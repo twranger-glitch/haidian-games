@@ -71,7 +71,7 @@ function startRound(){st.me=0;st.ai=5;st.high='ai';st.over=false;st.msg='阿海�
 function raise(){if(st.busy)return;var nb=high()+5;st.me=nb;st.high='me';st.msg='你舉牌說：「我出 '+nb+' 元！」';save(st);aiMove()}
 function aiMove(){st.busy=true;save(st);render();
  setTimeout(function(){var cp=st.caps[st.round-1];var nb2=st.me+5;var prev=st.ai;
-  if(nb2<=cp){st.ai=nb2;st.high='ai';st.msg=(nb2>100?'阿海伯皺著眉頭說：「如果現在放手，我喊過的 '+prev+' 元就白付了。我出 '+nb2+' 元！」':'阿海伯舉牌說：「我出 '+nb2+' 元！」');}
+  if(nb2<=cp){st.ai=nb2;st.high='ai';st.msg=(nb2>100?'阿海伯皺著眉頭說：「現在放手，我喊過的 '+prev+' 元就白付了，我不甘心！我出 '+nb2+' 元！」':'阿海伯舉牌說：「我出 '+nb2+' 元！」');}
   else{finish('me');return}
   st.busy=false;save(st);render()},700)}
 function quit(){if(st.busy)return;finish('ai')}
@@ -91,10 +91,10 @@ function render(){var h='';var s=st.step;
   '<p class="mini">一共要玩兩回合。遊戲裡的錢都是假的，不用真的付錢。</p>'+
   '<button class="btn" onclick="startRound()">開始第一回合</button>';
  } else if(s==='setstop'){
-  h='<p class="kick">第二回合開始前</p><h2>開始以前，請先寫下你的停損點：這一回合，你最多願意喊到多少錢？</h2>'+
-  '<p class="lead">停損點，就是事先替自己畫好的一條線。喊到這條線的時候，就要停下來，重新想一想。請注意：阿海伯這一回合願意喊到多高，和上一回合不一定一樣。</p>'+
+  h='<p class="kick">第二回合開始前</p><h2>開始以前，請先設好你的停損點：這一回合，你最多願意喊到多少錢？</h2>'+
+  '<p class="lead">停損點，就是事先替自己畫好的一條線：喊到這條線，就停下來重新想一想，免得越陷越深。請注意：阿海伯這一回合肯喊到多高，和上一回合不一定一樣。</p>'+
   '<div class="card warm"><div class="stopset"><button class="btn ghost" onclick="adj(-5)" aria-label="減少 5 元">減 5 元</button><span class="big">'+st.stop+' 元</span><button class="btn ghost" onclick="adj(5)" aria-label="增加 5 元">加 5 元</button></div></div>'+
-  '<button class="btn" onclick="st.round=2;startRound()">寫好了，開始第二回合</button>';
+  '<button class="btn" onclick="st.round=2;startRound()">設好了，開始第二回合</button>';
  } else if(s==='bid'){
   var myTurn=st.high==='ai'&&!st.busy;var nb=high()+5;
   h='<p class="kick">第 '+st.round+' 回合'+(st.round===2?'・你的停損點是 '+st.stop+' 元':'')+'</p>'+
@@ -106,7 +106,7 @@ function render(){var h='';var s=st.step;
   if(myTurn){
    h+='<div class="card cool ledger"><p>'+(st.me===0?'如果你現在放手：你一次都還沒有喊，所以不用付錢。':'如果你現在放手：你要付出自己喊過的 <b>'+st.me+' 元</b>，可是什麼也拿不到。')+'</p>'+
    '<p>如果你喊 '+nb+' 元，最後贏了：你花 '+nb+' 元，買到值 100 元的魚苗，'+(nb<=100?'會賺 <b>'+(100-nb)+' 元</b>。':'<b>會賠 '+(nb-100)+' 元</b>。')+'</p></div>'+
-   (st.round===2&&nb>st.stop?'<p class="warn">你寫下的停損點是 '+st.stop+' 元。如果再喊 '+nb+' 元，就超過你的停損點了。</p>':'')+
+   (st.round===2&&nb>st.stop?'<p class="warn">小心！你設的停損點是 '+st.stop+' 元，再喊 '+nb+' 元就超過了。</p>':'')+
    '<div class="act"><button class="btn" onclick="raise()">舉牌：我出 '+nb+' 元</button><button class="btn ghost" onclick="quit()">放手，不喊了</button></div>';
   } else h+='<p class="lead">阿海伯正在想要不要再喊……</p>';
  } else if(s==='res'){
@@ -116,11 +116,11 @@ function render(){var h='';var s=st.step;
    '你放手了。阿海伯用 '+r.ai+' 元買走了魚苗；你喊過的 '+r.me+' 元還是要付，可是什麼也拿不到。';
   var total=r.me+r.ai;
   h='<p class="kick">第 '+st.round+' 回合結束</p><h2>'+t+'</h2>'+
-  '<div class="card"><p>你們兩個人加起來，一共付出 <b>'+total+' 元</b>，換到一桶值 100 元的魚苗。'+(total>100?'辦拍賣的人多賺了 '+(total-100)+' 元。':'')+'</p>'+
-  (st.round===2?'<p>你寫下的停損點是 '+st.stop+' 元，'+(r.me>st.stop?'<b>你最後喊到 '+r.me+' 元，超過了停損點。</b>':'你最後喊到 '+r.me+' 元，<b>守住了停損點。</b>')+'</p>':'')+'</div>'+
+  '<div class="card"><p>你們兩個人加起來，一共付出 <b>'+total+' 元</b>，換到一桶值 100 元的魚苗。'+(total>100?'兩個人搶得不肯放手，反而讓辦拍賣的人漁翁得利，多賺了 '+(total-100)+' 元。':'')+'</p>'+
+  (st.round===2?'<p>你設的停損點是 '+st.stop+' 元，'+(r.me>st.stop?'<b>你最後喊到 '+r.me+' 元，超過了停損點。</b>':'你最後喊到 '+r.me+' 元，<b>守住了停損點。</b>')+'</p>':'')+'</div>'+
   (st.round===1?'<button class="btn" onclick="go(\'setstop\')">下一步：準備第二回合</button>':'<button class="btn" onclick="go(\'why\')">下一步</button>');
  } else if(s==='why'){
-  var W=['我想買到便宜的魚苗。','我不想白白付掉前面已經喊出去的錢。','我不想輸給阿海伯。','我很早就放手了，沒有越喊越高。'];
+  var W=['我想用便宜的價錢買到魚苗。','前面喊的錢都要付了，現在放手太不甘心。','我就是不想輸給阿海伯。','我很早就收手了，沒有越喊越高。'];
   h='<p class="kick">想一想（這一題沒有標準答案）</p><h2>第一回合喊到後來，你心裡的想法比較像哪一句？</h2>';
   for(var i=0;i<4;i++)h+='<button class="btn alt'+(st.why===i?' pick':'')+'" aria-pressed="'+(st.why===i)+'" onclick="pickW('+i+')">'+W[i]+'</button>';
   h+='<button class="btn" '+(st.why===null?'disabled':'')+' onclick="go(\'end\')">看結果</button>';
@@ -131,11 +131,11 @@ function render(){var h='';var s=st.step;
   h='<h1>做完了！請停在這一頁，等其他同學。</h1><div class="card sum">'+
   '<div class="row"><span>第一回合：你最後喊到</span><b>'+a.me+' 元（'+band(a.me)+'）</b></div>'+
   '<div class="row"><span>第一回合的結果</span><b>'+out(a)+'</b></div>'+
-  '<div class="row"><span>第二回合：你寫下的停損點</span><b>'+b.stop+' 元</b></div>'+
+  '<div class="row"><span>第二回合：你設的停損點</span><b>'+b.stop+' 元</b></div>'+
   '<div class="row"><span>第二回合：你最後喊到</span><b>'+b.me+' 元（'+band(b.me)+'）</b></div>'+
   '<div class="row"><span>有沒有守住停損點？</span><b>'+(b.over?'超過了':'守住了')+'</b></div>'+
   '<div class="row"><span>第二回合的結果</span><b>'+out(b)+'</b></div></div>'+
-  '<p class="lead">想一想：價錢超過 100 元以後，還在喊價的人，真的是為了那桶魚苗嗎？</p>';
+  '<p class="lead">想一想：價錢超過 100 元以後還在喊價的人，真的是為了那桶魚苗嗎？還是騎虎難下、不甘心放手？</p>';
  }
  app.innerHTML=h;
 }

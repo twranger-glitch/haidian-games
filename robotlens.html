@@ -182,7 +182,7 @@ function intro(){
   var r=el('div','row');r.append(el('span','ico',ic('robot','#2A6F68','#F0F7F6',72)),el('p','lead','這是機器人阿算。阿算做決定的時候，只會看一件事：哪一個選擇比較省錢，或是比較能賺錢。'));
   c.append(r,
    el('p','lead','這個遊戲有 3 個小故事。每個故事裡都有兩件事，你只能選其中一件。'),
-   el('p','lead','你選好以後，另一張卡片會翻過來，告訴你放棄了哪些東西。接著，你會看到阿算怎麼選。最後，請你點一點，說說自己做這個決定時最在意什麼。'),
+   el('p','lead','你選好以後，另一張卡片會翻過來，告訴你割愛了哪些東西。接著，你會看到阿算怎麼選。最後，請你點一點，說說自己做這個決定時最在意什麼。'),
    el('p','note','每一步都只要「點一下」。這個遊戲沒有標準答案，選哪一個都可以。'));
   app.append(el('p','kick','線上小遊戲・選了這個，就放棄了什麼'),el('h1',null,'我放棄了什麼？'),c,
    btn('開始第 1 個故事','wide',function(){st.s=0;go()}));
@@ -207,31 +207,31 @@ function render(){
   }
   var o=1-k;
   if(stg===1){
-    app.append(doLine(2,'你選了「'+q.o[k].n+'」，所以另一張卡片翻過來了。請讀一讀，你放棄了哪些東西。讀完以後，請點最下面的按鈕。'));
+    app.append(doLine(2,'你選了「'+q.o[k].n+'」，另一張卡片就翻過來了。讀一讀：選了這個，你割愛了哪些東西？讀完以後，再點最下面的按鈕。'));
     var du=el('div','duo');
     var m=el('div','mine');m.append(el('span','tg','你選了'),el('span','ico',ic(q.o[k].i,'#D95D39','#FFFFFF',64)),el('span','nm',q.o[k].n));
     var bk=el('div','back'+(st.anim?' flipin':''));st.anim=false;save();
-    bk.append(el('h3',null,'沒有選「'+q.o[o].n+'」，你就放棄了：'));
+    bk.append(el('h3',null,'沒選「'+q.o[o].n+'」，你就割愛了：'));
     q.g[k].forEach(function(x){bk.appendChild(giveRow(x,''))});
     du.append(m,bk);
     var nm=q.g[k].filter(function(x){return x[0]!=='coin'}).map(function(x){return '「'+NAME[x[0]]+'」'}),
         paid=q.g[k].some(function(x){return x[0]==='coin'&&x[2]!==0}),msg;
-    if(!nm.length)msg='這一次，你放棄的主要是錢。用一些錢，換來你更想要的東西，也是一種選擇。';
-    else if(!paid)msg='這個選擇沒有花到錢，可是你還是放棄了'+nm.join('、')+'。不花錢，不代表什麼都沒有放棄。';
-    else msg='你放棄的不只是錢，還有'+nm.join('、')+'。';
+    if(!nm.length)msg='這一次，你割愛的主要是錢。花一點錢，換來你更想要的東西，只要你覺得划算，也是一種選擇。';
+    else if(!paid)msg='這個選擇沒花到錢，可是你還是割愛了'+nm.join('、')+'。省了錢，不代表什麼都沒割愛。';
+    else msg='你割愛的不只是錢，還有'+nm.join('、')+'。';
     app.append(du,el('p','note',msg),
       btn('我讀完了，看看阿算怎麼選','teal wide',function(){st.stage[i]=2;go()}));
     return;
   }
   if(stg===2){
     var r=q.r;
-    app.append(doLine(3,'這是只會算錢的機器人阿算。請看看它選了什麼，再看看它漏算了哪些東西。看完以後，請點最下面的按鈕。'));
+    app.append(doLine(3,'這是只會算錢的機器人阿算。看看它選了什麼，又漏算了哪些東西。看完以後，再點最下面的按鈕。'));
     var b=el('div','bot');b.append(el('span','ico',ic('robot','#2A6F68','#FFFFFF',64)),el('p',null,'<span class="who">阿算說：</span>'+q.rs));
-    var bk2=el('div','back');bk2.append(el('h3',null,'阿算選了「'+q.o[r].n+'」，它其實放棄了：'));
+    var bk2=el('div','back');bk2.append(el('h3',null,'阿算選了「'+q.o[r].n+'」，其實它也割愛了：'));
     q.g[r].forEach(function(x){bk2.appendChild(giveRow(x,'robot'))});
     var same=(k===r),miss=q.g[r].filter(function(x){return x[0]!=='coin'}).length;
     app.append(b,bk2,
-      el('p','note','阿算只看「錢」那一行，所以它覺得自己沒有放棄什麼。可是，標著「阿算沒算到」的'+(miss>1?'那幾行':'那一行')+'，也是它放棄的東西。'),
+      el('p','note','阿算只看「錢」那一行，所以以為自己什麼都沒割愛。可是，標著「阿算沒算到」的'+(miss>1?'那幾行':'那一行')+'，也是它割愛的東西。'),
       el('p','note warm',same?'你和阿算選得一樣，都選了「'+q.o[r].n+'」。不過，阿算只看錢；你選這個的理由，可能和阿算不一樣。'
                              :'你和阿算選得不一樣。阿算選了「'+q.o[r].n+'」，你選了「'+q.o[k].n+'」。你除了錢以外，可能還算了別的東西。'),
       btn('下一步：說說我最在意什麼','teal wide',function(){st.stage[i]=3;go()}));
@@ -239,7 +239,7 @@ function render(){
   }
   // stg 3：我最在意的是什麼（可複選）
   st.care[i]=st.care[i]||[];
-  app.append(doLine(4,'你選「'+q.o[k].n+'」的時候，最在意的是什麼？請點一下，可以點好幾個。這一題沒有標準答案。'));
+  app.append(doLine(4,'你選「'+q.o[k].n+'」的時候，心裡最在意的是什麼？請點一下，可以點好幾個。這一題沒有標準答案。'));
   var ch=el('div','chips'),said=el('p','note'),nx=btn(i<S.length-1?'選好了，進入下一個故事':'選好了，看看我的結果','wide',function(){st.s++;go()});
   function paint(){
     Array.prototype.forEach.call(ch.children,function(b,n){var on=st.care[i].indexOf(CARE[n][0])>=0;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')});
@@ -269,7 +269,7 @@ function end(){
   var c=el('div','card');
   c.append(el('p','note','請記下這四件事，等一下老師會請大家舉手：<br>① 在 3 個故事裡，我有 <b>'+diff+'</b> 個和阿算選得不一樣。<br>② 星期六下午，我選了「<b>'+sat+'</b>」。<br>③ 我點得最多次的是<b>'+(top.length?top.join('、'):'—')+'</b>'+(top.length>1?'（一樣多次）':'')+'。<br>④ 在 3 個故事裡，我'+(money?'<b>有</b>':'<b>沒有</b>')+'點過「錢」。'),
    t,
-   el('p','note warm','想一想：阿算只看錢，所以它常常覺得自己什麼都沒有放棄。可是，時間、朋友、開心、健康和學到的東西，也都是放棄掉的東西。'));
+   el('p','note warm','想一想：阿算只看錢，所以常常以為自己什麼都沒割愛。可是，時間、朋友、開心、健康、學到的東西和家人，也都是會被割愛的東西。'));
   app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
 }
 render();

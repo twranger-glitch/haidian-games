@@ -124,7 +124,7 @@ function render(){
     }
   }else if(s===2){
     app.append(el('p','kick','第 2 步，共 5 步'),el('h2',null,'吃完一塊，還想再吃嗎？'),
-      el('p','lead','試吃攤前面排了很多人。如果你還想再吃一塊，就要重新排隊。你最多願意排在幾個人的後面？請點一下隊伍裡的位置，例如點 5，就表示你願意排在 5 個人的後面。如果你不想再吃了，請按最下面的按鈕。'));
+      el('p','lead','試吃攤前面大排長龍。想再吃一塊，就要重新排隊。你最多肯排在幾個人的後面？請點一下隊伍裡的位置，例如點 5，就表示你肯排在 5 個人的後面。如果不想再吃了，請按最下面的按鈕。'));
     var qc=el('div','card');var q=el('div','queue');
     for(var i=1;i<=10;i++){(function(k){var b=el('button','qp'+(st.q!=null&&k<=st.q?' on':''),PERSON+'<span>'+k+'</span>');b.type='button';b.setAttribute('aria-label','前面有 '+k+' 個人');
       b.addEventListener('click',function(){st.q=k;save();render()});q.appendChild(b)})(i)}
@@ -134,7 +134,7 @@ function render(){
     app.lastChild.disabled=st.q==null;
   }else if(s===3){
     app.append(el('p','kick','第 3 步，共 5 步'),el('h2',null,'你覺得一塊雞蛋糕，值幾張園遊券？'),
-      el('p','lead','在園遊會裡，一張園遊券可以買一杯小杯的飲料。如果要用園遊券買一塊這樣的雞蛋糕，你覺得付幾張才合理？請點園遊券，選 1 到 5 張。'));
+      el('p','lead','在園遊會裡，一張園遊券可以買一杯小杯的飲料。如果要用園遊券買一塊這樣的雞蛋糕，你覺得付幾張才值得？請點園遊券，選 1 到 5 張。'));
     var tc=el('div','card');var tw=el('div','tickets');
     for(var j=1;j<=5;j++){(function(k){var b=el('button','tk',ticket(k<=st.t));b.type='button';b.setAttribute('aria-label',k+' 張');b.addEventListener('click',function(){st.t=k;save();render()});tw.appendChild(b)})(j)}
     tc.append(tw,el('p','big',st.t?st.t+' 張':'還沒選'));

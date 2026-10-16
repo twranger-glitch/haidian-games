@@ -147,7 +147,7 @@ function item(){
 }
 function odo(){
  app.append(el('p','kick','第一關：請轉動數字滾輪，寫下一個點數'));
- app.append(el('h2',null,Y?'隔壁班有一位同學很喜歡你的鑰匙圈，想用點數跟你買。他<b style="color:var(--coral)">最少</b>要給你多少點，你才願意把鑰匙圈賣給他？':'如果你想把文具店櫃子裡的鑰匙圈買下來，你<b style="color:var(--teal)">最多</b>願意花多少點？'));
+ app.append(el('h2',null,Y?'隔壁班有一位同學很喜歡你的鑰匙圈，想用點數跟你買。他<b style="color:var(--coral)">最少</b>要給你多少點，你才肯割愛，把鑰匙圈賣給他？':'如果你想把文具店櫃子裡的鑰匙圈買下來，你<b style="color:var(--teal)">最多</b>肯花多少點？'));
  var c=el('div','card');c.innerHTML='<svg class="scene" style="max-width:220px" viewBox="0 0 220 160" aria-hidden="true">'+fish(st.rope,10,10,1)+'</svg>';app.appendChild(c);
  var o=el('div','odo');var H=null;
  [0,1,2].forEach(function(k){var w=el('div','wheel');
@@ -162,7 +162,7 @@ function odo(){
  app.appendChild(o);
  var tot=el('p','lead','');tot.style.textAlign='center';tot.style.fontWeight='900';tot.style.fontSize='clamp(24px,4vw,32px)';tot.style.color='var(--ink)';tot.textContent=price()+' 點';
  app.appendChild(tot);
- app.appendChild(el('p','hint','請按上下箭頭，轉動每一格數字，可以寫 0 點到 999 點。這題沒有標準答案，請寫下你真正願意的點數。'));
+ app.appendChild(el('p','hint','請按上下箭頭，轉動每一格數字，可以寫 0 點到 999 點。這題沒有標準答案，請寫下你心裡真正的點數。'));
  app.appendChild(btn('確定寫這個點數','',function(){st.priceSet=true;go(3)}));
 }
 function trade(){
@@ -176,7 +176,7 @@ function trade(){
  var keep=btn((Y?fs():cs())+'<span>我要留著我的'+mine+'</span>','alt'+(st.swap===false?' pick':''),function(){st.swap=false;save();render()});
  var sw=btn((Y?cs():fs())+'<span>我要換成'+other+'</span>','alt'+(st.swap===true?' pick':''),function(){st.swap=true;save();render()});
  g.append(keep,sw);app.appendChild(g);
- if(st.swap!==null){app.appendChild(el('p','note',st.swap?'你把手上的'+mine+'換成了'+other+'。對你來說，'+other+'比'+mine+'更吸引人。':'你決定留著手上的'+mine+'。很多人都會這樣選，等一下全班會比一比。'));
+ if(st.swap!==null){app.appendChild(el('p','note',st.swap?'你把手上的'+mine+'換成了'+other+'。對你來說，'+other+'比'+mine+'更吸引人。':'你決定留著手上的'+mine+'，捨不得換。很多人都會這樣選，等一下全班會比一比。'));
   app.appendChild(btn('看看我的結果','',function(){go(4)}))}
 }
 function end(){
@@ -186,7 +186,7 @@ function end(){
  [['第一關寫下的點數',price()+' 點'],['第二關有沒有交換',st.swap===null?'—':(st.swap?'有交換':'沒有交換')]].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,'<b>'+r[1]+'</b>'));t.appendChild(tr)});
  c.appendChild(t);app.appendChild(c);
  app.appendChild(el('p','hint','等一下，老師會請黃組和青組分開舉手，分成 0 點到 49 點、50 點到 99 點、100 點到 199 點、200 點或更多。接著，第二關有交換的人，要再舉一次手。'));
- var d=el('details');d.innerHTML='<summary>等老師揭曉以後，再點這裡，看看兩組的題目差在哪裡</summary><p>黃組：鑰匙圈一開始就送給你了。畫面問你，同學最少要給你多少點，你才願意賣掉它。第二關，你手上拿的是鑰匙圈，可以換成明信片。</p><p>青組：鑰匙圈擺在文具店的櫃子裡。畫面問你，最多願意花多少點把它買下來。第二關，你手上拿的是明信片，可以換成鑰匙圈。</p>';
+ var d=el('details');d.innerHTML='<summary>等老師揭曉以後，再點這裡，看看兩組的題目差在哪裡</summary><p>黃組：鑰匙圈一開始就送給你了。畫面問你，同學最少要給你多少點，你才肯割愛，把它賣掉。第二關，你手上拿的是鑰匙圈，可以換成明信片。</p><p>青組：鑰匙圈擺在文具店的櫃子裡。畫面問你，最多肯花多少點把它買下來。第二關，你手上拿的是明信片，可以換成鑰匙圈。</p>';
  app.appendChild(d);
 }
 render();

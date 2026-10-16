@@ -147,7 +147,7 @@ function intro(){
   var c=el('div','card');
   c.append(el('p','lead','接下來有 3 次買東西的機會。每一次，都請你想像自己的錢包裡剛好有 300 元零用錢。這個金額是假設的。'),
    el('p','lead','如果你想買，就把錢包拖到店家的櫃台上；如果你不想買，就把錢包拖到撲滿裡。你也可以直接點一下你要的那一格。'),
-   el('p','lead','這裡沒有對錯，請照你真正會做的選擇來選。每個人看到的畫面可能有一點不一樣，所以先不要和旁邊的同學討論。'));
+   el('p','lead','這裡沒有對錯，請照你心裡真正的想法來選。每個人看到的畫面可能有一點不一樣，所以先不要和旁邊的同學討論。'));
   app.append(el('p','kick','線上小遊戲・機會成本'),el('h1',null,'錢包去哪裡'),c,btn('開始','',function(){st.r=0;save();round()}));
 }
 function round(){
@@ -169,7 +169,7 @@ function choose(k){st.pick[st.r]=k;st.r++;save();round();window.scrollTo(0,0)}
 function reflect(){
   if(st.ref!=null){end();return}
   app.innerHTML='';
-  app.append(el('p','kick','最後一題'),el('h2',null,'剛剛在決定要不要買的時候，你有沒有想到：這些錢如果不花，還可以拿去做什麼？'));
+  app.append(el('p','kick','最後一題'),el('h2',null,'剛剛決定要不要買的時候，你有沒有想到：這筆錢如果不花，還可以拿去做什麼？'));
   var g=el('div','opts');
   ['每一次都有想到','有時候有想到','幾乎都沒有想到'].forEach(function(t,i){g.appendChild(btn(t,'alt',function(){st.ref=i;save();end()}))});
   app.append(g,el('p','lead','三個答案都可以選，這一題沒有對錯。'));
@@ -184,7 +184,7 @@ function end(){
    '<tr><td>第 1 次：150 元的鑰匙圈</td><td>'+nm[p[0]]+'</td></tr>'+
    '<tr><td>第 2 次：兩副耳機</td><td>'+(p[1]==='shop'?'買了 300 元的大耳機':p[1]==='shop2'?'買了 200 元的小耳機':'兩副都沒有買')+'</td></tr>'+
    '<tr><td>第 3 次：120 元的漫畫</td><td>'+nm[p[2]]+'</td></tr>'+
-   '<tr><td>有沒有想到錢的其他用途</td><td>'+['每一次都有想到','有時候有想到','幾乎都沒有想到'][st.ref]+'</td></tr>';
+   '<tr><td>有沒有想到這筆錢還能做什麼</td><td>'+['每一次都有想到','有時候有想到','幾乎都沒有想到'][st.ref]+'</td></tr>';
   c.append(t,el('p','note','等一下，老師會先請青組舉手，再請紅組舉手，看看兩組的選擇一不一樣。請記住自己是哪一組。'));
   var d=el('details');d.innerHTML='<summary>等老師揭曉以後，再打開這裡</summary><p>青組看到的「不買」，只寫了「不買」兩個字。紅組看到的「不買」，多寫了一句「把錢留下來，以後可以買別的想要的東西」；200 元的小耳機那一格，也多寫了「買完以後還剩下 100 元」。兩組的東西和價錢完全一樣，紅組的畫面只是把「沒花掉的錢還可以拿去做什麼」說了出來。</p>';
   app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,d);

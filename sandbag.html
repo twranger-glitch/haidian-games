@@ -97,11 +97,11 @@ function render(){var h='';var s=st.step;
   var left=10-st.cur.bag-st.cur.box;
   h='<p class="kick">第 '+(st.wk+1)+' 週 '+tag()+'</p><div class="week">'+[0,1,2,3].map(function(i){return '<span class="'+(i<st.wk?'done':i===st.wk?'now':'')+'">第 '+(i+1)+' 週</span>'}).join('')+'</div>'+
   '<div class="card"><p class="news">'+NEWS[st.wk]+'</p><p class="mini">'+who().replace(/<\/?b>/g,'')+'</p></div>'+scene()+
-  '<p class="lead">還有 <b>'+left+'</b> 位同學還沒有安排工作（下面每一個小格子，代表一位還沒安排的同學）：</p><div class="tray" aria-hidden="true">'+Array(left+1).join('<span class="chip"></span>')+'</div>'+
+  '<p class="lead">還有 <b>'+left+'</b> 位同學還沒分配工作（下面每一個小格子，就是一位還沒分配的同學）：</p><div class="tray" aria-hidden="true">'+Array(left+1).join('<span class="chip"></span>')+'</div>'+
   '<div class="zones">'+zone('bag',I_BAG,'補沙包堤')+zone('box',I_BOX,'試新方法：種菜箱')+'</div>'+
   '<button class="btn te" '+(left===0?'':'disabled')+' onclick="week()">'+(left===0?'這一週就這樣安排':'請先把 10 位同學都安排好')+'</button>';
  } else if(s===2){
-  h='<p class="kick">四週結束了</p><h2>請停下來想一想：五年13班做這個計畫，真正的目標是什麼？</h2>';
+  h='<p class="kick">四週結束了</p><h2>先停一下：五年13班辛苦種菜，真正的目標是什麼？</h2>';
   var G=['把這塊低窪地顧好，不要讓它淹水。','園遊會時，有自己種的菜可以賣。','證明當初選這塊地沒有選錯。','把沙包堤蓋得又高又漂亮。'];
   for(var i=0;i<4;i++)h+='<button class="btn alt'+(st.goal===i?' pick':'')+'" onclick="pick(\'goal\','+i+')">'+G[i]+'</button>';
   h+='<button class="btn" '+(st.goal===null?'disabled':'')+' onclick="go(3)">下一題</button>';
@@ -121,7 +121,7 @@ function render(){var h='';var s=st.step;
   '<div class="row"><span>每一週派去補沙包的人數</span><b>'+st.bag.join('、')+' 位</b></div>'+
   '<div class="row"><span>你認為的目標</span><b>'+G2[st.goal]+'</b></div>'+
   '<div class="row"><span>第 5 週的打算</span><b>'+N2[st.next]+'</b></div></div>'+
-  '<p class="mini">同一位同學來幫忙兩週，就算兩位。</p><p class="lead">想一想：沙包堤和種菜箱，都是「方法」。如果目標是園遊會時有菜可以賣，哪一個方法比較有希望？</p>'+
+  '<p class="mini">同一位同學來幫忙兩週，就算兩位。</p><p class="lead">想一想：沙包堤和種菜箱，都只是「方法」。如果目標是園遊會時有菜可以賣，哪一個方法比較有希望？山不轉，路可以轉。</p>'+
   '';
  }
  app.innerHTML=h;

@@ -138,7 +138,7 @@ function oc(y,k){var o=Y[y].v.filter(function(_,i){return i!==k});return Math.ma
 function intro(){
   app.innerHTML='';
   var c=el('div','card');
-  c.append(el('p','lead','請你想像自己住在兩百年前七股的海邊。你家有一塊靠海的新土地，可是這塊地每一年只能拿來做一件事，可以種稻、養魚，或是曬鹽。'),
+  c.append(el('p','lead','想像你住在兩百年前七股的海邊。你家有一塊靠海的新土地，可是一年只能拿來做一件事：種稻、養魚，或是曬鹽。魚與熊掌不可兼得，選了一樣，另外兩樣就得割愛。'),
    el('p','lead','每一年開始的時候，你要選一塊牌子立在地上。立了哪一塊牌子，這一年就做那一件事。一共要過 4 年。'),
    el('p','lead','每一年結束的時候，你會看到自己收成了幾點，也會看到另外兩種用途本來可以收成幾點。這個故事和點數都是假設的，只是用來練習。'));
   app.append(el('p','kick','線上小遊戲・機會成本'),el('h1',null,'一塊地三條路'),c,btn('開始第 1 年','',function(){st.y=0;save();year()}));
@@ -168,7 +168,7 @@ function year(){
   var ch=[[best,'best'],[sum,'sum'],[small,'small'],[0,'zero']];
   var seen={};ch=ch.filter(function(c){if(seen[c[0]])return false;seen[c[0]]=1;return true});ch.sort(function(x,y){return x[0]-y[0]});
   var g=el('div','opts'),fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
-  ch.forEach(function(c){var b=el('button','btn alt',c[0]+' 點'+(c[1]==='zero'?'，因為我覺得自己沒有放棄什麼':''));b.type='button';
+  ch.forEach(function(c){var b=el('button','btn alt',c[0]+' 點'+(c[1]==='zero'?'，我選的收成最多，沒有放棄什麼':''));b.type='button';
     b.addEventListener('click',function(){Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');
       if(st.first[y]==null)st.first[y]=c[1]==='best';st.ans[y]=c[1];save();feedback(fb,c[1],best,sum,q.v[k],k)});g.appendChild(b)});
   app.append(g,fb);
@@ -176,11 +176,11 @@ function year(){
 }
 function feedback(fb,t,best,sum,got,k){
   fb.innerHTML='';var msg;
-  if(t==='best')msg='答對了。機會成本只算沒有選的用途裡面，收成最多的那一種，所以是 '+best+' 點。';
-  else if(t==='sum')msg='一塊地一年只能做一件事，所以沒有選的兩種用途，本來就不可能同時做。因此不能把它們加起來，只要算收成比較多的那一種，也就是 '+best+' 點。';
-  else if(t==='small')msg='在你放棄的兩種用途裡，收成比較多的那一種，才是你真正放棄的。所以機會成本是 '+best+' 點，不是收成比較少的那一種。';
-  else msg='就算你選了收成最多的用途，另一種用途的收成，你這一年還是拿不到。只要做了選擇，就一定會放棄一些東西。這一年你放棄了 '+best+' 點。';
-  var cmp=got>=best?'你得到了 '+got+' 點，放棄了 '+best+' 點。得到的比放棄的多，所以這一年你選得很划算。':'你得到了 '+got+' 點，放棄了 '+best+' 點。放棄的比得到的多，所以這一年有一點可惜。';
+  if(t==='best')msg='答對了！機會成本只算沒選的用途裡，收成最多、最讓人捨不得的那一種，所以是 '+best+' 點。';
+  else if(t==='sum')msg='魚與熊掌不可兼得：一塊地一年只能做一件事，沒選的兩種用途本來就不可能一起做，所以不能加起來。只要算收成比較多的那一種，也就是 '+best+' 點。';
+  else if(t==='small')msg='你放棄的兩種用途裡，收成比較多的那一種，才是你最捨不得的。所以機會成本是 '+best+' 點，不是收成比較少的那一種。';
+  else msg='有一好，沒兩好。就算你選了收成最多的用途，別的用途的收成，你這一年還是拿不到。只要做了選擇，就一定有割愛的東西。這一年你放棄了 '+best+' 點。';
+  var cmp=got>=best?'你得到了 '+got+' 點，放棄了 '+best+' 點。得到的比放棄的多，所以這一年你選得很划算。':'你得到了 '+got+' 點，放棄了 '+best+' 點。放棄的比得到的多，這一年選得有點划不來。';
   fb.append(el('p','note'+(t==='best'?'':' warm'),msg),el('p','note',cmp),btn(st.y<Y.length-1?'繼續過第 '+(st.y+2)+' 年':'看看這 4 年的紀錄','teal',function(){st.y++;save();year();window.scrollTo(0,0)}));
 }
 function place(i){if(st.pick[st.y]!=null)return;st.pick[st.y]=i;save();year()}
@@ -190,7 +190,7 @@ function end(){
   Y.forEach(function(q,y){var k=st.pick[y];if(k==null)return;var b=oc(y,k);tot+=q.v[k];if(q.v[k]>=b)win++;if(st.first[y])right++;
     var tr=el('tr');tr.innerHTML='<td>第 '+(y+1)+' 年</td><td>'+USE[k][1]+'</td><td>'+q.v[k]+' 點</td><td>'+b+' 點</td>';t.appendChild(tr)});
   var c=el('div','card');
-  c.append(t,el('p','note','請記下這三個數字，等一下老師會請大家舉手：<br>① 這 4 年一共收成了 <b>'+tot+'</b> 點。<br>② 有 <b>'+win+'</b> 年，我得到的比放棄的多。<br>③ 算機會成本的時候，有 <b>'+right+'</b> 年是第一次就選對的。'),
+  c.append(t,el('p','note','請記下這三個數字，等一下老師會請大家舉手：<br>① 這 4 年一共收成了 <b>'+tot+'</b> 點。<br>② 有 <b>'+win+'</b> 年選得划算：我得到的比放棄的多。<br>③ 算機會成本的時候，有 <b>'+right+'</b> 年是第一次就答對的。'),
    el('p','note warm','想一想：就算每一年都選了收成最多的用途，機會成本會不會是 0？為什麼？'));
   app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
 }

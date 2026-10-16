@@ -128,7 +128,7 @@ function q(i){var x=Q[i];var p=st.pick[i];
  function place(w){if(w==='a'){rf.style.left='17%';rf.style.top='40%'}else if(w==='b'){rf.style.left='61%';rf.style.top='40%'}else{rf.style.left='39%';rf.style.top='66%'}}
  function choose(w){st.pick[i]=w;save();place(w);ca.classList.toggle('on',w==='a');cb.classList.toggle('on',w==='b');show()}
  function show(){fb.innerHTML='';var w=st.pick[i];if(!w)return;
-  var m=(w==='a')?(x.k==='g'?'你選了穩穩地拿到錢。可以得到錢的時候，很多人都喜歡這樣選。':'你選了接受一定會發生的損失。這其實不容易做到，因為「一定會賠錢」的感覺很不好受。')
+  var m=(w==='a')?(x.k==='g'?'你選了穩穩地先拿到手。可以得到錢的時候，很多人都喜歡這樣選。':'你選了接受一定會發生的損失。這其實不容易做到，因為「一定會賠錢」讓人很不甘心。')
    :(x.k==='g'?'你選了賭一把，希望可以拿到更多錢。':'你選了賭一把，希望可以一點都不損失。可能會失去錢的時候，很多人都會這樣選。');
   fb.appendChild(el('p','note'+(w==='b'?' c':''),m+'<br><span style="font-size:.85em;color:var(--muted)">如果想改，可以把竹筏拖到另一條水道。</span>'));
   fb.appendChild(btn(i<3?'下一個岔路口':'回到岸上','',function(){go(st.s+1)}))}
@@ -146,7 +146,7 @@ function q(i){var x=Q[i];var p=st.pick[i];
 }
 function word(){
  app.append(el('p','kick','回到岸上：這一題沒有標準答案'),el('h2',null,'阿水伯最後決定先不挖魚塭，要再種一季稻子看看。你最想對他說下面哪一句話？'));
- var W=[['hard','我懂，要接受「一定會賠錢」真的很難。','這句話說出了阿水伯的心情。一個人覺得自己被了解，比較願意靜下來再想一想。'],
+ var W=[['hard','我懂，要接受「一定會賠錢」，真的很不甘心。','這句話說出了阿水伯的心情。一個人覺得自己被了解，比較願意靜下來再想一想。'],
   ['count','先算算看：如果再種一季，最多可能會賠多少錢？','這句話是請阿水伯先把最壞的情況想清楚，再決定要不要賭。'],
   ['ask','去問問隔壁已經改養魚的鄰居，看看他們怎麼說。','這句話讓阿水伯多聽聽別人的經驗，不要只靠自己的感覺做決定。'],
   ['luck','再撐撐看，說不定明年就會變好了。','這句話給了阿水伯希望，可是也可能讓他賠得更多。等一下，全班可以聊聊這一句話。']];
@@ -159,7 +159,7 @@ function end(){
  var c=el('div','card');var t=el('table','sum');
  [['可以得到錢的題目','第 1 題和第 3 題，我選「一定會」的有 <b>'+gs+'</b> 題（一共 2 題）'],['可能失去錢的題目','第 2 題和第 4 題，我選「賭一把」的有 <b>'+lb+'</b> 題（一共 2 題）'],
   ['四個岔路口我選的路',st.pick.map(function(p,i){return '第 '+(i+1)+' 題：'+(p==='a'?'一定會':p==='b'?'賭一把':'—')}).join('、')],
-  ['我想對阿水伯說',{hard:'要接受一定會賠錢真的很難',count:'先算算看最多可能會賠多少',ask:'去問問已經改養魚的鄰居',luck:'再撐撐看，說不定明年會變好'}[st.word]||'—']].forEach(function(r){
+  ['我想對阿水伯說',{hard:'要接受一定會賠錢，真的很不甘心',count:'先算算看最多可能會賠多少',ask:'去問問已經改養魚的鄰居',luck:'再撐撐看，說不定明年會變好'}[st.word]||'—']].forEach(function(r){
   var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,r[1]));t.appendChild(tr)});
  c.appendChild(t);app.appendChild(c);
  app.appendChild(el('p','hint','等一下老師會問兩個問題。第一個：可以得到錢的兩題，都選了「一定會」的人，請舉手。第二個：可能失去錢的兩題，都選了「賭一把」的人，請舉手。'));
