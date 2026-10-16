@@ -1,0 +1,170 @@
+<title>我切你選</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1E242B; --muted:#475569; --line:#E3DED7;
+  --co:#D95D39; --te:#2A6F68; --lco:#FFF5F2; --lte:#F0F7F6; --peach:#F2B79F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:18px;padding-block:22px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,48px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.8vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--co);letter-spacing:2px;margin:0}
+.lead{font-size:clamp(19px,2.7vw,24px);color:var(--muted);margin:0}
+p{margin:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 24px rgba(30,36,43,.06)}
+.note{background:var(--lte);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,23px);line-height:1.65}
+.note.warm{background:var(--lco)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--co);color:#fff;cursor:pointer;line-height:1.4;touch-action:manipulation}
+.btn.teal{background:var(--te)}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--co);background:var(--lco)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible{outline:4px solid var(--te);outline-offset:3px}
+.chip{display:inline-block;border-radius:999px;padding:4px 16px;font-weight:900;color:#fff}
+.chip.red{background:var(--co)} .chip.blue{background:var(--te)}
+svg{display:block;max-width:100%;height:auto}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top}
+td.k{color:var(--muted);font-weight:700;width:52%}
+td.v{font-weight:900}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+.cakewrap{position:relative;width:100%;max-width:640px;margin:0 auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.cakewrap svg{width:100%}
+.pieces{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.piece{border:2px solid var(--line);background:var(--card);border-radius:16px;padding:12px;text-align:center;font:inherit;cursor:pointer}
+.piece b{display:block;font-size:clamp(30px,6vw,48px);color:var(--co);font-variant-numeric:tabular-nums}
+.piece span{font-size:clamp(17px,2.4vw,21px);color:var(--muted);font-weight:700}
+.piece.mine{border-color:var(--co);background:var(--lco)}
+.piece.hers{border-color:var(--te);background:var(--lte)}
+.piece.hers b{color:var(--te)}
+.piece:disabled{cursor:default;opacity:1}
+.nudge{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rule{font-weight:900;color:var(--te)}
+</style>
+<main class="wrap" id="app" aria-live="polite"></main>
+<script>
+(function(){
+"use strict";
+var KEY='u2d-cutchoose-v2', app=document.getElementById('app'), LEN=20;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+if(location.hash==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}
+var st=load()||{s:0,cut:[null,null,null],cutDone:[false,false,false],mine:[null,null,null],q1:null,q2:null};
+save();
+function el(t,c,html){var e=document.createElement(t);if(c)e.className=c;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.s=n;save();render();window.scrollTo(0,0)}
+var RULES=['你切，你先挑','你切，小芸先挑','小芸切，你先挑'];
+function cakeSVG(x,done){
+  // 蛋糕從 40 到 600（寬 560）代表 20 公分；x 是 0~20 公分
+  var cx=40+560*x/LEN,s='<svg viewBox="0 0 640 230" aria-label="一條 20 公分長的蛋糕，刀子切在 '+x+' 公分的地方">';
+  s+='<rect x="40" y="70" width="560" height="120" rx="22" fill="#F2B79F" stroke="#D95D39" stroke-width="5"/><path d="M40 110 H600" stroke="#fff" stroke-width="7"/>';
+  for(var i=0;i<10;i++){var px=68+i*56;s+='<circle cx="'+px+'" cy="62" r="11" fill="#fff" stroke="#D95D39" stroke-width="4"/>'}
+  s+='<path d="M'+cx+' 40 V214" stroke="#2A6F68" stroke-width="5" stroke-dasharray="'+(done?'0':'12 10')+'" stroke-linecap="round"/>';
+  s+='<path d="M'+(cx-20)+' 6 H'+(cx+20)+' L'+(cx+12)+' 38 H'+(cx-12)+' Z" fill="#F0F7F6" stroke="#2A6F68" stroke-width="4" stroke-linejoin="round"/>';
+  return s+'</svg>';
+}
+function cutText(k){return '刀子現在切在 <b>'+st.cut[k]+' 公分</b>的地方：左邊這一塊 '+st.cut[k]+' 公分，右邊這一塊 '+(LEN-st.cut[k])+' 公分。'}
+function cutUI(k,onDone){
+  if(st.cut[k]==null)st.cut[k]=6+Math.round(rnd()*8);
+  var w=el('div','cakewrap');w.innerHTML=cakeSVG(st.cut[k],false);
+  var lab=el('p','lead',cutText(k));
+  function show(){w.innerHTML=cakeSVG(st.cut[k],false);lab.innerHTML=cutText(k)}
+  function setX(clientX){var r=w.getBoundingClientRect();var x=(clientX-r.left)/r.width*640;var v=Math.max(2,Math.min(18,Math.round((x-40)/560*LEN)));st.cut[k]=v;show()}
+  var drag=false;
+  w.addEventListener('pointerdown',function(e){drag=true;try{w.setPointerCapture(e.pointerId)}catch(_){}setX(e.clientX)});
+  w.addEventListener('pointermove',function(e){if(drag)setX(e.clientX)});
+  w.addEventListener('pointerup',function(){drag=false;save()});w.addEventListener('pointercancel',function(){drag=false;save()});
+  var nd=el('div','nudge');
+  nd.append(btn('往左一點','alt',function(){st.cut[k]=Math.max(2,st.cut[k]-1);save();show()}),
+            btn('往右一點','alt',function(){st.cut[k]=Math.min(18,st.cut[k]+1);save();show()}));
+  var c=el('div','card');c.append(el('p','lead','請用手指按住蛋糕，左右拖動，決定刀子要切在哪裡。也可以按下面的按鈕，一次移動 1 公分。'),w,lab,nd);
+  app.append(c,btn('切下去','',function(){st.cutDone[k]=true;save();onDone()}));
+}
+function piecesUI(k,chooser){
+  var L=st.cut[k],R=LEN-L;
+  var w=el('div','cakewrap');w.innerHTML=cakeSVG(L,true);
+  var c=el('div','card');c.append(w);
+  var p=el('div','pieces');
+  function mk(side,v){var b=el('button','piece','<b>'+v+' 公分</b><span>'+(side==='L'?'左邊這一塊':'右邊這一塊')+'</span>');b.type='button';
+    if(st.mine[k]!=null){b.disabled=true;b.className='piece '+(st.mine[k]===side?'mine':'hers');b.querySelector('span').textContent+=(st.mine[k]===side?'・我的':'・小芸的')}
+    else if(chooser==='me'){b.addEventListener('click',function(){st.mine[k]=side;save();render()})}
+    else b.disabled=true;
+    return b}
+  p.append(mk('L',L),mk('R',R));c.append(p);app.append(c);
+}
+function myShare(k){return st.mine[k]==='L'?st.cut[k]:LEN-st.cut[k]}
+function render(){
+  app.innerHTML='';var s=st.s;
+  if(s===0){
+    app.append(el('p','kick','線上小遊戲・稀缺與制度'),el('h1',null,'我切你選'));
+    var c=el('div','card');
+    c.append(el('p','lead','你和同學小芸一起幫忙園遊會。結束以後，阿嬤送你們一條 20 公分長的蛋糕，上面有 10 顆草莓，請你們兩個人自己分。'),
+      el('p','lead','蛋糕只有一條，兩個人都想吃多一點。我們用三種不同的規則各分一次，看看結果有什麼不一樣。20 公分的一半，就是 10 公分。'));
+    app.append(c,btn('開始第一關','',function(){go(1)}));
+  }else if(s>=1&&s<=3){
+    var k=s-1;
+    app.append(el('p','kick','第 '+s+' 關，共 3 關'),el('h2',null,'規則：<span class="rule">'+RULES[k]+'</span>'));
+    if(k<2){
+      if(!st.cutDone[k]){app.append(el('p','lead',k===0?'這一關由你來切。切好以後，也由你先挑一塊。':'這一關還是由你來切，可是切好以後，換小芸先挑。小芸一定會挑比較大的那一塊。'));cutUI(k,render);return}
+      if(k===0){
+        if(st.mine[0]==null){app.append(el('p','lead','切好了。你想拿哪一塊？請點一下。'));piecesUI(0,'me');return}
+        piecesUI(0,'me');var m=myShare(0);
+        app.append(el('p','note'+(m>10?' warm':''),'你拿了 '+m+' 公分，小芸拿到 '+(LEN-m)+' 公分。'+(m>10?'小芸看了看自己那一塊，小聲地說：「我的好像比較小……」':m<10?'你把比較大的那一塊讓給了小芸。':'兩塊一樣大。')));
+      }else{
+        if(st.mine[1]==null){var L=st.cut[1];st.mine[1]=(L>10)?'R':(L<10?'L':'R');save()}
+        piecesUI(1,'her');var m2=myShare(1);
+        app.append(el('p','note'+(m2<10?' warm':''),'小芸先挑走了'+(LEN-m2>m2?'比較大的':'')+'那一塊（'+(LEN-m2)+' 公分），你拿到剩下的 '+m2+' 公分。'+(m2<10?'切得不平均，吃虧的是切的人自己。':'因為你切得一樣大，不管小芸挑哪一塊，你都不會吃虧。')));
+      }
+      app.append(btn('下一關','',function(){go(s+1)}));
+    }else{
+      if(st.cut[2]==null||!st.cutDone[2]){st.cut[2]=10;st.cutDone[2]=true;save()}
+      app.append(el('p','lead','這一關換小芸來切，你先挑。小芸知道你會先挑，所以她切得很小心。'));
+      if(st.mine[2]==null){app.append(el('p','lead','小芸切好了。你想拿哪一塊？請點一下。'));piecesUI(2,'me');return}
+      piecesUI(2,'me');
+      app.append(el('p','note','你拿了 '+myShare(2)+' 公分。小芸切成兩塊一樣大，所以不管你挑哪一塊，她都不會吃虧。'),btn('回答問題','',function(){go(4)}));
+    }
+  }else if(s===4){
+    app.append(el('p','kick','問題 1，共 2 題'),el('h2',null,'第二關「你切，小芸先挑」，為什麼大部分的人都會切成一樣大？'));
+    var o=el('div','opts');
+    var A=[['kind','因為切的人突然變得比較善良'],['self','因為切得不一樣大，大的那一塊會被小芸先拿走，切的人只剩小的'],['watch','因為小芸在旁邊看著']];
+    A.forEach(function(x){o.appendChild(btn(x[1],'alt'+(st.q1===x[0]?' pick':''),function(){st.q1=x[0];save();render()}))});
+    app.append(o);
+    if(st.q1){
+      app.append(el('p','note'+(st.q1==='self'?'':' warm'),(st.q1==='self'?'對，這就是關鍵。':'這也許有一點影響。不過想一想：第一關的時候，小芸也在旁邊，切的人也是同一個你。')+'第二關和第一關唯一不一樣的地方，是「誰先挑」。切的人知道大的那一塊會被拿走，所以就算只為自己著想，也會切成一樣大。這叫做「切的人後拿」。'),
+        btn('下一題','',function(){go(5)}));
+    }
+  }else if(s===5){
+    app.append(el('p','kick','問題 2，共 2 題'),el('h2',null,'下課的時候只有一顆籃球，全班 28 個人都想玩。你覺得哪一種規則最好？'),el('p','lead','每一種都可以選，沒有標準答案。選了以後，你會看到這種規則的好處和代價。'));
+    var R={grab:['誰先搶到球，誰就先玩','好處：不用排隊，也不用記。代價：跑得快、力氣大的人一直玩，很容易吵架。'],
+      line:['大家排隊，每個人投 5 球就換下一個人','好處：先來的人先玩，每個人都輪得到。代價：人多的時候，要等很久。'],
+      seat:['照座號輪流，今天單號玩，明天雙號玩','好處：不用搶也不用排，大家早就知道哪一天輪到自己。代價：今天很想玩的人，可能要等到明天。'],
+      lot:['抽籤，抽到的人今天可以玩','好處：每個人的機會一樣，誰也不能說不公平。代價：運氣不好的人，可能好幾天都抽不到。'],
+      team:['分成兩隊比賽，大家一起玩','好處：一顆球可以讓十幾個人同時玩。代價：要先分好隊，不喜歡比賽的人可能不想玩。']};
+    var o2=el('div','opts');
+    Object.keys(R).forEach(function(k){o2.appendChild(btn(R[k][0],'alt'+(st.q2===k?' pick':''),function(){st.q2=k;save();render()}))});
+    app.append(o2);
+    if(st.q2){app.append(el('p','note',R[st.q2][1]+' 不管選哪一種，最重要的是在大家搶之前，先把規則講好。'),btn('看我的紀錄','',function(){go(6)}))}
+  }else{
+    var RN={grab:'誰先搶到，誰就先玩',line:'排隊，每個人投 5 球',seat:'照座號單雙號輪流',lot:'抽籤',team:'分成兩隊比賽'};
+    var Q1={kind:'切的人變善良了',self:'大的那一塊會被先拿走',watch:'小芸在旁邊看著'};
+    app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+    var c2=el('div','card');var tb=el('table');
+    [['第一關（你切，你先挑），我拿到',myShare(0)+' 公分'],['第二關（你切，小芸先挑），我拿到',myShare(1)+' 公分'],['第三關（小芸切，你先挑），我拿到',myShare(2)+' 公分'],['第二關切得平均的原因，我選了',Q1[st.q1]],['一顆籃球，我覺得最好的規則',RN[st.q2]]]
+      .forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));tb.appendChild(tr)});
+    c2.appendChild(tb);
+    app.append(c2,el('p','note','等一下，老師會問：第一關和第二關，你拿到的那一塊各是幾公分？比 10 公分短、剛好 10 公分，還是比 10 公分長？'));
+  }
+}
+render();
+})();
+</script>

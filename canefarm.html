@@ -1,0 +1,584 @@
+<title>甘蔗園請幫手</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story → drag one of three name cards (toads / strong spray / rotate crops + dig + birds) into the cane field → three two-way guesses about year 1 and year 10 → drag a timeline handle from year 1 to year 10 while the SVG field, three meters and a village-news sentence change → pick a second (optionally third) method and drag again → year-1 / year-10 comparison table → "if you were the village head" (every option allowed, effect and cost only) → summary for a show of hands. Fixed script, no randomness. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --mA:#7A5A16; --mB:#A8441A; --mC:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:focus-visible,.ncard:focus-visible,.tl:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.7em;height:1.7em}
+.lt{display:inline-flex;align-items:center;justify-content:center;min-width:1.7em;height:1.7em;border-radius:50%;color:#fff;font-weight:900;font-size:.9em;flex:none;line-height:1}
+.lt.A{background:var(--mA)}.lt.B{background:var(--mB)}.lt.C{background:var(--mC)}.lt.D{background:var(--sea)}
+/* scene */
+.sbox{position:relative;background:#E3EFF4;border:3px solid var(--line);border-radius:20px;overflow:hidden}
+.scene{width:100%;height:auto;display:block}
+.scene .it{transition:opacity .4s}
+.scene .bt{transition:opacity .35s,transform .45s}
+.scene .grow{transform-box:fill-box;transform-origin:50% 100%;transition:transform .45s}
+.scene .cs{transition:opacity .4s}
+.scene .lf{transition:fill .4s}
+.scene .spot{transition:opacity .4s}
+.scene #water,.scene .veg{transition:fill .4s}
+@media (prefers-reduced-motion:reduce){.scene *{transition:none!important}}
+.cap{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted)}
+/* drop zone */
+.zone{outline:4px dashed var(--gold);outline-offset:-4px}
+.zone.over{outline-color:var(--good);outline-style:solid;box-shadow:0 0 0 6px #CFE3C4}
+.zlabel{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);background:rgba(251,252,249,.94);border:3px dashed var(--gold);border-radius:16px;padding:8px 16px;font-weight:900;font-size:clamp(19px,2.8vw,26px);white-space:nowrap;display:flex;align-items:center;gap:8px;pointer-events:none}
+.zsign{position:absolute;left:3%;top:6%;background:var(--card);border:3px solid var(--ink);border-radius:14px;padding:6px 12px;font-weight:900;font-size:clamp(19px,2.6vw,24px);display:flex;align-items:center;gap:8px;pointer-events:none;box-shadow:0 4px 0 rgba(31,42,46,.18)}
+.zsign svg.i{width:1.6em;height:1.6em}
+/* name cards */
+.ncards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ncard{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:22px 14px 14px;display:flex;flex-direction:column;gap:6px;cursor:grab;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.ncard::before{content:"";position:absolute;top:8px;left:50%;width:30px;height:8px;margin-left:-15px;border-radius:5px;background:var(--bg);border:2px solid var(--line)}
+.ncard .top{display:flex;align-items:center;gap:8px}
+.ncard .top svg.i{width:52px;height:52px}
+.ncard .nm{font-size:clamp(21px,2.6vw,25px);font-weight:900;line-height:1.35}
+.ncard .ds{margin:0;font-size:clamp(19px,2.2vw,21px);line-height:1.6;color:var(--muted)}
+.ncard.A{border-top:8px solid var(--mA)}.ncard.B{border-top:8px solid var(--mB)}.ncard.C{border-top:8px solid var(--mC)}
+.ncard.in{opacity:.4;border-style:dashed}
+.ncard.done{opacity:.5;cursor:default}
+.ncard .tag{font-size:19px;font-weight:900;color:var(--muted)}
+.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.93;transform:rotate(-3deg);box-shadow:0 12px 26px rgba(31,42,46,.25)}
+/* guess */
+.q{display:flex;flex-direction:column;gap:8px}
+.q h3 .n{color:var(--sea);margin-right:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .btn.alt{justify-content:center;text-align:center}
+/* stage */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 236px;grid-template-areas:"sc mt" "tl mt";gap:12px;align-items:start}
+.stage .sbox{grid-area:sc}
+.meters{grid-area:mt;display:flex;flex-direction:column;gap:8px}
+.tlw{grid-area:tl}
+.mt{background:var(--card);border:3px solid var(--line);border-radius:16px;padding:8px 12px;display:flex;flex-direction:column;gap:4px}
+.mt .mh{display:flex;align-items:center;gap:8px;font-weight:900;font-size:19px;line-height:1.3}
+.mt .mh svg.i{width:38px;height:38px}
+.mt .mh .mw{margin-left:auto;font-size:clamp(21px,2.6vw,25px)}
+.mcap{margin-top:2px}
+.bar{height:16px;border-radius:8px;background:#E3E6E0;position:relative;margin:4px 0 2px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;transition:width .4s}
+.bar .base{position:absolute;top:-5px;bottom:-5px;width:4px;margin-left:-2px;background:var(--ink);opacity:.55;border-radius:2px;transition:left .4s}
+.mt.h .bar i{background:var(--good)}.mt.h .mw{color:var(--good)}
+.mt.b .bar i{background:var(--rust)}.mt.b .mw{color:var(--rust)}
+.mt.a .bar i{background:var(--sea)}.mt.a .mw{color:var(--sea)}
+.mt .mb{font-size:19px;color:var(--muted);margin:0;line-height:1.35}
+.mcap{line-height:1.45}
+@media (max-width:760px){.mcap{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.bar i,.bar .base{transition:none}}
+/* timeline */
+.tl{position:relative;overflow:hidden;padding:50px 26px 4px;background:var(--card);border:3px solid var(--line);border-radius:20px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.tin{position:relative;height:64px}
+.trk{position:absolute;left:0;right:0;top:12px;height:14px;border-radius:7px;background:#E3E6E0}
+.trk .seen{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:#F3E3BE}
+.trk .fill{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:var(--gold);transition:width .2s}
+.tk{position:absolute;top:4px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.tk i{display:block;width:4px;height:30px;border-radius:2px;background:#B9BFB6}
+.tk em{font-style:normal;font-weight:900;font-size:19px;color:var(--muted);line-height:1.4;font-variant-numeric:tabular-nums}
+.tk.v i{background:var(--gold)}
+.tk.now em{color:var(--ink)}
+.hd{position:absolute;top:19px;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:var(--card);border:5px solid var(--gold);box-shadow:0 3px 0 rgba(31,42,46,.2);transition:left .2s;display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.hd svg.i{width:26px;height:26px}
+.hb{position:absolute;bottom:42px;left:18px;transition:transform .2s;background:var(--ink);color:#fff;font-weight:900;font-size:19px;padding:2px 12px;border-radius:12px;white-space:nowrap}
+.tl.drag .hd,.tl.drag .hb,.tl.drag .trk .fill{transition:none}
+.news{min-height:5.2em;display:flex;gap:12px;align-items:flex-start}
+.news svg.i{width:44px;height:44px;margin-top:2px}
+.news .nt{display:block;font-size:19px;font-weight:900;color:var(--sea)}
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:clamp(19px,2.3vw,21px);color:var(--muted)}
+.cmp td.m{font-weight:900;width:30%}
+.cmp td.m .mn{display:flex;align-items:center;gap:8px;line-height:1.35}
+.cmp .row{display:flex;align-items:center;gap:6px;white-space:nowrap;line-height:1.5}
+.cmp .row svg.i{width:26px;height:26px}
+.cmp .row b{font-weight:900}
+.w-h{color:var(--good)}.w-b{color:var(--rust)}.w-a{color:var(--sea)}
+.cmp td.y10{background:#F7F3E8}
+.cmp td.mm{display:none;font-weight:900}
+.cmp td.mm .mn{display:flex;align-items:center;gap:8px}
+.gtab td:first-child{color:var(--muted);font-weight:700}
+.gtab .same{color:var(--good);font-weight:900}.gtab .diff{color:var(--rust);font-weight:900}
+.sum td:first-child{color:var(--muted);font-weight:700;width:42%}
+.sum td b{font-size:1.1em}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.e{color:var(--good)}.ec dt.c{color:var(--rust)}
+.say{display:flex;gap:14px;align-items:center}
+.say .av{width:76px;height:76px;flex:none}
+@media (max-width:760px){
+  .stage{grid-template-columns:minmax(0,1fr);grid-template-areas:"sc" "tl" "mt"}
+  .meters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .mt{padding:6px 8px}
+  .mt .mh{flex-wrap:wrap;gap:2px 6px}
+  .mt .mh svg.i{width:30px;height:30px}
+  .mt .mh .lb{order:3;width:100%}
+  .mt .mb{display:none}
+  .ncards{grid-template-columns:1fr}
+  .ncard{padding:18px 12px 10px}
+  .ncard .top svg.i{width:44px;height:44px}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .tl{padding:48px 26px 2px}
+  .gtab,.gtab tbody,.gtab tr,.gtab td{display:block}
+  .gtab td{border:0;padding:2px 0}
+  .gtab tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .tk em{font-size:19px;letter-spacing:-1px}
+  .cmp th:first-child,.cmp td.m{display:none}
+  .cmp td.mm{display:table-cell;border-bottom:0;padding-bottom:0}
+  .sum td:first-child{width:auto}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .say .av{width:60px;height:60px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"cane_cane": "<path d=\"M2.5 21.5h19\"/><rect x=\"6.4\" y=\"6.4\" width=\"3.2\" height=\"15.1\" rx=\"1.3\" fill=\"#E6D9A8\"/><rect x=\"13.8\" y=\"3.8\" width=\"3.2\" height=\"17.7\" rx=\"1.3\" fill=\"#CFE3C4\"/><path d=\"M6.4 11.4h3.2M6.4 16.4h3.2M13.8 8.8h3.2M13.8 13.6h3.2M13.8 18h3.2\"/><path d=\"M8 6.4C6.4 4 4.4 3.4 2.6 4.2M8 6.4c1.2-2.4 3-3.4 4.8-3.2M15.4 3.8c1.8-1.6 3.8-1.8 5.8-.6M17 11.2c1.6-1.2 3.2-1.2 4.6 0\"/>", "cane_beetle": "<path d=\"M7.2 10.4L4 8.8M7 13.8H3.6M7.6 17.2l-2.8 2.2M16.8 10.4L20 8.8M17 13.8h3.4M16.4 17.2l2.8 2.2\"/><path d=\"M10.4 5.4L9 2.8M13.6 5.4l1.4-2.6\"/><circle cx=\"12\" cy=\"7.2\" r=\"2.6\" fill=\"#B9A27A\"/><ellipse cx=\"12\" cy=\"14.4\" rx=\"5.4\" ry=\"6.6\" fill=\"#D9C79E\"/><path d=\"M12 8.8v12.2\"/>", "cane_toad": "<path d=\"M4.4 20.2l-2 1.4M19.6 20.2l2 1.4\"/><path d=\"M3 17.6c0-4.6 4-8 9-8s9 3.4 9 8c0 1.6-1.4 2.6-3 2.6H6c-1.6 0-3-1-3-2.6z\" fill=\"#D9C08F\"/><circle cx=\"8.4\" cy=\"9.4\" r=\"2.4\" fill=\"#F3E3BE\"/><circle cx=\"15.6\" cy=\"9.4\" r=\"2.4\" fill=\"#F3E3BE\"/><circle cx=\"8.6\" cy=\"9.2\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15.4\" cy=\"9.2\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M8.6 14.2q3.4 1.6 6.8 0\"/><circle cx=\"6.6\" cy=\"17.2\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"17.4\" cy=\"16.6\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"18\" r=\".75\" fill=\"currentColor\" stroke=\"none\"/>", "cane_frog": "<path d=\"M6.4 19.2L3.6 21M17.6 19.2l2.8 1.8\"/><path d=\"M5.4 16.8c0-3.4 3-6 6.6-6s6.6 2.6 6.6 6c0 1.4-1.1 2.4-2.5 2.4H7.9c-1.4 0-2.5-1-2.5-2.4z\" fill=\"#CFE3C4\"/><circle cx=\"9.2\" cy=\"9.8\" r=\"2.2\" fill=\"#E9F3E3\"/><circle cx=\"14.8\" cy=\"9.8\" r=\"2.2\" fill=\"#E9F3E3\"/><circle cx=\"9.2\" cy=\"9.7\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"14.8\" cy=\"9.7\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M9.8 14.6q2.2 1.2 4.4 0\"/>", "cane_spray": "<rect x=\"4.6\" y=\"9.2\" width=\"9.4\" height=\"12.2\" rx=\"2\" fill=\"#F2B8A0\"/><path d=\"M7.2 9.2V6.4h4.2v2.8\"/><path d=\"M11.4 6.4h4.2l1.4 1.4M7.2 6.4H5.4\"/><path d=\"M9.3 12.6c1.3 1.6 2 2.6 2 3.4a2 2 0 0 1-4 0c0-.8.7-1.8 2-3.4z\" fill=\"#FBF4E2\"/><path d=\"M19.2 6.2h.01M21.2 8.4h.01M19.6 10.4h.01M21.4 4.2h.01\"/>", "cane_hoe": "<path d=\"M2.5 21h19\"/><path d=\"M3.4 21c1.2-2.6 2.8-3.8 4.8-3.8s3.6 1.2 4.8 3.8\" fill=\"#E8D2B0\"/><path d=\"M3.6 3l7.2 10.4\"/><path d=\"M9.2 12.6l4.4-2.4 1.4 2.8-3.8 2.4z\" fill=\"#DCE8F0\"/><path d=\"M17.6 21v-5.6\"/><path d=\"M17.6 16.4c-2.6 0-3.8-1.6-3.8-3.6 2.6 0 3.8 1.6 3.8 3.6zM17.6 15.2c0-2.4 1.4-3.8 3.8-3.8 0 2.4-1.4 3.8-3.8 3.8z\" fill=\"#CFE3C4\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>", "grip": "<circle cx=\"9\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/>", "mega": "<path d=\"M3.5 9.5h3l8-4.5v14l-8-4.5h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z\" fill=\"#DCE8F0\"/><path d=\"M6.5 14.5l1.6 5h2.6l-1.4-4.2\"/><path d=\"M18 9.2a4 4 0 0 1 0 5.6M20.5 6.8a7.4 7.4 0 0 1 0 10.4\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"8.8\" fill=\"#DCE8F0\"/><path d=\"M12 6.8v5.4l3.6 2.2\"/>", "swap": "<rect x=\"2.5\" y=\"2.5\" width=\"19\" height=\"19\" rx=\"5\" fill=\"#DCE8F0\"/><path d=\"M6.5 9h10\"/><path d=\"M14 6.2L16.8 9 14 11.8\"/><path d=\"M17.5 15h-10\"/><path d=\"M10 12.2L7.2 15l2.8 2.8\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"grandpa": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#56605C\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19 26 Q19 12.5 32 13 Q45 12.5 45 26 Q43 19.5 38 18.5 Q32 20.5 26 18.5 Q21 19.5 19 26 Z\" fill=\"#D5D8DC\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M28.5 31.2 Q32 30 35.5 31.2\" fill=\"none\" stroke=\"#B9BEC4\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='canefarm-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function lt(k){return '<span class="lt '+k+'">'+k+'</span>'}
+
+/* ---------- the three methods (fixed script, index 0 = before anything is done) ---------- */
+var M={
+  A:{name:'大蟾蜍幫手',icon:'cane_toad',desc:'從外地運來一大群很會吃蟲的大蟾蜍放進園子，第一年一定很熱鬧。'},
+  B:{name:'強力殺蟲藥',icon:'cane_spray',desc:'在甘蔗園灑很強的殺蟲藥，聽說第一年甲蟲幾乎都會不見。'},
+  C:{name:'輪作翻土請鳥',icon:'cane_hoe',desc:'輪流種別的作物、翻土挖出幼蟲、請鳥來吃，比較累，第一年只會少一點點。'}
+};
+var KS=['A','B','C'];
+var D={
+  A:{h:[4,4,4,4,4,4,4,4,3,3,3],b:[8,7,7,8,8,8,8,8,8,8,8],
+     frog:[3,3,3,2,2,1,1,1,1,0,0],fish:[3,3,3,3,3,2,2,1,1,1,1],bee:[3,3,3,3,3,3,3,3,3,3,3],bird:[2,2,2,2,2,2,2,1,1,1,1],
+     toad:[0,4,5,6,7,8,9,10,11,12,12],
+     news:['',
+      '第 1 年，庄裡從外地運來一大群大蟾蜍，放進甘蔗園。晚上蟾蜍叫成一片，好熱鬧，大家都說這下甲蟲跑不掉了。',
+      '第 2 年，大家蹲下來仔細看，甲蟲並沒有少多少。原來幼蟲躲在土裡，長大的甲蟲殼又硬，大蟾蜍不太吃牠們。',
+      '第 3 年，大蟾蜍在水溝裡生下一長串、一長串的卵，水溝邊開始到處都是小蟾蜍。',
+      '第 4 年，大蟾蜍看到什麼就吃什麼，連本來就住在水溝邊的小青蛙，也被牠們吃掉了。',
+      '第 5 年，隔壁庄的人跑來說：「你們的大蟾蜍，已經跑到我們的水溝和菜園來了！」',
+      '第 6 年，庄裡有一隻狗咬了大蟾蜍，嘴巴一直流口水，病了好幾天，大家才知道大蟾蜍的身上有毒。',
+      '第 7 年，水溝裡擠滿了蟾蜍的卵和蝌蚪，小魚變少了；有幾隻鳥啄了大蟾蜍，也跟著生病。',
+      '第 8 年，大蟾蜍越生越多，大家想把牠們抓走，可是怎麼抓也抓不完。',
+      '第 9 年，晚上已經聽不到小青蛙的叫聲，只剩下大蟾蜍低低的叫聲。',
+      '第 10 年，甲蟲還是和以前一樣多，甘蔗還是被咬；庄裡卻多了一個趕不走的大蟾蜍麻煩。']},
+  B:{h:[4,9,9,8,7,6,6,5,5,4,4],b:[8,1,2,3,4,5,6,6,7,7,8],
+     frog:[3,3,3,2,2,2,1,1,1,1,1],fish:[3,3,2,2,2,1,1,1,0,0,0],bee:[3,3,3,2,2,1,1,1,1,0,0],bird:[2,2,2,2,2,2,2,2,2,1,1],
+     spray:[0,1,1,2,2,3,3,4,4,5,5],veg:[0,0,0,0,0,0,0,1,2,2,2],
+     news:['',
+      '第 1 年，大家在甘蔗園灑了很強的殺蟲藥。沒過幾天，甲蟲幾乎都不見了，甘蔗長得又高又壯，大家都好開心。',
+      '第 2 年，又是大豐收，庄裡的人都說這個藥真厲害。只有在水溝邊抓魚的孩子覺得，小魚好像少了一點。',
+      '第 3 年，甲蟲又慢慢出現了。灑一樣多的藥，好像沒有以前那麼有效，大家只好多灑一些。',
+      '第 4 年，大家發現：被藥打不死、活下來的甲蟲，生出來的小甲蟲也比較不怕藥。',
+      '第 5 年，藥越灑越多，田邊的花開了，來採蜜的蜜蜂卻越來越少。',
+      '第 6 年，每次一下大雨，田裡的藥就被雨水沖進水溝，水溝裡的魚又更少了。',
+      '第 7 年，隔壁庄種菜的阿伯跑來說：「你們灑的藥飄到我的菜園，菜葉都黃掉了。」',
+      '第 8 年，甲蟲已經很不怕藥了，一年要灑好幾次，大家灑得又累又擔心。',
+      '第 9 年，水溝裡幾乎看不到魚，連來田邊找蟲吃的鳥也變少了。',
+      '第 10 年，甲蟲又和以前一樣多，而且不怕藥了；水溝裡的魚和田邊的蜜蜂，卻都少了很多。']},
+  C:{h:[4,5,5,6,6,7,7,7,7,7,7],b:[8,7,6,5,4,4,3,4,3,3,3],
+     frog:[3,3,3,3,3,3,3,3,3,3,3],fish:[3,3,3,3,3,3,3,3,3,3,3],bee:[3,3,3,3,4,4,4,4,4,4,4],bird:[2,3,3,3,3,3,3,3,3,3,3],
+     news:['',
+      '第 1 年，大家把一部分的田改種花生，又一鋤一鋤地翻土，把躲在土裡的幼蟲挖出來。好累，甲蟲卻只少了一點點。',
+      '第 2 年，大家在田邊插了竹竿讓鳥停。翻土的時候，白鷺鷥跟在後面，把翻出來的幼蟲一隻一隻吃掉。',
+      '第 3 年，甲蟲少了一些，甘蔗被咬得沒那麼慘了。大家說：「好像慢慢穩住了。」',
+      '第 4 年，甲蟲的幼蟲最愛吃甘蔗根，改種花生的那一塊地，幼蟲找不到東西吃，就少了很多。',
+      '第 5 年，花生也收成了，家裡多了一樣可以吃、也可以拿去和別人交換的作物。',
+      '第 6 年，田邊的青蛙、鳥和蜜蜂都還在，水溝裡也還看得到小魚游來游去。',
+      '第 7 年，這一年甲蟲又多了一點，大家多翻一次土、多請鳥來，很快又把甲蟲壓下去了。',
+      '第 8 年，輪流種、翻土、插竹竿，已經變成庄裡的習慣，大家做起來沒有一開始那麼累了。',
+      '第 9 年，甲蟲還是有，但是不多；甘蔗長得穩穩的，沒有大好，也沒有大壞。',
+      '第 10 年，甘蔗收成還不錯，田邊的小動物也都還在。這個辦法很慢，可是一直撐得住。']}
+};
+var BASE={h:4,b:8,frog:3,fish:3,bee:3,bird:2};
+function lv(k,y){
+  var d=k?D[k]:null,o={};
+  ['h','b','frog','fish','bee','bird'].forEach(function(f){o[f]=d?d[f][y]:BASE[f]});
+  o.toad=d&&d.toad?d.toad[y]:0;o.spray=d&&d.spray?d.spray[y]:0;o.veg=d&&d.veg?d.veg[y]:0;
+  o.a=Math.round((o.frog+o.fish+o.bee+o.bird)/16*10);
+  return o;
+}
+var A0=lv(null,0).a;
+function word(v){return v<=2?'很少':v<=4?'少':v<=6?'普通':v<=8?'多':'很多'}
+
+/* ---------- SVG scene (viewBox 800×360): field 0–544, ditch 544–640, neighbour plot 640–800 ---------- */
+var SX=[80,142,204,266,328,390,452,514];
+var GRUB=[[60,270],[150,302],[205,262],[268,322],[330,282],[392,310],[450,266],[505,300],[110,340],[230,346]];
+var TOAD=[[110,234],[236,234],[360,234],[482,234],[528,236],[654,238],[172,234],[690,240],[590,284],[740,238],[420,234],[784,240]];
+var FROG=[[576,246],[612,252],[702,244],[300,242]];
+var FISH=[[572,270],[604,280],[580,292],[606,262]];
+var BEE=[[662,174],[700,150],[790,172],[548,186]];
+var FLY=[[300,74],[346,56],[410,88],[456,62]];
+var EGRET=[[172,232],[300,232],[424,232],[236,232]];
+var DRUM=[[8,202],[34,202],[8,174],[34,174],[21,146]];
+var VEG=[[668,220],[704,224],[740,220],[776,224]];
+function caneSVG(i){
+  var x=SX[i],s='<g class="cs" data-i="'+i+'" transform="translate('+x+' 232)"><g class="grow">';
+  s+='<rect x="-6" y="-190" width="12" height="190" rx="5" fill="#CDC67C" stroke="#7E8A3E" stroke-width="2.5"/>';
+  s+='<path d="M-6 -40h12M-6 -80h12M-6 -120h12M-6 -160h12" stroke="#7E8A3E" stroke-width="2.5"/>';
+  var L=['M0 -150C-20 -175 -45 -170 -62 -140C-42 -158 -22 -158 0 -142Z','M0 -170C22 -198 48 -192 64 -160C44 -180 22 -180 0 -162Z',
+    'M0 -110C24 -130 46 -124 58 -96C40 -114 22 -114 0 -102Z','M0 -186C-6 -210 -2 -226 8 -238C6 -220 6 -204 2 -186Z','M0 -80C-22 -98 -40 -92 -50 -66C-36 -82 -20 -84 0 -72Z'];
+  L.forEach(function(p){s+='<path class="lf" d="'+p+'" fill="#6FA855" stroke="#56743A" stroke-width="2" stroke-linejoin="round"/>'});
+  s+='<g class="spot" opacity="0" fill="#7A5A30"><circle cx="-38" cy="-158" r="4"/><circle cx="38" cy="-180" r="4"/><circle cx="30" cy="-116" r="3.5"/><circle cx="-28" cy="-86" r="3.5"/><circle cx="46" cy="-170" r="3"/></g>';
+  return s+'</g></g>';
+}
+function sceneSVG(){
+  var s='<svg class="scene" viewBox="0 0 800 360" role="img" aria-label="甘蔗園的樣子：左邊是甘蔗園，中間是水溝，右邊是隔壁庄的菜園，土裡躲著甲蟲的幼蟲">';
+  s+='<rect width="800" height="236" fill="#E3EFF4"/><circle cx="58" cy="50" r="24" fill="#F3D27A"/>';
+  s+='<ellipse cx="210" cy="56" rx="46" ry="14" fill="#FBFCF9"/><ellipse cx="240" cy="46" rx="28" ry="12" fill="#FBFCF9"/><ellipse cx="560" cy="44" rx="40" ry="12" fill="#FBFCF9"/>';
+  s+='<path d="M0 214Q120 182 260 206T520 200T800 198V236H0Z" fill="#D5E6CF"/>';
+  s+='<rect y="232" width="800" height="128" fill="#CFB28A"/>';
+  s+='<path d="M0 288Q200 280 400 290T800 286M0 330Q220 322 420 334T800 328" stroke="#BC9C73" stroke-width="3" fill="none"/>';
+  s+='<rect x="0" y="226" width="544" height="10" fill="#A9C27D"/><rect x="640" y="226" width="160" height="10" fill="#A9C27D"/>';
+  s+='<path d="M544 226H640L628 306H556Z" fill="#8E7356"/><path id="water" d="M548 234H636L625 302H559Z" fill="#9CC3E0"/>';
+  s+='<path d="M556 248q8-4 16 0M596 266q8-4 16 0M566 288q8-4 16 0" stroke="#FBFCF9" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7"/>';
+  s+='<ellipse cx="576" cy="250" rx="15" ry="4.5" fill="#7FB565"/><ellipse cx="612" cy="256" rx="15" ry="4.5" fill="#7FB565"/>';
+  // eggs (A)
+  s+='<g class="it" data-g="eggs" opacity="0" stroke="#2E2A26" stroke-width="3.4" stroke-dasharray="0.1 7" stroke-linecap="round" fill="none"><path d="M560 278q10-6 20 0t20 0t18 0"/><path d="M566 294q10-5 20 0t20 0"/></g>';
+  // furrows (C)
+  s+='<g class="it" data-g="furrow" opacity="0" stroke="#9C7A52" stroke-width="3" fill="none" stroke-linecap="round">';
+  for(var f=0;f<9;f++){s+='<path d="M'+(12+f*58)+' 244q14-8 28 0t26 0"/>'}
+  s+='</g>';
+  GRUB.forEach(function(p){s+='<g class="it" data-g="grub" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><path d="M-9 5A9 9 0 1 1 7 7" stroke="#8E7356" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M-9 5A9 9 0 1 1 7 7" stroke="#F4E9CF" stroke-width="7" stroke-linecap="round" fill="none"/><circle cx="-9" cy="5" r="4.2" fill="#B9733A"/></g>'});
+  // flowers
+  [[652,198],[718,194],[790,200],[536,206]].forEach(function(p){s+='<path d="M'+p[0]+' 230V'+(p[1]+6)+'" stroke="#56743A" stroke-width="3"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="7" fill="#F2B8C6" stroke="#B5607A" stroke-width="2"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.4" fill="#F3D27A"/>'});
+  // neighbour sign + vegetables
+  s+='<path d="M752 226V130" stroke="#8C6A3E" stroke-width="5"/><rect x="706" y="96" width="88" height="36" rx="6" fill="#FBF4E2" stroke="#8C6A3E" stroke-width="3"/><text x="750" y="122" text-anchor="middle" font-size="22" font-weight="900" fill="#56605C" font-family="Noto Sans TC,sans-serif">隔壁庄</text>';
+  VEG.forEach(function(p){s+='<g transform="translate('+p[0]+' '+p[1]+')"><circle r="14" class="veg" fill="#8DBF6A" stroke="#4F7A3A" stroke-width="2.5"/><path d="M0 -12V10M-9 -6Q0 2 9 -6" stroke="#4F7A3A" stroke-width="2" fill="none"/></g>'});
+  // left props
+  s+='<g class="it" data-g="crate" opacity="0"><rect x="8" y="196" width="52" height="34" rx="3" fill="#D9B98A" stroke="#8C6A3E" stroke-width="2.5"/><path d="M8 207h52M8 219h52" stroke="#8C6A3E" stroke-width="2"/><path d="M10 196l12-14h40l-2 14" fill="#E6CF9E" stroke="#8C6A3E" stroke-width="2.5" stroke-linejoin="round"/></g>';
+  DRUM.forEach(function(p){s+='<g class="it" data-g="drum" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><rect width="22" height="28" rx="3" fill="#E58B6A" stroke="#8B3A1A" stroke-width="2"/><path d="M0 9h22M0 19h22" stroke="#8B3A1A" stroke-width="2"/></g>'});
+  s+='<g class="it" data-g="hoe" opacity="0"><path d="M52 140L30 228" stroke="#8C6A3E" stroke-width="5" stroke-linecap="round"/><path d="M22 222l18 4-4 8-18-2z" fill="#C9D3DA" stroke="#56605C" stroke-width="2"/><path d="M8 206h40l-5 24H13z" fill="#E6CF9E" stroke="#8C6A3E" stroke-width="2.5" stroke-linejoin="round"/></g>';
+  // perches (C)
+  [236,360].forEach(function(x){s+='<g class="it" data-g="perch" opacity="0"><path d="M'+x+' 232V112M'+(x-18)+' 116H'+(x+18)+'" stroke="#9C8A4A" stroke-width="5" stroke-linecap="round"/></g>'});
+  // mist (B)
+  s+='<g class="it" data-g="mist" opacity="0" fill="#E3E6B4"><ellipse cx="150" cy="128" rx="140" ry="38"/><ellipse cx="370" cy="112" rx="150" ry="40"/><ellipse cx="520" cy="140" rx="90" ry="30"/></g>';
+  // cane
+  for(var i=0;i<8;i++)s+=caneSVG(i);
+  // peanut bushes (C)
+  SX.forEach(function(x,i){s+='<g class="it" data-g="pea" data-i="'+i+'" opacity="0" transform="translate('+x+' 232)"><path d="M-28 0C-26 -26 -8 -34 0 -30C10 -36 28 -24 28 0Z" fill="#7FB565" stroke="#4F7A3A" stroke-width="2.5"/><circle cx="-10" cy="-17" r="3.2" fill="#F3D27A"/><circle cx="9" cy="-21" r="3.2" fill="#F3D27A"/></g>'});
+  // beetles
+  for(var j=0;j<10;j++)s+='<g class="bt" data-g="bt" opacity="0" style="transform:translate(0px,200px)"><path d="M-8 -3l-6 -3M-8 3l-6 3M8 -3l6 -3M8 3l6 3M-7 9l-4 5M7 9l4 5" stroke="#3B2C1B" stroke-width="2.4" stroke-linecap="round"/><ellipse rx="8" ry="10" cy="2" fill="#5B4630" stroke="#2E2216" stroke-width="2"/><path d="M0 -6V12" stroke="#2E2216" stroke-width="1.6"/><circle cy="-10" r="4.2" fill="#3B2C1B"/></g>';
+  // toads
+  TOAD.forEach(function(p){s+='<g class="it" data-g="toad" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><path d="M-21 0C-21 -16 -11 -22 0 -22C11 -22 21 -16 21 0Z" fill="#A9895A" stroke="#5E4A2C" stroke-width="2.5"/><circle cx="-8" cy="-20" r="5.5" fill="#C9AE7E" stroke="#5E4A2C" stroke-width="2.5"/><circle cx="8" cy="-20" r="5.5" fill="#C9AE7E" stroke="#5E4A2C" stroke-width="2.5"/><circle cx="-8" cy="-20.5" r="2" fill="#2E2216"/><circle cx="8" cy="-20.5" r="2" fill="#2E2216"/><circle cx="-11" cy="-8" r="2" fill="#7A5F38"/><circle cx="3" cy="-6" r="2" fill="#7A5F38"/><circle cx="12" cy="-11" r="2" fill="#7A5F38"/></g>'});
+  // frogs
+  FROG.forEach(function(p){s+='<g class="it" data-g="frog" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><path d="M-11 0C-11 -9 -5 -12 0 -12C5 -12 11 -9 11 0Z" fill="#7DBA5E" stroke="#3F6E2C" stroke-width="2.2"/><circle cx="-5" cy="-12" r="3.4" fill="#A9D68E" stroke="#3F6E2C" stroke-width="2"/><circle cx="5" cy="-12" r="3.4" fill="#A9D68E" stroke="#3F6E2C" stroke-width="2"/><circle cx="-5" cy="-12.4" r="1.3" fill="#1F2A2E"/><circle cx="5" cy="-12.4" r="1.3" fill="#1F2A2E"/></g>'});
+  // fish
+  FISH.forEach(function(p){s+='<g class="it" data-g="fish" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><path d="M-9 0C-5 -5 0 -6 5 -4L11 -7V7L5 4C0 6 -5 5 -9 0Z" fill="#E8B04B" stroke="#8C6A1E" stroke-width="1.8"/><circle cx="-5" cy="-1" r="1.2" fill="#1F2A2E"/></g>'});
+  // bees
+  BEE.forEach(function(p){s+='<g class="it" data-g="bee" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><ellipse cx="-3" cy="-7" rx="5" ry="4" fill="#FBFCF9" stroke="#56605C" stroke-width="1.6"/><ellipse cx="4" cy="-7" rx="5" ry="4" fill="#FBFCF9" stroke="#56605C" stroke-width="1.6"/><ellipse rx="9" ry="6" fill="#F3D27A" stroke="#3B2C1B" stroke-width="2"/><path d="M-3 -5.5V5.5M3 -5.5V5.5" stroke="#3B2C1B" stroke-width="2.2"/></g>'});
+  // flying birds (A, B)
+  FLY.forEach(function(p){s+='<g class="it" data-g="fly" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><path d="M-16 0q8-10 16 0q8-10 16 0" stroke="#3A4448" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>'});
+  // egrets (C)
+  EGRET.forEach(function(p){s+='<g class="it" data-g="egret" opacity="0" transform="translate('+p[0]+' '+p[1]+')"><path d="M-4 -18V0M4 -18V0" stroke="#3A4448" stroke-width="2.4"/><ellipse cx="0" cy="-26" rx="15" ry="9" fill="#FBFCF9" stroke="#56605C" stroke-width="2.2"/><path d="M10 -30C16 -40 8 -46 14 -54" stroke="#56605C" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M10 -30C16 -40 8 -46 14 -54" stroke="#FBFCF9" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="15" cy="-55" r="4.6" fill="#FBFCF9" stroke="#56605C" stroke-width="2"/><path d="M19 -56l10 2-10 2z" fill="#E8B04B" stroke="#8C6A1E" stroke-width="1.4" stroke-linejoin="round"/></g>'});
+  s+='<text id="yl" x="786" y="42" text-anchor="end" font-size="32" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">開始前</text>';
+  return s+'</svg>';
+}
+function mix(a,b,t){t=Math.max(0,Math.min(1,t));var p=function(c,i){return parseInt(c.substr(1+i*2,2),16)};var r='#';for(var i=0;i<3;i++){var v=Math.round(p(a,i)+(p(b,i)-p(a,i))*t);r+=(v<16?'0':'')+v.toString(16)}return r}
+function showN(svg,g,n){svg.querySelectorAll('[data-g="'+g+'"]').forEach(function(e,i){e.setAttribute('opacity',i<n?1:0)})}
+function paint(svg,k,y){
+  var o=lv(k,y),C=k==='C'&&y>=1;
+  var hide=C?(y%2?[5,6,7]:[0,1,2]):[];
+  var sc=(0.3+0.07*o.h).toFixed(3),leaf=mix('#6FA855','#B9A257',(o.b-1)/7),spot=o.b>=7?1:o.b>=5?.55:0;
+  svg.querySelectorAll('.cs').forEach(function(e){var i=+e.getAttribute('data-i');var hid=hide.indexOf(i)>=0;e.style.opacity=hid?0:1;
+    e.querySelector('.grow').style.transform='scaleY('+(hid?0.2:sc)+')';
+    e.querySelectorAll('.lf').forEach(function(l){l.setAttribute('fill',leaf)});e.querySelector('.spot').setAttribute('opacity',spot)});
+  svg.querySelectorAll('[data-g="pea"]').forEach(function(e){e.setAttribute('opacity',hide.indexOf(+e.getAttribute('data-i'))>=0?1:0)});
+  var vis=[];for(var i=0;i<8;i++)if(hide.indexOf(i)<0)vis.push(i);
+  var slots=[];vis.forEach(function(i,n){slots.push([SX[i]+(n%2?7:-7),212])});vis.forEach(function(i,n){slots.push([SX[i]+(n%2?-7:7),184])});
+  svg.querySelectorAll('[data-g="bt"]').forEach(function(e,i){var s=slots[i%slots.length];e.style.transform='translate('+s[0]+'px,'+s[1]+'px)';e.setAttribute('opacity',i<o.b?1:0)});
+  showN(svg,'grub',o.b);showN(svg,'toad',o.toad);showN(svg,'frog',o.frog);showN(svg,'fish',o.fish);showN(svg,'bee',o.bee);
+  showN(svg,'fly',k==='C'?0:o.bird);showN(svg,'egret',k==='C'?o.bird:0);
+  showN(svg,'crate',k==='A'&&y>=1?1:0);showN(svg,'drum',o.spray);showN(svg,'hoe',C?1:0);
+  showN(svg,'furrow',C?1:0);showN(svg,'perch',k==='C'&&y>=2?2:0);showN(svg,'eggs',k==='A'&&y>=3?1:0);
+  svg.querySelector('[data-g="mist"]').setAttribute('opacity',(o.spray*0.13).toFixed(2));
+  svg.querySelector('#water').setAttribute('fill',mix('#9CC3E0','#B4B88A',o.spray/5));
+  svg.querySelectorAll('.veg').forEach(function(e){e.setAttribute('fill',mix('#8DBF6A','#DCC35C',o.veg/2))});
+  svg.querySelector('#yl').textContent=y===0?'開始前':'第 '+y+' 年';
+}
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',place:null,first:null,g:{},order:[],cur:null,yr:{},mx:{},mayor:null}}
+var st=load();if(!st||!st.step)st=fresh();
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+function intro(){
+  var c=el('div','card');var sb=el('div','sbox');sb.innerHTML=sceneSVG();paint(sb.querySelector('svg'),null,0);
+  c.append(sb,
+    el('p','lead','以前，臺江一帶的庄社有很多人家種甘蔗、做糖。'),
+    el('p','lead','今年，你家的甘蔗園被<b>「吃甘蔗的甲蟲」</b>咬得好慘：甲蟲的幼蟲躲在土裡啃甘蔗的根，長大的甲蟲爬出來啃葉子。'),
+    el('p','lead','庄裡的人想出了三個辦法。你要先選一個，再把時間一年一年往後拖，看看十年以後，甘蔗園會變成什麼樣子。'));
+  app.append(el('h1',null,'甘蔗園請幫手'),c,button('看看三個辦法','btn',function(){go('pick')}));
+}
+
+/* ---------- drag a name card into the field ---------- */
+function pickPage(second){
+  var avail=KS.filter(function(k){return st.order.indexOf(k)<0});
+  if(st.place&&avail.indexOf(st.place)<0)st.place=null;
+  app.append(el('p','case',second?'再看另一個辦法':'第一步：選一個辦法'));
+  app.append(el('h2',null,second?'再挑另一個辦法，把它的名牌卡拖進甘蔗園。':'你會選哪一個辦法？把它的名牌卡拖進甘蔗園。'));
+  var sb=el('div','sbox zone');sb.innerHTML=sceneSVG();paint(sb.querySelector('svg'),null,0);
+  var lab=el('div','zlabel');var sign=el('div','zsign');sb.append(lab,sign);
+  app.append(sb);
+  app.append(el('p','hint',ic('chev')+'按住名牌卡拖上去；也可以直接點一下名牌卡。'));
+  var wrap=el('div','ncards');var cards={};
+  KS.forEach(function(k){
+    var m=M[k],done=st.order.indexOf(k)>=0;
+    var b=el('button','ncard '+k+(done?' done':''),'<span class="top">'+ic(m.icon)+lt(k)+'<span class="nm">'+m.name+'</span></span><p class="ds">'+m.desc+'</p>'+(done?'<span class="tag">已經看過了</span>':''));
+    b.type='button';b.setAttribute('data-k',k);
+    if(done){b.disabled=true}else{dragify(b,k,sb,function(){place(k)})}
+    cards[k]=b;wrap.appendChild(b);
+  });
+  app.append(wrap);
+  var go2=button(second?'看看這個辦法的十年':'就決定用這個辦法','btn',function(){
+    if(!st.place)return;
+    if(second){st.order.push(st.place);st.cur=st.place;st.place=null;go('time')}
+    else{st.first=st.place;st.order=[st.place];st.cur=st.place;st.place=null;go('guess')}
+  });
+  app.append(go2);
+  function place(k){st.place=k;save(st);upd()}
+  function upd(){
+    KS.forEach(function(k){cards[k].classList.toggle('in',st.place===k);cards[k].setAttribute('aria-pressed',st.place===k?'true':'false')});
+    if(st.place){lab.style.display='none';sign.style.display='';sign.innerHTML=ic(M[st.place].icon)+lt(st.place)+'<span>'+M[st.place].name+'</span>'}
+    else{sign.style.display='none';lab.style.display='';lab.innerHTML=ic('chev')+'把名牌卡拖到這裡'}
+    go2.disabled=!st.place;
+  }
+  upd();
+}
+function dragify(b,k,zone,onDrop){
+  var sx=0,sy=0,down=false,dragging=false,ghost=null,moved=false,pid=null;
+  function over(x,y){var r=zone.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+  b.addEventListener('pointerdown',function(e){if(e.button>0)return;down=true;dragging=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;try{b.setPointerCapture(pid)}catch(_){}});
+  b.addEventListener('pointermove',function(e){
+    if(!down)return;
+    if(!dragging&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8){
+      dragging=true;var r=b.getBoundingClientRect();ghost=b.cloneNode(true);ghost.classList.add('ghost');ghost.classList.remove('in');ghost.style.width=r.width+'px';ghost.style.left=r.left+'px';ghost.style.top=r.top+'px';ghost._dx=sx-r.left;ghost._dy=sy-r.top;document.body.appendChild(ghost);
+    }
+    if(dragging){ghost.style.left=(e.clientX-ghost._dx)+'px';ghost.style.top=(e.clientY-ghost._dy)+'px';zone.classList.toggle('over',over(e.clientX,e.clientY));e.preventDefault()}
+  });
+  function end(e,cancel){
+    if(!down)return;down=false;
+    if(dragging){moved=true;var hit=!cancel&&over(e.clientX,e.clientY);if(ghost){ghost.remove();ghost=null}zone.classList.remove('over');dragging=false;if(hit)onDrop()}
+  }
+  b.addEventListener('pointerup',function(e){end(e,false)});
+  b.addEventListener('pointercancel',function(e){end(e,true)});
+  b.addEventListener('click',function(){if(moved){moved=false;return}onDrop()});
+}
+
+/* ---------- guesses ---------- */
+var GQ=[
+  {id:'y1',t:'第 1 年，甘蔗園裡的甲蟲會怎樣？',o:['會少很多','不會少很多']},
+  {id:'h10',t:'第 10 年，甘蔗的收成會比現在好嗎？',o:['會比現在好','不會比現在好']},
+  {id:'a10',t:'第 10 年，田邊的青蛙、鳥、魚、蜜蜂會怎樣？',o:['差不多，或更多','會變少']}
+];
+function truth(k){var o1=lv(k,1),o10=lv(k,10);return {y1:o1.b<=BASE.b-4?0:1,h10:o10.h>BASE.h?0:1,a10:o10.a>=A0?0:1}}
+function guessPage(){
+  var k=st.first;
+  app.append(el('p','case',ic(M[k].icon)+'你選了 '+lt(k)+' '+M[k].name));
+  app.append(el('h2',null,'先猜猜看：用了這個辦法，以後會怎樣？'));
+  app.append(el('p','lead','「現在」是指還沒用任何辦法、甘蔗被甲蟲咬得很慘的時候。'));
+  var c=el('div','card');var nx;
+  GQ.forEach(function(q,qi){
+    var box=el('div','q');box.append(el('h3',null,'<span class="n">'+(qi+1)+'.</span>'+q.t));
+    var two=el('div','two');var bs=[];
+    q.o.forEach(function(t,oi){var b=button(t,'btn alt'+(st.g[q.id]===oi?' pick':''),function(){st.g[q.id]=oi;save(st);bs.forEach(function(x,xi){x.classList.toggle('pick',xi===oi);x.setAttribute('aria-pressed',xi===oi?'true':'false')});chk()});b.setAttribute('aria-pressed',st.g[q.id]===oi?'true':'false');bs.push(b);two.appendChild(b)});
+    box.append(two);c.append(box);
+  });
+  app.append(c);
+  nx=button('開始拖時間軸','btn',function(){go('time')});app.append(nx);
+  function chk(){nx.disabled=!GQ.every(function(q){return st.g[q.id]===0||st.g[q.id]===1})}
+  chk();
+}
+
+/* ---------- timeline ---------- */
+function timePage(){
+  var k=st.cur,nth=st.order.indexOf(k)+1;
+  if(!st.yr[k])st.yr[k]=1;if(!st.mx[k])st.mx[k]=1;
+  app.append(el('p','case','第 '+nth+' 個辦法：'+ic(M[k].icon)+lt(k)+' '+M[k].name));
+  app.append(el('h2',null,'把時間軸往右拖，看看每一年的甘蔗園。'));
+  var stage=el('div','stage');
+  var sb=el('div','sbox');sb.innerHTML=sceneSVG();var svg=sb.querySelector('svg');
+  var ms=el('div','meters');
+  var MT=[['h','cane_cane','甘蔗收成'],['b','cane_beetle','甲蟲'],['a','cane_frog','田邊動物']];var mref={};
+  MT.forEach(function(m){var d=el('div','mt '+m[0]);d.innerHTML='<div class="mh">'+ic(m[1])+'<span class="lb">'+m[2]+'</span><b class="mw"></b></div><div class="bar"><i></i><span class="base" title="開始前"></span></div><p class="mb"></p>';ms.appendChild(d);mref[m[0]]=d});ms.appendChild(el('p','cap mcap','田邊動物：青蛙、鳥、魚、蜜蜂。深色細線是「開始前」。'));
+  var tlw=el('div','tlw');
+  var tl=el('div','tl');tl.setAttribute('role','slider');tl.tabIndex=0;tl.setAttribute('aria-label','時間軸：第幾年');tl.setAttribute('aria-valuemin','1');tl.setAttribute('aria-valuemax','10');
+  var tin=el('div','tin');var trk=el('div','trk','<div class="seen"></div><div class="fill"></div>');tin.appendChild(trk);
+  var tks=[];for(var y=1;y<=10;y++){var t=el('span','tk','<i></i><em>'+y+'</em>');t.style.left=((y-1)/9*100)+'%';tin.appendChild(t);tks.push(t)}
+  var hd=el('div','hd',ic('grip')+'<span class="hb"></span>');tin.appendChild(hd);
+  tl.appendChild(tin);tlw.appendChild(tl);
+  stage.append(sb,ms,tlw);app.append(stage);
+  var news=el('div','note warm news');app.append(news);
+  var extra=el('div');app.append(extra);
+  var hint=el('p','hint');app.append(hint);
+  var nxt=button(st.order.length===1?'再挑另一個辦法看看':'看看比較表','btn',function(){
+    if(st.mx[k]<10)return;
+    if(st.order.length===1){st.place=null;go('pick2')}else go('comp');
+  });app.append(nxt);
+
+  function set(y,quiet){
+    y=Math.max(1,Math.min(10,y));
+    st.yr[k]=y;if(y>st.mx[k])st.mx[k]=y;save(st);
+    paint(svg,k,y);
+    var o=lv(k,y),p=(y-1)/9*100;
+    hd.style.left=p+'%';var hb=hd.querySelector('.hb');hb.textContent='第 '+y+' 年';hb.style.transform='translateX(-'+Math.round(p)+'%)';
+    trk.querySelector('.fill').style.width=p+'%';trk.querySelector('.seen').style.width=((st.mx[k]-1)/9*100)+'%';
+    tks.forEach(function(t,i){t.classList.toggle('v',i+1<=st.mx[k]);t.classList.toggle('now',i+1===y)});
+    tl.setAttribute('aria-valuenow',y);tl.setAttribute('aria-valuetext','第 '+y+' 年');
+    [['h',o.h,BASE.h],['b',o.b,BASE.b],['a',o.a,A0]].forEach(function(r){var d=mref[r[0]];d.querySelector('.mw').textContent=word(r[1]);d.querySelector('.bar i').style.width=(r[1]*10)+'%';d.querySelector('.base').style.left=(r[2]*10)+'%';d.querySelector('.mb').textContent='開始前：'+word(r[2])});
+    news.innerHTML=ic('mega')+'<p style="margin:0"><span class="nt">庄裡的消息</span>'+D[k].news[y]+'</p>';
+    var ok=st.mx[k]>=10;nxt.disabled=!ok;
+    hint.innerHTML=ok?'':ic('clock')+'要把時間軸拖到第 10 年，才能按下一步。（現在看到第 '+st.mx[k]+' 年）';
+    hint.style.display=ok?'none':'';
+    extra.innerHTML='';
+    if(ok&&k===st.first)extra.appendChild(guessCheck(k));
+  }
+  function fromX(x){var r=tin.getBoundingClientRect();return Math.round((x-r.left)/r.width*9)+1}
+  var dragging=false;
+  tl.addEventListener('pointerdown',function(e){if(e.button>0)return;dragging=true;tl.classList.add('drag');try{tl.setPointerCapture(e.pointerId)}catch(_){}set(fromX(e.clientX));e.preventDefault()});
+  tl.addEventListener('pointermove',function(e){if(!dragging)return;var y=fromX(e.clientX);if(y!==st.yr[k])set(y)});
+  function stop(){dragging=false;tl.classList.remove('drag')}
+  tl.addEventListener('pointerup',stop);tl.addEventListener('pointercancel',stop);
+  tl.addEventListener('keydown',function(e){var y=st.yr[k];
+    if(e.key==='ArrowRight'||e.key==='ArrowUp'){set(y+1);e.preventDefault()}
+    else if(e.key==='ArrowLeft'||e.key==='ArrowDown'){set(y-1);e.preventDefault()}
+    else if(e.key==='Home'){set(1);e.preventDefault()}else if(e.key==='End'){set(10);e.preventDefault()}});
+  set(st.yr[k]);
+}
+function guessCheck(k){
+  var tr=truth(k),c=el('div','card');
+  c.append(el('h3',null,'你一開始猜的，和十年的結果'));
+  var tb=el('table','gtab');var h='<tbody>';
+  var lab=['第 1 年的甲蟲','第 10 年的收成','第 10 年的田邊動物'];
+  GQ.forEach(function(q,i){var g=st.g[q.id],same=g===tr[q.id];
+    h+='<tr><td>'+lab[i]+'</td><td>你猜：<b>'+q.o[g]+'</b><br>結果：<b>'+q.o[tr[q.id]]+'</b></td><td class="'+(same?'same':'diff')+'">'+(same?'和你猜的一樣':'和你猜的不一樣')+'</td></tr>'});
+  tb.innerHTML=h+'</tbody>';c.append(tb);
+  c.append(el('p','note','第 1 年看到的，不一定就是第 10 年的樣子。想一個辦法的時候，可以多問自己兩句：「然後呢？」「多久以後呢？」'));
+  return c;
+}
+
+/* ---------- comparison ---------- */
+function compPage(){
+  app.append(el('p','case','比一比'));
+  app.append(el('h2',null,st.order.length===3?'三個辦法，第 1 年和第 10 年差在哪裡？':'兩個辦法，第 1 年和第 10 年差在哪裡？'));
+  var c=el('div','card');var tb=el('table','cmp');
+  var h='<thead><tr><th>辦法</th><th>第 1 年</th><th>第 10 年</th></tr></thead><tbody>';
+  function cell(o){return '<div class="row">'+ic('cane_cane')+'收成 <b class="w-h">'+word(o.h)+'</b></div><div class="row">'+ic('cane_beetle')+'甲蟲 <b class="w-b">'+word(o.b)+'</b></div><div class="row">'+ic('cane_frog')+'動物 <b class="w-a">'+word(o.a)+'</b></div>'}
+  st.order.forEach(function(k){
+    h+='<tr class="mrow"><td colspan="3" class="mm"><span class="mn">'+lt(k)+M[k].name+'</span></td></tr>';
+    h+='<tr><td class="m"><span class="mn">'+lt(k)+M[k].name+'</span></td><td>'+cell(lv(k,1))+'</td><td class="y10">'+cell(lv(k,10))+'</td></tr>';
+  });
+  tb.innerHTML=h+'</tbody>';c.append(tb);app.append(c);
+  app.append(el('p','note','開始前，甘蔗園是：收成<b>少</b>、甲蟲<b>多</b>、田邊動物<b>多</b>。看看哪一個辦法，第 1 年和第 10 年差得最多。'));
+  if(st.order.length<3){
+    var left=KS.filter(function(k){return st.order.indexOf(k)<0})[0];
+    app.append(button('第三個辦法 '+left+' 也想看看（可以不看）','btn soft',function(){st.place=null;go('pick2')}));
+  }
+  app.append(button('下一步','btn',function(){go('mayor')}));
+}
+
+/* ---------- village head question (no right answer) ---------- */
+var MY={
+  A:{n:'放大蟾蜍進園子',e:'第 1 年很熱鬧，大家覺得「有在做事」，也不用碰到藥。',c:'甲蟲沒有變少；大蟾蜍越生越多，跑到水溝和隔壁庄，本地的小青蛙變少，放出去就收不回來。'},
+  B:{n:'灑強力殺蟲藥',e:'最快見效，第 1、2 年甲蟲幾乎不見，收成最好，可以馬上救急。',c:'甲蟲越來越不怕藥，要越灑越多；水溝的魚、田邊的蜜蜂和隔壁庄的菜，都會跟著受影響。'},
+  C:{n:'輪作、翻土、請鳥來吃',e:'第 3 年起慢慢穩住，第 10 年收成和田邊的小動物都還不錯。',c:'頭兩年甲蟲只少一點、收成不好，大家要很累、很有耐心，一起做好幾年。'},
+  D:{n:'先少灑一點藥救急，再改成輪作、翻土、請鳥',e:'第 1 年不會太慘，之後再慢慢換成比較穩的辦法。',c:'一開始還是會有一點藥流進水溝；而且要真的記得換手，不能一直灑下去。'}
+};
+var MI={A:'cane_toad',B:'cane_spray',C:'cane_hoe',D:'swap'};
+function mayorPage(){
+  app.append(el('p','case','最後一題'));
+  var say=el('div','say');say.innerHTML=av('grandpa');say.append(el('h2',null,'如果你是庄長，你會選哪一個辦法？'));
+  app.append(say);
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。選好以後，會看到這個辦法的作用和代價，等一下全班一起討論。'));
+  var o=el('div','opts');var bs={};var fb=el('div');
+  ['A','B','C','D'].forEach(function(k){var b=button(ic(MI[k])+lt(k)+'<span>'+MY[k].n+'</span>','btn alt'+(st.mayor===k?' pick':''),function(){st.mayor=k;save(st);upd()});bs[k]=b;o.appendChild(b)});
+  var nx=button('下一步','btn',function(){if(st.mayor)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    Object.keys(bs).forEach(function(k){bs[k].classList.toggle('pick',st.mayor===k);bs[k].setAttribute('aria-pressed',st.mayor===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.mayor;
+    if(st.mayor){var m=MY[st.mayor];var c=el('div','card');c.append(el('h3',null,lt(st.mayor)+' '+m.n));var dl=el('dl','ec','<dt class="e">作用</dt><dd>'+m.e+'</dd><dt class="c">代價</dt><dd>'+m.c+'</dd>');c.append(dl);fb.appendChild(c)}
+  }
+  upd();
+}
+
+/* ---------- end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var g=st.g,f=st.first,my=st.mayor;
+  var changed=f===my?'沒有換，還是 '+f:(my==='D'?'有換：從 '+f+' 換成 D（先救急，再換成 C）':'有換：從 '+f+' 換成 '+my);
+  var rows=[
+    ['一開始選的辦法',lt(f)+' '+M[f].name],
+    ['你猜的第 1 年',  '甲蟲'+GQ[0].o[g.y1]],
+    ['你猜的第 10 年','收成'+GQ[1].o[g.h10]+'；田邊動物'+GQ[2].o[g.a10]],
+    ['你看了幾個辦法',st.order.length+' 個（'+st.order.join('、')+'）'],
+    ['最後會選的辦法',lt(my)+' '+MY[my].n],
+    ['有沒有換辦法',changed]
+  ];
+  var c=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);app.append(c);
+  app.append(el('p','note warm','老師等一下會請大家舉手：一開始選 A、B、C 的各有幾個人？最後又各有幾個人？'));
+}
+
+function render(){
+  app.innerHTML='';
+  var s=st.step;
+  if(s==='intro')intro();
+  else if(s==='pick')pickPage(false);
+  else if(s==='guess'&&st.first)guessPage();
+  else if(s==='time'&&st.cur)timePage();
+  else if(s==='pick2')pickPage(true);
+  else if(s==='comp'&&st.order.length>=2)compPage();
+  else if(s==='mayor')mayorPage();
+  else if(s==='end'&&st.mayor&&st.first)endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

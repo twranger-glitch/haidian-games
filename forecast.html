@@ -1,0 +1,205 @@
+<title>快樂預測站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: pick one thing you really want → predict happiness at 4 time points with rows of 10 hearts → recall the last wanted thing you actually got, same 4 rows → both curves overlaid → summary for show of hands. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#F1EFEA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D8D3C8;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --note:#EAF1F5;
+  --pred:#C0392B; --rec:#1F6FB0; --empty:#E4DFD6;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.grid6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{background:#9FB3C2;cursor:default}
+.btn:focus-visible,.heart:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.item{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:14px 10px}
+.item svg{width:64px;height:64px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.row{display:flex;flex-direction:column;gap:4px;padding-block:6px;border-bottom:2px solid var(--line)}
+.row:last-child{border-bottom:0}
+.rowhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.rowhead b{font-size:clamp(20px,2.8vw,26px)}
+.rowhead span{font-size:clamp(19px,2.6vw,24px);font-weight:900;font-variant-numeric:tabular-nums}
+.hearts{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:2px;max-width:600px}
+.heart{border:0;background:none;padding:2px;cursor:pointer;aspect-ratio:1;min-height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.heart svg{width:100%;height:100%;max-width:52px}
+.heart path{fill:var(--empty);transition:fill .12s}
+.pred .heart.on path{fill:var(--pred)} .rec .heart.on path{fill:var(--rec)}
+.chart{width:100%;max-width:640px;margin-inline:auto}
+.chart svg{width:100%;height:auto;display:block}
+.xl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));text-align:center;font-size:clamp(17px,2.4vw,21px);color:var(--muted);font-weight:700;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:clamp(18px,2.4vw,22px);font-weight:700;margin:0}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend svg{width:40px;height:14px}
+.big{font-size:clamp(38px,6.6vw,64px);font-weight:900;line-height:1.15;margin:0;text-align:center;color:var(--rust)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.n{text-align:right;font-weight:900;white-space:nowrap}
+.hint{font-size:clamp(17px,2.2vw,20px);color:var(--muted);margin:0}
+@media (max-width:620px){.grid6{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='happy-forecast-v1';
+var T=['第 1 天','第 1 個星期','第 1 個月','半年後'];
+var TS=['第1天','第1週','第1個月','半年後'];
+var ITEMS=[
+ ['一雙新球鞋','<rect x="6" y="40" width="52" height="10" rx="4" fill="#56605C"/><path d="M8 40 L8 20 Q20 18 26 26 L40 32 Q56 34 56 40 Z" fill="#C0392B"/><path d="M20 24 L24 30 M26 26 L30 32" stroke="#fff" stroke-width="3"/>'],
+ ['一整套漫畫','<rect x="8" y="14" width="12" height="40" rx="2" fill="#1F6FB0"/><rect x="22" y="14" width="12" height="40" rx="2" fill="#B7862B"/><rect x="36" y="14" width="12" height="40" rx="2" fill="#2F7D4F"/><rect x="50" y="18" width="8" height="36" rx="2" fill="#A8441A" transform="rotate(8 54 36)"/>'],
+ ['遊戲裡的新角色造型','<rect x="6" y="10" width="52" height="38" rx="6" fill="#1F2A2E"/><circle cx="32" cy="24" r="7" fill="#F2CFAE"/><path d="M22 44 Q32 28 42 44 Z" fill="#B7862B"/><path d="M24 20 L32 12 L40 20 Z" fill="#C0392B"/><rect x="26" y="50" width="12" height="6" fill="#56605C"/>'],
+ ['會自動削的削鉛筆機','<rect x="12" y="24" width="40" height="30" rx="8" fill="#1F6FB0"/><circle cx="32" cy="38" r="6" fill="#1F2A2E"/><path d="M32 6 L36 14 L36 32 L28 32 L28 14 Z" fill="#B7862B"/><path d="M32 6 L34 10 L30 10 Z" fill="#1F2A2E"/>'],
+ ['一台新腳踏車','<circle cx="16" cy="42" r="11" fill="none" stroke="#1F2A2E" stroke-width="4"/><circle cx="48" cy="42" r="11" fill="none" stroke="#1F2A2E" stroke-width="4"/><path d="M16 42 L28 24 L42 24 L48 42 M28 24 L34 42 L42 24 M24 18 L32 18" stroke="#2F7D4F" stroke-width="4" fill="none" stroke-linecap="round"/>'],
+ ['一盒 72 色彩色筆','<rect x="6" y="28" width="52" height="26" rx="4" fill="#B7862B"/><rect x="10" y="12" width="6" height="22" fill="#C0392B"/><rect x="18" y="10" width="6" height="24" fill="#1F6FB0"/><rect x="26" y="12" width="6" height="22" fill="#2F7D4F"/><rect x="34" y="10" width="6" height="24" fill="#E0A100"/><rect x="42" y="12" width="6" height="22" fill="#7B4FA0"/><rect x="50" y="10" width="5" height="24" fill="#1F2A2E"/>']
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,item:null,p:[null,null,null,null],r:[null,null,null,null]};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();window.scrollTo(0,0)}
+var HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 C5 15.5 2 12.3 2 8.5 C2 5.4 4.4 3 7.4 3 C9.3 3 11 4 12 5.6 C13 4 14.7 3 16.6 3 C19.6 3 22 5.4 22 8.5 C22 12.3 19 15.5 12 21 Z"/></svg>';
+function full(a){return a.every(function(v){return v!=null})}
+
+/* chart: viewBox 400x210; x at column centers so HTML labels line up */
+function X(i){return (i+0.5)*100}
+function Y(v){return 180-v*15}
+function line(a,color,dash,abv,name){
+  var pts=[];a.forEach(function(v,i){if(v!=null)pts.push([i,v])});
+  var s='';
+  if(pts.length>1)s+='<polyline points="'+pts.map(function(q){return X(q[0])+','+Y(q[1])}).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"'+(dash?' stroke-dasharray="9 7"':'')+'/>';
+  pts.forEach(function(q){
+    var x=X(q[0]),y=Y(q[1]);
+    s+='<g><title>'+name+'・'+TS[q[0]]+'：'+q[1]+' 顆愛心</title>';
+    s+=dash?'<rect x="'+(x-7)+'" y="'+(y-7)+'" width="14" height="14" rx="2" fill="'+color+'" stroke="#FCFBF7" stroke-width="2"/>':'<circle cx="'+x+'" cy="'+y+'" r="8" fill="'+color+'" stroke="#FCFBF7" stroke-width="2"/>';
+    var ly=abv(q[0])?y-14:y+30;
+    s+='<text x="'+x+'" y="'+ly+'" text-anchor="middle" font-size="22" font-weight="900" fill="#1F2A2E">'+q[1]+'</text></g>';
+  });
+  return s;
+}
+function chart(showP,showR){
+  var g='';[0,5,10].forEach(function(v){g+='<line x1="10" x2="390" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="#D8D3C8" stroke-width="'+(v===0?2:1)+'"'+(v===0?'':' stroke-dasharray="3 5"')+'/>'});
+  var both=showP&&showR;
+  var s='<svg viewBox="0 0 400 214" role="img" aria-label="'+(showP?'預測：'+st.p.map(function(v,i){return TS[i]+(v==null?'未選':v+'顆')}).join('、')+'。':'')+(showR?'回想：'+st.r.map(function(v,i){return TS[i]+(v==null?'未選':v+'顆')}).join('、')+'。':'')+'">'+g;
+  function has(i){return both&&st.p[i]!=null&&st.r[i]!=null}
+  if(showR)s+=line(st.r,'#1F6FB0',true,function(i){return !has(i)||st.r[i]>st.p[i]},'回想');
+  if(showP)s+=line(st.p,'#C0392B',false,function(i){return !has(i)||st.p[i]>=st.r[i]},'預測');
+  s+='</svg>';
+  var c=el('div','chart');c.innerHTML=s;
+  var xl=el('p','xl');TS.forEach(function(t){xl.appendChild(el('span',null,t))});c.appendChild(xl);
+  return c;
+}
+function legend(showP,showR){
+  var l=el('p','legend');
+  if(showP)l.appendChild(el('span',null,'<svg viewBox="0 0 40 14"><line x1="2" x2="38" y1="7" y2="7" stroke="#C0392B" stroke-width="3"/><circle cx="20" cy="7" r="5" fill="#C0392B"/></svg>預測（你猜的）'));
+  if(showR)l.appendChild(el('span',null,'<svg viewBox="0 0 40 14"><line x1="2" x2="38" y1="7" y2="7" stroke="#1F6FB0" stroke-width="3" stroke-dasharray="7 5"/><rect x="15" y="2" width="10" height="10" rx="2" fill="#1F6FB0"/></svg>回想（真的發生過的）'));
+  return l;
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','每個人都有「好想要」的東西。拿到的那一刻，心裡好開心；可是，這份開心會維持多久呢？'),
+    el('p','lead','今天你要當一位「快樂預測員」：先猜猜看拿到一樣東西以後，你會開心多久；再回想一次你真的得到過的東西，最後把兩條線放在一起比一比。'),
+    el('p','lead','開心的程度用愛心表示，最多 10 顆。沒有對錯，照你心裡的感覺點就好。'));
+  app.append(el('h1',null,'快樂預測站'),c,btn('開始','btn',function(){go(1)}));
+}
+function pick(){
+  app.innerHTML='';
+  var g=el('div','grid6');var nx=btn('選好了，開始預測','btn',function(){go(2)});nx.disabled=st.item==null;
+  ITEMS.forEach(function(it,k){
+    var b=btn('<svg viewBox="0 0 64 64" aria-hidden="true">'+it[1]+'</svg><span>'+it[0]+'</span>','btn alt item'+(st.item===k?' pick':''),function(){
+      st.item=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;
+    });g.appendChild(b);
+  });
+  app.append(el('p','case','步驟 1／3　挑一樣東西'),el('h2',null,'下面這 6 樣東西，你最想要哪一樣？'),el('p','hint','如果都不是你最想要的，就挑一個「還算想要」的。'),g,nx);
+}
+function hearts(arr,kind,onchange){
+  var box=el('div','card '+kind);
+  T.forEach(function(t,i){
+    var row=el('div','row');var head=el('div','rowhead');var lab=el('span',null,arr[i]==null?'還沒點':arr[i]+' 顆');
+    lab.style.color=arr[i]==null?'var(--muted)':(kind==='pred'?'var(--pred)':'var(--rec)');
+    head.append(el('b',null,'拿到後 '+t),lab);
+    var hs=el('div','hearts');hs.setAttribute('role','group');hs.setAttribute('aria-label','拿到後'+t+'有多開心');
+    for(var n=1;n<=10;n++){(function(n){
+      var h=btn(HEART,'heart'+(arr[i]!=null&&n<=arr[i]?' on':''),function(){
+        arr[i]=n;save(st);
+        Array.prototype.forEach.call(hs.children,function(x,j){x.classList.toggle('on',j<n);x.setAttribute('aria-pressed',j===n-1?'true':'false')});
+        lab.textContent=n+' 顆';lab.style.color=kind==='pred'?'var(--pred)':'var(--rec)';onchange();
+      });h.setAttribute('aria-label',n+' 顆愛心');h.setAttribute('aria-pressed',arr[i]===n?'true':'false');hs.appendChild(h);
+    })(n)}
+    row.append(head,hs);box.appendChild(row);
+  });
+  return box;
+}
+function predict(){
+  app.innerHTML='';
+  var name=ITEMS[st.item][0];
+  var holder=el('div','card');
+  var nx=btn('畫好了，下一步','btn',function(){go(3)});
+  function upd(){holder.innerHTML='';holder.append(el('p','lead','你的預測曲線'),legend(true,false),chart(true,false));nx.disabled=!full(st.p)}
+  var hb=hearts(st.p,'pred',upd);
+  app.append(el('p','case','步驟 2／3　預測'),el('h2',null,'想像你明天就拿到「'+name+'」。拿到以後，你會有多開心？'),
+    el('p','hint','每一排點一顆愛心：點第 7 顆，就是 7 分開心。點錯了，再點一次別顆就好。'),hb,holder,nx);
+  upd();
+}
+function recall(){
+  app.innerHTML='';
+  var holder=el('div','card');
+  var nx=btn('畫好了，把兩條線放在一起','btn',function(){go(4)});
+  function upd(){holder.innerHTML='';holder.append(legend(true,true),chart(true,true));nx.disabled=!full(st.r)}
+  var hb=hearts(st.r,'rec',upd);
+  app.append(el('p','case','步驟 3／3　回想'),el('h2',null,'想一想：你上一次「好想要、後來真的得到」的東西。'),
+    el('p','note','不用說出它是什麼，放在心裡就好。也許是生日禮物、過年用紅包買的東西，或是存了好久的零用錢換來的東西。想不起來的話，就想一個最近得到的新東西。'),
+    el('p','lead','它在這四個時候，真的讓你多開心？'),hb,holder,nx);
+  upd();
+}
+function sumDiff(){var d=0;for(var i=0;i<4;i++)d+=st.p[i]-st.r[i];return d}
+function diffText(d){return d>0?'預測比回想高 '+d+' 顆愛心':d<0?'預測比回想低 '+(-d)+' 顆愛心':'預測和回想一樣多'}
+function compare(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(legend(true,true),chart(true,true));
+  var d=sumDiff();var dp=st.p[0]-st.p[3],dr=st.r[0]-st.r[3];
+  function drop(x){return x>0?'少了 '+x+' 顆':x<0?'多了 '+(-x)+' 顆':'沒有變'}
+  var mine=el('p','note','你的兩條線：四個時間點加起來，<b>'+diffText(d)+'</b>。<br>從第 1 天到半年後，預測的線'+drop(dp)+'，回想的線'+drop(dr)+'。');
+  var gen=el('p','note warm','心理學家請很多人做過類似的事，發現：<b>很多人的預測曲線比回想曲線高，而且掉得比較慢。</b>我們常常以為「拿到它，我會開心很久很久」，可是新東西帶來的開心，常常會慢慢變淡。<br>如果你的線不是這樣，也很正常，每個人、每樣東西都不一樣。等一下全班聊聊。');
+  app.append(el('h2',null,'把兩條線放在一起看看'),c,mine,gen,btn('看我的摘要','btn',function(){go(5)}));
+}
+function end(){
+  app.innerHTML='';
+  var d=sumDiff();
+  var c=el('div','card');c.append(el('p','lead','四個時間點加起來'),el('p','big',diffText(d)));
+  var t=el('table');
+  [['我挑的東西',ITEMS[st.item][0]],['預測：半年後',st.p[3]+' 顆'],['回想：半年後',st.r[3]+' 顆'],['預測：第 1 天到半年後',(st.p[0]-st.p[3]>=0?'少了 '+(st.p[0]-st.p[3]):'多了 '+(st.p[3]-st.p[0]))+' 顆'],['回想：第 1 天到半年後',(st.r[0]-st.r[3]>=0?'少了 '+(st.r[0]-st.r[3]):'多了 '+(st.r[3]-st.r[0]))+' 顆']].forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  c.append(t);
+  var c2=el('div','card');c2.append(legend(true,true),chart(true,true));
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,c2);
+}
+function render(){
+  var s=st.step;
+  if(s>=2&&st.item==null)s=1;
+  if(s>=3&&!full(st.p))s=2;
+  if(s>=4&&!full(st.r))s=3;
+  [intro,pick,predict,recall,compare,end][s]();
+}
+render();
+})();
+</script>

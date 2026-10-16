@@ -1,0 +1,176 @@
+<title>廟口硬幣攤</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1E242B; --coral:#D95D39; --teal:#2A6F68; --muted:#475569;
+  --line:#E3DED7; --lc:#FFF5F2; --lt:#F0F7F6; --dark:#1E242B; --gold:#C99A2E; --lg:#FBF3DD;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,46px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.8vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--coral);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.7vw,24px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.card.c{background:var(--lc);border-color:#F2D3C7}
+.card.t{background:var(--lt);border-color:#CFE3E0}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--coral);color:#fff;cursor:pointer;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.btn.teal{background:var(--teal)}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--coral);background:var(--lc)}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--lt);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.5vw,23px);line-height:1.7;margin:0}
+.note.c{background:var(--lc)}
+.hint{margin:0;font-size:19px;color:var(--muted);font-weight:700}
+svg.i{width:1.3em;height:1.3em;vertical-align:-0.28em;flex:none;display:inline-block}
+.prog{display:flex;gap:6px}
+.prog i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.prog i.on{background:var(--coral)}
+table.sum{width:100%;border-collapse:collapse;font-size:clamp(19px,2.5vw,22px)}
+table.sum td{border-top:2px solid var(--line);padding:10px 6px;vertical-align:top}
+table.sum td.k{font-weight:900;color:var(--muted);width:40%}
+.bigdone{font-size:clamp(24px,4vw,34px)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 流程：介紹 → 一題一題問「願不願意丟」（丟到字一律付 100 點，丟到人頭可以得到的點數 100→150→200→250→300→500 越加越多，答「願意」就停）
+   → 照你願意的條件真的丟一次（硬幣翻轉動畫）→ 結果頁（舉手分組＋長條比較） */
+.stall{width:100%;max-width:420px;height:auto;display:block;margin:0 auto}
+.pts{display:inline-flex;align-items:center;gap:8px;background:var(--lg);border:2px solid #EBD9A6;border-radius:14px;padding:4px 14px;font-weight:900;font-size:clamp(19px,2.6vw,23px);align-self:flex-start}
+.deal{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.face{border-radius:18px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-weight:900;font-size:clamp(19px,2.6vw,23px);line-height:1.45}
+.face.win{background:var(--lt);border:3px solid var(--teal);color:var(--teal)}
+.face.lose{background:var(--lc);border:3px dashed var(--coral);color:var(--coral)}
+.face svg{width:64px;height:64px}
+.face .amt{font-size:clamp(28px,4.6vw,40px);color:var(--ink);line-height:1.2}
+.face .amt.up{animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(1.35);color:var(--teal)}100%{transform:scale(1)}}
+.say{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px 18px;font-size:clamp(20px,2.9vw,26px);font-weight:700;line-height:1.6;margin:0;position:relative}
+.say b{color:var(--teal)}.say b.n{white-space:nowrap}.say b.c{color:var(--coral)}
+.yn{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.yn .btn{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.yn .btn small{font-size:clamp(17px,2.2vw,19px);font-weight:700;opacity:.9}
+.ladder{display:flex;gap:6px;flex-wrap:wrap}
+.ladder span{border:2px solid var(--line);background:var(--card);border-radius:12px;padding:2px 10px;font-weight:700;font-size:19px;color:var(--muted)}
+.ladder span.no{text-decoration:line-through;color:#8A94A3}
+.ladder span.now{border-color:var(--teal);color:var(--teal);background:var(--lt)}
+.ladder span.yes{border-color:var(--coral);color:#fff;background:var(--coral)}
+/* 丟硬幣 */
+.coinbox{perspective:900px;width:min(220px,60vw);aspect-ratio:1;align-self:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.coinin{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1.3s cubic-bezier(.3,.7,.3,1)}
+.coinin.go{transform:rotateY(var(--ry,1080deg))}
+.cside{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center}
+.cside.b{transform:rotateY(180deg)}
+.cside svg{width:100%;height:100%}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:7.5em 1fr;gap:10px;align-items:center;font-weight:700;font-size:clamp(18px,2.4vw,21px)}
+.bar .tr{background:#F1EEE8;border-radius:10px;height:34px;position:relative;overflow:hidden}
+.bar .f{position:absolute;left:0;top:0;bottom:0;border-radius:10px;display:flex;align-items:center;padding-left:10px;color:#fff;font-weight:900;white-space:nowrap}
+.bar .f.lose{background:repeating-linear-gradient(45deg,#D95D39 0 10px,#C24E2C 10px 20px)}
+.bar .f.win{background:var(--teal)}
+@media (max-width:480px){.yn{grid-template-columns:1fr}}
+</style>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+"use strict";
+var KEY='u2b-coinstall-v1';
+var app=document.getElementById('app');
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+if(location.hash==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var OFFERS=[100,150,200,250,300,500];
+var st=load()||{s:0,k:0,no:[],yes:null,toss:null};
+// 硬幣的兩面：人頭（得到）、字（付出）
+function coinHead(){return '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#FBF3DD" stroke="#C99A2E" stroke-width="5"/><circle cx="50" cy="50" r="37" fill="none" stroke="#C99A2E" stroke-width="2.5" stroke-dasharray="3 5"/><circle cx="50" cy="40" r="11" fill="#2A6F68"/><path d="M29 72c3-12 11-18 21-18s18 6 21 18z" fill="#2A6F68"/></svg>'}
+function coinTail(){return '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#FBF3DD" stroke="#C99A2E" stroke-width="5"/><circle cx="50" cy="50" r="37" fill="none" stroke="#C99A2E" stroke-width="2.5" stroke-dasharray="3 5"/><path d="M33 40l7-6v34" fill="none" stroke="#D95D39" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="61" cy="51" rx="11" ry="17" fill="none" stroke="#D95D39" stroke-width="6"/></svg>'}
+function stallSvg(){return '<svg class="stall" viewBox="0 0 420 200" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
+ '<path d="M30 70 H390" stroke="#1E242B"/><path d="M30 70 l20 -40 H370 l20 40" fill="#FFF5F2" stroke="#D95D39"/>'+
+ '<path d="M90 30 l-12 40 M150 30 l-6 40 M210 30 v40 M270 30 l6 40 M330 30 l12 40" stroke="#D95D39"/>'+
+ '<path d="M50 70 V190 M370 70 V190" stroke="#475569"/><rect x="80" y="130" width="260" height="56" rx="10" fill="#FFFFFF" stroke="#475569"/>'+
+ '<circle cx="165" cy="118" r="34" fill="#FBF3DD" stroke="#C99A2E"/><circle cx="165" cy="110" r="8" fill="#2A6F68" stroke="none"/><path d="M151 132c2-8 7-12 14-12s12 4 14 12z" fill="#2A6F68" stroke="none"/>'+
+ '<circle cx="255" cy="118" r="34" fill="#FBF3DD" stroke="#C99A2E"/><path d="M242 110l5-4v24" stroke="#D95D39"/><ellipse cx="262" cy="118" rx="8" ry="12" stroke="#D95D39"/></svg>'}
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+function btn(t,c,f){var b=el('button','btn'+(c?' '+c:''),t);b.type='button';b.addEventListener('click',f);return b}
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}
+function go(n){st.s=n;save();render();window.scrollTo(0,0)}
+function prog(){var p=el('div','prog');var on=st.s===1?1:st.s===2?2:3;for(var i=0;i<3;i++)p.appendChild(el('i',i<on?'on':''));return p}
+function deal(win,anim){var d=el('div','deal');
+ d.appendChild(el('div','face win',coinHead()+'<span>丟到「人頭」<br>你可以得到</span><span class="amt'+(anim?' up':'')+'">'+win+' 點</span>'));
+ d.appendChild(el('div','face lose',coinTail()+'<span>丟到「字」<br>你要付給老闆</span><span class="amt">100 點</span>'));return d}
+function ladder(){var l=el('div','ladder');OFFERS.forEach(function(v,i){var c=st.no.indexOf(v)>=0?'no':(st.yes===v?'yes':(i===st.k&&st.yes==null?'now':''));l.appendChild(el('span',c,v+' 點'))});return l}
+
+function render(){app.innerHTML='';
+ if(st.s===0)return intro();
+ app.appendChild(prog());
+ if(st.s===1)return ask();
+ if(st.s===2)return toss();
+ return end();
+}
+function intro(){
+ app.append(el('p','kick','活動一・線上小遊戲'),el('h1',null,'廟口硬幣攤'));
+ var c=el('div','card');c.innerHTML=stallSvg();
+ c.append(el('p','lead','廟口有一個丟硬幣的攤子。老闆手上的硬幣，一面是<b>「人頭」</b>，另一面是<b>「字」</b>。丟出去以後，出現人頭和出現字的機會<b>一樣大</b>。'),
+  el('p','lead','一開始，你有 <b>1000 點</b>遊戲點數。這些點數只在遊戲裡用，不是真的錢。'),
+  el('p','lead','老闆會一次說一個條件，你只要回答<b>「願意丟」</b>或<b>「不願意丟」</b>。沒有標準答案，請照你心裡真正的想法回答。'));
+ app.append(c,btn('走到硬幣攤前面','',function(){go(1)}));
+}
+function ask(){var k=st.k,win=OFFERS[k];
+ app.append(el('p','kick','第 '+(k+1)+' 個條件'));
+ app.appendChild(el('p','say','老闆說：「丟到人頭，我給你 <b class="n">'+win+' 點</b>；丟到字，你給我 <b class="c n">100 點</b>。」'));
+ app.appendChild(deal(win,k>0));
+ app.appendChild(el('h2',null,'用這個條件，你願意丟一次硬幣嗎？'));
+ var yn=el('div','yn');
+ yn.appendChild(btn('願意，我要丟<small>就用這個條件丟一次</small>','teal',function(){st.yes=win;save();go(2)}));
+ yn.appendChild(btn('不願意，我不丟<small>請老闆再多給一點</small>','',function(){st.no.push(win);
+   if(k+1<OFFERS.length){st.k=k+1;save();render();window.scrollTo(0,0)}else{st.yes='never';save();go(3)}}));
+ app.appendChild(yn);
+ app.appendChild(el('p','hint','如果你說不願意，老闆會把「人頭」可以得到的點數加多一點，再問你一次。'));
+ app.appendChild(ladder());
+}
+function toss(){var win=st.yes;
+ app.append(el('p','kick','你願意了！老闆照這個條件，真的丟一次'),
+  el('h2',null,'丟到人頭，你得到 '+win+' 點；丟到字，你付給老闆 100 點。請點下面的硬幣。'));
+ var box=el('div','coinbox');box.setAttribute('role','button');box.setAttribute('aria-label','點這枚硬幣，把它丟出去');box.tabIndex=0;
+ var r=st.toss;
+ box.innerHTML='<div class="coinin'+(r?' go':'')+'"><div class="cside a">'+coinHead()+'</div><div class="cside b">'+coinTail()+'</div></div>';
+ if(r){box.querySelector('.coinin').style.setProperty('--ry',r.head?'1080deg':'1260deg')}
+ app.appendChild(box);
+ var after=el('div');after.style.display='flex';after.style.flexDirection='column';after.style.gap='12px';app.appendChild(after);
+ function done(){after.innerHTML='';var t=st.toss;
+  after.appendChild(el('p','note'+(t.head?'':' c'),t.head?('丟到「人頭」！你得到 '+win+' 點，現在你有 '+(1000+win)+' 點。'):('丟到「字」。你付給老闆 100 點，現在你有 900 點。')));
+  after.appendChild(btn('看看我的結果','',function(){go(3)}))}
+ if(r){done();return}
+ var busy=false;
+ function doToss(){if(busy||st.toss)return;busy=true;var head=rnd()<0.5;st.toss={head:head};save();
+  var ci=box.querySelector('.coinin');ci.style.setProperty('--ry',head?'1080deg':'1260deg');ci.classList.add('go');setTimeout(done,1350)}
+ box.addEventListener('click',doToss);box.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();doToss()}});
+}
+function group(){var v=st.yes;if(v==='never'||v>=300)return '第 4 組：300 點以上才願意，或是都不願意';if(v>=200)return '第 3 組：200 點或 250 點才願意';if(v===150)return '第 2 組：150 點才願意';return '第 1 組：100 點就願意'}
+function end(){
+ app.appendChild(el('h2','bigdone','做完了！請停在這一頁，等其他同學。'));
+ var c=el('div','card');var v=st.yes;
+ c.appendChild(el('p','kick','舉手分組'));
+ c.appendChild(el('p','say','<b>'+group()+'</b>'));
+ if(v==='never'){c.appendChild(el('p','lead','丟到人頭可以得到 500 點，你還是不願意冒險付出 100 點。很多人一想到可能會失去，就乾脆不玩，這也是一種選擇。'))}
+ else{c.appendChild(el('p','lead',v===100?'丟到人頭得到的點數，和丟到字付出的點數一樣多，你就願意丟了。':'丟到字要付出 100 點。丟到人頭要能得到 <b>'+v+' 點</b>，你才願意丟。也就是說，得到的要比付出的多，你才覺得值得冒險。'));
+  var bars=el('div','bars');var mx=Math.max(v,100);
+  bars.appendChild(el('div','bar','<span>可能付出</span><span class="tr"><span class="f lose" style="width:'+(100/mx*100)+'%">100 點</span></span>'));
+  bars.appendChild(el('div','bar','<span>至少要得到</span><span class="tr"><span class="f win" style="width:'+(v/mx*100)+'%">'+v+' 點</span></span>'));
+  c.appendChild(bars);c.appendChild(el('p','hint','有斜線的長條是可能付出的點數，實心的長條是你要求得到的點數。'))}
+ if(st.toss)c.appendChild(el('p','lead','真的丟一次的結果：'+(st.toss.head?'丟到人頭，現在你有 '+(1000+v)+' 點。':'丟到字，現在你有 900 點。')));
+ app.appendChild(c);
+ app.appendChild(el('p','hint','等一下，老師會請大家照上面寫的「舉手分組」舉手。'));
+}
+render();
+})();
+</script>

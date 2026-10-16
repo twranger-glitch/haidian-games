@@ -1,0 +1,146 @@
+<title>飼料大對決</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: tablet screens — story → pick a pond for the new feed → pick a pond for the old feed → "three months later" → result + fairness check. Single light classroom look on purpose. */
+:root{
+  --bg:#EDF2F1; --card:#FBFCFA; --ink:#1F2A2E; --muted:#56605C; --line:#C9D7D3;
+  --sea:#205E86; --rust:#A8441A; --good:#2F7D4F; --water:#7FA6B8; --waterd:#4F7F96; --sand:#CDBB98;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:920px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(24px,4vw,36px);font-weight:900;margin:0;line-height:1.4;text-wrap:balance}
+.lead{font-size:clamp(19px,2.6vw,24px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(16px,3vw,28px);display:flex;flex-direction:column;gap:12px}
+.ponds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pond{font:inherit;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:8px;color:var(--ink)}
+.pond:disabled{opacity:.45;cursor:default}
+.pond.sel{border-color:var(--sea);box-shadow:0 0 0 3px var(--sea) inset}
+.pond:focus-visible,.btn:focus-visible{outline:4px solid var(--rust);outline-offset:3px}
+.pond .pic{height:70px;border-radius:12px;background:var(--water);position:relative;overflow:hidden;border:4px solid var(--sand)}
+.pond .pic.deep{background:var(--waterd)}
+.pond .name{font-size:clamp(20px,2.8vw,26px);font-weight:900}
+.tag{display:block;line-height:1.7;font-size:clamp(15px,2vw,19px);color:var(--muted)}
+.tag b{color:var(--ink)}
+.fish{position:absolute;width:14px;height:7px;border-radius:50%;background:#E8EEF1}
+.btn{font:inherit;font-size:clamp(22px,3.2vw,30px);font-weight:900;border:0;border-radius:16px;padding:14px 22px;background:var(--sea);color:#fff;cursor:pointer;align-self:flex-start}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.btn.alt{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.pick{font-size:clamp(20px,2.8vw,26px);font-weight:900;margin:0}
+.pick .n{color:var(--good)} .pick .o{color:var(--rust)}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.box{border:3px solid var(--line);border-radius:18px;padding:14px;text-align:center;background:var(--card)}
+.box p{margin:0;font-size:clamp(18px,2.4vw,22px);color:var(--muted);font-weight:700}
+.box strong{display:block;font-size:clamp(46px,9vw,80px);font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums}
+.box.n strong{color:var(--good)} .box.o strong{color:var(--rust)}
+table{border-collapse:collapse;width:100%;font-size:clamp(17px,2.4vw,22px)}
+th,td{padding:8px;border-bottom:2px solid var(--line);text-align:center}
+th{color:var(--muted)}
+td.bad{color:var(--rust);font-weight:900} td.ok{color:var(--good);font-weight:900}
+.stars{font-size:clamp(28px,4.6vw,40px);font-weight:900;margin:0;color:var(--sea)}
+.verdict{font-size:clamp(20px,2.8vw,26px);font-weight:700;margin:0}
+.tablewrap{overflow-x:auto}
+.grow{height:18px;border-radius:99px;background:#DCE4E0;overflow:hidden}
+.grow i{display:block;height:100%;width:0;background:var(--good);transition:width 2.4s linear}
+.hist{font-size:clamp(17px,2.3vw,21px);color:var(--muted);margin:0}
+@media (max-width:620px){.ponds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.res{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.grow i{transition:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='fair-feed-v1';
+var P=[
+ {id:'甲',fry:'大',deep:true, many:false},
+ {id:'乙',fry:'小',deep:false,many:true},
+ {id:'丙',fry:'大',deep:true, many:false},
+ {id:'丁',fry:'小',deep:true, many:true},
+ {id:'戊',fry:'大',deep:false,many:true},
+ {id:'己',fry:'小',deep:false,many:true}
+];
+var EFFECT=30;
+function load(){try{var v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save([])}
+var hist=load();
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function weight(p,isNew){var w=(p.fry==='大'?350:250)+(p.deep?40:0)+(p.many?0:60)+(isNew?EFFECT:0)+Math.round((Math.random()*2-1)*8);return w}
+function pic(p){var d=el('div','pic'+(p.deep?' deep':''));var n=p.many?9:4;for(var i=0;i<n;i++){var f=el('span','fish');f.style.left=(8+((i*37)%80))+'%';f.style.top=(15+((i*23)%60))+'%';if(p.fry==='大'){f.style.width='20px';f.style.height='10px'}d.appendChild(f)}return d}
+function pondBtn(p,onPick,disabled,sel){
+  var b=el('button','pond'+(sel?' sel':''));b.type='button';b.disabled=!!disabled;
+  b.append(pic(p),el('span','name',p.id+' 魚塭'));
+  var t=el('span','tag');t.innerHTML='魚苗：<b>'+p.fry+'</b>　水：<b>'+(p.deep?'深':'淺')+'</b><br>魚的數量：<b>'+(p.many?'多':'少')+'</b>';
+  b.appendChild(t);b.setAttribute('aria-label',p.id+'魚塭，魚苗'+p.fry+'，水'+(p.deep?'深':'淺')+'，魚'+(p.many?'多':'少'));
+  b.addEventListener('click',function(){onPick(p)});return b;
+}
+function intro(){
+  app.innerHTML='';
+  var h=el('h1',null,'飼料大對決');
+  var c=el('div','card');
+  c.append(el('p','lead','七股的阿伯買了一種「新飼料」，想知道虱目魚吃了會不會長得比較大。'),
+           el('p','lead','阿伯有 6 個魚塭。請你幫他挑 2 個：一個餵新飼料，一個餵舊飼料，養 3 個月再來比一比。'),
+           el('p','lead','要怎麼挑，比出來的結果才公平？'));
+  var b=el('button','btn','開始挑魚塭');b.type='button';b.addEventListener('click',function(){choose(null)});
+  app.append(h,c,b);
+  if(hist.length)app.appendChild(history());
+}
+function choose(first){
+  app.innerHTML='';
+  var h=el('h2',null,first?'第 2 步：哪一個魚塭餵「舊飼料」？':'第 1 步：哪一個魚塭餵「新飼料」？');
+  var g=el('div','ponds');
+  P.forEach(function(p){g.appendChild(pondBtn(p,function(x){if(!first)choose(x);else grow(first,x)},first&&first.id===p.id,first&&first.id===p.id))});
+  app.append(h);
+  if(first){var s=el('p','pick');s.innerHTML='新飼料：<span class="n">'+first.id+' 魚塭</span>';app.appendChild(s)}
+  app.appendChild(g);
+}
+function grow(a,b){
+  app.innerHTML='';
+  var h=el('h2',null,'養了 3 個月……');
+  var g=el('div','grow');var i=el('i');g.appendChild(i);
+  app.append(h,g,el('p','lead','阿伯每天按時餵魚。'));
+  requestAnimationFrame(function(){requestAnimationFrame(function(){i.style.width='100%'})});
+  setTimeout(function(){result(a,b)},2600);
+}
+function result(a,b){
+  var wa=weight(a,true),wb=weight(b,false),diff=wa-wb;
+  var rows=[['魚苗大小',a.fry,b.fry],['水深',a.deep?'深':'淺',b.deep?'深':'淺'],['魚的數量',a.many?'多':'少',b.many?'多':'少']];
+  var same=rows.filter(function(r){return r[1]===r[2]}).length;
+  hist.push({a:a.id,b:b.id,d:diff,s:same});save(hist);
+  app.innerHTML='';
+  var h=el('h2',null,'3 個月後，每條虱目魚平均的重量');
+  var res=el('div','res');
+  var x=el('div','box n');x.append(el('p',null,a.id+' 魚塭・新飼料'),el('strong',null,wa+' 克'));
+  var y=el('div','box o');y.append(el('p',null,b.id+' 魚塭・舊飼料'),el('strong',null,wb+' 克'));
+  res.append(x,y);
+  var naive=el('p','verdict','看起來，新飼料的魚'+(diff>=0?'多了 '+diff:'少了 '+(-diff))+' 克。');
+  var c=el('div','card');c.appendChild(el('h2',null,'等一下！這兩個魚塭，除了飼料，還有哪裡不一樣？'));
+  var w=el('div','tablewrap');var t=el('table');var hr=el('tr');['',a.id+' 魚塭',b.id+' 魚塭','一樣嗎？'].forEach(function(s){hr.appendChild(el('th',null,s))});t.appendChild(hr);
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]),el('td',null,r[2]));var ok=r[1]===r[2];tr.appendChild(el('td',ok?'ok':'bad',ok?'一樣':'不一樣'));t.appendChild(tr)});
+  w.appendChild(t);c.appendChild(w);
+  c.appendChild(el('p','stars','公平分數：'+same+' / 3'));
+  var msg;
+  if(same===3)msg='很公平！兩個魚塭只有飼料不一樣，所以差的重量，比較可能是飼料造成的。';
+  else{var bad=rows.filter(function(r){return r[1]!==r[2]}).map(function(r){return r[0]});msg='不公平。'+bad.join('、')+'也不一樣，所以差的重量，可能不是飼料造成的。'}
+  c.appendChild(el('p','verdict',msg));
+  var again=el('button','btn alt','再挑一次');again.type='button';again.addEventListener('click',function(){choose(null)});
+  app.append(h,res,naive,c,again,history());
+}
+function history(){
+  var c=el('div','card');c.appendChild(el('h2',null,'我的紀錄'));
+  var w=el('div','tablewrap');var t=el('table');var hr=el('tr');['次數','新飼料','舊飼料','差幾克','公平分數'].forEach(function(s){hr.appendChild(el('th',null,s))});t.appendChild(hr);
+  hist.forEach(function(r,i){var tr=el('tr');[('第 '+(i+1)+' 次'),r.a,r.b,(r.d>=0?'+':'')+r.d,r.s+' / 3'].forEach(function(s){tr.appendChild(el('td',null,String(s)))});t.appendChild(tr)});
+  w.appendChild(t);c.appendChild(w);return c;
+}
+intro();
+})();
+</script>

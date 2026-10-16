@@ -1,0 +1,667 @@
+<title>然後呢？骨牌</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro (the tool: ask "then what?" three times, plus "for whom?" and "how long after?") → 3 school rules: the rule sits on domino 1; drag (or tap) 3 of 5–6 consequence cards onto dominoes 2–4 → push: dominoes fall one by one and each step is narrated; an unrelated card or a skipped step makes that domino stick, with a neutral explanation (re-arrange and push again, or see one workable order and move on) → value question (do it / change it / don't) with 3 change directions → build your own chain for a class rule you might propose (no right answer) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:20px;padding-block:22px 40px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h1 svg.i{width:1.1em;height:1.1em;vertical-align:-0.18em;margin-right:10px}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(23px,3vw,27px);font-weight:900;margin:0;line-height:1.45}
+.lead{font-size:clamp(19px,2.6vw,24px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px}
+.case svg.i{width:1.4em;height:1.4em}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn svg.i{width:1.4em;height:1.4em}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;justify-content:flex-start}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.go{background:var(--rust)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.ccard:focus-visible,.tcard:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.btn .sub{display:block;font-size:.8em;font-weight:500;color:var(--muted)}
+.btn.alt .bx{display:flex;flex-direction:column}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.5vw,23px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.row .btn{flex:1 1 260px}
+.muted{color:var(--muted)}
+
+/* ---------- tool intro ---------- */
+.ask{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ask div{background:var(--warm);border-radius:16px;padding:10px;text-align:center;font-size:clamp(20px,2.8vw,26px);font-weight:900;color:var(--rust)}
+.legend{display:flex;flex-direction:column;gap:8px}
+.legend p{margin:0;font-size:clamp(19px,2.4vw,22px);font-weight:700}
+
+/* ---------- chips ---------- */
+.tags{display:flex;flex-wrap:wrap;gap:4px 5px}
+.chip{display:inline-flex;align-items:center;gap:3px;font-size:16px;font-weight:700;border-radius:999px;padding:1px 9px 1px 4px;background:#EEF0EC;color:var(--ink);line-height:1.55;white-space:nowrap}
+.chip svg.i{width:21px;height:21px;vertical-align:0}
+.chip.me{background:#DCE8F0;color:#1B4E70}
+.chip.cls{background:#DDEEDF;color:#1F5C38}
+.chip.tch{background:#F8E0D4;color:#8A3714}
+.chip.par{background:#F6EBD2;color:#6E5210}
+.chip.jun{background:#ECE5F5;color:#4F3B73}
+.chip.when{background:#fff;border:2px solid var(--line);padding-block:0}
+.legend .chip{font-size:18px}
+
+/* ---------- domino board ---------- */
+.board{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:46px 58px 0 6px;overflow:hidden;align-items:stretch}
+.board::after{content:'';grid-column:1/-1;height:10px;border-radius:6px;background:#CFC6AF;margin:0 -58px 4px -6px}
+.tile{position:relative;min-height:236px;border-radius:16px;border:3px solid #CDC5B0;background:var(--card);padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;transform-origin:100% 100%;box-shadow:0 5px 0 #CDC5B0}
+.tile.t0{z-index:4}.tile.t1{z-index:3}.tile.t2{z-index:2}.tile.t3{z-index:1}
+.tile .lab{display:inline-flex;align-self:flex-start;align-items:center;gap:4px;font-size:16px;font-weight:900;color:#fff;background:var(--sea);border-radius:999px;padding:0 10px 0 6px;letter-spacing:1px;white-space:nowrap}
+.tile .lab svg.i{width:18px;height:18px;color:#fff}
+.tile.rule{background:#FBF4E2;border-color:#D9C08A;box-shadow:0 5px 0 #D9C08A}
+.tile.rule .lab{background:var(--rust)}
+.tile .rt{margin:0;font-size:clamp(19px,2.2vw,22px);font-weight:900;line-height:1.45}
+.tile.empty{border-style:dashed;background:rgba(255,255,255,.45);box-shadow:none;border-color:#B9B3A2}
+.tile.empty .lab{background:#8C948F}
+.tile .hint{margin:auto 0;text-align:center;color:var(--muted);font-size:17px;font-weight:700;line-height:1.4}
+.tile.hot{border-color:var(--gold);background:var(--warm);border-style:solid}
+.tcard{font:inherit;color:var(--ink);text-align:left;background:none;border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;flex:1}
+.tcard .ft,.ccard .ft{font-size:clamp(19px,2.1vw,21px);font-weight:900;line-height:1.4}
+.tcard .back{margin-top:auto;font-size:15px;color:var(--muted);font-weight:700}
+.tile.down{transform:rotate(13deg)}
+.tile.down.anim{animation:fall .62s cubic-bezier(.55,.05,.85,.45) both}
+@keyframes fall{0%{transform:rotate(0)}72%{transform:rotate(16deg)}86%{transform:rotate(11.5deg)}100%{transform:rotate(13deg)}}
+.tile.lift .tcard{opacity:.35}
+.tile.jam{z-index:6;border-color:var(--gold);background:var(--warm);box-shadow:0 5px 0 var(--gold)}
+.tile.jam.anim{animation:wob .45s ease-in-out 2}
+@keyframes wob{0%,100%{transform:rotate(0)}30%{transform:rotate(4deg)}65%{transform:rotate(-1.5deg)}}
+.jamtag{position:absolute;right:6px;bottom:6px;display:inline-flex;align-items:center;gap:2px;font-size:15px;font-weight:900;color:#7A5A12;background:#F3D27A;border-radius:999px;padding:0 8px 0 3px}
+.jamtag svg.i{width:20px;height:20px}
+.board.done .tile.t3.down{transform:rotate(13deg)}
+
+/* ---------- card pool ---------- */
+.poolwrap{display:flex;flex-direction:column;gap:8px}
+.pool{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;background:#E2E6DF;border-radius:18px;padding:12px;min-height:96px}
+.pool.hot{background:#D7DED3}
+.pool .empty{grid-column:1/-1;margin:auto;color:var(--muted);font-weight:700}
+.ccard{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:10px 12px;cursor:grab;display:flex;flex-direction:column;gap:7px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 0 var(--line)}
+.ccard:active{transform:scale(.97)}
+.ccard.lift{opacity:.35}
+.ghost{position:fixed;left:0;top:0;width:210px;margin:-30px 0 0 -105px;background:var(--card);border:3px solid var(--gold);border-radius:14px;padding:8px 12px;box-shadow:0 10px 24px rgba(31,42,46,.25);pointer-events:none;z-index:50;font-size:19px;font-weight:900;line-height:1.4;transform:rotate(-3deg)}
+.how{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted)}
+.pushbar{display:flex;flex-direction:column;gap:6px}
+.pushbar .left{margin:0;text-align:center;color:var(--muted);font-weight:700}
+
+/* ---------- narration log ---------- */
+.log{display:flex;flex-direction:column;gap:8px}
+.ln{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 14px;align-items:start}
+.ln .no{grid-row:span 2;display:flex;flex-direction:column;align-items:center;font-weight:900;color:var(--sea);font-size:16px;line-height:1.2;min-width:3.6em;text-align:center}
+.ln .no b{font-size:28px;line-height:1.2}
+.ln p{margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.65}
+.ln .q{display:block;font-weight:900;color:var(--rust)}
+.ln.jam{background:var(--warm);border-color:#E3CF9E}
+.ln.jam .no{color:#7A5A12}
+.pre{display:none!important}
+.fade{animation:fadein .4s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sumline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;font-size:clamp(19px,2.4vw,22px)}
+
+/* ---------- end ---------- */
+.row2{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:clamp(19px,2.5vw,23px);line-height:1.55}
+.row2 .k{color:var(--muted);font-weight:700;white-space:nowrap}
+.row2 .v{font-weight:900}
+.row2 .v .sub{display:block;font-weight:500;color:var(--muted);font-size:.9em}
+.big{font-size:clamp(40px,8vw,64px);font-weight:900;color:var(--rust);line-height:1.1}
+
+@media (max-width:700px){
+  .wrap{padding-inline:16px}
+  .board{grid-template-columns:1fr;gap:10px;padding:4px 4px 6px}
+  .board::after{display:none}
+  .tile{min-height:0;transform-origin:50% 100%;box-shadow:0 4px 0 #CDC5B0}
+  .tile.empty{min-height:84px}
+  .tile .hint{margin:0}
+  .tile.down{transform:perspective(700px) rotateX(36deg)}
+  .tile.down.anim{animation:fallx .6s cubic-bezier(.55,.05,.85,.45) both}
+  @keyframes fallx{0%{transform:perspective(700px) rotateX(0)}72%{transform:perspective(700px) rotateX(44deg)}86%{transform:perspective(700px) rotateX(32deg)}100%{transform:perspective(700px) rotateX(36deg)}}
+  .board.done .tile.t3.down{transform:perspective(700px) rotateX(36deg)}
+  .tile.jam.anim{animation:wobx .45s ease-in-out 2}
+  @keyframes wobx{0%,100%{transform:none}30%{transform:perspective(700px) rotateX(12deg)}65%{transform:perspective(700px) rotateX(-4deg)}}
+  .pool{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px;gap:8px}
+  .ccard{padding:8px 10px}
+  .ask{grid-template-columns:1fr}
+  .ghost{width:180px;margin-left:-90px}
+}
+@media (max-width:440px){
+  .row2{grid-template-columns:1fr;gap:0}
+  .row2 .v{margin-bottom:8px}
+  .chip{font-size:15px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tile.down.anim,.tile.jam.anim,.fade{animation:none}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"domino_tile": "<rect x=\"6.5\" y=\"2.5\" width=\"11\" height=\"19\" rx=\"2.4\" fill=\"#FBF4E2\"/><path d=\"M6.5 12h11\"/><circle cx=\"9.6\" cy=\"5.8\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"14.4\" cy=\"8.8\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"16.8\" r=\"1.1\" fill=\"#C0532C\" stroke=\"none\"/>", "domino_push": "<rect x=\"14.4\" y=\"5\" width=\"6\" height=\"15.8\" rx=\"1.6\" fill=\"#FBF4E2\"/><rect x=\"4.4\" y=\"5\" width=\"6\" height=\"15.8\" rx=\"1.6\" fill=\"#F3D27A\" transform=\"rotate(24 10.4 20.8)\"/><path d=\"M2 20.8h20\"/>", "domino_stuck": "<rect x=\"9\" y=\"3\" width=\"7.4\" height=\"14.6\" rx=\"1.8\" fill=\"#FBF4E2\"/><path d=\"M2.5 20.8h19\"/><path d=\"M5.2 20.8l2.6-4 2.6 4z\" fill=\"#F2B8A0\"/><path d=\"M19 6.4l1.8-1.2M19.6 9.6h2M19 12.8l1.8 1.2\"/>", "domino_me": "<circle cx=\"12\" cy=\"12\" r=\"9.4\" fill=\"#DCE8F0\"/><circle cx=\"12\" cy=\"9.6\" r=\"3.2\" fill=\"#FBFCF9\"/><path d=\"M6.4 18.6a6.4 5 0 0 1 11.2 0\" fill=\"#FBFCF9\"/>", "domino_class": "<circle cx=\"7.6\" cy=\"8.2\" r=\"2.9\" fill=\"#CFE3C4\"/><circle cx=\"16.4\" cy=\"8.2\" r=\"2.9\" fill=\"#CFE3C4\"/><path d=\"M2.6 19.6a5 5 0 0 1 10 0z\" fill=\"#CFE3C4\"/><path d=\"M11.4 19.6a5 5 0 0 1 10 0z\" fill=\"#CFE3C4\"/>", "domino_teacher": "<rect x=\"2.4\" y=\"3.4\" width=\"11.6\" height=\"8.4\" rx=\"1.2\" fill=\"#CFE3C4\"/><path d=\"M4.8 6.4h4.6M4.8 9h2.8\"/><circle cx=\"17.6\" cy=\"8.6\" r=\"2.8\" fill=\"#F2B8A0\"/><path d=\"M12.6 20.6a5 5 0 0 1 10 0z\" fill=\"#F2B8A0\"/><path d=\"M14.8 14.4l-4.2-3.2\"/>", "domino_parent": "<circle cx=\"8.2\" cy=\"5.4\" r=\"2.8\" fill=\"#F3E3BE\"/><path d=\"M4.4 21v-7.4a3.8 3.8 0 0 1 7.6 0V21\" fill=\"#F3E3BE\"/><circle cx=\"17\" cy=\"11\" r=\"2.2\" fill=\"#FBF4E2\"/><path d=\"M14.2 21v-4.2a2.8 2.8 0 0 1 5.6 0V21\" fill=\"#FBF4E2\"/><path d=\"M12 15.6l2.2 1.4\"/>", "domino_junior": "<circle cx=\"9.6\" cy=\"9.6\" r=\"2.8\" fill=\"#E6DDF2\"/><path d=\"M5.2 21v-3.8a4.4 4.4 0 0 1 8.8 0V21\" fill=\"#E6DDF2\"/><path d=\"M15.4 6.2h5.4M18.4 3.6l2.6 2.6-2.6 2.6\"/>", "domino_today": "<circle cx=\"12\" cy=\"12\" r=\"4.4\" fill=\"#F3D27A\"/><path d=\"M12 2.6v2.4M12 19v2.4M2.6 12H5M19 12h2.4M5.4 5.4l1.7 1.7M16.9 16.9l1.7 1.7M18.6 5.4l-1.7 1.7M7.1 16.9l-1.7 1.7\"/>", "domino_month": "<rect x=\"3.4\" y=\"4.6\" width=\"17.2\" height=\"16\" rx=\"2.2\" fill=\"#FBFCF9\"/><path d=\"M3.4 9.4h17.2V6.8a2.2 2.2 0 0 0-2.2-2.2H5.6a2.2 2.2 0 0 0-2.2 2.2z\" fill=\"#DCE8F0\"/><path d=\"M8 2.8v3.4M16 2.8v3.4\"/><path d=\"M7 13h2M11 13h2M15 13h2M7 16.6h2M11 16.6h2\"/><rect x=\"14.6\" y=\"15.4\" width=\"3\" height=\"2.6\" rx=\".6\" fill=\"#F2B8A0\"/>", "domino_year": "<path d=\"M12 21.2v-7.4\"/><path d=\"M12 16.4l-3-2.2M12 15l2.8-2\"/><circle cx=\"12\" cy=\"9.2\" r=\"6.6\" fill=\"#CFE3C4\"/><path d=\"M9.2 8.4a3 3 0 0 1 2.6-2.4\"/><path d=\"M6 21.2h12\"/>", "undo": "<path d=\"M4 4.5v5h5\"/><path d=\"M4.8 9.5A8 8 0 1 1 4 13.5\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='domino-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var REDUCE=false;try{REDUCE=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+var STEP_MS=REDUCE?250:1150;
+var timers=[];function clearTimers(){timers.forEach(clearTimeout);timers=[]}
+function later(fn,ms){timers.push(setTimeout(fn,ms))}
+
+var WHO={me:['自己','domino_me'],cls:['同學','domino_class'],tch:['老師','domino_teacher'],par:['家長','domino_parent'],jun:['以後的學弟妹','domino_junior']};
+var WHO_ORDER=['me','cls','tch','par','jun'];
+var WHEN={d:['今天','domino_today'],m:['一個月後','domino_month'],y:['一年後','domino_year']};
+var WHEN_ORDER=['d','m','y'];
+var NUM=['一','二','三','四'];
+
+/* ---------- three school rules ---------- */
+var LV=[
+{name:'下課一律留在教室',
+ story:'五年13班那一層樓的走廊，每到下課就很吵，常常有人在走廊上奔跑，有一次還差一點撞倒搬作業的同學。學校想了一個辦法，公布了一條新規定。',
+ rule:'為了讓走廊安靜，下課一律留在教室。',
+ cards:{
+  x1:{t:'營養午餐多了一道甜湯',who:['cls'],w:'d',lv:0,from:[],why:'午餐多一道甜湯，是廚房原本排好的菜單，和下課待在哪裡沒有關係。'},
+  h2:{t:'下課沒地方動，上課反而坐不住',who:['me','tch'],w:'m',lv:2,from:['h1'],say:'可是大家整天都坐在教室裡，身體一直沒有動到。過了一個月，上課時有人扭來扭去、一直分心，老師得花更多時間提醒大家。'},
+  h1:{t:'走廊一下子變安靜了',who:['cls','tch'],w:'d',lv:1,from:['R'],say:'規定開始的第一天，下課時走廊上一個奔跑的人都沒有，搬作業的同學終於可以放心走過去。這一步，規定真的有效。'},
+  x2:{t:'操場的跑道重新畫了白線',who:['jun'],w:'m',lv:0,from:[],why:'重新畫跑道是學校原本就排好的工程，就算沒有這條規定，也一樣會畫。'},
+  h3:{t:'一年下來，大家越來越不愛動',who:['me','par'],w:'y',lv:3,from:['h2'],say:'一年過去，很多人習慣了下課就坐著聊天、發呆，體育課跑兩圈就喘。家長也發現，孩子放假時更不想出門了。'}
+ },
+ order:['x1','h2','h1','x2','h3'],ref:['h1','h2','h3'],
+ val:{go:'作用：走廊馬上安靜下來，很少有人撞到人。代價：大家沒有地方活動，後面那兩張骨牌也會跟著倒下。',
+      no:'作用：大家下課還能自由活動。代價：走廊又吵、又容易撞到人的問題還在，需要再想別的辦法。'},
+ mods:[['把「一律」改成「雨天」','只有下雨、走廊濕滑的時候，才留在教室。','晴天大家還是能出去跑跳，下雨天才留下來；代價是雨天的教室還是會比較擠、比較吵。'],
+       ['改成「走廊用走的，操場可以跑」','不限制大家去哪裡，只限制在哪裡可以跑。','大家還能活動，走廊也比較安全；代價是需要有人提醒，剛開始大家可能不太習慣。'],
+       ['改成各班輪流','每一節下課，一半的班級去操場，另一半留在教室。','走廊不會那麼擠，大家也都還有機會活動；代價是要排輪流表，有時輪到的那一節剛好下雨。']]},
+{name:'心得寫滿三行就加分',
+ story:'學校希望大家讀完書以後，多寫一寫閱讀心得，可是願意動筆寫的人一直不多。學校想了一個辦法，公布了一條新規定。',
+ rule:'為了讓大家多寫心得，閱讀心得只要寫滿三行就加分。',
+ cards:{
+  r2:{t:'老師的桌上堆滿心得，改不完',who:['tch'],w:'m',lv:2,from:['r1'],say:'每一張心得，老師都要讀完、寫評語。過了一個月，老師桌上的心得堆成好幾疊，下課和午休都在改，還是改不完。'},
+  x1:{t:'圖書館新買了一批恐龍百科',who:['cls'],w:'d',lv:0,from:[],why:'圖書館買新書是學校原本就有的採購，就算沒有加分規定，也一樣會買。'},
+  r3:{t:'心得很久才發回來，寫的人又變少',who:['me'],w:'y',lv:3,from:['r2'],say:'心得要等好幾個星期才發回來，評語常常只剩「很好」兩個字。大家不知道自己哪裡寫得好、哪裡可以更好；到了第二年，願意寫的人又慢慢變少了。'},
+  r1:{t:'交心得的人一下子變多了',who:['cls'],w:'d',lv:1,from:['R'],say:'規定一公布，五年13班這個星期交來的心得，就比以前多了好幾倍。這一步，規定真的有效。'},
+  x2:{t:'學弟妹的書包變得比較重',who:['jun'],w:'m',lv:0,from:[],why:'學弟妹的書包重不重，要看他們每天帶哪些課本，和五年級的心得加分沒有關係。'},
+  r3b:{t:'老師沒時間準備好玩的閱讀課',who:['tch','cls'],w:'m',lv:3,from:['r2'],say:'老師把下課和午休都拿來改心得，原本想帶大家玩的「好書推薦大會」，一直沒有時間準備，只好先暫停。'}
+ },
+ order:['r2','x1','r3','r1','x2','r3b'],ref:['r1','r2','r3'],
+ val:{go:'作用：馬上有很多人動筆寫心得。代價：老師的時間就那麼多，寫的人越多，每一張得到的回饋就越少、越慢。',
+      no:'作用：老師的時間可以留給原本的上課和回饋。代價：想用加分鼓勵大家動筆寫心得的那一步，也跟著沒有了。'},
+ mods:[['改成每個月交一篇','每個月只交一篇最想給老師看的心得。','老師有時間好好回覆每一個人；代價是交出來的張數變少了。'],
+       ['改成同學兩兩交換讀','寫完先和同學交換讀，再寫一句話回饋給對方。','回饋來得比較快，老師也不會被心得淹沒；代價是同學的回饋，不一定像老師那麼仔細。'],
+       ['改成用說的','不用寫，每個月在小組裡說一本書給大家聽。','老師不用改一大疊心得，大家當場就聽到別人的反應；代價是說完就沒有留下紀錄。']]},
+{name:'剩菜的班級被廣播點名',
+ story:'學校發現，每天午餐後都有好幾桶剩菜被倒掉，覺得很可惜。學校想了一個辦法，公布了一條新規定。',
+ rule:'為了不浪費，營養午餐剩菜的班級，要被廣播點名。',
+ cards:{
+  f3:{t:'學弟妹還沒升上來，就怕吃午餐',who:['jun'],w:'y',lv:3,from:['f2'],say:'一年後，四年級的學弟妹聽說「五年級吃不完會被廣播」，還沒升上來就開始擔心。午餐本來是開心的時間，現在變成最緊張的時候。'},
+  x1:{t:'學校的蒸飯箱換成新的了',who:['tch'],w:'d',lv:0,from:[],why:'換蒸飯箱是學校原本就排好的事，和剩菜廣播沒有關係。'},
+  f1:{t:'各班的剩菜桶一下子變輕了',who:['cls'],w:'d',lv:1,from:['R'],say:'廣播開始的第一個星期，每一班都很怕被點名，剩菜桶真的變輕了。這一步，規定真的有效。'},
+  f3b:{t:'老師整個午餐時間都在盯大家吃飯',who:['tch'],w:'m',lv:3,from:['f2'],say:'老師為了不讓班上被點名，整個午餐時間都在教室裡走來走去，看誰的碗還沒吃完，自己的飯常常涼了才吃。'},
+  x2:{t:'運動會的進場音樂換了一首歌',who:['cls'],w:'m',lv:0,from:[],why:'運動會的進場音樂是負責的老師挑的，和午餐剩菜沒有關係。'},
+  f2:{t:'吃不完的人被催著硬吃，或把菜偷偷藏起來',who:['cls','par'],w:'m',lv:2,from:['f1'],say:'可是每個人的食量不一樣。吃不完的同學被班上催著硬塞，有人回家說肚子不舒服，家長打電話來問；也有人把菜偷偷倒進別的袋子，剩菜其實沒有變少，只是看不到了。'}
+ },
+ order:['f3','x1','f1','f3b','x2','f2'],ref:['f1','f2','f3'],
+ val:{go:'作用：剩菜桶很快就變輕了。代價：吃不下的同學壓力變大，有些剩菜可能只是被藏起來，看不到而已。',
+      no:'作用：午餐不會變成一件有壓力的事。代價：每天倒掉好幾桶剩菜的問題還在，需要再想別的辦法。'},
+ mods:[['改成自己決定盛多少','每個人先盛少一點，吃完了再去添。','一開始就盛自己吃得下的量，剩菜自然變少；代價是添飯要排隊，午餐時間可能會拉長。'],
+       ['廣播時不點班級的名字','只說「全校今天一共剩下幾桶」。','大家知道結果，又不會有哪一班被盯著看；代價是每一班都可能覺得「不是我們」，比較不想改。'],
+       ['改成請剩最少的班級分享','不點名剩最多的班，而是請剩最少的班說說他們怎麼做到的。','大家可以學到真的用得上的方法；代價是剩很多的班級，可能還是不知道自己的問題在哪裡。']]}
+];
+var CH={go:'照做',mod:'改一改再做',no:'不要做'};
+
+/* ---------- your own class rule ---------- */
+var OWN=[
+{rule:'為了讓教室乾淨，每天最後一個離開教室的人要負責掃地。',short:'最後離開的人掃地',cards:[
+ ['放學時大家收拾得特別快',['cls'],'d'],
+ ['教室的地板真的比較乾淨了',['tch'],'d'],
+ ['最後幾分鐘，大家搶著衝出教室',['cls'],'d'],
+ ['動作比較慢的同學，常常被留下來掃地',['cls'],'m'],
+ ['有人覺得不公平，回家跟爸媽抱怨',['par'],'m'],
+ ['大家記得的是「別當最後一個」，不是「把教室弄乾淨」',['me'],'y'],
+ ['學弟妹接手教室時，發現櫃子裡塞滿東西',['jun'],'y']]},
+{rule:'為了讓大家準時，上課鐘響後才進教室的人，要幫全班擦黑板一星期。',short:'晚進教室的人擦黑板',cards:[
+ ['鐘響前，大家都提早回到教室',['cls'],'d'],
+ ['黑板天天有人擦，變得好乾淨',['tch'],'d'],
+ ['有人為了趕上鐘聲，在走廊上奔跑',['me'],'d'],
+ ['去保健室回來晚了，也被罰擦黑板',['me'],'m'],
+ ['擦黑板變成一種處罰，沒有人想當值日生',['cls'],'m'],
+ ['學弟妹聽說擦黑板是處罰，看到值日生就笑',['jun'],'y']]},
+{rule:'為了讓分組更公平，每次分組都用抽籤決定。',short:'分組都用抽籤',cards:[
+ ['沒有人再為了分組吵架',['cls'],'d'],
+ ['好朋友常常被分開',['me'],'d'],
+ ['每次都要花時間重新認識組員',['cls'],'m'],
+ ['老師不用再處理分組的抱怨',['tch'],'m'],
+ ['家長聽孩子說，交到了新朋友',['par'],'m'],
+ ['一年下來，班上每個人都和更多人合作過',['me','cls'],'y']]}
+];
+
+/* ---------- state ---------- */
+function freshLv(){return {slots:[null,null,null],ph:'arr',jam:-1,push:0,first:null,ref:false,ch:null,mod:null}}
+function fresh(){return {step:0,lv:[freshLv(),freshLv(),freshLv()],own:{p:null,slots:[null,null,null],ph:'pick'}}}
+var st=load();
+if(!st||!st.lv||st.lv.length!==3||!st.own)st=fresh();
+function go(n){clearTimers();st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* ---------- helpers ---------- */
+function chips(who,w){
+  var s='';who.forEach(function(k){s+='<span class="chip '+k+'">'+ic(WHO[k][1])+WHO[k][0]+'</span>'});
+  if(w)s+='<span class="chip when">'+ic(WHEN[w][1])+WHEN[w][0]+'</span>';
+  return '<span class="tags">'+s+'</span>';
+}
+function getCard(ctx,id){
+  if(ctx.own){var c=OWN[st.own.p].cards[+id];return {t:c[0],who:c[1],w:c[2]}}
+  return LV[ctx.i].cards[id];
+}
+function ctxState(ctx){return ctx.own?st.own:st.lv[ctx.i]}
+function ruleText(ctx){return ctx.own?OWN[st.own.p].rule:LV[ctx.i].rule}
+function poolIds(ctx){
+  var ids=ctx.own?OWN[st.own.p].cards.map(function(c,k){return String(k)}):LV[ctx.i].order;
+  var S=ctxState(ctx);
+  return ids.filter(function(id){return S.slots.indexOf(id)<0});
+}
+function judge(i,slots){
+  var L=LV[i];
+  for(var k=0;k<3;k++){
+    var prev=k===0?'R':slots[k-1],c=L.cards[slots[k]];
+    if(c.from.indexOf(prev)<0)return k;
+  }
+  return -1;
+}
+function jamText(i,slots,k){
+  var L=LV[i],c=L.cards[slots[k]],need=k+1;
+  var prevT=k===0?'規定本身':'「'+L.cards[slots[k-1]].t+'」';
+  if(c.lv===0)return c.why+'所以前一張骨牌推不到它，它就卡住了。可以把它換成別張卡。';
+  if(c.lv>need)return '「'+c.t+'」是真的可能發生的事，可是它離前一張太遠了：從'+prevT+'直接跳到這裡，中間還少了一步。想一想：在這之前，會先發生什麼事？';
+  if(c.lv<need)return '「'+c.t+'」比較像更早就會發生的事。放在這個位置，前後的順序接不起來，可以試著把它往前移。';
+  return '「'+c.t+'」是從另一件事推出來的，和'+prevT+'接不起來。可以換一張試試看。';
+}
+function collectWho(){
+  var cnt={};WHO_ORDER.forEach(function(k){cnt[k]=0});
+  st.lv.forEach(function(S,i){if(S.ph!=='done')return;S.slots.forEach(function(id){if(id==null)return;LV[i].cards[id].who.forEach(function(w){cnt[w]++})})});
+  if(st.own.ph==='done'&&st.own.p!=null)st.own.slots.forEach(function(id){if(id==null)return;OWN[st.own.p].cards[+id][1].forEach(function(w){cnt[w]++})});
+  return cnt;
+}
+
+/* ---------- render ---------- */
+function render(){
+  clearTimers();
+  if(st.step===0)intro();
+  else if(st.step>=1&&st.step<=3)level(st.step-1,false);
+  else if(st.step===4)own(false);
+  else end();
+}
+
+function intro(){
+  app.innerHTML='';
+  app.appendChild(el('h1',null,ic('domino_tile')+'然後呢？骨牌'));
+  var c=el('div','card');
+  c.appendChild(el('p','lead','有些辦法「眼前有效」，可是後來不一定好。就像推骨牌：第一張倒下以後，後面還會一張接一張地倒。'));
+  c.appendChild(el('p','lead','做決定以前，可以先連問三次：'));
+  var a=el('div','ask');a.innerHTML='<div>然後呢？</div><div>然後呢？</div><div>然後呢？</div>';c.appendChild(a);
+  c.appendChild(el('p','lead','每一張骨牌，再多問兩件事：<b>這會影響到誰？</b>　<b>多久以後會發生？</b>'));
+  var lg=el('div','legend');
+  lg.appendChild(el('p',null,'影響到誰：'+chips(WHO_ORDER,null)));
+  lg.appendChild(el('p',null,'多久以後：<span class="tags"><span class="chip when">'+ic('domino_today')+'今天</span><span class="chip when">'+ic('domino_month')+'一個月後</span><span class="chip when">'+ic('domino_year')+'一年後</span></span>'));
+  c.appendChild(lg);
+  app.appendChild(c);
+  app.appendChild(el('p','lead','接下來有 <b>3 條校園新規定</b>。每一條都放在第 1 張骨牌上，你要把後果卡排到第 2、3、4 張骨牌的位置，再把它推倒。最後，你也可以自己排一條。'));
+  app.appendChild(button(ic('domino_push')+'開始排骨牌','btn',function(){go(1)}));
+}
+
+/* board: 4 tiles; returns element with .tiles array */
+function buildBoard(ctx,S,mode){
+  var b=el('div','board');b.tiles=[];
+  var t0=el('div','tile rule t0');
+  t0.appendChild(el('span','lab',ic('domino_tile')+'第 1 張・'+(ctx.own?'我的班規':'新規定')));
+  t0.appendChild(el('p','rt',ruleText(ctx)));
+  b.appendChild(t0);b.tiles.push(t0);
+  for(var k=0;k<3;k++){
+    var id=S.slots[k];
+    var t=el('div','tile t'+(k+1)+(id==null?' empty':''));t.setAttribute('data-slot',k);
+    t.appendChild(el('span','lab',ic('domino_tile')+'第 '+(k+2)+' 張'));
+    if(id==null){t.appendChild(el('p','hint','把一張卡片放到這裡'))}
+    else{
+      var c=getCard(ctx,id);
+      var tc=el('button','tcard','<span class="ft">'+c.t+'</span>'+chips(c.who,c.w)+(mode==='arr'?'<span class="back">點一下可以拿回去</span>':''));
+      tc.type='button';tc.setAttribute('data-id',id);
+      if(mode!=='arr'){tc.disabled=true;tc.style.cursor='default'}
+      t.appendChild(tc);
+    }
+    b.appendChild(t);b.tiles.push(t);
+  }
+  return b;
+}
+
+/* drag & tap for the arranging phase */
+function wireArrange(ctx,board,pool,rerender){
+  var S=ctxState(ctx);
+  function placeAt(id,k){
+    var j=S.slots.indexOf(id);
+    if(j>=0){var tmp=S.slots[k];S.slots[k]=id;S.slots[j]=tmp}
+    else S.slots[k]=id;
+    save(st);rerender();
+  }
+  function removeId(id){var j=S.slots.indexOf(id);if(j>=0){S.slots[j]=null;save(st);rerender()}}
+  function tap(id,fromSlot){
+    if(fromSlot){removeId(id);return}
+    var k=S.slots.indexOf(null);
+    if(k<0){flashFull();return}
+    placeAt(id,k);
+  }
+  var fullT=null;
+  function flashFull(){var h=document.getElementById('fullhint');if(h){h.classList.remove('pre');h.classList.remove('fade');void h.offsetWidth;h.classList.add('fade');clearTimeout(fullT);fullT=setTimeout(function(){h.classList.add('pre')},3500)}}
+  function slotAt(x,y){
+    for(var k=0;k<3;k++){var r=board.tiles[k+1].getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return k}
+    return -1;
+  }
+  function overPool(x,y){var r=pool.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+  function attach(node,id,fromSlot){
+    var sx=0,sy=0,down=false,drag=false,ghost=null,pid=null,suppress=false;
+    node.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='mouse'&&e.button!==0)return;
+      down=true;drag=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
+      try{node.setPointerCapture(pid)}catch(er){}
+    });
+    node.addEventListener('pointermove',function(e){
+      if(!down||e.pointerId!==pid)return;
+      var dx=e.clientX-sx,dy=e.clientY-sy;
+      if(!drag&&dx*dx+dy*dy>64){
+        drag=true;ghost=el('div','ghost',getCard(ctx,id).t);document.body.appendChild(ghost);
+        (fromSlot?node.closest('.tile'):node).classList.add('lift');
+      }
+      if(drag){
+        e.preventDefault();
+        ghost.style.transform='translate('+e.clientX+'px,'+e.clientY+'px) rotate(-3deg)';
+        var k=slotAt(e.clientX,e.clientY);
+        board.tiles.forEach(function(t,j){t.classList.toggle('hot',j===k+1&&k>=0)});
+        pool.classList.toggle('hot',fromSlot&&overPool(e.clientX,e.clientY));
+      }
+    });
+    function fin(e,cancel){
+      if(!down||e.pointerId!==pid)return;down=false;
+      try{node.releasePointerCapture(pid)}catch(er){}
+      if(drag){
+        suppress=true;setTimeout(function(){suppress=false},400);
+        if(ghost){ghost.remove();ghost=null}
+        board.tiles.forEach(function(t){t.classList.remove('hot')});pool.classList.remove('hot');
+        (fromSlot?node.closest('.tile'):node).classList.remove('lift');
+        if(cancel){drag=false;return}
+        var k=slotAt(e.clientX,e.clientY);
+        if(k>=0)placeAt(id,k);
+        else if(fromSlot)removeId(id);
+      }
+      drag=false;
+    }
+    node.addEventListener('pointerup',function(e){fin(e,false)});
+    node.addEventListener('pointercancel',function(e){fin(e,true)});
+    node.addEventListener('click',function(){if(suppress){suppress=false;return}tap(id,fromSlot)});
+  }
+  board.querySelectorAll('.tcard').forEach(function(n){attach(n,n.getAttribute('data-id'),true)});
+  pool.querySelectorAll('.ccard').forEach(function(n){attach(n,n.getAttribute('data-id'),false)});
+}
+
+function buildPool(ctx){
+  var wrap=el('div','poolwrap');
+  var pool=el('div','pool');
+  var ids=poolIds(ctx);
+  ids.forEach(function(id){
+    var c=getCard(ctx,id);
+    var b=el('button','ccard','<span class="ft">'+c.t+'</span>'+chips(c.who,c.w));b.type='button';b.setAttribute('data-id',id);
+    pool.appendChild(b);
+  });
+  if(!ids.length)pool.appendChild(el('p','empty','卡片都排上去了。'));
+  wrap.appendChild(pool);
+  wrap.pool=pool;
+  return wrap;
+}
+
+/* the narration lines */
+function lineEl(no,qtxt,body,cls){
+  var d=el('div','ln'+(cls?' '+cls:''));
+  d.appendChild(el('div','no','第<b>'+no+'</b>張'));
+  d.appendChild(el('p',null,(qtxt?'<span class="q">'+qtxt+'</span>':'')+body));
+  return d;
+}
+
+function whoSummary(ctx,slots){
+  var seen=[],maxW=0;
+  slots.forEach(function(id){var c=getCard(ctx,id);c.who.forEach(function(w){if(seen.indexOf(w)<0)seen.push(w)});maxW=Math.max(maxW,WHEN_ORDER.indexOf(c.w))});
+  seen.sort(function(a,b){return WHO_ORDER.indexOf(a)-WHO_ORDER.indexOf(b)});
+  var d=el('div','note');
+  d.appendChild(el('p','sumline','<b>對誰？</b>這條連鎖碰到了：'+chips(seen,null)));
+  d.appendChild(el('p','sumline','<b>多久以後？</b>從今天，一路倒到：'+chips([],WHEN_ORDER[maxW])));
+  return d;
+}
+
+/* ---------- one level ---------- */
+function level(i,anim){
+  clearTimers();
+  var L=LV[i],S=st.lv[i],ctx={i:i};
+  app.innerHTML='';
+  app.appendChild(el('p','case',ic('domino_tile')+'第 '+(i+1)+' 條規定，共 3 條'));
+  app.appendChild(el('p','lead',L.story));
+  var board=buildBoard(ctx,S,S.ph);
+  if(S.ph==='arr'){
+    app.appendChild(el('p','how','把下面的卡片拖到第 2、3、4 張骨牌上，排出「然後呢？」的順序。也可以點一下卡片，它會自己排進下一個空位。卡片不一定都要用到。'));
+    app.appendChild(board);
+    var pw=buildPool(ctx);app.appendChild(pw);
+    var full=el('p','note warm pre','三個位置都放滿了。想換卡片，先點一下骨牌上的卡，把它拿回去。');full.id='fullhint';app.appendChild(full);
+    var left=S.slots.filter(function(x){return x==null}).length;
+    var bar=el('div','pushbar');
+    var pb=button(ic('domino_push')+(S.push?'再推一次':'推倒第一張'),'btn go',function(){push(i)});pb.disabled=left>0;
+    bar.appendChild(pb);
+    bar.appendChild(el('p','left',left>0?'還有 '+left+' 張骨牌是空的。':'排好了！按下去，看骨牌怎麼倒。'));
+    app.appendChild(bar);
+    wireArrange(ctx,board,pw.pool,function(){level(i,false)});
+    return;
+  }
+  app.appendChild(board);
+  var log=el('div','log');app.appendChild(log);
+  var lastFall=S.ph==='jam'?S.jam:2;
+  var seq=[];
+  // tile 0 always falls
+  seq.push({tile:0});
+  if(S.ref)log.appendChild(el('p','note','這是一種排得通的排法。你也可以和同學比一比，你原本的排法和它差在哪裡。'));
+  for(var k=0;k<=lastFall;k++){
+    var c=L.cards[S.slots[k]];
+    if(S.ph==='jam'&&k===S.jam){
+      var jl=lineEl(k+2,null,'<b>這張骨牌卡住了，沒有倒下。</b><br>'+jamText(i,S.slots,k),'jam');
+      log.appendChild(jl);seq.push({tile:k+1,jam:true,line:jl});
+    }else{
+      var ln=lineEl(k+2,'然後呢？',c.say+'<br>'+chips(c.who,c.w));
+      log.appendChild(ln);seq.push({tile:k+1,line:ln});
+    }
+  }
+  var after=el('div','opts');app.appendChild(after);
+  if(S.ph==='jam'){
+    after.appendChild(el('p','note','卡住沒有關係，這不會扣分。你可以調整卡片再推一次，也可以先看一種排得通的排法，再往下走。'));
+    var row=el('div','row');
+    row.appendChild(button(ic('undo')+'調整後再推一次','btn',function(){S.ph='arr';S.jam=-1;save(st);level(i,false);scrollToBoard()}));
+    row.appendChild(button('看一種排得通的排法，往下','btn soft',function(){S.slots=L.ref.slice();S.ref=true;S.ph='done';S.jam=-1;save(st);level(i,true);scrollToBoard()}));
+    after.appendChild(row);
+  }else{
+    after.appendChild(whoSummary(ctx,S.slots));
+    valueBlock(i,after);
+  }
+  board.classList.toggle('done',S.ph==='done');
+  // static: everything fallen; animated: reveal in order
+  seq.forEach(function(s){if(s.jam)board.tiles[s.tile].classList.add('jam');else board.tiles[s.tile].classList.add('down')});
+  if(S.ph==='jam')board.tiles[S.jam+1].appendChild(el('span','jamtag',ic('domino_stuck')+'卡住了'));
+  if(anim){
+    seq.forEach(function(s){board.tiles[s.tile].classList.remove('down','jam');if(s.line)s.line.classList.add('pre')});
+    var jt=board.querySelector('.jamtag');if(jt)jt.classList.add('pre');
+    after.classList.add('pre');
+    seq.forEach(function(s,n){
+      later(function(){
+        var t=board.tiles[s.tile];
+        t.classList.add(s.jam?'jam':'down','anim');
+        if(s.jam&&jt)jt.classList.remove('pre');
+        if(s.line){s.line.classList.remove('pre');s.line.classList.add('fade');keepVisible(s.line)}
+      },250+n*STEP_MS);
+    });
+    later(function(){after.classList.remove('pre');after.classList.add('fade')},250+seq.length*STEP_MS-300);
+    later(function(){board.tiles.forEach(function(t){t.classList.remove('anim')})},250+seq.length*STEP_MS+100);
+  }
+}
+function keepVisible(node){
+  try{var r=node.getBoundingClientRect();if(r.bottom>window.innerHeight-10)node.scrollIntoView({behavior:REDUCE?'auto':'smooth',block:'end'})}catch(e){}
+}
+function scrollToBoard(){try{var b=app.querySelector('.board');if(b)b.scrollIntoView({behavior:'auto',block:'start'})}catch(e){}}
+
+function push(i){
+  var S=st.lv[i];
+  if(S.slots.indexOf(null)>=0)return;
+  var j=judge(i,S.slots);
+  S.push++;if(S.first===null)S.first=(j<0);
+  S.jam=j;S.ph=j<0?'done':'jam';S.ref=false;
+  save(st);level(i,true);scrollToBoard();
+}
+
+function valueBlock(i,box){
+  var L=LV[i],S=st.lv[i];
+  box.appendChild(el('h3',null,'看完這一串骨牌，如果由你來決定，這條規定你會：'));
+  box.appendChild(el('p','how','這一題沒有標準答案，選你真的會怎麼做。'));
+  var o=el('div','opts');
+  ['go','mod','no'].forEach(function(k){
+    var b=button(CH[k],'btn alt'+(S.ch===k?' pick':''),function(){S.ch=k;if(k!=='mod')S.mod=null;save(st);level(i,false);var v=document.getElementById('valfoot');if(v)v.scrollIntoView({block:'nearest'})});
+    o.appendChild(b);
+  });
+  box.appendChild(o);
+  var foot=el('div','opts');foot.id='valfoot';box.appendChild(foot);
+  if(!S.ch)return;
+  if(S.ch==='mod'){
+    foot.appendChild(el('h3',null,'你想怎麼改？選一個方向：'));
+    var m=el('div','opts');
+    L.mods.forEach(function(md,k){
+      m.appendChild(button('<span class="bx"><span>'+md[0]+'</span><span class="sub">'+md[1]+'</span></span>','btn alt'+(S.mod===k?' pick':''),function(){S.mod=k;save(st);level(i,false);var v=document.getElementById('nextbtn');if(v)v.scrollIntoView({block:'nearest'})}));
+    });
+    foot.appendChild(m);
+    if(S.mod==null)return;
+    foot.appendChild(el('p','note',L.mods[S.mod][2]));
+  }else{
+    foot.appendChild(el('p','note',L.val[S.ch]));
+  }
+  var nb=button((i<2?'下一條規定':'換你自己排一條')+ic('chev'),'btn',function(){go(st.step+1)});nb.id='nextbtn';
+  foot.appendChild(nb);
+}
+
+/* ---------- your own chain ---------- */
+function own(anim){
+  clearTimers();
+  var O=st.own,ctx={own:true};
+  app.innerHTML='';
+  app.appendChild(el('p','case',ic('domino_tile')+'換你自己排'));
+  if(O.ph==='pick'||O.p==null){
+    app.appendChild(el('h2',null,'假如你要在班會上提一條新班規，你想提哪一條？'));
+    app.appendChild(el('p','lead','選好以後，從卡片庫挑三張卡，排一條你自己的「然後呢？」連鎖。這一頁沒有對錯，排你真的覺得會發生的事。'));
+    var o=el('div','opts');
+    OWN.forEach(function(P,k){o.appendChild(button(P.rule,'btn alt',function(){O.p=k;O.slots=[null,null,null];O.ph='arr';save(st);own(false)}))});
+    app.appendChild(o);
+    return;
+  }
+  var board=buildBoard(ctx,O,O.ph);
+  if(O.ph==='arr'){
+    app.appendChild(el('p','how','從下面的卡片庫挑三張，拖到第 2、3、4 張骨牌上（也可以點一下）。想一想：第一步會發生什麼？然後呢？再然後呢？'));
+    app.appendChild(board);
+    var pw=buildPool(ctx);app.appendChild(pw);
+    var full=el('p','note warm pre','三個位置都放滿了。想換卡片，先點一下骨牌上的卡，把它拿回去。');full.id='fullhint';app.appendChild(full);
+    var left=O.slots.filter(function(x){return x==null}).length;
+    var bar=el('div','pushbar');
+    var pb=button(ic('domino_push')+'推倒我的骨牌','btn go',function(){if(O.slots.indexOf(null)>=0)return;O.ph='done';save(st);own(true);scrollToBoard()});pb.disabled=left>0;
+    bar.appendChild(pb);
+    bar.appendChild(el('p','left',left>0?'還有 '+left+' 張骨牌是空的。':'排好了！按下去，看你的骨牌怎麼倒。'));
+    app.appendChild(bar);
+    app.appendChild(button('換一條班規','btn soft',function(){O.ph='pick';O.p=null;O.slots=[null,null,null];save(st);own(false)}));
+    wireArrange(ctx,board,pw.pool,function(){own(false)});
+    return;
+  }
+  app.appendChild(board);
+  board.classList.add('done');
+  var log=el('div','log');app.appendChild(log);
+  var seq=[{tile:0}];
+  O.slots.forEach(function(id,k){
+    var c=getCard(ctx,id);
+    var ln=lineEl(k+2,'然後呢？',c.t+'<br>'+chips(c.who,c.w));log.appendChild(ln);seq.push({tile:k+1,line:ln});
+  });
+  var after=el('div','opts');app.appendChild(after);
+  after.appendChild(whoSummary(ctx,O.slots));
+  after.appendChild(el('p','note warm','這條連鎖沒有標準答案。等一下老師可能會請你說說看：你的第 4 張骨牌是什麼？為什麼會倒到那裡？如果要提這條班規，你會怎麼改，讓第 3、4 張不要倒得那麼快？'));
+  var row=el('div','row');
+  row.appendChild(button(ic('undo')+'重新排一次','btn soft',function(){O.ph='arr';save(st);own(false)}));
+  row.appendChild(button('完成，看我的整理'+ic('chev'),'btn',function(){go(5)}));
+  after.appendChild(row);
+  seq.forEach(function(s){board.tiles[s.tile].classList.add('down')});
+  if(anim){
+    seq.forEach(function(s){board.tiles[s.tile].classList.remove('down');if(s.line)s.line.classList.add('pre')});
+    after.classList.add('pre');
+    seq.forEach(function(s,n){later(function(){board.tiles[s.tile].classList.add('down','anim');if(s.line){s.line.classList.remove('pre');s.line.classList.add('fade');keepVisible(s.line)}},250+n*STEP_MS)});
+    later(function(){after.classList.remove('pre');after.classList.add('fade')},250+seq.length*STEP_MS-300);
+    later(function(){board.tiles.forEach(function(t){t.classList.remove('anim')})},250+seq.length*STEP_MS+100);
+  }
+}
+
+/* ---------- end ---------- */
+function end(){
+  app.innerHTML='';
+  app.appendChild(el('h2',null,'做完了！請停在這一頁，等其他同學。'));
+  var c=el('div','card');
+  c.appendChild(el('h3',null,'這三條規定，你會：'));
+  var t=el('div','row2');
+  LV.forEach(function(L,i){
+    var S=st.lv[i];
+    var v=S.ch?CH[S.ch]:'（還沒選）';
+    if(S.ch==='mod'&&S.mod!=null)v+='<span class="sub">'+L.mods[S.mod][0]+'</span>';
+    t.appendChild(el('div','k','第 '+(i+1)+' 條'));
+    t.appendChild(el('div','v','<span class="sub">'+L.name+'</span>'+v));
+  });
+  c.appendChild(t);
+  app.appendChild(c);
+
+  var smooth=st.lv.filter(function(S){return S.first===true}).length;
+  var c2=el('div','card');
+  c2.appendChild(el('h3',null,'第一次推，就順順倒完的有幾條？'));
+  c2.appendChild(el('p','big',smooth+' 條<span class="muted" style="font-size:.5em">（共 3 條）</span>'));
+  app.appendChild(c2);
+
+  var cnt=collectWho(),max=0;WHO_ORDER.forEach(function(k){max=Math.max(max,cnt[k])});
+  var top=WHO_ORDER.filter(function(k){return max>0&&cnt[k]===max});
+  var c3=el('div','card');
+  c3.appendChild(el('h3',null,'你最常看到被影響的人是：'));
+  c3.appendChild(el('p','sumline',top.length?chips(top,null)+'<span>（出現 '+max+' 次）</span>':'（還沒有骨牌倒下）'));
+  var all='';WHO_ORDER.forEach(function(k){all+=WHO[k][0]+' '+cnt[k]+' 次　'});
+  c3.appendChild(el('p','how',all.trim()));
+  app.appendChild(c3);
+
+  if(st.own.p!=null){
+    var c4=el('div','card');
+    c4.appendChild(el('h3',null,'你自己排的班規：'));
+    c4.appendChild(el('p','lead','<b>'+OWN[st.own.p].short+'</b>'+(st.own.ph==='done'?'，第 4 張骨牌是：「'+OWN[st.own.p].cards[+st.own.slots[2]][0]+'」':'')));
+    app.appendChild(c4);
+  }
+}
+
+render();
+})();
+</script>

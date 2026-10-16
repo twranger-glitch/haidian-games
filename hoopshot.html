@@ -1,0 +1,161 @@
+<title>夜市投籃機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1E242B; --muted:#475569; --line:#E3DED7;
+  --co:#D95D39; --te:#2A6F68; --lco:#FFF5F2; --lte:#F0F7F6; --peach:#F2B79F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:18px;padding-block:22px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,48px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.8vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--co);letter-spacing:2px;margin:0}
+.lead{font-size:clamp(19px,2.7vw,24px);color:var(--muted);margin:0}
+p{margin:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 24px rgba(30,36,43,.06)}
+.note{background:var(--lte);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,23px);line-height:1.65}
+.note.warm{background:var(--lco)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--co);color:#fff;cursor:pointer;line-height:1.4;touch-action:manipulation}
+.btn.teal{background:var(--te)}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--co);background:var(--lco)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible{outline:4px solid var(--te);outline-offset:3px}
+.chip{display:inline-block;border-radius:999px;padding:4px 16px;font-weight:900;color:#fff}
+.chip.red{background:var(--co)} .chip.blue{background:var(--te)}
+svg{display:block;max-width:100%;height:auto}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top}
+td.k{color:var(--muted);font-weight:700;width:52%}
+td.v{font-weight:900}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+.hud{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hud div{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:6px 8px;text-align:center}
+.hud b{display:block;font-size:clamp(24px,4.4vw,36px);color:var(--co);font-variant-numeric:tabular-nums;line-height:1.2}
+.hud span{font-size:clamp(14px,2vw,18px);color:var(--muted);font-weight:700}
+.court{position:relative;width:100%;max-width:520px;margin:0 auto}
+.ball{transition:transform .7s cubic-bezier(.3,.0,.6,1)}
+.meter{position:relative;height:46px;border-radius:14px;background:#F3EEE7;border:2px solid var(--line);overflow:hidden;max-width:620px;width:100%;margin:0 auto}
+.meter .zone{position:absolute;top:0;bottom:0;background:#BFE0D9;border-left:3px solid var(--te);border-right:3px solid var(--te)}
+.meter .needle{position:absolute;top:-2px;bottom:-2px;width:8px;margin-left:-4px;background:var(--co);border-radius:4px}
+.balls{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:34px}
+.balls i{width:28px;height:28px;border-radius:50%;background:var(--peach);border:3px solid var(--co)}
+.balls i.debt{background:#fff;border:3px dashed var(--muted)}
+.msg{font-size:clamp(24px,4vw,34px);font-weight:900;text-align:center;min-height:1.5em;margin:0}
+.msg.ok{color:var(--te)} .msg.no{color:var(--co)}
+.shoot{font-size:clamp(28px,5vw,40px);padding:18px}
+</style>
+<main class="wrap" id="app" aria-live="polite"></main>
+<script>
+(function(){
+"use strict";
+var KEY='u2d-hoopshot-v1', app=document.getElementById('app'), ROUNDS=5;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+var h=location.hash;
+if(h==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}}
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}
+var st=load();
+if(!st||h==='#red'||h==='#blue'){st={g:h==='#red'?'red':h==='#blue'?'blue':(rnd()<.5?'red':'blue'),ph:'intro',r:1,left:0,debt:0,borrowNow:0,bor:0,shots:0,makes:0,rs:[],think:null,zone:null}}
+if(h==='#reset'||h==='#red'||h==='#blue'){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+save();
+var RED=st.g==='red', BASE=RED?3:8;
+function el(t,c,html){var e=document.createElement(t);if(c)e.className=c;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),txt);b.type='button';b.addEventListener('click',fn);return b}
+var raf=null;
+function hud(){var d=el('div','hud');d.innerHTML='<div><b>'+st.r+'／'+ROUNDS+'</b><span>第幾回合</span></div><div><b>'+st.makes+'</b><span>進了幾球</span></div><div><b>'+st.bor+'</b><span>一共借了幾顆</span></div>';return d}
+function court(ballState){
+  // ballState: 'ready' | 'in' | 'miss'
+  var t=ballState==='in'?'translate(0px,-178px) scale(.62)':ballState==='miss'?'translate(70px,-150px) scale(.66)':'none';
+  return '<svg class="court" viewBox="0 0 320 300" aria-label="投籃機的籃框和球"><rect x="70" y="10" width="180" height="110" rx="12" fill="#fff" stroke="#2A6F68" stroke-width="5"/><rect x="120" y="46" width="80" height="54" rx="6" fill="none" stroke="#2A6F68" stroke-width="4"/><path d="M110 112 H210" stroke="#D95D39" stroke-width="8" stroke-linecap="round"/><path d="M116 118 L130 164 H190 L204 118 M136 118 L146 164 M160 118 V164 M184 118 L174 164" fill="none" stroke="#475569" stroke-width="3" stroke-linecap="round"/><path d="M20 290 H300" stroke="#E3DED7" stroke-width="5" stroke-linecap="round"/><g class="ball" style="transform-origin:160px 255px;transform:'+t+'"><circle cx="160" cy="255" r="28" fill="#F2B79F" stroke="#D95D39" stroke-width="5"/><path d="M132 255 H188 M160 227 V283" stroke="#D95D39" stroke-width="4" stroke-linecap="round"/></g></svg>';
+}
+function ballsRow(n,debtN){var d=el('div','balls');for(var i=0;i<n;i++)d.appendChild(el('i'));for(var j=0;j<(debtN||0);j++)d.appendChild(el('i','debt'));return d}
+function newZone(){var w=.22, x=.12+rnd()*(.76-w);st.zone=[x,x+w]}
+function startRound(){var avail=BASE-st.debt;st.debt=0;st.left=Math.max(0,avail);st.borrowNow=0;st.ph=st.r<ROUNDS?'borrow':'shoot';if(st.ph==='shoot'){if(st.left===0){endRound();return}newZone()}save();render()}
+function render(){
+  if(raf){cancelAnimationFrame(raf);raf=null}
+  app.innerHTML='';
+  if(st.ph==='intro'){
+    app.append(el('p','kick','線上小遊戲・稀缺與制度'),el('h1',null,'夜市投籃機'));
+    var c=el('div','card');
+    c.append(el('p','lead','夜市的投籃機一共玩 5 回合。每一回合開始時，老闆會發給你幾顆球。'),
+      el('p','lead','投籃的方法：指針會在力氣條上左右來回跑，等它跑到<b style="color:#2A6F68">綠色的地方</b>，再按「投！」，球就會進。'),
+      el('p','lead','每一回合開始前，如果你覺得球不夠，可以先<b style="color:#D95D39">向下一回合借球</b>。借 1 顆球，這一回合就多 1 顆；可是到了下一回合，老闆會先收回 2 顆。第 5 回合是最後一回合，不能再借。'));
+    var g=el('div','note warm','平板發給你的卡片是：<span class="chip '+(RED?'red':'blue')+'">'+(RED?'紅色卡':'藍色卡')+'</span>，每一回合老闆會發給你 <b>'+BASE+' 顆球</b>。<br>請先不要告訴別人你的卡片顏色。');
+    app.append(c,g,btn('開始第 1 回合','',function(){startRound()}));
+    return;
+  }
+  if(st.ph==='borrow'){
+    app.append(hud(),el('h2',null,'第 '+st.r+' 回合：這一回合你有 '+(st.left)+' 顆球'));
+    var c2=el('div','card');
+    c2.append(ballsRow(st.left),el('p','lead',st.left===0?'這一回合的球，已經在上一回合借光了。':'你要不要向下一回合借球？每借 1 顆，這一回合就多 1 顆；可是到了第 '+(st.r+1)+' 回合，老闆會先收回 2 顆。'));
+    if(st.borrowNow>0)c2.append(el('p','note warm','你這一回合已經借了 '+st.borrowNow+' 顆，所以到了第 '+(st.r+1)+' 回合，老闆會先收回 '+(st.borrowNow*2)+' 顆。'));
+    app.append(c2);
+    var canBorrow=(st.borrowNow+1)*2<=BASE;
+    var b1=btn('借 1 顆球','teal',function(){st.borrowNow++;st.bor++;st.left++;st.debt=st.borrowNow*2;save();render()});b1.disabled=!canBorrow;
+    if(!canBorrow)app.append(el('p','lead','下一回合的球已經不夠還了，所以這一回合不能再借。'));
+    app.append(b1,btn(st.left>0?'不借了，開始投':'看下一回合','',function(){if(st.left>0){st.ph='shoot';newZone();save();render()}else{endRound()}}));
+    return;
+  }
+  if(st.ph==='shoot'){
+    app.append(hud(),el('h2',null,'第 '+st.r+' 回合：還剩 '+st.left+' 顆球'));
+    var cv=el('div');cv.innerHTML=court('ready');var msg=el('p','msg','等指針跑到綠色的地方，再按「投！」');
+    var m=el('div','meter');var z=el('div','zone');z.style.left=(st.zone[0]*100)+'%';z.style.width=((st.zone[1]-st.zone[0])*100)+'%';var nd=el('div','needle');m.append(z,nd);
+    var shoot=btn('投！','shoot',null);
+    app.append(cv,ballsRow(st.left),m,shoot,msg);
+    var t0=performance.now(),pos=0,period=1300+rnd()*300,busy=false;
+    function tick(t){var ph=((t-t0)%period)/period;pos=ph<.5?ph*2:2-ph*2;nd.style.left=(pos*100)+'%';raf=requestAnimationFrame(tick)}
+    raf=requestAnimationFrame(tick);
+    shoot.addEventListener('click',function(){
+      if(busy)return;busy=true;shoot.disabled=true;cancelAnimationFrame(raf);raf=null;
+      var ok=pos>=st.zone[0]&&pos<=st.zone[1];
+      st.shots++;st.left--;if(ok)st.makes++;
+      var ball=cv.querySelector('.ball');requestAnimationFrame(function(){ball.style.transform=ok?'translate(0px,-178px) scale(.62)':'translate(70px,-150px) scale(.66)'});
+      msg.textContent=ok?'進了！':'沒進，差一點。';msg.className='msg '+(ok?'ok':'no');
+      save();
+      setTimeout(function(){if(st.left>0){newZone();save();render()}else{endRound()}},1000);
+    });
+    return;
+  }
+  if(st.ph==='roundEnd'){
+    var last=st.rs[st.rs.length-1];
+    app.append(hud(),el('h2',null,'第 '+last.r+' 回合結束'));
+    var c3=el('div','card');
+    c3.append(el('p','lead','這一回合你投了 '+last.shots+' 球，進了 '+last.makes+' 球。'));
+    if(st.r<=ROUNDS){var nxt=Math.max(0,BASE-st.debt);c3.append(el('p','note'+(st.debt?' warm':''),st.debt?'因為你上一回合借了球，第 '+st.r+' 回合本來有 '+BASE+' 顆，要先還給老闆 '+st.debt+' 顆，所以只剩 '+nxt+' 顆。':'第 '+st.r+' 回合，你會拿到 '+BASE+' 顆球。'),ballsRow(nxt,Math.min(st.debt,BASE)))}
+    app.append(c3,btn(st.r<=ROUNDS?'開始第 '+st.r+' 回合':'看看結果','',function(){if(st.r<=ROUNDS)startRound();else{st.ph='think';save();render()}}));
+    return;
+  }
+  if(st.ph==='think'){
+    app.append(el('h2',null,'5 回合都打完了。玩的時候，你心裡最常想的是什麼？'),el('p','lead','請選一個最像你的答案，沒有對錯。'));
+    var o=el('div','opts');
+    [['this','只想著「這一球一定要進」'],['later','會想著後面的回合還剩幾顆球'],['fun','只是覺得好玩，沒有想太多']].forEach(function(x){o.appendChild(btn(x[1],'alt',function(){st.think=x[0];st.ph='end';save();render()}))});
+    app.append(o);return;
+  }
+  // end
+  var TH={'this':'只想著這一球一定要進','later':'想著後面的回合還剩幾顆球','fun':'只是好玩，沒有想太多'};
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var c4=el('div','card');var tb=el('table');
+  [['我的卡片顏色','<span class="chip '+(RED?'red':'blue')+'">'+(RED?'紅色卡':'藍色卡')+'</span>'],['每一回合老闆發幾顆球',BASE+' 顆'],['一共向下一回合借了幾顆',st.bor+' 顆'],['一共投了幾球',st.shots+' 球'],['進了幾球',st.makes+' 球'],['玩的時候心裡想的',TH[st.think]]]
+    .forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));tb.appendChild(tr)});
+  c4.appendChild(tb);
+  var rt=el('table');rt.innerHTML='<tr><td class="k">回合</td>'+st.rs.map(function(x){return '<td class="v">'+x.r+'</td>'}).join('')+'</tr><tr><td class="k">投了幾球</td>'+st.rs.map(function(x){return '<td>'+x.shots+'</td>'}).join('')+'</tr><tr><td class="k">借了幾顆</td>'+st.rs.map(function(x){return '<td>'+x.bor+'</td>'}).join('')+'</tr>';
+  var c5=el('div','card');c5.append(el('p','lead','每一回合的紀錄'),rt);
+  app.append(c4,c5,el('p','note','等一下，老師會請紅色卡和藍色卡分開舉手。兩種卡片到底差在哪裡？請等老師揭曉。'));
+}
+function endRound(){
+  var rec={r:st.r,shots:0,makes:0,bor:st.borrowNow};
+  var prevShots=st.rs.reduce(function(a,x){return a+x.shots},0),prevMakes=st.rs.reduce(function(a,x){return a+x.makes},0);
+  rec.shots=st.shots-prevShots;rec.makes=st.makes-prevMakes;st.rs.push(rec);
+  st.r++;st.ph='roundEnd';save();render();
+}
+render();
+})();
+</script>

@@ -1,0 +1,201 @@
+<title>還有什麼可能</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: four classroom / local stories; for each: pick the first reason that comes to mind → flip as many covered clue cards as you like (at least one) → pick the reason you now think is most likely → see "first thought → now". Final page counts "personality first" and "changed mind". No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.scene{font-size:clamp(23px,3.4vw,31px);font-weight:900;line-height:1.5;margin:0}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default;background:#9AA7AE}
+.btn:focus-visible,.clue:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.deck{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.clue{font:inherit;border-radius:18px;min-height:150px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:6px;text-align:left;line-height:1.55;border:3px solid var(--line)}
+.clue.shut{background:var(--sea);color:#fff;border-color:var(--sea);align-items:center;justify-content:center;text-align:center}
+.clue.shut .q{font-size:clamp(40px,6vw,56px);font-weight:900;line-height:1}
+.clue.shut .t{font-size:clamp(18px,2.4vw,22px);font-weight:700}
+.clue.open{background:#FBF1DC;color:var(--ink);border-color:var(--gold);cursor:default;animation:flip .35s ease-out}
+.clue.open .t{font-size:clamp(16px,2vw,18px);font-weight:700;color:var(--gold)}
+.clue.open .x{font-size:clamp(19px,2.4vw,22px);font-weight:500}
+@keyframes flip{from{transform:rotateY(80deg)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.clue.open{animation:none}}
+.got{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.got li{background:#FBF1DC;border-radius:14px;padding:10px 14px;font-size:clamp(19px,2.4vw,22px)}
+.tally{font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--rust);margin:0}
+.arrow{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.arrow .box{border-radius:16px;padding:12px 14px;border:3px solid var(--line);background:var(--card);font-size:clamp(19px,2.6vw,23px);font-weight:700;line-height:1.5}
+.arrow .box small{display:block;font-size:.8em;color:var(--muted);font-weight:700}
+.arrow .mid{font-size:clamp(28px,5vw,44px);font-weight:900;color:var(--muted)}
+.tag{display:inline-block;font-size:.78em;font-weight:900;border-radius:999px;padding:0 10px;margin-left:4px;color:#fff;vertical-align:1px}
+.tag.p{background:var(--rust)} .tag.s{background:var(--sea)}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.big div{background:var(--note);border-radius:18px;padding:14px;text-align:center}
+.big b{display:block;font-size:clamp(48px,9vw,80px);font-weight:900;line-height:1.1;color:var(--sea);font-variant-numeric:tabular-nums}
+.big div.p b{color:var(--rust)}
+.big span{font-size:clamp(19px,2.5vw,23px);font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+@media (max-width:620px){.deck{grid-template-columns:repeat(2,minmax(0,1fr))}.arrow{grid-template-columns:1fr}.arrow .mid{text-align:center;transform:rotate(90deg)}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='more-reasons-v1';
+/* t: 'p' = 他這個人（個性）, 's' = 他遇到的狀況 */
+var C=[
+ {who:'阿哲',s:'數學課上，坐你隔壁的阿哲一直打哈欠，眼睛都快閉起來了。',
+  o:[['他個性就是懶散，不想上課。','p'],['他昨天晚上可能沒睡好。','s'],['他就是對讀書沒興趣的人。','p'],['教室可能太熱、太悶了。','s']],
+  k:['昨天晚上，阿哲幫家裡在夜市顧攤，收攤回到家已經快十一點了。',
+     '他家的小弟弟半夜一直哭，全家人都被吵醒好幾次。',
+     '這節課剛好在午餐後，教室的電風扇又壞了一台，裡面很悶。',
+     '他今天早上來不及吃早餐，到現在肚子都是空的。',
+     '老師說，阿哲平常上課很少打哈欠，這學期今天是第一次。',
+     '下課時，他還是跑去問老師剛剛那一題要怎麼算。']},
+ {who:'小美',s:'自然課分組討論時，小美坐在旁邊，一句話都沒有說。',
+  o:[['她個性就是很冷漠，不想理人。','p'],['她可能跟組員還不熟。','s'],['她就是懶得動腦，想讓別人做。','p'],['她可能心裡有別的煩惱。','s']],
+  k:['小美上個星期才轉學來海佃國小，組裡的人她還叫不出名字。',
+     '在原本的學校，分組報告常常是她當組長。',
+     '這次討論的題目是「籃球比賽的規則」，她從來沒有打過籃球。',
+     '組裡有兩位同學一直搶著說話，她好幾次想開口都插不進去。',
+     '早上出門前，她跟媽媽吵了一架，心裡還在難過。',
+     '討論結束後，她把自己的想法寫在紙條上，悄悄交給了老師。']},
+ {who:'志豪',s:'早上在走廊上，你跟志豪揮手說「早安」，他沒有回你，直接走過去了。',
+  o:[['他個性就是很跩，不愛理人。','p'],['他可能根本沒看到、沒聽到。','s'],['他就是沒禮貌的人。','p'],['他可能正急著去做別的事。','s']],
+  k:['志豪的眼鏡昨天打球時被壓壞了，今天他看遠一點的東西都霧霧的。',
+     '那時候走廊上有一整班正在排隊去上體育課，吵得要命。',
+     '他肚子突然很痛，正急著要去廁所。',
+     '老師剛剛叫他去辦公室拿東西，還說要快一點回來。',
+     '他嘴巴裡一直念著等一下要小考的英文單字。',
+     '第二節下課，他主動跑來找你，問你要不要一起去打球。']},
+ {who:'阿凱',s:'校外教學到四草搭竹筏，導覽的大哥哥在講紅樹林時，阿凱一直轉頭看別的地方，好像沒在聽。',
+  o:[['他個性就是不專心，坐不住。','p'],['他可能看到了別的有趣的東西。','s'],['他就是對學習沒興趣的人。','p'],['他可能身體不舒服。','s']],
+  k:['阿凱是第一次坐船，竹筏一搖晃，他就開始頭暈想吐。',
+     '他坐在竹筏最後面，引擎的聲音很大，幾乎聽不到大哥哥在說什麼。',
+     '他看到泥灘上有好多彈塗魚在跳，一直想指給同學看。',
+     '太陽剛好照在他那一邊，他的眼睛被晒得睜不太開。',
+     '出發前他說，阿公以前常帶他來這裡，他一直在找阿公說過的那個小碼頭。',
+     '回到學校以後，他的學習單把紅樹林的名字寫得最完整。']}
+];
+var N=C[0].k.length;
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuffle(n){var a=[];for(var i=0;i<n;i++)a.push(i);for(var j=n-1;j>0;j--){var r=rnd(j+1),t=a[j];a[j]=a[r];a[r]=t}return a}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load();
+if(!st||!st.order||st.order.length!==C.length){st={started:false,i:0,stage:0,first:[],now:[],order:C.map(function(){return shuffle(N)}),open:C.map(function(){return []}),peek:[]}}
+if(!st.peek)st.peek=[];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(cls,text,fn){var b=el('button',cls,text);b.type='button';b.addEventListener('click',fn);return b}
+function tag(t){return '<span class="tag '+t+'">'+(t==='p'?'個性':'處境')+'</span>'}
+function go(){save(st);render();window.scrollTo(0,0)}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','接下來有 4 個發生在學校和台江附近的小故事。每一個故事，你都要做三件事：'),
+    el('p','lead','① 選一選：你第一個想到的原因是什麼？<br>② 翻線索卡：每張卡寫著這位同學那天真的遇到的事。要翻幾張，你自己決定，至少翻一張。<br>③ 再選一次：看完線索，你現在覺得最可能的原因是什麼？'),
+    el('p','note','這個遊戲沒有對錯，每個答案都可以選。選你心裡真正的想法就好。'));
+  app.append(el('h1',null,'還有什麼可能？'),c,button('btn','開始',function(){st.started=true;go()}));
+}
+function head(q){
+  var cs=el('p','case');cs.append(el('span',null,'第 '+(st.i+1)+' 個故事，共 '+C.length+' 個'));
+  var sc=el('div','card');sc.appendChild(el('p','scene',q.s));
+  app.append(cs,sc);
+}
+function opts(q,onPick,cur){
+  var g=el('div','opts');
+  q.o.forEach(function(x,k){var b=button('btn alt'+(cur===k?' pick':''),x[0],function(){onPick(k)});g.appendChild(b)});
+  return g;
+}
+function step(){
+  if(st.i>=C.length){end();return}
+  var q=C[st.i];app.innerHTML='';head(q);
+  var opened=st.open[st.i];
+  if(st.stage===0){
+    app.append(el('h2',null,'① '+q.who+'為什麼會這樣？你<span style="color:var(--rust)">第一個</span>想到的原因是哪一個？'),
+      el('p','lead','不用想太久，選最先跳進腦袋的那一個。'),
+      opts(q,function(k){st.first[st.i]=k;st.stage=1;go()}));
+  }else if(st.stage===1){
+    app.append(el('h2',null,'② 翻開線索卡，看看'+q.who+'那天遇到了什麼事。'),
+      el('p','lead','想翻幾張就翻幾張，至少一張。翻好了就按下面的按鈕。'));
+    var tl=el('p','tally','已經翻開 '+opened.length+' 張，共 '+N+' 張');
+    var d=el('div','deck');
+    st.order[st.i].forEach(function(ci,pos){
+      var isOpen=opened.indexOf(ci)>=0;
+      var b=el('button','clue '+(isOpen?'open':'shut'));b.type='button';
+      if(isOpen){b.innerHTML='<span class="t">線索 '+(pos+1)+'</span><span class="x">'+q.k[ci]+'</span>';b.setAttribute('aria-disabled','true')}
+      else{b.innerHTML='<span class="q">？</span><span class="t">線索 '+(pos+1)+'</span>';b.setAttribute('aria-label','翻開線索 '+(pos+1));
+        b.addEventListener('click',function(){opened.push(ci);save(st);
+          b.className='clue open';b.innerHTML='<span class="t">線索 '+(pos+1)+'</span><span class="x">'+q.k[ci]+'</span>';b.setAttribute('aria-disabled','true');b.removeAttribute('aria-label');
+          tl.textContent='已經翻開 '+opened.length+' 張，共 '+N+' 張';nx.disabled=false;nx.textContent='我翻好了，回答問題';},{once:true});}
+      d.appendChild(b);
+    });
+    var nx=button('btn',opened.length?'我翻好了，回答問題':'至少先翻開一張卡',function(){if(!opened.length)return;st.stage=2;go()});
+    nx.disabled=!opened.length;
+    app.append(tl,d,nx);
+  }else if(st.stage===2){
+    var got=el('ul','got');opened.forEach(function(ci){got.appendChild(el('li',null,q.k[ci]))});
+    var c=el('div','card');c.append(el('p','lead','你翻開的線索（'+opened.length+' 張）：'),got);
+    app.append(c,el('h2',null,'③ 看完線索，你<span style="color:var(--sea)">現在</span>覺得最可能的原因是哪一個？'),
+      el('p','lead','可以跟剛剛一樣，也可以不一樣。'),
+      opts(q,function(k){st.now[st.i]=k;st.stage=3;go()}));
+  }else{
+    var f=q.o[st.first[st.i]],n=q.o[st.now[st.i]];
+    var ar=el('div','arrow');
+    ar.append(el('div','box','<small>第一個想法</small>'+f[0]+' '+tag(f[1])),el('div','mid','→'),el('div','box','<small>現在的想法</small>'+n[0]+' '+tag(n[1])));
+    var msg;
+    if(st.first[st.i]===st.now[st.i]){msg=f[1]==='p'?'你維持原本的想法，兩次都選了「他這個人」那一邊。等一下可以跟大家說說，是什麼讓你這樣想。':'你一開始就想到了「他遇到的狀況」，看完線索也沒有改變。'}
+    else if(f[1]==='p'&&n[1]==='s'){msg='線索讓你從「他這個人」，換成了「他遇到的狀況」。'}
+    else if(f[1]==='s'&&n[1]==='p'){msg='看完線索，你反而覺得是個性。等一下可以說說，是哪一張卡讓你這樣想。'}
+    else{msg='你換了一個想法，不過兩次想到的都是同一邊（'+(f[1]==='p'?'個性':'處境')+'）。'}
+    var rest=N-opened.length;
+    var c2=el('div','card');c2.append(el('p','lead','你翻開了 '+opened.length+' 張線索卡'+(rest?'，還有 '+rest+' 張沒有翻。':'，全部都翻完了。')),ar,el('p','note',msg));
+    if(rest){
+      var box=el('div');
+      if(st.peek[st.i]){var ul=el('ul','got');q.k.forEach(function(t,ci){if(opened.indexOf(ci)<0)ul.appendChild(el('li',null,t))});box.append(el('p','lead','你沒有翻開的線索：'),ul)}
+      else box.appendChild(button('btn alt','偷看沒翻開的線索（不會改變你的答案）',function(){st.peek[st.i]=true;go()}));
+      c2.appendChild(box);
+    }
+    app.append(c2,button('btn',st.i<C.length-1?'下一個故事':'看看我的結果',function(){st.i++;st.stage=0;go()}));
+  }
+}
+function end(){
+  app.innerHTML='';
+  var pf=0,ch=0,flips=0;
+  C.forEach(function(q,k){if(st.first[k]!=null&&q.o[st.first[k]][1]==='p')pf++;if(st.first[k]!=null&&st.now[k]!=null&&st.first[k]!==st.now[k])ch++;flips+=st.open[k].length});
+  var big=el('div','big');
+  big.append(el('div','p','<span>第一個就想到「個性」</span><b>'+pf+'</b><span>題（共 '+C.length+' 題）</span>'),
+             el('div',null,'<span>翻完線索後改變想法</span><b>'+ch+'</b><span>題（共 '+C.length+' 題）</span>'));
+  var t=el('table');
+  C.forEach(function(q,k){var f=q.o[st.first[k]],n=q.o[st.now[k]];var tr=el('tr');
+    tr.append(el('td','k',q.who),el('td',null,(f?f[0]+tag(f[1]):'—')+'<br>→ '+(n?n[0]+tag(n[1]):'—')));t.appendChild(tr)});
+  var c=el('div','card');c.append(big,el('p','lead','4 個故事一共翻開了 '+flips+' 張線索卡（最多 '+(N*C.length)+' 張）。'),t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+function render(){if(!st.started){intro();return}step()}
+render();
+})();
+</script>

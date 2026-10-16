@@ -1,0 +1,292 @@
+<title>魚丸包裝偵探</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: help Grandma shop at a grocery store near Haidian Road. Read last month's receipt, drag a scanner over 5 shelf items (or tap them), each scan shows "last month / this month". Secret group: orange = fish balls cost more, green = same price but one fewer ball. Then 3 no-right-answer questions and a summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --org:#C8701E; --grn:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:20px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead.ink{color:var(--ink)}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:30px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:16px;font-weight:700;color:var(--muted);background:var(--card);border:2px solid var(--line);border-radius:999px;padding:2px 12px 2px 8px;line-height:1.5;margin-left:auto}
+.tag i{width:14px;height:14px;border-radius:50%;display:inline-block}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default;background:#9AA7AE}
+.btn:focus-visible,input:focus-visible,.prod:focus-visible,summary:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.small{font-size:clamp(19px,2.3vw,21px);color:var(--muted);margin:0}
+
+/* receipt: photo style */
+.photo{align-self:center;width:min(100%,430px);background:#fff;padding:14px 14px 18px;border-radius:6px;box-shadow:0 10px 22px rgba(31,42,46,.22);transform:rotate(-1.6deg);position:relative;margin:10px 0 6px}
+.photo::before{content:"";position:absolute;top:-12px;left:50%;width:110px;height:26px;margin-left:-55px;background:rgba(232,210,140,.75);transform:rotate(2deg)}
+.rcpt{background:#FFFDF5;border:1px dashed #C9C1A8;padding:14px 16px;font-size:clamp(17px,2.4vw,21px);line-height:1.55}
+.rcpt .shop{text-align:center;font-weight:900;font-size:1.1em;margin:0}
+.rcpt .sub{text-align:center;color:var(--muted);margin:0 0 6px;font-size:.88em}
+.rcpt table{width:100%;border-collapse:collapse}
+.rcpt td{padding:4px 2px;border-bottom:1px dotted #C9C1A8;vertical-align:top}
+.rcpt td.p{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+.rcpt .tot td{border-bottom:0;font-weight:900;padding-top:8px}
+.cap{text-align:center;color:var(--muted);font-size:18px;margin:8px 0 0}
+
+/* shelf */
+.shelfwrap{position:relative}
+.shelf{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;background:#E9DFC9;border-radius:16px;padding:12px 10px 0;border-bottom:14px solid #9C7A4E}
+.prod{position:relative;background:transparent;border:3px solid transparent;border-radius:14px;padding:4px 2px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font:inherit;color:inherit;touch-action:manipulation}
+.prod svg{width:100%;max-width:130px;height:auto;display:block}
+.prod.hot{border-color:var(--rust);background:#FFF4EC}
+.prod.flash{animation:fl .5s ease-out}
+@keyframes fl{0%{background:#FFD9C7}100%{background:transparent}}
+.ptag{background:#FFF6C9;border:2px solid #D9C27A;border-radius:6px;padding:0 8px;font-weight:900;font-size:clamp(18px,2.5vw,22px);font-variant-numeric:tabular-nums;margin-bottom:8px;white-space:nowrap}
+.done{position:absolute;top:2px;right:2px;background:var(--good);color:#fff;border-radius:999px;font-size:14px;font-weight:700;padding:0 8px;line-height:1.6}
+.pname{font-size:clamp(15px,2vw,18px);font-weight:700;line-height:1.3;text-align:center}
+.dock{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.scanner{width:96px;height:96px;flex:none;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:16px;background:#F4F5F2;border:3px dashed var(--line);display:flex;align-items:center;justify-content:center}
+.scanner svg{width:78px;height:78px;pointer-events:none}
+.scanner.drag{position:fixed;z-index:20;border-color:transparent;background:transparent;cursor:grabbing;margin:0}
+.count{font-weight:900;color:var(--sea);font-size:clamp(20px,2.8vw,26px);margin:0}
+.scard{background:#fff;border:3px solid var(--line);border-radius:18px;padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.scard .t{font-size:clamp(21px,3vw,27px);font-weight:900;margin:0}
+.scard table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.7vw,24px)}
+.scard td{padding:6px 4px;border-bottom:2px solid var(--line)}
+.scard td.k{color:var(--muted);font-weight:700;white-space:nowrap;width:1%;padding-right:12px}
+.scard.pop{animation:pop .3s ease-out}
+@keyframes pop{0%{transform:scale(.94);opacity:.3}100%{transform:none;opacity:1}}
+
+/* q1 */
+.chips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.chips .btn.alt{text-align:center;padding:12px 6px;font-size:clamp(18px,2.5vw,22px)}
+
+/* thermometer */
+.thermo{display:flex;gap:16px;align-items:stretch}
+.thermo svg{width:70px;flex:none;height:auto}
+.levels{flex:1;display:flex;flex-direction:column;gap:8px}
+.levels .btn.alt{display:flex;align-items:center;gap:12px;padding:10px 14px}
+.levels .n{flex:none;width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:900}
+
+/* end */
+table.sum{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px)}
+table.sum td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top}
+table.sum td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+details{background:var(--card);border:3px dashed var(--line);border-radius:22px;padding:14px 18px}
+summary{cursor:pointer;font-weight:900;font-size:clamp(19px,2.7vw,24px);color:var(--sea)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.box{background:var(--note);border-radius:16px;padding:12px 16px;font-size:clamp(18px,2.6vw,23px)}
+.box b{display:block;font-size:1.15em}
+@media (max-width:640px){
+  .scard{padding:12px 12px}
+  .shelf{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:6px}
+  .chips{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .two{grid-template-columns:1fr}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='fishball-v1';
+var GN={orange:'橘組',green:'綠組'};
+var GC={orange:'var(--org)',green:'var(--grn)'};
+
+function rint(n){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function fresh(g){return {g:g,stage:'intro',scanned:[],last:null,q1:null,q2:null,q3:null}}
+var h=location.hash;
+if(h==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(h==='#orange'||h==='#green'){var want=h.slice(1);if(!st||st.g!==want){st=fresh(want);save(st)}}
+if(!st||!st.g){st=fresh(rint(2)?'orange':'green');save(st)}
+if(!st.scanned)st.scanned=[];
+
+/* ---------- products (numbers are made up) ---------- */
+var FISH_NOW=st.g==='orange'?{n:10,p:110}:{n:9,p:100};
+var P=[
+ {id:'fish',name:'虱目魚丸',unit:'一包',last:'一包 10 顆，100 元',now:'一包 '+FISH_NOW.n+' 顆，'+FISH_NOW.p+' 元',price:FISH_NOW.p,rc:'虱目魚丸（10 顆）',rp:100},
+ {id:'soy',name:'醬油',last:'一瓶 500 毫升，60 元',now:'一瓶 500 毫升，60 元',price:60,rc:'醬油（500 毫升）',rp:60},
+ {id:'rice',name:'米粉',last:'一包 300 公克，35 元',now:'一包 300 公克，35 元',price:35,rc:'米粉（300 公克）',rp:35},
+ {id:'egg',name:'鹹蛋',last:'一盒 6 顆，70 元',now:'一盒 6 顆，70 元',price:70,rc:'鹹蛋（6 顆）',rp:70},
+ {id:'radish',name:'菜脯',last:'一包 200 公克，50 元',now:'一包 200 公克，50 元',price:50,rc:'菜脯（200 公克）',rp:50}
+];
+function byId(id){for(var i=0;i<P.length;i++)if(P[i].id===id)return P[i];return null}
+
+function fishSVG(n){
+  var s='<svg viewBox="0 0 120 150" aria-hidden="true"><path d="M14 18h92l-4 122c0 4-3 6-7 6H25c-4 0-7-2-7-6z" fill="#DDEEF6" stroke="#7FA9BE" stroke-width="3"/><rect x="14" y="10" width="92" height="12" rx="3" fill="#205E86"/>';
+  var cols=[30,50,70,90];var k=0;
+  for(var r=0;r<3&&k<n;r++){for(var c=0;c<4&&k<n;c++){s+='<circle cx="'+(cols[c]+(r%2?4:0))+'" cy="'+(96+r*16)+'" r="8" fill="#fff" stroke="#C9D2D5" stroke-width="2"/>';k++}}
+  s+='<rect x="22" y="28" width="76" height="52" rx="6" fill="#fff"/><text x="60" y="50" text-anchor="middle" font-size="16" font-weight="900" fill="#205E86">虱目魚丸</text><text x="60" y="73" text-anchor="middle" font-size="20" font-weight="900" fill="#A8441A">'+n+' 顆</text></svg>';
+  return s;
+}
+var ART={
+ soy:'<svg viewBox="0 0 120 150" aria-hidden="true"><rect x="50" y="6" width="20" height="14" rx="3" fill="#B03A2E"/><path d="M48 20h24v18l14 16v86c0 4-3 6-7 6H41c-4 0-7-2-7-6V54l14-16z" fill="#5A3420"/><rect x="34" y="70" width="52" height="54" fill="#FBF1DC"/><text x="60" y="94" text-anchor="middle" font-size="20" font-weight="900" fill="#A8441A">醬油</text><text x="60" y="116" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A2E">500 毫升</text></svg>',
+ rice:'<svg viewBox="0 0 120 150" aria-hidden="true"><path d="M18 14h84v126H18z" fill="#F7F4EC" stroke="#C9B98E" stroke-width="3"/><path d="M26 98q8-8 16 0t16 0 16 0 16 0 8 0M26 112q8-8 16 0t16 0 16 0 16 0 8 0M26 126q8-8 16 0t16 0 16 0 16 0 8 0" fill="none" stroke="#E2D6B5" stroke-width="3"/><rect x="18" y="14" width="84" height="12" fill="#2F7D4F"/><rect x="26" y="34" width="68" height="50" rx="6" fill="#fff" stroke="#2F7D4F" stroke-width="2"/><text x="60" y="58" text-anchor="middle" font-size="20" font-weight="900" fill="#2F7D4F">米粉</text><text x="60" y="77" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A2E">300 公克</text></svg>',
+ egg:'<svg viewBox="0 0 120 150" aria-hidden="true"><rect x="10" y="62" width="100" height="78" rx="8" fill="#D9C7A3" stroke="#A88E62" stroke-width="3"/><g fill="#3A3A3A"><ellipse cx="30" cy="62" rx="11" ry="14"/><ellipse cx="60" cy="62" rx="11" ry="14"/><ellipse cx="90" cy="62" rx="11" ry="14"/></g><g fill="#5A5A5A"><ellipse cx="30" cy="46" rx="10" ry="13"/><ellipse cx="60" cy="46" rx="10" ry="13"/><ellipse cx="90" cy="46" rx="10" ry="13"/></g><rect x="22" y="84" width="76" height="46" rx="6" fill="#fff"/><text x="60" y="106" text-anchor="middle" font-size="20" font-weight="900" fill="#A8441A">鹹蛋</text><text x="60" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A2E">6 顆</text></svg>',
+ radish:'<svg viewBox="0 0 120 150" aria-hidden="true"><path d="M20 18h80l-4 122c0 4-3 6-7 6H31c-4 0-7-2-7-6z" fill="#F4E9CF" stroke="#C9A85A" stroke-width="3"/><g stroke="#C08A2E" stroke-width="5" stroke-linecap="round"><path d="M34 98l10 26M50 96l-4 30M62 100l8 24M78 96l-6 30M88 102l-4 20"/></g><rect x="20" y="10" width="80" height="12" rx="3" fill="#B7862B"/><rect x="28" y="30" width="64" height="52" rx="6" fill="#fff"/><text x="60" y="54" text-anchor="middle" font-size="20" font-weight="900" fill="#8A5A12">菜脯</text><text x="60" y="73" text-anchor="middle" font-size="13" font-weight="700" fill="#1F2A2E">200 公克</text></svg>'
+};
+function art(p){return p.id==='fish'?fishSVG(FISH_NOW.n):ART[p.id]}
+var SCAN='<svg viewBox="0 0 80 80" aria-hidden="true"><rect x="10" y="8" width="60" height="30" rx="10" fill="#3F4B50"/><rect x="16" y="4" width="48" height="8" rx="3" fill="#E04B3A"/><path d="M30 36h20l-4 38c0 3-2 4-5 4h-2c-3 0-5-1-5-4z" fill="#56605C"/><rect x="22" y="16" width="36" height="12" rx="4" fill="#9FD3E6"/><circle cx="40" cy="48" r="4" fill="#B7862B"/></svg>';
+
+/* ---------- helpers ---------- */
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function top(label){var t=el('div','top');t.append(el('p','case',label||''));var g=el('span','tag');g.innerHTML='<i style="background:'+GC[st.g]+'"></i>'+GN[st.g];t.appendChild(g);return t}
+var actx=null;
+function beep(){try{var C=window.AudioContext||window.webkitAudioContext;if(!C)return;if(!actx)actx=new C();if(actx.state==='suspended')actx.resume();var o=actx.createOscillator(),g=actx.createGain();o.type='square';o.frequency.value=1500;g.gain.setValueAtTime(0.0001,actx.currentTime);g.gain.exponentialRampToValueAtTime(0.12,actx.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.0001,actx.currentTime+0.14);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+0.16)}catch(e){}}
+function scanCard(p,anim){
+  var c=el('div','scard'+(anim?' pop':''));
+  c.appendChild(el('p','t',p.name));
+  var t=el('table');[['上個月',p.last],['這個月',p.now]].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]+'：'),el('td',null,r[1]));t.appendChild(tr)});
+  c.appendChild(t);return c;
+}
+function receipt(){
+  var ph=el('div','photo');var r=el('div','rcpt');
+  r.append(el('p','shop','海佃雜貨店'),el('p','sub','收據・上個月'));
+  var t=el('table');var sum=0;
+  P.forEach(function(p){sum+=p.rp;var tr=el('tr');tr.append(el('td',null,p.rc),el('td','p',p.rp+' 元'));t.appendChild(tr)});
+  var tr=el('tr','tot');tr.append(el('td',null,'合計'),el('td','p',sum+' 元'));t.appendChild(tr);
+  r.appendChild(t);ph.appendChild(r);ph.appendChild(el('p','cap','阿嬤給你的收據'));return ph;
+}
+
+/* ---------- steps ---------- */
+function render(){
+  window.scrollTo(0,0);
+  ({intro:intro,shop:shop,q1:q1,q2:q2,q3:q3,end:end}[st.stage]||intro)();
+}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead ink','星期六早上，阿嬤請你去海佃路附近的雜貨店幫她買東西。阿嬤每個月都買同樣的 5 樣東西，她把上個月的收據交給你，說：「照這張買就對了。」'));
+  c.appendChild(receipt());
+  c.append(el('p','lead','到了店裡，櫃臺借你一支掃描器。把掃描器拖到商品上（或直接點商品），就會「嗶」一聲，跳出這樣東西上個月和這個月的樣子。5 樣都掃過，才能結帳回家。'),el('p','small','遊戲裡的數量和價錢都是假設的。沒有聲音也可以玩。'));
+  app.append(top(),el('h1',null,'魚丸包裝偵探'),c,btn('走進雜貨店','',function(){st.stage='shop';save(st);render()}));
+}
+function shop(){
+  app.innerHTML='';
+  var h=el('h2',null,'把掃描器拖到商品上，5 樣都要掃過。');
+  var card=el('div','card');
+  var dock=el('div','dock');
+  var sc=el('div','scanner');sc.innerHTML=SCAN;sc.setAttribute('aria-hidden','true');
+  var cnt=el('p','count');
+  dock.append(sc,el('p','small','拖曳掃描器，或直接點商品也可以。'));
+  var shelf=el('div','shelf');
+  var res=el('div');res.style.display='flex';res.style.flexDirection='column';res.style.gap='12px';
+  var next=btn('5 樣都掃好了，下一步','',function(){st.stage='q1';save(st);render()});
+  function upd(){cnt.textContent='已掃描 '+st.scanned.length+'／5 樣';next.disabled=st.scanned.length<5;next.textContent=st.scanned.length<5?'還有 '+(5-st.scanned.length)+' 樣沒掃':'5 樣都掃好了，下一步'}
+  var nodes={};
+  P.forEach(function(p){
+    var b=el('button','prod');b.type='button';b.dataset.id=p.id;b.setAttribute('aria-label','掃描'+p.name);
+    b.innerHTML=art(p)+'<span class="pname">'+p.name+'</span><span class="ptag">'+p.price+' 元</span>'+(st.scanned.indexOf(p.id)>=0?'<span class="done">已掃</span>':'');
+    b.addEventListener('click',function(){doScan(p.id)});
+    nodes[p.id]=b;shelf.appendChild(b);
+  });
+  function doScan(id){
+    var p=byId(id);beep();
+    var b=nodes[id];b.classList.remove('flash');void b.offsetWidth;b.classList.add('flash');
+    if(st.scanned.indexOf(id)<0){st.scanned.push(id);b.insertAdjacentHTML('beforeend','<span class="done">已掃</span>')}
+    st.last=id;save(st);
+    res.innerHTML='';res.appendChild(scanCard(p,true));upd();
+    if(st.scanned.length===5)setTimeout(function(){try{next.scrollIntoView({behavior:'smooth',block:'end'})}catch(e){}},250);
+  }
+  /* drag */
+  var drag=null;
+  function tipAt(e){return {x:e.clientX,y:e.clientY-40}}
+  function prodAt(pt){var list=document.elementsFromPoint?document.elementsFromPoint(pt.x,pt.y):[];for(var i=0;i<list.length;i++){var pr=list[i].closest&&list[i].closest('.prod');if(pr)return pr}return null}
+  function clearHot(){Object.keys(nodes).forEach(function(k){nodes[k].classList.remove('hot')})}
+  sc.addEventListener('pointerdown',function(e){
+    e.preventDefault();try{sc.setPointerCapture(e.pointerId)}catch(x){}
+    var ph=el('div','scanner');ph.style.visibility='hidden';sc.parentNode.insertBefore(ph,sc);
+    drag={ph:ph};sc.classList.add('drag');move(e);
+  });
+  function move(e){if(!drag)return;sc.style.left=(e.clientX-48)+'px';sc.style.top=(e.clientY-48)+'px';clearHot();var pr=prodAt(tipAt(e));if(pr)pr.classList.add('hot')}
+  sc.addEventListener('pointermove',move);
+  function up(e){if(!drag)return;var pr=prodAt(tipAt(e));clearHot();sc.classList.remove('drag');sc.style.left='';sc.style.top='';drag.ph.remove();drag=null;if(pr)doScan(pr.dataset.id)}
+  sc.addEventListener('pointerup',up);sc.addEventListener('pointercancel',function(){if(!drag)return;clearHot();sc.classList.remove('drag');sc.style.left='';sc.style.top='';drag.ph.remove();drag=null});
+  card.append(dock,shelf,cnt,res);
+  if(st.last){res.appendChild(scanCard(byId(st.last),false))}else{res.appendChild(el('p','note','掃描結果會出現在這裡。'))}
+  upd();
+  app.append(top('雜貨店的貨架'),h,card,next);
+}
+function q1(){
+  app.innerHTML='';
+  if(!st.q1)st.q1={none:false,items:[]};
+  var h=el('h2',null,'第 1 題：這個月，阿嬤的 5 樣東西，有沒有哪一樣變貴了？');
+  var none=btn('沒有，都一樣','alt',function(){st.q1.none=true;st.q1.items=[];save(st);paint()});
+  var lab=el('p','lead ink','有，是：（可以點一樣或好幾樣）');
+  var chips=el('div','chips');var cb={};
+  P.forEach(function(p){var b=btn(p.name,'alt',function(){st.q1.none=false;var i=st.q1.items.indexOf(p.id);if(i>=0)st.q1.items.splice(i,1);else st.q1.items.push(p.id);save(st);paint()});cb[p.id]=b;chips.appendChild(b)});
+  var nx=btn('下一題','',function(){st.stage='q2';save(st);render()});
+  function paint(){none.classList.toggle('pick',st.q1.none);P.forEach(function(p){cb[p.id].classList.toggle('pick',st.q1.items.indexOf(p.id)>=0)});nx.disabled=!(st.q1.none||st.q1.items.length)}
+  paint();
+  app.append(top('已經結完帳，走在回家的路上'),h,el('p','small','照你剛剛看到的回答就好，這一題不會告訴你對或錯。'),none,lab,chips,nx);
+}
+var LV=[['1','很公平','#2F7D4F'],['2','還算公平','#6E9A3C'],['3','普通','#B7862B'],['4','有點不公平','#C8701E'],['5','很不公平','#A8441A']];
+function thermoSVG(v){
+  var s='<svg viewBox="0 0 70 300" aria-hidden="true"><rect x="22" y="8" width="26" height="236" rx="13" fill="#fff" stroke="#56605C" stroke-width="3"/><circle cx="35" cy="262" r="28" fill="'+(v?LV[v-1][2]:'#D4D9D2')+'" stroke="#56605C" stroke-width="3"/>';
+  for(var i=1;i<=5;i++){var y=244-i*46;s+='<rect x="26" y="'+(y+3)+'" width="18" height="40" rx="6" fill="'+(v&&i<=v?LV[v-1][2]:'#EEF0EC')+'"/>'}
+  return s+'</svg>';
+}
+function q2(){
+  app.innerHTML='';
+  var h=el('h2',null,'第 2 題：你覺得魚丸老闆這樣做，公平嗎？');
+  var tip=el('p','lead','點一格「生氣溫度計」。越上面，代表你覺得越不公平。');
+  var th=el('div','thermo');var svgBox=el('div');svgBox.innerHTML=thermoSVG(st.q2);
+  var lv=el('div','levels');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  var bs=[];
+  for(var i=5;i>=1;i--){(function(v){var L=LV[v-1];var b=btn('<span class="n" style="background:'+L[2]+'">'+v+'</span><span>'+L[1]+'</span>','alt',function(){st.q2=v;save(st);paint()});bs[v]=b;lv.appendChild(b)})(i)}
+  th.append(svgBox,lv);
+  function paint(){for(var v=1;v<=5;v++)bs[v].classList.toggle('pick',st.q2===v);svgBox.innerHTML=thermoSVG(st.q2);fb.innerHTML='';
+    if(st.q2){fb.append(el('p','note','你點了第 '+st.q2+' 格：「'+LV[st.q2-1][1]+'」。這一題沒有對錯，等一下全班會比比看大家的溫度。想換也可以，直接點別格。'),btn('下一題','',function(){st.stage='q3';save(st);render()}))}}
+  paint();
+  app.append(top('想一想'),el('p','lead ink','剛剛掃到的魚丸是這樣：'),scanCard(byId('fish'),false),h,tip,th,fb);
+}
+var Q3=[['會','繼續買同一包，阿嬤吃習慣的味道不用換。'],['可能換別家','換別家可能比較划算，不過要多花心思比一比，也不一定一樣好吃。'],['不確定','想多看看、問問阿嬤再決定，也是一種做法。']];
+function q3(){
+  app.innerHTML='';
+  var h=el('h2',null,'第 3 題：下個月，你還會幫阿嬤買這一包魚丸嗎？');
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';var bs=[];
+  Q3.forEach(function(q,k){var b=btn(q[0],'alt',function(){st.q3=k;save(st);paint()});bs.push(b);g.appendChild(b)});
+  function paint(){bs.forEach(function(b,k){b.classList.toggle('pick',st.q3===k)});fb.innerHTML='';
+    if(st.q3!=null){fb.append(el('p','note','你選了「'+Q3[st.q3][0]+'」：'+Q3[st.q3][1]+'<br><span class="small">沒有對錯，想換也可以直接點別的。</span>'),btn('看看我的紀錄','',function(){st.stage='end';save(st);render()}))}}
+  paint();
+  app.append(top('最後一題'),h,g,fb);
+}
+function end(){
+  app.innerHTML='';
+  var q=st.q1||{none:false,items:[]};
+  var hit=q.items.indexOf('fish')>=0;
+  var picked=q.none?'沒有，都一樣':(q.items.length?q.items.map(function(id){return byId(id).name}).join('、'):'—');
+  var t=el('table','sum');
+  [['我的組別','<span class="tag" style="margin:0"><i style="background:'+GC[st.g]+'"></i>'+GN[st.g]+'</span>'],
+   ['第 1 題','<b>'+(hit?'有點出魚丸':'沒有點出魚丸')+'</b><br><span class="small">我點的是：'+picked+'</span>'],
+   ['第 2 題','生氣溫度計 <b>'+(st.q2||'—')+' 格</b>'+(st.q2?'（'+LV[st.q2-1][1]+'）':'')],
+   ['第 3 題','<b>'+(st.q3!=null?Q3[st.q3][0]:'—')+'</b>']
+  ].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  var d=el('details');d.appendChild(el('summary',null,'老師說可以再打開'));
+  var two=el('div','two');
+  two.append(el('div','box','<b>10 顆 110 元</b>110 ÷ 10 ＝ 一顆 11 元'),el('div','box','<b>9 顆 100 元</b>100 ÷ 9 ＝ 一顆大約 11 元'));
+  d.append(el('p','lead ink','上個月：10 顆 100 元，一顆 10 元。這個月有兩種情形：'),two,el('p','note','兩種情形，每一顆魚丸其實都變貴了差不多的錢。'));
+  d.lastChild.style.marginTop='12px';
+  app.append(top(),el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,d);
+}
+render();
+})();
+</script>

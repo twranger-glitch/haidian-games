@@ -1,0 +1,119 @@
+<title>聚光燈調暗器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: four small embarrassing moments; for each: guess how many classmates are watching → see what classmates are busy thinking → pick a sentence to say to yourself. The spotlight graphic dims as you go. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.scene{font-size:clamp(22px,3.3vw,30px);font-weight:900;line-height:1.5;margin:0}
+.lamp{display:flex;align-items:center;gap:14px}
+.lamp svg{width:84px;height:84px;flex:none}
+.count{font-size:clamp(54px,10vw,90px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--rust);height:40px}
+.scale{display:flex;justify-content:space-between;font-size:clamp(16px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0}
+.bubbles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bub{background:var(--note);border-radius:16px;padding:10px 12px;font-size:clamp(16px,2.2vw,20px);line-height:1.5}
+.bub b{display:block;font-size:.85em;color:var(--muted)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+table{border-collapse:collapse;width:100%;font-size:clamp(17px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+@media (max-width:620px){.bubbles{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='spotlight-dimmer-v1';
+var C=[
+ {s:'上台報告到一半，突然忘記下一句要說什麼，停了好幾秒。',b:[['小安','等一下就輪到我了，我好緊張……'],['阿哲','他剛剛停了嗎？我在看我的小卡。'],['佳佳','我的報告第二段還沒背熟。']],
+  o:['停幾秒沒關係，看一下小卡就好。','大家等一下就會忘了，繼續說下去。','我好丟臉，以後再也不要上台了。','忘詞很正常，連老師也會忘詞。']},
+ {s:'體育課打躲避球，球朝你飛過來，你沒接到。',b:[['宇翔','下一顆球往哪裡飛？快躲！'],['美美','我的鞋帶鬆了。'],['志豪','好熱喔，等一下要喝水。']],
+  o:['每個人都有漏接的時候，下一球再來。','大家都在忙著躲球，沒什麼人在看。','我好遜，以後再也不要玩躲避球了。','下次可以先看球，再伸手。']},
+ {s:'今天不是穿運動服的日子，你卻穿了運動服來學校。',b:[['小芳','我的作業有沒有帶？'],['阿明','今天中午吃什麼？'],['小琪','他今天穿運動服耶……算了，我要寫聯絡簿。']],
+  o:['穿錯衣服不會改變我是誰，明天記得換就好。','大家看一眼就去忙自己的事了。','大家一定都在笑我，今天都不想說話了。','可以笑著說：「我今天想運動一下！」']},
+ {s:'音樂課唱歌時，你的聲音突然破音了。',b:[['家豪','我也好怕自己破音……'],['思妤','這一句的歌詞是什麼？'],['柏宇','好想下課。']],
+  o:['破音很正常，連歌手都會破音。','大家都在專心唱自己的部分。','我好丟臉，以後再也不要唱歌了。','深呼吸，下一句再唱好就好。']}
+];
+var TY=[['next','forget','bad','normal'],['normal','forget','bad','next'],['normal','forget','bad','humor'],['normal','forget','bad','next']];
+var FB={normal:'這句話提醒自己：這種事，每個人都會遇到。',forget:'這句話提醒自己：別人沒有那麼注意，很快就忘了。',next:'這句話把注意力放到「下一次可以怎麼做」。',humor:'這句話用一點幽默，讓尷尬變輕鬆。',
+ bad:'這句話很真實，很多人出糗的時候，心裡真的會這樣想。不過它把一次小小的失誤，變成了「以後都不要」，聚光燈會變得更亮一點。等一下全班可以一起聊聊這一句。'};
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{i:0,stage:0,est:[],est2:[],pick:[],ty:[]};if(!st.est2)st.est2=[];if(!st.ty)st.ty=[];
+function dim(){var d=0;st.ty.forEach(function(t){d+=t==='bad'?-1:1});return Math.max(0,d)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function lamp(level){var a=Math.max(0.12,1-level*0.22);return '<svg viewBox="0 0 84 84" aria-hidden="true"><path d="M30 8 H54 L60 30 H24 Z" fill="#56605C"/><path d="M24 30 L6 80 H78 L60 30 Z" fill="#F2C94C" opacity="'+a.toFixed(2)+'"/></svg>'}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','接下來有 4 個小小的出糗時刻。每一個，你都要做三件事：'),el('p','lead','① 猜猜看：有幾成同學在看你？<br>② 看看大家其實在想什麼。<br>③ 選一句話，對自己說。'));
+  var b=el('button','btn','開始');b.type='button';b.addEventListener('click',function(){step()});
+  app.append(el('h1',null,'聚光燈調暗器'),c,b);
+}
+function step(){
+  if(st.i>=C.length){end();return}
+  var q=C[st.i];app.innerHTML='';
+  var cs=el('p','case','第 '+(st.i+1)+' 個時刻，共 4 個');
+  var sc=el('div','card');var lp=el('div','lamp');lp.innerHTML=lamp(dim());lp.appendChild(el('p','scene',q.s));sc.appendChild(lp);
+  app.append(cs,sc);
+  if(st.stage===0){
+    var h=el('h2',null,'① 這時候，你「覺得」有幾成同學在看你？');
+    var r=document.createElement('input');r.type='range';r.min=0;r.max=10;r.step=1;r.value=5;r.setAttribute('aria-label','幾成同學在看你');
+    var out=el('p','count','5 成');r.addEventListener('input',function(){out.textContent=r.value+' 成'});
+    var s2=el('p','scale');s2.append(el('span',null,'0 成'),el('span',null,'10 成'));
+    var b=el('button','btn','看看大家在想什麼');b.type='button';b.addEventListener('click',function(){st.est[st.i]=+r.value;st.stage=1;save(st);step()});
+    app.append(h,out,r,s2,b);
+  }else if(st.stage===1){
+    var h2=el('h2',null,'② 這時候，旁邊的同學其實在想……');
+    var bb=el('div','bubbles');q.b.forEach(function(x){bb.appendChild(el('div','bub','<b>'+x[0]+'</b>'+x[1]))});
+    var h2b=el('h2',null,'你一開始猜 '+st.est[st.i]+' 成。看完以後，你覺得是幾成？');
+    var r2=document.createElement('input');r2.type='range';r2.min=0;r2.max=10;r2.step=1;r2.value=st.est[st.i];r2.setAttribute('aria-label','看完以後覺得幾成');
+    var out2=el('p','count',st.est[st.i]+' 成');r2.addEventListener('input',function(){out2.textContent=r2.value+' 成'});
+    var s3=el('p','scale');s3.append(el('span',null,'0 成'),el('span',null,'10 成'));
+    var b2=el('button','btn','選一句話對自己說');b2.type='button';b2.addEventListener('click',function(){st.est2[st.i]=+r2.value;st.stage=2;save(st);step()});
+    app.append(h2,bb,h2b,out2,r2,s3,b2);
+  }else{
+    var h3=el('h2',null,'③ 你最想對自己說哪一句？');
+    var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+    q.o.forEach(function(t,k){var b=el('button','btn alt',t);b.type='button';b.addEventListener('click',function(){
+      Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');fb.innerHTML='';
+      var ty=TY[st.i][k];st.pick[st.i]=t;st.ty[st.i]=ty;save(st);
+      var nx=el('button','btn',st.i<C.length-1?'下一個時刻':'看看我選的話');nx.type='button';nx.addEventListener('click',function(){st.i++;st.stage=0;save(st);step()});
+      fb.append(el('p','note'+(ty==='bad'?' warm':''),FB[ty]+'<br><span style="font-size:.85em;color:var(--muted)">想換一句也可以，直接點別的句子。</span>'),nx);nx.scrollIntoView({behavior:'smooth',block:'end'});
+    });g.appendChild(b)});
+    app.append(h3,g,fb);
+  }
+}
+function end(){
+  app.innerHTML='';
+  var t=el('table');C.forEach(function(q,k){var tr=el('tr');tr.append(el('td','k','時刻 '+(k+1)),el('td',null,'先猜 '+(st.est[k]!=null?st.est[k]:'—')+' 成 → 看完覺得 '+(st.est2[k]!=null?st.est2[k]:'—')+' 成<br><b>'+(st.pick[k]||'—')+'</b>'));t.appendChild(tr)});
+  var nb=st.ty.filter(function(x){return x==='bad'}).length;
+  var c=el('div','card');var lp=el('div','lamp');lp.innerHTML=lamp(dim());lp.appendChild(el('p','scene',nb?'你選的話裡，有 '+nb+' 句讓聚光燈變亮了一點。':'聚光燈調暗了！'));c.append(lp,t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+if(st.i>0||st.stage>0)step();else intro();
+})();
+</script>

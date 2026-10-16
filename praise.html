@@ -1,0 +1,279 @@
+<title>準不準檢查站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: part 1 = four made-up fortune lines, each checked with three warning lamps (yes/no each, then an explanation; any answer can continue). Part 2 = write a "only-you" praise card for the classmate next to you in three guided boxes, show it big, hand the tablet over, neighbour taps one reaction. Final page = summary for show-of-hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.scene{font-size:clamp(23px,3.4vw,31px);font-weight:900;line-height:1.5;margin:0}
+.lamps{display:flex;flex-direction:column;gap:12px}
+.lrow{display:grid;grid-template-columns:64px minmax(0,1fr) auto;align-items:center;gap:12px;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 14px}
+.lrow svg{width:60px;height:60px}
+.lq{font-size:clamp(19px,2.6vw,24px);font-weight:700;margin:0;line-height:1.45}
+.yn{display:flex;gap:8px}
+.yn .btn{min-width:84px;padding:10px 14px}
+.lrow .ex{grid-column:1 / -1;margin:0}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.small{font-size:clamp(19px,2.3vw,21px);padding:8px 14px;align-self:flex-start}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.alt.pick:disabled{opacity:1}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.ex{background:var(--note);border-radius:14px;padding:10px 14px;font-size:clamp(19px,2.4vw,22px);line-height:1.65}
+.tag{display:inline-block;font-weight:900;border-radius:10px;padding:0 8px;margin-right:6px;font-size:.9em}
+.tag.same{background:#DCEFE3;color:var(--good)}
+.tag.diff{background:var(--warm);color:var(--rust)}
+label.q{font-size:clamp(21px,3vw,27px);font-weight:900;display:block}
+.hint{font-size:clamp(19px,2.3vw,21px);color:var(--muted);margin:0}
+textarea,input[type=text]{font:inherit;font-size:clamp(20px,2.8vw,25px);width:100%;border:3px solid var(--line);border-radius:14px;padding:10px 14px;background:#fff;color:var(--ink);resize:vertical}
+textarea{min-height:3.4em}
+.sample{background:var(--warm);border-radius:14px;padding:10px 14px;margin:0;font-size:clamp(19px,2.5vw,23px)}
+.big{background:#FFFDF6;border:5px solid var(--gold);border-radius:26px;padding:clamp(18px,4vw,34px);display:flex;flex-direction:column;gap:14px;box-shadow:0 6px 0 #E3D3AE}
+.big .to{font-size:clamp(26px,4.6vw,42px);font-weight:900;color:var(--rust);margin:0;text-wrap:balance}
+.big .row{margin:0}
+.big .row b{display:block;font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:700}
+.big .row span{display:block;font-size:clamp(25px,4.2vw,38px);font-weight:900;line-height:1.45;overflow-wrap:anywhere}
+.turn{display:flex;align-items:center;gap:12px;background:var(--sea);color:#fff;border-radius:18px;padding:12px 18px;font-size:clamp(22px,3.4vw,32px);font-weight:900;margin:0}
+.turn svg{width:52px;height:52px;flex:none}
+.mini{display:flex;gap:4px;vertical-align:middle}
+.mini svg{width:30px;height:30px}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+.bignum{font-size:clamp(54px,10vw,90px);font-weight:900;color:var(--rust);margin:0;line-height:1.1;text-align:center}
+@media (max-width:620px){
+  .lrow{grid-template-columns:52px minmax(0,1fr)}
+  .lrow svg{width:50px;height:50px}
+  .yn{grid-column:1 / -1}
+  .yn .btn{flex:1}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='forer-praise-v1';
+/* lamps: 0 = 很多人都符合？(是→亮) 1 = 有沒有可能說錯？(否→亮) 2 = 找得到證明嗎？(否→亮)
+   ans = reference answer (true = 是) */
+var LQ=['這句話，是不是很多人都符合？','這句話，有沒有可能說錯？','找得到看得到、查得到的事來證明嗎？'];
+var LIT=[true,false,false];
+var F=[
+ {s:'「本週你會遇到一點小挑戰，只要保持耐心，就能順利解決。」',ans:[true,false,false],
+  ex:['每個人每個星期都會遇到大大小小的挑戰：作業寫不完、考試、跟朋友鬧彆扭，全部都算。',
+      '「一點小挑戰」什麼事都算，「順利解決」也沒說什麼時候、怎樣才算解決，所以它幾乎不可能說錯。',
+      '到了週末，你想舉一件事來證明它說對了，會發現什麼事都可以算，所以哪一件都證明不了。'],
+  sum:'三盞燈都亮：這是一句誰都說得通的運勢。'},
+ {s:'「這個星期五放學的時候，你會在校門口，遇到一位穿紅色外套的大人向你問路。」',ans:[false,true,true],
+  ex:['同一個星期五，真的在校門口被穿紅色外套的大人問路的人，全校大概沒幾個。',
+      '星期五放學一過，沒有遇到，就是說錯了。這句話很勇敢，它把自己放在可能說錯的位置上。',
+      '星期五放學時你自己就知道，旁邊一起走出校門的同學也看得到。'],
+  sum:'一盞燈都不亮：這句話很具體，說對了才真的厲害，說錯了也馬上知道。'},
+ {s:'「你有時候很想表現自己，有時候又希望大家不要注意你。」',ans:[true,false,false],
+  ex:['它把兩邊都說了：想表現的人說中，想躲起來的人也說中，班上幾乎每個人都符合。',
+      '不管你是哪一種人，它都說得通，所以它永遠不會錯。',
+      '你可能馬上想起一件事，覺得「對，我就是這樣」。那是原因 3：你自己補上了故事。可是想不起來的人，它也沒說錯，所以那件事證明不了它。'],
+  sum:'三盞燈都亮：兩邊都說了，所以誰都說得通。'},
+ {s:'「下星期一的數學小考，你會剛好錯兩題，而且兩題都錯在最後一大題。」',ans:[false,true,true],
+  ex:['同一張考卷，剛好錯兩題、又剛好都錯在最後一大題的人，全班大概只有一兩個，也可能一個都沒有。',
+      '只要錯一題、錯三題，或錯在別的大題，它就說錯了。',
+      '考卷發回來一看就知道，老師的成績單上也查得到。'],
+  sum:'一盞燈都不亮：說得很清楚，對或錯一查就知道。'}
+];
+/* praise card boxes */
+var BX=[
+ {k:'what',q:'① 他做過的哪一件事？',h:'寫一件你親眼看到他做過的事，不要寫「人很好」「很聰明」這種誰都說得通的話。',ex:'你把班上被風吹倒的盆栽扶起來，還重新把土壓好。'},
+ {k:'when',q:'② 那是在什麼時候？',h:'寫得出是哪一天、哪一節課、什麼活動就更好。',ex:'上星期三下午的打掃時間。'},
+ {k:'seen',q:'③ 別人看得到什麼？',h:'那件事留下了什麼看得到、查得到的東西？作品、成績、照片，或是誰也在場。',ex:'現在教室窗台上那盆薄荷，長出了三片新葉子，全班都看得到。'}
+];
+var VAGUE=['人很好','人好','很聰明','很善良','很棒','很有創意','很厲害','很可愛','很帥','很漂亮','很努力','很好笑','很溫柔','很貼心'];
+var PEER=[
+ {t:'是，這真的是我做過的事，而且大概只有我。',fb:'這張卡分辨得出你是誰。它說得很具體，所以你一看就知道是不是在說你。'},
+ {t:'有一點像我，但是班上很多人也做過。',fb:'這也很正常。寫卡片的人可以想想：再多加一個「什麼時候」或「看得到什麼」，會不會就只有你符合了？'},
+ {t:'我不記得我做過這件事。',fb:'這就是「可能說錯」的句子：寫得具體，對不對就查得出來。你們可以小聲聊聊，他是在什麼時候看到的。'}
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{p:'intro',i:0,stage:0,a:[],name:'',card:{what:'',when:'',seen:''},peer:null};
+if(!st.a)st.a=[];if(!st.card)st.card={what:'',when:'',seen:''};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function go(p){st.p=p;save(st);render();window.scrollTo(0,0)}
+/* lamp svg: state null = not answered, true = lit, false = off */
+function lamp(on){
+  var fill=on===true?'#F2C94C':on===false?'#C9CEC8':'#FFFFFF';
+  var glow=on===true?'<circle cx="30" cy="26" r="25" fill="#F2C94C" opacity=".35"/>':'';
+  return '<svg viewBox="0 0 60 60" aria-hidden="true">'+glow+'<circle cx="30" cy="26" r="17" fill="'+fill+'" stroke="#56605C" stroke-width="3"/><rect x="22" y="44" width="16" height="10" rx="3" fill="#56605C"/></svg>';
+}
+function isLit(k,v){return v==null?null:v===LIT[k]}
+function litCount(arr){var n=0;for(var k=0;k<3;k++){if(arr&&arr[k]===LIT[k])n++}return n}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','第一部分：有 4 段運勢和分析，都是老師自己編的。每一段，你要用三盞檢查燈檢查它：'));
+  var ul=el('div','lamps');
+  LQ.forEach(function(q,k){var r=el('div','lrow');r.innerHTML=lamp(true);r.append(el('p','lq',q+'<br><span style="color:var(--muted);font-weight:500">選「'+(LIT[k]?'是':'否')+'」，這盞燈就會亮。</span>'));ul.appendChild(r)});
+  c.append(ul,el('p','lead','三盞燈都亮，代表這句話「誰都說得通」，就是福勒效應最愛用的句子。'),el('p','lead','第二部分：替隔壁同學寫一張「只有他才符合」的專屬優點卡。'));
+  var b=el('button','btn','開始檢查第 1 段');b.type='button';b.addEventListener('click',function(){st.i=0;st.stage=0;go('f')});
+  app.append(el('h1',null,'準不準檢查站'),c,b);
+}
+function fortune(){
+  if(st.i>=F.length){go('mid');return}
+  var f=F[st.i];var my=st.a[st.i]||(st.a[st.i]=[null,null,null]);
+  app.innerHTML='';
+  var sc=el('div','card');sc.append(el('p','scene',f.s),el('p','hint','這段話是課堂自編的運勢。'));
+  app.append(el('p','case','第 '+(st.i+1)+' 段，共 '+F.length+' 段'),sc);
+  var box=el('div','lamps');
+  LQ.forEach(function(q,k){
+    var r=el('div','lrow');var lp=el('div');lp.innerHTML=lamp(isLit(k,my[k]));
+    var yn=el('div','yn');
+    [['是',true],['否',false]].forEach(function(x){
+      var b=el('button','btn alt'+(my[k]===x[1]?' pick':''),x[0]);b.type='button';b.setAttribute('aria-pressed',my[k]===x[1]?'true':'false');
+      b.addEventListener('click',function(){my[k]=x[1];save(st);fortune()});
+      if(st.stage===1)b.disabled=true;
+      yn.appendChild(b);
+    });
+    r.append(lp,el('p','lq','燈 '+(k+1)+'：'+q),yn);
+    if(st.stage===1){
+      var same=my[k]===f.ans[k];
+      r.appendChild(el('p','ex','<span class="tag '+(same?'same':'diff')+'">'+(same?'和說明一樣':'和說明不一樣')+'</span>參考：<b>'+(f.ans[k]?'是':'否')+'</b>。'+f.ex[k]));
+    }
+    box.appendChild(r);
+  });
+  app.appendChild(box);
+  if(st.stage===0){
+    var done=my.every(function(v){return v!=null});
+    var b=el('button','btn',done?'看說明':'三盞燈都選好，再看說明');b.type='button';b.disabled=!done;
+    b.addEventListener('click',function(){st.stage=1;save(st);fortune()});
+    app.appendChild(b);
+  }else{
+    var n=litCount(my);
+    app.appendChild(el('p','note'+(n===3?' warm':''),'你的判斷：亮了 <b>'+n+'</b> 盞燈。<br>'+f.sum+'<br><span style="color:var(--muted)">跟說明不一樣也沒關係，等一下全班可以一起討論。</span>'));
+    var nx=el('button','btn',st.i<F.length-1?'下一段':'進入第二部分');nx.type='button';
+    nx.addEventListener('click',function(){st.i++;st.stage=0;save(st);if(st.i>=F.length)go('mid');else{fortune();window.scrollTo(0,0)}});
+    app.appendChild(nx);
+  }
+}
+function mid(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','福勒效應的句子，三盞燈都亮：很多人都符合、不會說錯、也拿不出證明。'),
+    el('p','lead','現在換你來寫一句「三盞燈都不亮」的話，送給隔壁同學：只有他符合、可能說錯、找得到證明。'),
+    el('p','lead','卡片分成三格。每一格都可以點「看範例」，但是要寫你自己看到的事，自己打字。'));
+  var b=el('button','btn','開始寫專屬優點卡');b.type='button';b.addEventListener('click',function(){go('w')});
+  app.append(el('h1',null,'第二部分：專屬優點卡'),c,b);
+}
+function write(){
+  app.innerHTML='';
+  app.appendChild(el('h2',null,'替隔壁同學寫一張只有他才符合的優點卡'));
+  var nc=el('div','card');
+  var nl=el('label','q','隔壁同學的名字或綽號');nl.htmlFor='nm';
+  var ni=document.createElement('input');ni.type='text';ni.id='nm';ni.maxLength=12;ni.value=st.name||'';ni.autocomplete='off';
+  ni.addEventListener('input',function(){st.name=ni.value;save(st)});
+  nc.append(nl,ni);app.appendChild(nc);
+  var btn=el('button','btn','完成卡片，放大給他看');btn.type='button';
+  var msgs={};
+  function check(){
+    var ok=BX.every(function(x){var v=(st.card[x.k]||'').trim();return v.length>=3&&v!==x.ex});
+    btn.disabled=!ok;
+  }
+  BX.forEach(function(x){
+    var c=el('div','card');
+    var l=el('label','q',x.q);l.htmlFor='t_'+x.k;
+    var ta=document.createElement('textarea');ta.id='t_'+x.k;ta.maxLength=80;ta.value=st.card[x.k]||'';ta.rows=2;
+    var warn=el('p','note warm');warn.style.display='none';msgs[x.k]=warn;
+    var sb=el('button','btn alt small','看範例');sb.type='button';sb.setAttribute('aria-expanded','false');
+    var sp=el('p','sample','範例：'+x.ex);sp.style.display='none';
+    sb.addEventListener('click',function(){var o=sp.style.display==='none';sp.style.display=o?'block':'none';sb.textContent=o?'收起範例':'看範例';sb.setAttribute('aria-expanded',o?'true':'false')});
+    function upd(){
+      var v=ta.value.trim();var m='';
+      if(v&&v===x.ex)m='這是範例裡的同學做的事喔。請換成你隔壁同學真的做過的事。';
+      else if(x.k==='what'&&v&&v.length<12&&VAGUE.some(function(w){return v.indexOf(w)>=0}))m='這句話很多人都符合，燈會亮起來。可以想一想：他做了哪一件事，讓你覺得他是這樣的人？';
+      warn.innerHTML=m;warn.style.display=m?'block':'none';
+    }
+    ta.addEventListener('input',function(){st.card[x.k]=ta.value;save(st);upd();check()});
+    upd();
+    c.append(l,el('p','hint',x.h),ta,warn,sb,sp);
+    app.appendChild(c);
+  });
+  btn.addEventListener('click',function(){go('show')});
+  check();
+  app.append(btn,el('p','hint','三格都至少寫 3 個字，按鈕才會亮起來。'));
+}
+function bigCard(){
+  var nm=(st.name||'').trim()||'隔壁同學';
+  var c=el('div','big');
+  c.append(el('p','to','給 '+esc(nm)+' 的專屬優點卡'));
+  [['我看到你做過的事','what'],['那是在','when'],['大家看得到','seen']].forEach(function(r){
+    var p=el('p','row');p.append(el('b',null,r[0]),el('span',null,esc(st.card[r[1]].trim())));c.appendChild(p);
+  });
+  return c;
+}
+var TURN='<svg viewBox="0 0 52 52" aria-hidden="true"><path d="M10 26a16 16 0 0 1 28-10.6" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M40 6v12H28" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M42 26a16 16 0 0 1-28 10.6" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M12 46V34h12" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function show(){
+  app.innerHTML='';
+  var t=el('p','turn');t.innerHTML=TURN;t.appendChild(el('span',null,'把平板轉給隔壁同學看！'));
+  var bk=el('button','btn alt small','回去修改');bk.type='button';bk.addEventListener('click',function(){go('w')});
+  var nx=el('button','btn','（隔壁同學按）我看完了');nx.type='button';nx.addEventListener('click',function(){go('peer')});
+  app.append(t,bigCard(),nx,bk);
+}
+function peer(){
+  app.innerHTML='';
+  app.append(el('p','case','這一頁請隔壁同學點'),el('h2',null,'這張卡寫的，是只有你才符合的事嗎？'));
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function showFb(){
+    fb.innerHTML='';if(st.peer==null)return;
+    var nx=el('button','btn','把平板還給主人，看摘要');nx.type='button';nx.addEventListener('click',function(){go('end')});
+    fb.append(el('p','note',PEER[st.peer].fb+'<br><span style="color:var(--muted)">想換一個也可以，直接點別的選項。</span>'),nx);
+  }
+  PEER.forEach(function(x,k){
+    var b=el('button','btn alt'+(st.peer===k?' pick':''),x.t);b.type='button';
+    b.addEventListener('click',function(){st.peer=k;save(st);Array.prototype.forEach.call(g.children,function(y){y.classList.remove('pick')});b.classList.add('pick');showFb();fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})});
+    g.appendChild(b);
+  });
+  app.append(g,fb);showFb();
+}
+function end(){
+  app.innerHTML='';
+  var n3=0;st.a.forEach(function(x){if(litCount(x)===3)n3++});
+  var c=el('div','card');
+  c.append(el('p','lead','我判斷「三盞燈都亮」的運勢（很多人符合、不會說錯、無法證明）：'),el('p','bignum',n3+' 段'),el('p','hint','共 4 段'));
+  var t=el('table');
+  F.forEach(function(f,k){
+    var my=st.a[k]||[];var tr=el('tr');
+    var mini='<span class="mini">'+[0,1,2].map(function(j){return lamp(isLit(j,my[j]))}).join('')+'</span>';
+    tr.append(el('td','k','第 '+(k+1)+' 段'),el('td',null,mini+' 亮 '+litCount(my)+' 盞<br><span style="color:var(--muted)">'+esc(f.s)+'</span>'));
+    t.appendChild(tr);
+  });
+  c.appendChild(t);
+  var c2=el('div','card');
+  c2.append(el('p','lead','我的專屬優點卡'),bigCard(),el('p','lead','隔壁同學說：<b>'+(st.peer!=null?esc(PEER[st.peer].t):'（還沒選）')+'</b>'));
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,c2);
+}
+function render(){
+  if(st.p==='f')fortune();else if(st.p==='mid')mid();else if(st.p==='w')write();
+  else if(st.p==='show')show();else if(st.p==='peer')peer();else if(st.p==='end')end();else intro();
+}
+render();
+})();
+</script>

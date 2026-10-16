@@ -1,0 +1,224 @@
+<title>撕票大考驗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: two rounds of tearing tickets off a strip. The tablet secretly puts each student on route 星星 (a big request first, then a small one) or 月亮 (the small request only), and swaps the route in round 2, so everyone meets both. Then one feelings question with no right answer, then a summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --tk:#F7E3B5; --tk2:#FBF1DC; --tkline:#B7862B;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.say{display:flex;gap:12px;align-items:flex-start}
+.say svg{width:64px;height:64px;flex:none}
+.say .bub{background:var(--note);border-radius:4px 18px 18px 18px;padding:10px 16px;font-size:clamp(20px,2.9vw,26px);font-weight:700;line-height:1.55;min-width:0}
+.say .bub b{display:block;font-size:.72em;color:var(--muted);font-weight:700}
+.say.me{flex-direction:row-reverse}
+.say.me .bub{background:#FBF1DC;border-radius:18px 4px 18px 18px}
+.say.big .bub{font-size:clamp(23px,3.4vw,30px)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,2.9vw,26px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+/* ticket strip */
+.strip{display:flex;width:100%;background:transparent;filter:drop-shadow(0 3px 0 rgba(0,0,0,.12))}
+.tk{flex:1 1 0;min-width:0;font:inherit;border:0;margin:0;cursor:pointer;background:var(--tk);color:var(--rust);
+  border-right:3px dashed var(--tkline);padding:14px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;
+  min-height:clamp(118px,17vw,150px);justify-content:center;position:relative;transition:transform .15s}
+.tk:first-child{border-radius:12px 0 0 12px}
+.tk:last-child{border-right:0;border-radius:0 12px 12px 0}
+.tk .ic{font-size:clamp(22px,4vw,34px);line-height:1}
+.tk .t1{font-size:clamp(14px,2.2vw,20px);font-weight:900;line-height:1.25;text-align:center}
+.tk .t2{font-size:clamp(13px,1.9vw,17px);font-weight:700;color:var(--muted);line-height:1.2;text-align:center}
+.tk:hover:not(.gone){transform:translateY(-3px)}
+.tk:focus-visible{outline:4px solid var(--sea);outline-offset:-4px}
+.tk.gone{background:transparent;color:transparent;cursor:default;outline:3px dashed var(--line);outline-offset:-6px}
+.tk.gone *{visibility:hidden}
+.tk.rip{animation:rip .35s ease-out}
+@keyframes rip{0%{transform:translateY(0) rotate(0)}40%{transform:translateY(-10px) rotate(-6deg)}100%{transform:translateY(0) rotate(0)}}
+.pocket{background:#E7ECE6;border:3px dashed var(--muted);border-radius:22px;padding:14px;min-height:150px;display:flex;flex-direction:column;gap:10px}
+.pocket .lbl{font-size:clamp(19px,2.6vw,23px);font-weight:900;margin:0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pocket .lbl span{color:var(--rust)}
+.pk{display:flex;flex-wrap:wrap;gap:10px}
+.pk .tk{flex:none;width:clamp(72px,13vw,104px);min-height:clamp(96px,13vw,120px);border:0;border-radius:10px;border-left:3px dashed var(--tkline);transform:rotate(-3deg)}
+.pk .tk:nth-child(even){transform:rotate(3deg)}
+.pk .tk.drop{animation:drop .45s cubic-bezier(.2,.8,.3,1.2)}
+@keyframes drop{0%{transform:translateY(-90px) rotate(-25deg);opacity:0}100%{transform:translateY(0) rotate(-3deg);opacity:1}}
+.empty{color:var(--muted);font-size:clamp(19px,2.4vw,22px);margin:0}
+.hint{font-size:clamp(19px,2.3vw,22px);color:var(--muted);margin:0}
+.tag{display:inline-block;font-weight:900;border-radius:999px;padding:4px 16px;white-space:nowrap}
+.tag.star{background:#F6E2A8;color:#7A5410}
+.tag.moon{background:#D9E6F2;color:#1B4A6B}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;width:38%}
+.end{font-size:clamp(20px,2.8vw,25px);line-height:1.7;margin:0;font-weight:700}
+@media (max-width:440px){.two{grid-template-columns:1fr}.say svg{width:50px;height:50px}}
+@media (prefers-reduced-motion:reduce){.tk.rip,.pk .tk.drop{animation:none}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"star": "<path d=\"M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z\" fill=\"#F3D27A\"/>", "moon": "<path d=\"M19.5 14.8A8 8 0 1 1 9.2 4.5a6.4 6.4 0 0 0 10.3 10.3z\" fill=\"#DCE3F2\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='ticket-tear-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+/* g=1: round 1 is 星星 (big request first), round 2 is 月亮. g=0: the other way round. */
+var st=load();
+if(!st||typeof st.g!=='number'){st={g:rnd(),step:'intro',big:[null,null],torn:[[],[]],done:[false,false],ans:null}}
+save(st);
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',fn);return b}
+function isStar(r){return r===0?st.g===1:st.g===0}
+
+var FACE={
+ ting:'<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#EAF1EC"/><path d="M12 34 Q12 8 32 8 Q52 8 52 34 L52 46 L46 46 L46 30 L18 30 L18 46 L12 46 Z" fill="#2B2118"/><circle cx="32" cy="35" r="15" fill="#F2CFAE"/><path d="M17 31 Q24 20 40 22 Q46 24 47 31 Q38 26 17 31Z" fill="#2B2118"/><circle cx="26" cy="36" r="2.2" fill="#1F2A2E"/><circle cx="38" cy="36" r="2.2" fill="#1F2A2E"/><path d="M27 43 Q32 47 37 43" stroke="#A8441A" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+ bao:'<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#EAF1F5"/><circle cx="32" cy="36" r="17" fill="#F2CFAE"/><path d="M15 32 Q18 16 32 16 Q46 16 49 32 Q42 24 32 26 Q22 24 15 32Z" fill="#2B2118"/><circle cx="25" cy="37" r="2.6" fill="#1F2A2E"/><circle cx="39" cy="37" r="2.6" fill="#1F2A2E"/><circle cx="21" cy="43" r="3" fill="#F1A9A0" opacity=".7"/><circle cx="43" cy="43" r="3" fill="#F1A9A0" opacity=".7"/><path d="M27 44 Q32 49 37 44" stroke="#A8441A" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+ me:'<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#FBF1DC"/><text x="32" y="41" text-anchor="middle" font-size="22" font-weight="900" fill="#7A5410" font-family="Noto Sans TC,sans-serif">我</text></svg>'
+};
+var R=[
+ {name:'第 1 回合：園遊會義賣券',who:'ting',whoName:'小婷',
+  story:'星期一下課，六年級的班長小婷抱著一疊義賣券走過來。她們班下個月要辦「台江濕地淨灘活動」，想在校慶園遊會上辦義賣，把賺到的錢拿去買淨灘用的手套和夾子。<br>假裝你的口袋裡有 5 枚夜市幣（園遊會用的代幣），一張義賣券要 1 枚，買幾張都可以，不買也可以。',
+  big:'你可以接下來八個星期六早上，都來學校幫忙顧攤嗎？',
+  afterYes:'謝謝你！真的幫了大忙。對了，除了顧攤，也可以買幾張義賣券嗎？一張 1 枚夜市幣。',
+  afterNo:'那……沒關係！至少買幾張義賣券好不好？一張 1 枚夜市幣。',
+  direct:'可以買幾張義賣券嗎？一張 1 枚夜市幣。',
+  max:5,ic:'<svg viewBox="0 0 32 32" width="1em" height="1em"><path d="M4 9h24v5a3 3 0 0 0 0 6v5H4v-5a3 3 0 0 0 0-6z" fill="#A8441A"/><circle cx="16" cy="17" r="4" fill="#F7E3B5"/></svg>',t1:'義賣券',t2:'1 枚',unit:'張義賣券',pocketName:'我買的義賣券',
+  tearQ:'你要買幾張？點一格票就會撕下來，放進你的口袋。'},
+ {name:'第 2 回合：陪表弟玩',who:'bao',whoName:'阿寶',
+  story:'星期六下午，你到安南區的阿嬤家。讀幼兒園大班的表弟阿寶一看到你，就拿著積木跑過來。你本來想在沙發上休息、看一下自己喜歡的書。<br>每一張「陪玩券」代表陪阿寶玩 10 分鐘，撕幾張都可以，不撕也可以。',
+  big:'你可以整個寒假，每天都陪我玩三個小時嗎？',
+  afterYes:'耶！謝謝你！那今天就先陪我玩一下下好不好？',
+  afterNo:'那……沒關係！那今天陪我玩一下下好不好？',
+  direct:'今天可以陪我玩一下下嗎？',
+  max:6,ic:'<svg viewBox="0 0 32 32" width="1em" height="1em"><circle cx="9" cy="8" r="4" fill="#8A5A2B"/><circle cx="23" cy="8" r="4" fill="#8A5A2B"/><circle cx="16" cy="15" r="9" fill="#A8743F"/><circle cx="12.5" cy="13.5" r="1.4" fill="#1F2A2E"/><circle cx="19.5" cy="13.5" r="1.4" fill="#1F2A2E"/><ellipse cx="16" cy="18" rx="3" ry="2" fill="#F2CFAE"/><rect x="9" y="23" width="14" height="7" rx="3" fill="#A8743F"/></svg>',t1:'陪玩券',t2:'10 分鐘',unit:'張陪玩券',pocketName:'我答應的陪玩券',
+  tearQ:'你要陪他玩多久？點一格票就會撕下來，放進你的口袋。'}
+];
+var Q={q:'如果對方先被你拒絕，再退一步，你會覺得怎樣？',o:[['A','覺得他讓步了，我也該讓一點'],['B','沒什麼感覺'],['C','覺得被套路了']],
+ fb:{A:'很多人都會有這種感覺：對方退了一步，自己好像也該退一步，才公平。',B:'有些人比較不受這種說話順序影響，只看要求本身合不合理。',C:'有些人會注意到「先大後小」的說法，覺得不太舒服，反而更想拒絕。'}};
+
+function say(who,name,text,cls){var d=el('div','say'+(cls?' '+cls:''));d.innerHTML=FACE[who];var b=el('div','bub','<b>'+name+'</b>'+text);d.appendChild(b);return d}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','接下來有兩個小故事。每個故事裡，都有人想請你幫一點忙。'),
+   el('p','lead','你用「撕票」來回答：點一格票就撕下來，放進自己的口袋；點口袋裡的票，可以貼回去。一張都不撕也完全沒關係。'),
+   el('p','lead','沒有對錯，照你真正的想法就好。'));
+  app.append(el('h1',null,'撕票大考驗'),c,btn('開始',null,function(){st.step='r0';save(st);render()}));
+}
+
+function round(r){
+  var d=R[r];app.innerHTML='';
+  app.appendChild(el('p','case',d.name));
+  var c=el('div','card');c.appendChild(el('p','lead',d.story));app.appendChild(c);
+  var star=isStar(r);
+  if(star&&st.big[r]===null){
+    var h=el('div','card');h.appendChild(say(d.who,d.whoName,d.big,'big'));app.appendChild(h);
+    app.appendChild(el('h2',null,'你要怎麼回答'+d.whoName+'？'));
+    var g=el('div','two');
+    g.append(btn('好','btn alt',function(){st.big[r]=true;save(st);render()}),btn('不好意思，沒辦法','btn alt',function(){st.big[r]=false;save(st);render()}));
+    app.appendChild(g);
+    app.appendChild(el('p','hint','兩個都可以選。'));
+    return;
+  }
+  var talk=el('div','card');
+  if(star){
+    talk.appendChild(say(d.who,d.whoName,d.big));
+    talk.appendChild(say('me','我',st.big[r]?'好。':'不好意思，沒辦法。','me'));
+    talk.appendChild(say(d.who,d.whoName,st.big[r]?d.afterYes:d.afterNo,'big'));
+  }else{
+    talk.appendChild(say(d.who,d.whoName,d.direct,'big'));
+  }
+  app.appendChild(talk);
+  app.appendChild(el('h2',null,d.tearQ));
+  var strip=el('div','strip');strip.setAttribute('role','group');strip.setAttribute('aria-label','還沒撕的票');
+  var pocket=el('div','pocket');var lbl=el('p','lbl');var pk=el('div','pk');pk.setAttribute('role','group');pk.setAttribute('aria-label','口袋裡的票');
+  pocket.append(lbl,pk);
+  function card(i,inPocket){
+    var b=el('button','tk','<span class="ic" aria-hidden="true">'+d.ic+'</span><span class="t1">'+d.t1+'</span><span class="t2">'+d.t2+'</span>');
+    b.type='button';b.setAttribute('aria-label',inPocket?'把第 '+(i+1)+' 張貼回去':'撕下第 '+(i+1)+' 張');return b}
+  function draw(newIdx,backIdx){
+    strip.innerHTML='';pk.innerHTML='';
+    var torn=st.torn[r];
+    for(var i=0;i<d.max;i++){(function(i){
+      var b=card(i,false);
+      if(torn.indexOf(i)>=0){b.classList.add('gone');b.disabled=true;b.setAttribute('aria-hidden','true')}
+      else{if(i===backIdx)b.classList.add('rip');b.addEventListener('click',function(){st.torn[r].push(i);save(st);draw(i,-1)})}
+      strip.appendChild(b)})(i)}
+    torn.slice().sort(function(a,b){return a-b}).forEach(function(i){
+      var b=card(i,true);if(i===newIdx)b.classList.add('drop');
+      b.addEventListener('click',function(){st.torn[r]=st.torn[r].filter(function(x){return x!==i});save(st);draw(-1,i)});
+      pk.appendChild(b)});
+    lbl.innerHTML=d.pocketName+'<span>'+torn.length+' 張</span>';
+    if(!torn.length)pk.appendChild(el('p','empty','口袋是空的。一張都不撕也可以。'));
+  }
+  draw(-1,-1);
+  app.append(strip,el('p','hint','想反悔的話，點口袋裡的票就能貼回去。'),pocket,
+    btn('決定好了',null,function(){st.done[r]=true;st.step=r===0?'r1':'q';save(st);render();window.scrollTo(0,0)}));
+}
+
+function question(){
+  app.innerHTML='';
+  app.appendChild(el('p','case','最後一題：沒有對錯'));
+  app.appendChild(el('h2',null,Q.q));
+  app.appendChild(el('p','lead','想一想剛才的兩個故事，再選最像你的那一個。'));
+  var g=el('div','opts');var fb=el('div','opts');
+  function show(){
+    fb.innerHTML='';if(!st.ans)return;
+    fb.append(el('p','note',Q.fb[st.ans]+'<br><span style="font-size:.85em;color:var(--muted)">想換也可以，直接點別的選項。</span>'),
+      btn('看看我的結果',null,function(){st.step='end';save(st);render();window.scrollTo(0,0)}));
+  }
+  Q.o.forEach(function(o){var b=btn(o[0]+'　'+o[1],'btn alt',function(){st.ans=o[0];save(st);
+    Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');show()});
+    if(st.ans===o[0])b.classList.add('pick');g.appendChild(b)});
+  app.append(g,fb);show();
+}
+
+function tag(r){return isStar(r)?'<span class="tag star">'+ic('star')+' 星星路線</span>':'<span class="tag moon">'+ic('moon')+' 月亮路線</span>'}
+function end(){
+  app.innerHTML='';
+  app.appendChild(el('h2',null,'做完了！請停在這一頁，等其他同學。'));
+  var c=el('div','card');var t=el('table');
+  var sr=isStar(0)?0:1;
+  var rows=[
+    ['第 1 回合<br>義賣券',tag(0)+'<br>撕了 <b>'+st.torn[0].length+'</b> 張 <span style="white-space:nowrap">（最多 5 張）</span>'],
+    ['第 2 回合<br>陪玩券',tag(1)+'<br>撕了 <b>'+st.torn[1].length+'</b> 張 <span style="white-space:nowrap">（最多 6 張）</span>'],
+    ['一開始那個很大的要求',(st.big[sr]?'<b>答應了</b>':'<b>沒答應</b>')+'（第 '+(sr+1)+' 回合，'+R[sr].whoName+'問的）'],
+    ['最後一題我選',st.ans?'<b>'+st.ans+'</b>　'+Q.o.filter(function(o){return o[0]===st.ans})[0][1]:'—']
+  ];
+  rows.forEach(function(x){var tr=el('tr');tr.append(el('td','k',x[0]),el('td',null,x[1]));t.appendChild(tr)});
+  c.appendChild(t);app.appendChild(c);
+  app.appendChild(el('p','note','老師等一下會問：「星星路線的人，撕了幾張？月亮路線的人呢？」請記住你兩個回合的顏色和張數。'));
+  app.appendChild(el('p','end','先提一個很大的要求，被拒絕以後退一步，對方常常會覺得「他讓步了，我也該讓一點」。心理學家把這叫做「以退為進」。'));
+}
+
+function render(){
+  if(st.step==='r0')round(0);else if(st.step==='r1')round(1);else if(st.step==='q')question();else if(st.step==='end')end();else intro();
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);location.replace(location.pathname+location.search);location.reload()}});
+})();
+</script>

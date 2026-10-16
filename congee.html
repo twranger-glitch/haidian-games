@@ -1,0 +1,449 @@
+<title>一碗粥的旅程</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: morning congee stall → first guess (how many people helped) → an opening web: the bowl in the middle, six things around it; tap a circle and the people behind it grow out (up to 3 rings; phone = expanding list tree) → second guess → two no-right-answer questions → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+svg.pic{width:100%;max-height:300px;height:auto}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:focus-visible,[tabindex]:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.4vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700}
+td.n{text-align:right;font-weight:900}
+/* web (tablet) */
+.webbox{position:relative;background:var(--card);border:3px solid var(--line);border-radius:22px;overflow:hidden;padding:0}
+.webbox svg{display:block;width:100%;height:clamp(360px,calc(100svh - 360px),900px);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.webbox svg .nd{cursor:pointer}
+.webbox svg .nd:focus{outline:none}
+.webbox svg .nd:focus-visible circle.c{stroke:var(--gold);stroke-width:7}
+.tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.counter{background:var(--card);border:3px solid var(--line);border-radius:16px;padding:6px 14px;line-height:1.35}
+.counter b{font-size:20px;color:var(--muted)}
+.counter .num{font-size:32px;font-weight:900;color:var(--rust);font-variant-numeric:tabular-nums}
+.counter small{font-size:19px;color:var(--muted);margin-left:8px}
+.zoom{display:flex;gap:8px}
+.zoom button{font:inherit;font-size:22px;font-weight:900;min-width:52px;height:52px;border-radius:14px;border:3px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;padding:0 10px}
+.zoom button.wide{font-size:19px}
+.status{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.status .lead{flex:1 1 260px}
+/* tree (phone) */
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:8px;display:flex;flex-direction:column;gap:8px;border-bottom:3px solid var(--line)}
+.bar p{margin:0;font-size:19px;font-weight:700;color:var(--muted)}
+.bar .num{font-size:30px;font-weight:900;color:var(--rust);font-variant-numeric:tabular-nums}
+.tree,.tree ul{list-style:none;margin:0;padding:0}
+.tree ul{margin-left:22px;padding-left:12px;border-left:4px solid var(--line)}
+.tree li{margin:8px 0}
+.tnode{font:inherit;width:100%;display:flex;align-items:center;gap:10px;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:10px 12px;font-size:20px;font-weight:700;color:var(--ink);cursor:pointer;line-height:1.4}
+.tnode .dot{flex:none;width:26px;height:26px;border-radius:50%;background:var(--note);border:3px solid var(--sea)}
+.tnode.thing .dot{background:#FBF1DC;border-color:var(--gold)}
+.tnode.leaf .dot{background:#fff;border-color:var(--muted);border-style:dashed}
+.tnode .tl{flex:1}
+.tnode .tag{flex:none;font-size:19px;font-weight:900;color:var(--sea)}
+.tnode.open{border-color:var(--sea)}
+.tnode.open .tag{color:var(--muted)}
+.tdesc{margin:6px 0 0 4px;font-size:19px;color:var(--muted);line-height:1.6}
+.grow{animation:grow .45s ease-out both}
+@keyframes grow{from{opacity:0;transform:translateY(-10px) scale(.9)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.grow{animation:none}}
+.bowlrow{display:flex;align-items:center;gap:12px}
+.bowlrow svg{width:96px;height:96px;flex:none}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='congee-v1';
+var NEED=6;
+var GUESS=['5 人以內','大約 20 人','大約 100 人','超過 1000 人'];
+var KNOW=['一個都不認識','認識一兩個','認識很多個'];
+var ALONE=['很多碗','幾碗','可能一碗都煮不出來'];
+var KNOWFB=['很多人都跟你一樣：每天幫過我們的人，大部分我們連名字都不知道。等一下可以聽聽別人的想法。',
+ '你認識其中一兩個，也許是家人、親戚或鄰居在做這樣的工作。等一下可以跟大家說說看是誰。',
+ '你認識很多個！也許你身邊就有人在做這些工作。等一下可以跟大家分享。'];
+var ALONEFB=['你覺得阿嬤還是能煮很多碗。等一下可以說說看：這麼多事情，她的一天要怎麼排？',
+ '你覺得阿嬤還煮得出來，只是會少很多。等一下可以說說看：少掉的時間花到哪裡去了？',
+ '你覺得阿嬤可能連一碗都煮不出來。等一下可以說說看：她會卡在哪一個步驟？'];
+
+/* [id, parentId, label ('|' = line break in the circle), what this one does] */
+var RAW=[
+ ['fish',null,'虱目魚','粥裡的虱目魚，不是阿嬤自己養的。牠從魚塭一路來到粥攤，經過好多人的手。'],
+ ['rice',null,'米','煮粥的米，要先有人種稻，再有人把稻穀變成白米。'],
+ ['bowl',null,'碗和|湯匙','你手上的碗和湯匙，是別人做好、再一路賣到阿嬤的攤子上。'],
+ ['gas',null,'瓦斯和|爐子','粥要煮得熱，阿嬤需要瓦斯和爐子，這也不是她自己做的。'],
+ ['side',null,'蔥和|油條','撒在粥上的蔥花、旁邊的油條，也各有一群人在忙。'],
+ ['stall',null,'阿嬤的|粥攤','阿嬤每天在這裡煮粥，攤子要有房子、有水、有電，還要有人收垃圾。'],
+ ['farmer','fish','魚塭的|養殖戶','養殖戶每天顧魚塭、餵魚、看天氣，把虱目魚養大。'],
+ ['feed','fish','飼料|工廠','魚要吃飼料，飼料是工廠把很多原料混在一起做出來的。'],
+ ['catch','fish','捕魚的|工人','魚養大了，要有人下魚塭把魚撈起來。'],
+ ['truck','fish','冷凍運送|的貨車|司機','剛撈起來的魚要保持新鮮，靠冷凍貨車一大早送到市場和粥攤。'],
+ ['digger','farmer','挖魚塭的|怪手司機',null],['fry','farmer','賣魚苗|的人',null],['pump','farmer','修抽水機|的師傅',null],
+ ['corn','feed','種玉米|和黃豆|的農夫',null],['ship','feed','遠洋運送|的船員',null],['fworker','feed','工廠|工人',null],
+ ['net','catch','做漁網|的人',null],['boots','catch','做雨鞋|的工廠',null],
+ ['truckmk','truck','造貨車|的工廠',null],['fuel','truck','加油站|的店員',null],['road','truck','修馬路|的工人',null],
+ ['grower','rice','種稻的|農夫','農夫插秧、放水、除草，等好幾個月稻子才會成熟。'],
+ ['mill','rice','碾米廠','碾米廠把稻穀的殼去掉，變成我們煮飯、煮粥的白米。'],
+ ['coop','rice','農會','農會幫農夫收稻穀、借機器、教新的種法，也幫忙把米賣出去。'],
+ ['tiller','grower','做耕耘機|的工廠',null],['canal','grower','灌溉水圳|的管理員',null],['seed','grower','研究稻子|品種的人',null],
+ ['millfix','mill','修碾米機|的師傅',null],['sack','mill','做米袋|的工廠',null],
+ ['collect','coop','收稻穀的|工作人員',null],['store','coop','管倉庫|的人',null],
+ ['ceramic','bowl','陶瓷|工廠','陶瓷工廠把土做成碗的形狀，再放進窯裡燒。'],
+ ['designer','bowl','設計碗|的人','碗要多大、多深、拿起來燙不燙手，都有人先想好、畫好。'],
+ ['whole','bowl','賣碗的|批發商','批發商一次進很多碗和湯匙，再賣給一家一家的小吃攤。'],
+ ['clay','ceramic','挖陶土|的工人',null],['kiln','ceramic','燒窯的|師傅',null],['pack','ceramic','包裝|工人',null],
+ ['teacher','designer','教設計|的老師',null],['pc','designer','做電腦|的工廠',null],
+ ['deliver','whole','送貨的|司機',null],['porter','whole','倉庫的|搬運工',null],
+ ['gasman','gas','送瓦斯|的人','瓦斯快用完時，打一通電話，就有人騎機車把一桶瓦斯扛來。'],
+ ['gasco','gas','瓦斯|公司','瓦斯公司把從很遠地方運來的瓦斯，裝進一桶一桶的鋼瓶。'],
+ ['stove','gas','做爐子|的工廠','工廠把鐵板、零件組合起來，做成能點火的爐子。'],
+ ['moto','gasman','做機車|的工廠',null],['cyl','gasman','檢查鋼瓶|的師傅',null],
+ ['tanker','gasco','運瓦斯的|大船船員',null],['dock','gasco','港口的|碼頭工人',null],['pipe','gasco','檢查管線|的技師',null],
+ ['steel','stove','煉鋼廠|的工人',null],['parts','stove','做零件|的小工廠',null],
+ ['onion','side','種蔥的|農夫','蔥要種一兩個月才長大，下雨太多還會爛掉。'],
+ ['youtiao','side','炸油條|的師傅','炸油條的師傅天還沒亮就起床揉麵、下鍋。'],
+ ['wheat','side','種小麥|的人|（麵粉）','油條是麵粉做的，麵粉來自很遠的地方種的小麥。'],
+ ['fert','onion','賣肥料|的人',null],['market','onion','果菜市場|的搬運工',null],
+ ['oil','youtiao','做食用油|的工廠',null],['wok','youtiao','做鍋子|的師傅',null],
+ ['flour','wheat','麵粉廠|的工人',null],['grain','wheat','運小麥|的船員',null],
+ ['builder','stall','蓋房子|的師傅','粥攤要有遮風擋雨的地方，房子是一群師傅一起蓋的。'],
+ ['water','stall','自來水|公司','煮粥、洗碗都要用水，水從水庫經過水管才流到攤子。'],
+ ['power','stall','電力|公司','電燈、冰箱、電扇都要用電，電是從發電廠一路送過來的。'],
+ ['trash','stall','收垃圾|的清潔隊','攤子每天有很多垃圾，清潔隊每天來收，街上才會乾淨。'],
+ ['cement','builder','做水泥|的工廠',null],['brick','builder','燒磚頭|的工人',null],
+ ['dam','water','管水庫|的人',null],['plumber','water','修水管|的工人',null],
+ ['plant','power','發電廠的|工程師',null],['line','power','爬電線桿|的修理員',null],
+ ['garbage','trash','開垃圾車|的司機',null],['burn','trash','焚化廠的|工作人員',null]
+];
+var N={},L1=[];
+RAW.forEach(function(r){N[r[0]]={id:r[0],p:r[1],label:r[2],desc:r[3],kids:[],d:r[1]?0:1}});
+RAW.forEach(function(r){if(r[1]){N[r[1]].kids.push(r[0])}else L1.push(r[0])});
+(function setD(ids,d){ids.forEach(function(id){N[id].d=d;setD(N[id].kids,d+1)})})(L1,1);
+function plain(s){return s.replace(/\|/g,'')}
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,g1:null,open:[],g2:null,know:null,alone:null,msg:null};
+if(!Array.isArray(st.open))st.open=[];
+st.open=st.open.filter(function(id){return N[id]&&N[id].kids.length});
+function isOpen(id){return st.open.indexOf(id)>=0}
+function visible(id){var n=N[id];return !n.p||(isOpen(n.p)&&visible(n.p))}
+function people(){var c=1;RAW.forEach(function(r){var n=N[r[0]];if(n.d>=2&&visible(n.id))c++});return c}
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();window.scrollTo(0,0)}
+
+/* bowl drawing in local coords around (0,0), about 130 wide */
+var BOWL='<path d="M-24 -40 q-8 -12 0 -24 q8 -12 0 -24" fill="none" stroke="#B9C2BD" stroke-width="5" stroke-linecap="round"/><path d="M4 -40 q-8 -12 0 -24 q8 -12 0 -24" fill="none" stroke="#B9C2BD" stroke-width="5" stroke-linecap="round"/><path d="M30 -40 q-8 -12 0 -24" fill="none" stroke="#B9C2BD" stroke-width="5" stroke-linecap="round"/>'+
+ '<path d="M-60 -18 Q-56 34 0 40 Q56 34 60 -18 Z" fill="#FFFFFF" stroke="#205E86" stroke-width="4"/><path d="M-57 0 Q0 12 57 0" fill="none" stroke="#205E86" stroke-width="4"/>'+
+ '<ellipse cx="0" cy="-18" rx="60" ry="14" fill="#F4EBD6" stroke="#205E86" stroke-width="4"/>'+
+ '<ellipse cx="-20" cy="-20" rx="13" ry="6" fill="#E9CDB8"/><ellipse cx="14" cy="-16" rx="12" ry="5" fill="#E9CDB8"/>'+
+ '<circle cx="-2" cy="-22" r="3.5" fill="#5C9A4B"/><circle cx="30" cy="-22" r="3.5" fill="#5C9A4B"/><circle cx="-36" cy="-15" r="3.5" fill="#5C9A4B"/><circle cx="8" cy="-24" r="3" fill="#5C9A4B"/>'+
+ '<line x1="34" y1="-12" x2="74" y2="-48" stroke="#56605C" stroke-width="7" stroke-linecap="round"/>';
+var SCENE='<svg class="pic" viewBox="0 0 600 300" role="img" aria-label="早上的粥攤，阿嬤從大鍋子舀了一碗虱目魚粥，端到你面前。">'+
+ '<rect width="600" height="300" rx="16" fill="#EAF1EC"/>'+
+ '<rect x="40" y="20" width="520" height="54" rx="8" fill="#A8441A"/><text x="300" y="58" text-anchor="middle" font-size="32" font-weight="900" fill="#FBF1DC">虱目魚粥</text>'+
+ '<path d="M40 74 h520 l-10 22 h-500 Z" fill="#FBF1DC"/>'+
+ '<rect x="40" y="210" width="520" height="70" rx="8" fill="#C9A26A"/>'+
+ '<path d="M80 150 h110 v58 q0 10 -10 10 h-90 q-10 0 -10 -10 Z" fill="#8E9A96"/><rect x="72" y="142" width="126" height="12" rx="6" fill="#56605C"/>'+
+ '<path d="M110 136 q-10 -14 0 -28 M135 136 q-10 -14 0 -28 M160 136 q-10 -14 0 -28" fill="none" stroke="#B9C2BD" stroke-width="5" stroke-linecap="round"/>'+
+ '<circle cx="300" cy="128" r="30" fill="#F2CFAE"/><path d="M270 124 Q272 92 300 94 Q328 92 330 124 Q318 106 300 106 Q282 106 270 124 Z" fill="#C9CCCB"/><circle cx="300" cy="94" r="12" fill="#C9CCCB"/>'+
+ '<circle cx="289" cy="130" r="7" fill="none" stroke="#1F2A2E" stroke-width="2.5"/><circle cx="311" cy="130" r="7" fill="none" stroke="#1F2A2E" stroke-width="2.5"/><path d="M291 144 q9 6 18 0" fill="none" stroke="#1F2A2E" stroke-width="3" stroke-linecap="round"/>'+
+ '<path d="M262 210 Q264 164 300 160 Q336 164 338 210 Z" fill="#205E86"/><path d="M280 172 h40 v38 h-40 Z" fill="#FCFBF7"/>'+
+ '<path d="M330 176 Q370 180 392 186" fill="none" stroke="#F2CFAE" stroke-width="14" stroke-linecap="round"/>'+
+ '<g transform="translate(440 190) scale(.7)">'+BOWL+'</g>'+
+ '<rect x="500" y="196" width="60" height="12" rx="6" fill="#D9A441" transform="rotate(-12 530 202)"/>'+
+ '</svg>';
+function bowlIcon(){return '<svg viewBox="-80 -100 160 150" aria-hidden="true">'+BOWL+'</svg>'}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.innerHTML=SCENE;
+  c.append(el('p','lead','早上七點，你跟家人來到安南區巷口的粥攤。阿嬤從大鍋子裡舀了一碗熱騰騰的虱目魚粥，上面有魚肉和蔥花，旁邊還放了一條油條，端到你面前。'),
+   el('p','lead','你看到的，是阿嬤舀粥的這一刻。可是在這之前，還發生了很多事。'));
+  app.append(el('h1',null,'一碗粥的旅程'),c,btn('開始',null,function(){go(1)}));
+}
+function guessPage(which){
+  app.innerHTML='';
+  var first=which===1;
+  app.append(el('p','case',first?'先猜猜看':'再猜一次'));
+  app.append(el('h2',null,(first?'':'看完這張網子以後，')+'這碗粥端到你面前，大概有多少人出過力？'));
+  app.append(el('p','lead',first?'憑感覺猜就好，沒有對錯。':'你第一次猜「'+(GUESS[st.g1]||'—')+'」。可以一樣，也可以改。'));
+  var g=el('div','opts');
+  GUESS.forEach(function(t,k){g.appendChild(btn(t,'btn alt',function(){if(first){st.g1=k;go(2)}else{st.g2=k;go(4)}}))});
+  app.append(g);
+}
+function choicePage(field,h,lead,opts,fbs,next){
+  app.innerHTML='';
+  app.append(el('p','case','沒有對錯'),el('h2',null,h),el('p','lead',lead));
+  var g=el('div','opts');var fb=el('div','opts');
+  function show(){
+    Array.prototype.forEach.call(g.children,function(x,k){x.classList.toggle('pick',k===st[field])});
+    fb.innerHTML='';if(st[field]==null)return;
+    fb.append(el('p','note',fbs[st[field]]+'<br><span style="font-size:.85em;color:var(--muted)">想換也可以，直接點別的選項。</span>'),btn('下一步',null,function(){go(next)}));
+  }
+  opts.forEach(function(t,k){g.appendChild(btn(t,'btn alt',function(){st[field]=k;save(st);show();var b=fb.lastChild;if(b&&b.scrollIntoView)b.scrollIntoView({behavior:RM?'auto':'smooth',block:'end'})}))});
+  app.append(g,fb);show();
+}
+function end(){
+  app.innerHTML='';
+  var t=el('table');
+  [['第一次猜',GUESS[st.g1]||'—'],['點開了幾個',st.open.length+' 個'],['看到幾種人',people()+' 種'],['第二次猜',GUESS[st.g2]||'—'],['這些人你認識幾個',KNOW[st.know]||'—'],['阿嬤自己來，一天能煮',ALONE[st.alone]||'—']]
+   .forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  var c=el('div','card');var br=el('div','bowlrow');br.innerHTML=bowlIcon();br.appendChild(el('p','lead','你在一碗粥的背後，找到了 <b style="color:var(--rust)">'+people()+' 種人</b>，而且每一種都可能不只一個人。'));
+  c.append(br,t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+/* ---------- the web ---------- */
+var webMode=null; // 'svg' or 'list'
+function useList(){return window.innerWidth<700}
+function msgFor(id){
+  var n=N[id];
+  if(!n)return '這是阿嬤剛舀好的一碗粥。點旁邊的小圓圈，看看它背後還有誰。';
+  if(n.kids.length)return '「'+plain(n.label)+'」：'+n.desc;
+  return '「'+plain(n.label)+'」的背後，其實也還有很多人在幫忙。這張網子先畫到這裡，換點別的圓圈看看。';
+}
+function tap(id){
+  var n=N[id];var grew=false;
+  if(n&&n.kids.length&&!isOpen(id)){st.open.push(id);grew=true}
+  st.msg=id||'center';save(st);
+  return grew;
+}
+function webPage(){
+  app.innerHTML='';
+  webMode=useList()?'list':'svg';
+  if(webMode==='list')listView();else svgView();
+}
+function doneBtn(){return btn('我看夠了','btn',function(){go(3)})}
+function remainText(){var r=NEED-st.open.length;return r>0?'再點開 '+r+' 個，就會出現「我看夠了」。':'想再多看也可以；看夠了就按「我看夠了」。'}
+
+/* phone: expanding list tree */
+var justOpened=null;
+function listView(){
+  app.innerHTML='';
+  app.append(el('h2',null,'這碗粥的背後，還有誰？'),el('p','lead','點一個項目，它背後的人就會長出來。至少點開 '+NEED+' 個。'));
+  var bar=el('div','bar');
+  bar.appendChild(el('p',null,'目前看到的人：<span class="num">'+people()+'</span> 種<br>（每一種可能不只一個人）'));
+  if(st.open.length<NEED)bar.appendChild(el('p',null,'已點開 '+st.open.length+' 個。'+remainText()));
+  else{var db=doneBtn();db.style.padding='8px 16px';bar.appendChild(db)}
+  var top=el('div','card');var br=el('div','bowlrow');br.innerHTML=bowlIcon();br.appendChild(el('p','lead','<b style="color:var(--ink)">阿嬤舀的一碗虱目魚粥</b><br>我們只看到這一步。'));top.appendChild(br);
+  var tree=el('ul','tree');
+  function build(ids,ul,grow){
+    ids.forEach(function(id){
+      var n=N[id];var li=el('li',grow?'grow':null);
+      var cls='tnode'+(n.d===1?' thing':'')+(n.kids.length?'':' leaf')+(isOpen(id)?' open':'');
+      var tag=n.kids.length?(isOpen(id)?'已點開':'＋ 點開'):'';
+      var b=btn('<span class="dot"></span><span class="tl">'+plain(n.label)+'</span><span class="tag">'+tag+'</span>',cls,function(){
+        var grew=tap(id);justOpened=grew?id:null;var y=window.scrollY;listView();window.scrollTo(0,y);
+        var again=app.querySelector('[data-id="'+id+'"]');if(again)again.focus({preventScroll:true});
+      });
+      b.setAttribute('data-id',id);b.setAttribute('aria-expanded',n.kids.length?String(isOpen(id)):'false');
+      li.appendChild(b);
+      if(st.msg===id&&!n.kids.length)li.appendChild(el('p','tdesc',msgFor(id)));
+      if(isOpen(id)){li.appendChild(el('p','tdesc',n.desc));var sub=el('ul');build(n.kids,sub,id===justOpened);li.appendChild(sub)}
+      ul.appendChild(li);
+    });
+  }
+  build(L1,tree,false);justOpened=null;
+  app.append(bar,top,tree);
+  if(st.open.length>=NEED)app.appendChild(doneBtn());
+}
+
+/* tablet: radial web with pan / zoom */
+var R={0:96,1:64,2:58,3:55},RAD={1:215,2:400,3:580},GAP=14;
+var toolsEl,svg,world,gLines,gNodes,W=800,H=500,view={tx:400,ty:250,k:1},cur={},els={},lines={},raf=null,counterEl,statusEl,infoEl;
+var SVGNS='http://www.w3.org/2000/svg';
+function sv(tag,attrs){var e=document.createElementNS(SVGNS,tag);for(var a in attrs)e.setAttribute(a,attrs[a]);return e}
+var AX=1;
+function layout(){
+  var r={1:RAD[1],2:RAD[2],3:RAD[3]};
+  function own(id){var n=N[id];return (2*R[n.d]+GAP)/r[n.d]}
+  function need(id){var n=N[id];if(isOpen(id)){var s=0;n.kids.forEach(function(k){s+=need(k)});return Math.max(own(id),s)}return own(id)}
+  function total(){var T=0;L1.forEach(function(id){T+=need(id)});return T}
+  var guard=0;
+  while(total()>2*Math.PI&&guard++<200){
+    /* grow the ring whose unopened circles use the most angle; outer rings follow */
+    var c={1:0,2:0,3:0};RAW.forEach(function(x){var id=x[0];if(visible(id)&&!isOpen(id))c[N[id].d]+=own(id)});
+    var d=c[3]>=c[2]&&c[3]>=c[1]?3:(c[2]>=c[1]?2:1);
+    r[d]*=1.04;
+    for(var k=2;k<=3;k++){var minr=r[k-1]+R[k-1]+R[k]+70;if(r[k]<minr)r[k]=minr}
+  }
+  var pos={c:{x:0,y:0}};
+  function place(ids,a0,a1){
+    var ns=ids.map(need);var tot=ns.reduce(function(a,b){return a+b},0);
+    var a=a0;ids.forEach(function(id,i){var span=(a1-a0)*ns[i]/tot;var mid=a+span/2;var rr=r[N[id].d];
+      pos[id]={x:rr*Math.cos(mid)*AX,y:rr*Math.sin(mid)};if(isOpen(id))place(N[id].kids,a,a+span);a+=span});
+  }
+  var ns0=L1.map(need);var s0=(2*Math.PI)*ns0[0]/ns0.reduce(function(a,b){return a+b},0);
+  var start=-Math.PI/2-s0/2;place(L1,start,start+2*Math.PI);
+  return pos;
+}
+function bbox(pos,ids){
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  ids.forEach(function(id){var p=pos[id];if(!p)return;var r=id==='c'?R[0]:R[N[id].d];x0=Math.min(x0,p.x-r);y0=Math.min(y0,p.y-r);x1=Math.max(x1,p.x+r);y1=Math.max(y1,p.y+r)});
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+function fitTo(b,kmax){var pad=16,top=16;var k=Math.min((W-2*pad)/(b.x1-b.x0),(H-top-pad)/(b.y1-b.y0),kmax);return {k:k,tx:W/2-k*(b.x0+b.x1)/2,ty:top+(H-top-pad)/2-k*(b.y0+b.y1)/2}}
+function visIds(){var a=['c'];RAW.forEach(function(r){if(visible(r[0]))a.push(r[0])});return a}
+function targetView(pos,focus){
+  var all=fitTo(bbox(pos,visIds()),1.15);
+  if(all.k>=0.6||!focus)return all;
+  var ids=[focus].concat(N[focus].kids);if(N[focus].p)ids.push(N[focus].p);else ids.push('c');
+  return fitTo(bbox(pos,ids),0.8);
+}
+function nodeEl(id){
+  var n=N[id];var g=sv('g',{'class':'nd','data-id':id,tabindex:'0',role:'button'});
+  var thing=n.d===1,leaf=!n.kids.length;
+  g.appendChild(sv('circle',{'class':'c',r:R[n.d],fill:thing?'#FBF1DC':(leaf?'#FFFFFF':'#EAF1F5'),stroke:thing?'#B7862B':(leaf?'#8A938F':'#205E86'),'stroke-width':'5','stroke-dasharray':leaf?'10 7':'none'}));
+  var ls=n.label.split('|');var fs=thing?24:20;var lh=fs*1.2;var y0=-(ls.length-1)*lh/2+fs*0.36-(leaf?0:6);
+  ls.forEach(function(t,i){var tx=sv('text',{x:0,y:(y0+i*lh).toFixed(1),'text-anchor':'middle','font-size':fs,'font-weight':'900',fill:'#1F2A2E'});tx.textContent=t;g.appendChild(tx)});
+  if(!leaf){var bd=sv('g',{'class':'badge'});bd.appendChild(sv('circle',{cx:0,cy:R[n.d]-6,r:15,fill:'#205E86'}));var pl=sv('text',{x:0,y:R[n.d]+1,'text-anchor':'middle','font-size':'24','font-weight':'900',fill:'#fff'});pl.textContent='+';bd.appendChild(pl);g.appendChild(bd)}
+  g.setAttribute('aria-label',plain(n.label)+(leaf?'':(isOpen(id)?'，已點開':'，點一下看看背後還有誰')));
+  return g;
+}
+function svgView(){
+  app.innerHTML='';
+  app.append(el('h2',null,'這碗粥的背後，還有誰？'),el('p','lead','點一個小圓圈，看看它背後還有誰。手指可以拖動畫面。'));
+  var box=el('div','webbox');var tools=el('div','tools');toolsEl=tools;
+  svg=sv('svg',{'aria-label':'一碗粥背後的人際網'});world=sv('g');gLines=sv('g');gNodes=sv('g');world.append(gLines,gNodes);svg.appendChild(world);
+  var center=sv('g',{'class':'nd','data-id':'c',tabindex:'0',role:'button','aria-label':'阿嬤舀的一碗粥'});
+  center.appendChild(sv('circle',{r:R[0],fill:'#FCFBF7',stroke:'#A8441A','stroke-width':'6'}));
+  var bi=sv('g',{transform:'translate(0 -4) scale(.78)'});bi.innerHTML=BOWL;center.appendChild(bi);
+  var ct=sv('text',{x:0,y:62,'text-anchor':'middle','font-size':'22','font-weight':'900',fill:'#A8441A'});ct.textContent='一碗粥';center.appendChild(ct);
+  gNodes.appendChild(center);
+  box.appendChild(svg);
+  counterEl=el('div','counter');tools.appendChild(counterEl);
+  var z=el('div','zoom');
+  z.append(btn('＋',null,function(){zoomBy(1.25,W/2,H/2)}),btn('－',null,function(){zoomBy(0.8,W/2,H/2)}),btn('看全部','wide',function(){animate(layout(),fitTo(bbox(layout(),visIds()),1.15))}));
+  z.children[0].setAttribute('aria-label','放大');z.children[1].setAttribute('aria-label','縮小');
+  tools.appendChild(z);
+  infoEl=el('p','note');statusEl=el('div','status');
+  app.append(tools,box,infoEl,statusEl);
+  els={c:center};lines={};cur={c:{x:0,y:0,s:1,o:1}};
+  measure();
+  var pos=layout();
+  syncEls(pos,true);
+  view=fitTo(bbox(pos,visIds()),1.15);
+  var tv=targetView(pos,st.msg&&N[st.msg]&&N[st.msg].kids.length?st.msg:null);view=tv;
+  draw();updateHud();
+  bindPointer();
+}
+function measure(){var r=svg.getBoundingClientRect();W=Math.max(200,r.width);H=Math.max(200,r.height);AX=Math.max(1,Math.min(1.7,W/H*0.92));svg.setAttribute('viewBox','0 0 '+W+' '+H)}
+function syncEls(pos,instant){
+  visIds().forEach(function(id){
+    if(id==='c')return;
+    if(!els[id]){
+      var n=N[id];var e=nodeEl(id);gNodes.appendChild(e);els[id]=e;
+      var ln=sv('line',{stroke:n.d===1?'#B7862B':'#205E86','stroke-width':'4','stroke-linecap':'round',opacity:'.55'});gLines.appendChild(ln);lines[id]=ln;
+      var pp=cur[n.p||'c']||{x:0,y:0};
+      cur[id]=instant?{x:pos[id].x,y:pos[id].y,s:1,o:1}:{x:pp.x,y:pp.y,s:.25,o:0};
+    }
+    var b=els[id].querySelector('.badge');if(b)b.style.display=isOpen(id)?'none':'';
+    var n2=N[id];if(n2.kids.length)els[id].setAttribute('aria-label',plain(n2.label)+(isOpen(id)?'，已點開':'，點一下看看背後還有誰'));
+  });
+}
+function draw(){
+  world.setAttribute('transform','translate('+view.tx.toFixed(2)+' '+view.ty.toFixed(2)+') scale('+view.k.toFixed(4)+')');
+  for(var id in els){if(id==='c')continue;var c=cur[id];els[id].setAttribute('transform','translate('+c.x.toFixed(1)+' '+c.y.toFixed(1)+') scale('+c.s.toFixed(3)+')');els[id].style.opacity=c.o;
+    var p=cur[N[id].p||'c'];var ln=lines[id];ln.setAttribute('x1',p.x.toFixed(1));ln.setAttribute('y1',p.y.toFixed(1));ln.setAttribute('x2',c.x.toFixed(1));ln.setAttribute('y2',c.y.toFixed(1));ln.style.opacity=(0.55*c.o).toFixed(2)}
+}
+function animate(pos,tv){
+  if(raf)cancelAnimationFrame(raf);raf=null;
+  var from={},ids=Object.keys(els).filter(function(i){return i!=='c'});
+  ids.forEach(function(id){from[id]={x:cur[id].x,y:cur[id].y,s:cur[id].s,o:cur[id].o}});
+  var v0={tx:view.tx,ty:view.ty,k:view.k};
+  function setT(t){var e=1-Math.pow(1-t,3);
+    ids.forEach(function(id){var a=from[id],b=pos[id];cur[id]={x:a.x+(b.x-a.x)*e,y:a.y+(b.y-a.y)*e,s:a.s+(1-a.s)*e,o:a.o+(1-a.o)*e}});
+    if(tv){view={tx:v0.tx+(tv.tx-v0.tx)*e,ty:v0.ty+(tv.ty-v0.ty)*e,k:v0.k+(tv.k-v0.k)*e}}
+    draw();}
+  if(RM){setT(1);return}
+  var t0=null,dur=600;
+  function step(ts){if(t0==null)t0=ts;var t=Math.min(1,(ts-t0)/dur);setT(t);if(t<1)raf=requestAnimationFrame(step);else raf=null}
+  raf=requestAnimationFrame(step);
+}
+function updateHud(){
+  counterEl.innerHTML='<b>目前看到的人：</b><span class="num">'+people()+'</span> 種<small>（每一種可能不只一個人）</small>';
+  infoEl.textContent=st.msg?msgFor(st.msg==='center'?null:st.msg):'先點一個金色的圓圈試試看。藍色圓圈下面有「＋」的，還可以再點開。';
+  statusEl.innerHTML='';
+  statusEl.appendChild(el('p','lead','已點開 '+st.open.length+' 個。'+remainText()));
+  var old=document.getElementById('done2');if(old)old.remove();
+  if(st.open.length>=NEED){var d2=doneBtn();d2.id='done2';d2.style.padding='8px 16px';toolsEl.insertBefore(d2,toolsEl.lastChild)}
+}
+function onTap(id){
+  if(id==='c'){tap(null);updateHud();return}
+  var grew=tap(id);
+  var pos=layout();syncEls(pos,false);
+  animate(pos,grew?targetView(pos,id):null);
+  updateHud();
+}
+function zoomBy(f,cx,cy){if(raf){cancelAnimationFrame(raf);raf=null;var p=layout();for(var id in cur)if(p[id])cur[id]={x:p[id].x,y:p[id].y,s:1,o:1}}
+  var k=Math.max(0.25,Math.min(2.2,view.k*f));var wx=(cx-view.tx)/view.k,wy=(cy-view.ty)/view.k;view={k:k,tx:cx-wx*k,ty:cy-wy*k};draw()}
+function bindPointer(){
+  var pts={},start=null,moved=false,downId=null,pinch=null;
+  function local(e){var r=svg.getBoundingClientRect();return {x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+  svg.addEventListener('pointerdown',function(e){
+    try{svg.setPointerCapture(e.pointerId)}catch(err){}
+    pts[e.pointerId]=local(e);var ks=Object.keys(pts);
+    if(ks.length===1){var t=e.target.closest&&e.target.closest('[data-id]');downId=t?t.getAttribute('data-id'):null;start={p:pts[e.pointerId],tx:view.tx,ty:view.ty};moved=false}
+    else if(ks.length===2){var a=pts[ks[0]],b=pts[ks[1]];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)||1,k:view.k,m:{x:(a.x+b.x)/2,y:(a.y+b.y)/2},tx:view.tx,ty:view.ty};moved=true}
+  });
+  svg.addEventListener('pointermove',function(e){
+    if(!pts[e.pointerId])return;pts[e.pointerId]=local(e);var ks=Object.keys(pts);
+    if(ks.length===1&&start){var dx=pts[ks[0]].x-start.p.x,dy=pts[ks[0]].y-start.p.y;if(!moved&&Math.hypot(dx,dy)>8)moved=true;
+      if(moved){if(raf){cancelAnimationFrame(raf);raf=null;var p=layout();for(var id in cur)if(p[id])cur[id]={x:p[id].x,y:p[id].y,s:1,o:1}}view.tx=start.tx+dx;view.ty=start.ty+dy;draw()}}
+    else if(ks.length===2&&pinch){var a=pts[ks[0]],b=pts[ks[1]];var d=Math.hypot(a.x-b.x,a.y-b.y);var m={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+      var k=Math.max(0.25,Math.min(2.2,pinch.k*d/pinch.d));var wx=(pinch.m.x-pinch.tx)/pinch.k,wy=(pinch.m.y-pinch.ty)/pinch.k;view={k:k,tx:m.x-wx*k,ty:m.y-wy*k};draw()}
+  });
+  function up(e){
+    if(!pts[e.pointerId])return;delete pts[e.pointerId];var ks=Object.keys(pts);
+    if(ks.length===0){if(!moved&&downId)onTap(downId);start=null;pinch=null;downId=null}
+    else if(ks.length===1){pinch=null;start={p:pts[ks[0]],tx:view.tx,ty:view.ty}}
+  }
+  svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',function(e){delete pts[e.pointerId];moved=true;if(!Object.keys(pts).length){start=null;pinch=null}});
+  svg.addEventListener('wheel',function(e){e.preventDefault();var p=local(e);zoomBy(e.deltaY<0?1.12:1/1.12,p.x,p.y)},{passive:false});
+  svg.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){var t=e.target.closest&&e.target.closest('[data-id]');if(t){e.preventDefault();onTap(t.getAttribute('data-id'));var again=svg.querySelector('[data-id="'+t.getAttribute('data-id')+'"]');if(again)again.focus()}}});
+}
+var rt=null;
+window.addEventListener('resize',function(){if(st.step!==2)return;clearTimeout(rt);rt=setTimeout(function(){
+  var want=useList()?'list':'svg';
+  if(want!==webMode){webPage();return}
+  if(webMode==='svg'){measure();var pos=layout();for(var id in cur)if(pos[id])cur[id]={x:pos[id].x,y:pos[id].y,s:1,o:1};view=fitTo(bbox(pos,visIds()),1.15);draw()}
+},150)});
+
+function render(){
+  var s=st.step;
+  if(s===0)intro();
+  else if(s===1)guessPage(1);
+  else if(s===2)webPage();
+  else if(s===3)guessPage(2);
+  else if(s===4)choicePage('know','你在網子上看到的這些人裡面，你認識幾個？','想一想：你知道他們的名字、見過他們嗎？',KNOW,KNOWFB,5);
+  else if(s===5)choicePage('alone','如果阿嬤要自己養魚、種米、做碗、送瓦斯……她一天能煮幾碗粥？','網子上每一種人做的事，都換成阿嬤自己做。',ALONE,ALONEFB,6);
+  else end();
+}
+render();
+})();
+</script>

@@ -1,0 +1,84 @@
+<title>背牌子大挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one story (walk around school for 30 minutes wearing a big sign) → yes or no → guess the share of classmates who would say yes → what kind of person chose the other way → summary to report by show of hands. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#F1F0EA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+svg.pic{width:100%;max-height:300px;height:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(21px,3.2vw,29px);font-weight:900;border:0;border-radius:16px;padding:16px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.opts .btn.alt{text-align:left;font-weight:700}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.count{font-size:clamp(54px,10vw,90px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--rust);height:40px}
+.scale{display:flex;justify-content:space-between;font-size:clamp(16px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0}
+.big{font-size:clamp(56px,11vw,100px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line)} td.n{text-align:right;font-weight:900}
+@media (max-width:440px){.two{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='sandwich-board-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,yes:null,est:null,other:null};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+var PIC='<svg class="pic" viewBox="0 0 600 300" role="img" aria-label="一個同學身體前後背著一塊大牌子，上面寫著「來吃海佃早餐店！」"><rect x="0" y="0" width="600" height="300" rx="16" fill="#EAF1EC"/><circle cx="300" cy="62" r="34" fill="#F2CFAE"/><path d="M266 58 Q300 14 334 58 Z" fill="#2B2118"/><circle cx="288" cy="64" r="4" fill="#1F2A2E"/><circle cx="312" cy="64" r="4" fill="#1F2A2E"/><rect x="200" y="100" width="200" height="170" rx="10" fill="#FBF1DC" stroke="#B7862B" stroke-width="6"/><line x1="250" y1="100" x2="276" y2="88" stroke="#56605C" stroke-width="5"/><line x1="350" y1="100" x2="324" y2="88" stroke="#56605C" stroke-width="5"/><text x="300" y="168" text-anchor="middle" font-size="34" font-weight="900" fill="#A8441A">來吃</text><text x="300" y="214" text-anchor="middle" font-size="30" font-weight="900" fill="#A8441A">海佃早餐店！</text></svg>';
+var OTH={yes:['他們比較害羞、放不開','他們只是覺得麻煩','他們跟我差不多，只是這次想法不一樣','我不知道'],no:['他們比較愛現、喜歡出風頭','他們膽子比較大','他們跟我差不多，只是這次想法不一樣','我不知道']};
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.innerHTML=PIC;
+  c.append(el('p','lead','校慶園遊會前，老師想找自願的同學，身上前後背著一塊大大的牌子，上面寫著「來吃海佃早餐店！」，在校園裡走一圈，大約 30 分鐘，讓大家知道我們班的攤位。'),el('p','lead','走的時候，很多人會看著你。不想參加也完全沒關係。'));
+  var h=el('h2',null,'你願意背這塊牌子嗎？');
+  var g=el('div','two');
+  [['願意',true],['不願意',false]].forEach(function(x){var b=el('button','btn alt',x[0]);b.type='button';b.addEventListener('click',function(){st.yes=x[1];st.step=1;save(st);guess()});g.appendChild(b)});
+  app.append(el('h1',null,'背牌子大挑戰'),c,h,g);
+}
+function guess(){
+  app.innerHTML='';
+  var h=el('h2',null,'你選了「'+(st.yes?'願意':'不願意')+'」。你猜，全班有幾成同學「願意」背牌子？');
+  var r=document.createElement('input');r.type='range';r.min=0;r.max=10;r.step=1;r.value=5;r.setAttribute('aria-label','幾成同學願意');
+  var out=el('p','count','5 成');r.addEventListener('input',function(){out.textContent=r.value+' 成'});
+  var sc=el('p','scale');sc.append(el('span',null,'0 成：沒有人願意'),el('span',null,'10 成：全班都願意'));
+  var b=el('button','btn','下一步');b.type='button';b.addEventListener('click',function(){st.est=+r.value;st.step=2;save(st);other()});
+  app.append(h,out,r,sc,b);
+}
+function other(){
+  app.innerHTML='';
+  var h=el('h2',null,'選「'+(st.yes?'不願意':'願意')+'」的同學，你覺得最可能是怎樣的人？');
+  var g=el('div','opts');
+  OTH[st.yes?'yes':'no'].forEach(function(t){var b=el('button','btn alt',t);b.type='button';b.addEventListener('click',function(){st.other=t;st.step=3;save(st);end()});g.appendChild(b)});
+  app.append(el('p','lead','沒有對錯，選你心裡最先想到的。'),h,g);
+}
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','你選的是'),el('p','big',st.yes?'願意':'不願意'));
+  var t=el('table');[['你猜全班願意的',st.est+' 成'],['你覺得選相反的人',st.other]].forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+var S=[intro,guess,other,end];(S[st.step]||intro)();
+})();
+</script>

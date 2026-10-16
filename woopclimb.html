@@ -1,0 +1,610 @@
+<title>WOOP 登山路線</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Flow: two-climber story (tap through 7 lines, Ah-Qing climbs past a rock) > demo mountain (recorder wish): place flag (W) at the summit, scenery photo (O) beside it, a rock (O, own obstacle; other-people cards get a one-tap rewrite) on the slope, a rope ladder (P, "如果…我就…" sentence block) beside the rock > climber walks the route, ladder lights at the rock > own mountain (4 everyday wishes, "其他" opens 6 common obstacles) > climb > reminder page (summit only vs full route) > "which step is hardest" (no right answer) > summary with the plan in large type. Fixed script, no randomness. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --cW:#8A6414; --cO:#205E86; --cB:#A8441A; --cP:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;justify-content:flex-start;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn.go{background:var(--good)}
+.btn:focus-visible,.pcard:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.row2{display:flex;gap:10px;flex-wrap:wrap}
+.row2 .btn{flex:1 1 220px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+svg.i{width:1.4em;height:1.4em;flex:none;color:var(--ink)}
+.btn svg.i{width:1.5em;height:1.5em}
+.btn:not(.alt):not(.soft) svg.i{color:#fff}
+/* WOOP letters */
+.lt{display:inline-flex;align-items:center;justify-content:center;min-width:1.7em;height:1.7em;border-radius:50%;color:#fff;font-weight:900;font-size:.9em;flex:none;line-height:1;padding:0 .2em}
+.lt.w{background:var(--cW)}.lt.o{background:var(--cO)}.lt.b{background:var(--cB)}.lt.p{background:var(--cP)}.lt.n{background:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:6px;background:var(--card);border:3px solid var(--line);border-radius:999px;padding:4px 14px 4px 6px;font-weight:900;font-size:19px;color:var(--muted)}
+.chip.now{border-color:var(--ink);color:var(--ink);box-shadow:0 3px 0 rgba(31,42,46,.15)}
+.chip.done{color:var(--ink)}
+.chip.done svg.i{color:var(--good);width:1.2em;height:1.2em}
+/* scene */
+.sbox{position:relative;background:#E3EFF4;border:3px solid var(--line);border-radius:20px;overflow:hidden}
+.sbox.zone{outline:4px dashed var(--gold);outline-offset:-4px}
+.sbox.over{outline-color:var(--good);outline-style:solid;box-shadow:0 0 0 6px #CFE3C4}
+.scene{width:100%;height:auto;display:block}
+.scene .tg circle.ring{transform-box:fill-box;transform-origin:center;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.12);opacity:.55}}
+.scene .pop{transform-box:fill-box;transform-origin:50% 100%;animation:pop .55s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+.scene .fall{animation:fall .7s cubic-bezier(.5,0,.8,.6)}
+@keyframes fall{from{transform:translateY(-190px) rotate(-30deg);opacity:0}30%{opacity:1}to{transform:none}}
+.scene .flagc{transform-box:fill-box;transform-origin:0 50%;animation:wave 2.4s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:skewY(0)}50%{transform:skewY(5deg) scaleX(.94)}}
+.scene .halo{opacity:0;transition:opacity .35s}
+.scene .lit .halo{opacity:1}
+.scene .bub{transition:opacity .3s}
+@media (prefers-reduced-motion:reduce){.scene *{animation:none!important;transition:none!important}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:0;font-size:19px;font-weight:700;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid var(--ink)}
+.cap{margin:0;font-size:clamp(19px,2.7vw,25px);line-height:1.7;min-height:3.4em}
+.cap b{color:var(--sea)}
+/* place cards */
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);display:flex;align-items:center;gap:6px}
+.hint .tap{display:none}
+.pcards{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:12px}
+.pcard{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:22px 14px 14px;display:flex;flex-direction:column;gap:6px;cursor:grab;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.pcard::before{content:"";position:absolute;top:8px;left:50%;width:30px;height:8px;margin-left:-15px;border-radius:5px;background:var(--bg);border:2px solid var(--line)}
+.pcard .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pcard .top svg.i{width:44px;height:44px}
+.pcard .tx{font-size:clamp(19px,2.4vw,23px);font-weight:700;line-height:1.5}
+.pcard .tag{font-size:19px;font-weight:900;color:var(--gold);background:var(--warm);border-radius:10px;padding:0 8px}
+.pcard .on{display:none;font-size:19px;font-weight:900;color:var(--good);align-items:center;gap:4px}
+.pcard.pick{border-color:var(--gold);background:var(--warm)}
+.pcard.pick .on{display:flex}
+.pcard.w{border-top:8px solid var(--cW)}.pcard.o{border-top:8px solid var(--cO)}.pcard.b{border-top:8px solid var(--cB)}.pcard.p{border-top:8px solid var(--cP)}
+.pcard.dash{border-style:dashed;border-top-style:solid}
+.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.93;transform:rotate(-3deg);box-shadow:0 12px 26px rgba(31,42,46,.25);margin:0}
+/* feedback */
+.fb{border-color:var(--gold)}
+.fb p{margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.7}
+.fb .fix{font-weight:900;color:var(--rust)}
+.picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.picker .btn.alt{font-size:clamp(19px,2.4vw,22px);padding:10px 14px}
+/* sentence builder */
+.builder{background:var(--card);border:3px solid var(--cP);border-radius:20px;padding:14px 18px;font-size:clamp(22px,3.2vw,30px);font-weight:900;line-height:1.8;margin:0}
+.builder .k{display:inline-block;background:var(--cP);color:#fff;border-radius:10px;padding:0 10px;margin:0 4px}
+.builder .ob{color:var(--rust)}
+.builder .slot{display:inline-block;min-width:6em;border-bottom:4px dashed var(--cP);color:var(--muted)}
+.builder .pl{color:var(--cP);border-bottom:4px solid var(--cP)}
+/* route list */
+.route{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.route li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-items:start;font-size:clamp(19px,2.5vw,23px);line-height:1.6}
+.route li .lt{margin-top:.15em}
+.route .lb{display:block;font-size:19px;font-weight:700;color:var(--muted)}
+.route .vv{font-weight:900}
+/* compare */
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cmp2 .card{gap:8px}
+.cmp2 p{margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+/* end */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+.sum td:first-child{color:var(--muted);font-weight:700;width:40%}
+.sum td b{font-size:1.05em}
+.bigplan{margin:0;background:#FFFDF6;border:3px solid var(--gold);border-radius:18px;padding:16px 20px;font-size:clamp(28px,4.6vw,42px);font-weight:900;line-height:1.75;background-image:repeating-linear-gradient(transparent 0 calc(1.75em - 3px),#EADFC4 calc(1.75em - 3px) 1.75em);background-position:0 16px;text-wrap:pretty}
+.bigplan .ob{color:var(--rust)}.bigplan .pl{color:var(--cP)}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap;color:var(--good)}
+.ec dd{margin:0}
+@media (max-width:760px){
+  .pcards{grid-template-columns:minmax(0,1fr)}
+  .cmp2{grid-template-columns:minmax(0,1fr)}
+  .picker{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .pcard{touch-action:pan-y;cursor:pointer}
+  .hint .drag{display:none}.hint .tap{display:inline}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0}
+  .sum td:first-child{width:auto}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .chip{padding:2px 10px 2px 4px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"flag": "<path d=\"M6 21.5V3\"/><path d=\"M6 4h12.2l-2.6 4 2.6 4H6z\" fill=\"#F3D27A\"/><path d=\"M3.5 21.5h5\"/>", "frame": "<path d=\"M8 4.6l4-2.6 4 2.6\"/><rect x=\"2.5\" y=\"4.6\" width=\"19\" height=\"15.4\" rx=\"1.6\" fill=\"#F3E3BE\"/><rect x=\"5.6\" y=\"7.6\" width=\"12.8\" height=\"9.4\" rx=\".6\" fill=\"#FBFCF9\"/><path d=\"M5.8 15.2l3.4-3.2 2.8 2.6 2-1.8 4.2 3.8\"/><circle cx=\"15\" cy=\"10.2\" r=\"1\"/>", "woop_rock": "<path d=\"M3 20.5l1.4-6.6 4.4-4.6 6-.6 4.6 4.4.6 7.4z\" fill=\"#D8CFC2\"/><path d=\"M8.8 9.3l1.6 5.4-6 -.8M10.4 14.7l4.6 1.4 5-1.6\"/><path d=\"M14.6 2.8l-1 2.4M19.2 4.2l-1.8 1.8M10 3.2l.4 2.2\"/>", "woop_ladder": "<path d=\"M4 2.6h16\"/><rect x=\"6.6\" y=\"6\" width=\"10.8\" height=\"2.2\" rx=\"1.1\" fill=\"#E8C795\"/><rect x=\"6.6\" y=\"11\" width=\"10.8\" height=\"2.2\" rx=\"1.1\" fill=\"#E8C795\"/><rect x=\"6.6\" y=\"16\" width=\"10.8\" height=\"2.2\" rx=\"1.1\" fill=\"#E8C795\"/><path d=\"M7 2.6c-.9 6.4.9 12.6 0 19M17 2.6c.9 6.4-.9 12.6 0 19\"/>", "woop_flute": "<g transform=\"rotate(-38 12 12)\"><path d=\"M10.4 1.6h3.2l-.2 3.2.5 14.6 1.4 2.6H8.7l1.4-2.6.5-14.6z\" fill=\"#F3E3BE\"/><path d=\"M10.5 5.2h3\"/><circle cx=\"12\" cy=\"8.6\" r=\".7\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"11.6\" r=\".7\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"14.6\" r=\".7\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"17.4\" r=\".7\" fill=\"currentColor\"/></g>", "woop_run": "<path d=\"M3 17.2v-6.6l4-1.4 2.6 2.6 4.4 1.4 5.6 1.2a2.2 2.2 0 0 1 1.8 2.2v.6z\" fill=\"#DCE8F0\"/><path d=\"M3 17.2h18.4v1.4a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 18.6z\" fill=\"#FBFCF9\"/><path d=\"M8.2 11.6l1.5-1.5M10.6 12.8l1.5-1.5\"/><path d=\"M1.6 5.6h4.6M3.4 2.8h4.4\"/>", "woop_bottle": "<rect x=\"9.2\" y=\"2.4\" width=\"5.6\" height=\"3\" rx=\"1\" fill=\"#FBFCF9\"/><path d=\"M8 7.6a2.2 2.2 0 0 1 2.2-2.2h3.6A2.2 2.2 0 0 1 16 7.6v11.8a2.2 2.2 0 0 1-2.2 2.2h-3.6A2.2 2.2 0 0 1 8 19.4z\" fill=\"#BFD8EA\"/><path d=\"M8 11.6h8M8 16.4h8\"/>", "woop_more": "<rect x=\"3.2\" y=\"4.4\" width=\"17.6\" height=\"15.2\" rx=\"2.8\" fill=\"#FBF4E2\"/><path d=\"M7 9.6h5.4\"/><path d=\"M7 14.6h10\" stroke-dasharray=\"1.6 2.4\"/>", "schoolbag": "<path d=\"M5.6 9.6a6.4 6.4 0 0 1 12.8 0v10a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2z\" fill=\"#F3E3BE\"/><path d=\"M9.4 4.4a2.6 2.6 0 0 1 5.2 0\"/><rect x=\"8.4\" y=\"13.6\" width=\"7.2\" height=\"4.8\" rx=\"1.2\" fill=\"#FBF4E2\"/>", "broom": "<path d=\"M12 2v8.4\"/><rect x=\"9\" y=\"10.4\" width=\"6\" height=\"2.6\" rx=\".8\" fill=\"#DCE8F0\"/><path d=\"M9.2 13L5 21.2h14L14.8 13z\" fill=\"#F3E3BE\"/><path d=\"M8.4 21.2l1.8-5M12 21.2v-5M15.6 21.2l-1.8-5\"/>", "openbook": "<path d=\"M12 6.4C9.6 4.6 6.4 4.1 2.8 4.6v13.8c3.6-.5 6.8 0 9.2 1.8 2.4-1.8 5.6-2.3 9.2-1.8V4.6c-3.6-.5-6.8 0-9.2 1.8z\" fill=\"#DCE8F0\"/><path d=\"M12 6.4v13.8\"/><path d=\"M5.8 8.6h3.4M5.8 11.6h3.4M5.8 14.6h2.2M14.8 8.6h3.4M14.8 11.6h3.4M14.8 14.6h2.2\"/>", "think": "<path d=\"M7.2 16.6a3.9 3.9 0 0 1-.7-7.7 5.4 5.4 0 0 1 10.4-1.3 4.4 4.4 0 0 1 .6 9z\" fill=\"#EEF0EC\"/><circle cx=\"6.2\" cy=\"19.4\" r=\"1.2\" fill=\"#EEF0EC\"/><circle cx=\"3.6\" cy=\"21.4\" r=\".6\" fill=\"currentColor\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>", "undo": "<path d=\"M4 4.5v5h5\"/><path d=\"M4.8 9.5A8 8 0 1 1 4 13.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='woopclimb-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+var PH=['w','o','b','p'];
+var PL={w:'W',o:'O',b:'O',p:'P'};
+var PN={w:'願望',o:'最好的結果',b:'障礙',p:'計畫'};
+var PI={w:'flag',o:'frame',b:'woop_rock',p:'woop_ladder'};
+var PT={w:'旗子',o:'風景照',b:'落石',p:'繩梯'};
+function lt(ph){return '<span class="lt '+ph+'">'+PL[ph]+'</span>'}
+
+/* ---------- demo mountain: recorder ---------- */
+var DW=[
+  {t:'這學期每天練習直笛 10 分鐘',fb:'這個願望說清楚了「多久做一次、一次做多少」。有一點難，但是做得到；山頂清清楚楚，才知道要往哪裡爬。'},
+  {t:'這學期每個星期練熟一首直笛曲',fb:'這個願望也很清楚：每個星期一首，有一點難，但是做得到。'},
+  {t:'我要變成最厲害的直笛高手',fb:'這是很棒的夢想！不過「最厲害」很難知道什麼時候算做到，山頂好像藏在雲裡。WOOP 的願望最好是「有一點難、但這學期做得到」的事。你可以換一張，也可以就用這一張繼續。'}
+];
+var DO=['音樂課能吹完一整首歌，中間不用停下來','回家吹給家人聽，大家都幫我拍手','期末直笛考試時，手指不會發抖'];
+var DB=[
+  {t:'吃完晚餐，很想先看影片',plans:[{t:'先吹 10 分鐘直笛，吹完再看影片',k:'g'},{t:'吃完飯先拿起放在餐桌旁的直笛吹一首',k:'g'},{t:'告訴自己要更努力',k:'v'}]},
+  {t:'手指按得好痠，很想放棄',plans:[{t:'先甩甩手、休息 30 秒，再吹一遍',k:'g'},{t:'改吹一首最熟的歌，讓手指暖一暖',k:'g'},{t:'今天先不吹了，明天再說',k:'p'}]},
+  {t:'弟弟一直在旁邊吵',ext:1,fix:'弟弟在旁邊吵，我很想放下直笛',plans:[{t:'拿著直笛到房間，關上門再吹',k:'g'},{t:'請弟弟當我的觀眾，吹給他聽',k:'g'},{t:'叫弟弟不准吵',k:'e'}]},
+  {t:'直笛太舊了，吹不出好聽的聲音',ext:1,fix:'吹出難聽的聲音，我覺得很洩氣',plans:[{t:'先吹一首最熟的歌，讓自己聽到好聽的聲音',k:'g'},{t:'對自己說「多吹幾次就會變順」，再試一遍',k:'g'},{t:'等買了新直笛再練',k:'e'}]}
+];
+/* ---------- your own mountain ---------- */
+var OW=[
+  {t:'每天睡前把書包整理好',ic:'schoolbag',tiny:'把明天的課本放進書包',
+   outs:['早上不用急急忙忙找東西','不會再忘記帶作業和課本','早上出門的心情比較輕鬆'],
+   obs:[
+    {t:'寫完功課，很想直接去玩',plans:[{t:'先花 3 分鐘把明天的課本放進書包，再去玩',k:'g'},{t:'把聯絡簿放在書包旁邊，照著上面一樣一樣收',k:'g'},{t:'告訴自己下次一定要記得',k:'v'}]},
+    {t:'睡前好睏，只想趕快上床',plans:[{t:'改成寫完功課馬上收，不要等到睡前',k:'g'},{t:'把書包放在床邊，躺下前先對一遍聯絡簿',k:'g'},{t:'明天早上再收',k:'p'}]},
+    {t:'媽媽今天沒有提醒我',ext:1,fix:'沒有人提醒我，我很容易忘記',plans:[{t:'在書桌上貼一張「收書包」的便條',k:'g'},{t:'刷完牙馬上收書包，把兩件事綁在一起',k:'g'},{t:'請媽媽每天都要提醒我',k:'e'}]}
+   ]},
+  {t:'每個星期幫家裡做一件家事',ic:'broom',tiny:'問家人今天可以幫忙做什麼',
+   outs:['家人看到家裡變乾淨，笑得很開心','我會做的家事一件一件變多','週末大家都比較輕鬆，可以一起出去走走'],
+   obs:[
+    {t:'週末一起床，很想先躺著看平板',plans:[{t:'先下床做完一件家事，再拿平板',k:'g'},{t:'前一天晚上先把平板放到客廳充電',k:'g'},{t:'星期天再做就好',k:'p'}]},
+    {t:'覺得做家事好麻煩，不想動',plans:[{t:'先挑最小的一件，像是把自己的碗洗好',k:'g'},{t:'一邊聽喜歡的歌，一邊做',k:'g'},{t:'告訴自己要當個好孩子',k:'v'}]},
+    {t:'家裡的人都沒有叫我做',ext:1,fix:'沒有人叫我，我常常想不起來要做',plans:[{t:'在聯絡簿星期六那一格寫上「做一件家事」',k:'g'},{t:'星期六吃完午餐，就去問家人要幫什麼',k:'g'},{t:'等家人叫我再做',k:'e'}]}
+   ]},
+  {t:'這學期看完一本自己選的書',ic:'openbook',tiny:'翻開書看一頁',
+   outs:['能跟同學說這本書最精彩的地方','發現看書原來也很好玩','寫作文的時候，想得出更多好句子'],
+   obs:[
+    {t:'看到字很多的那一頁，很想闔起來',plans:[{t:'先看完這一頁就好，看完再決定要不要繼續',k:'g'},{t:'把這一頁小聲唸出來，唸給自己聽',k:'g'},{t:'先跳過這本，改天再看',k:'p'}]},
+    {t:'很想一直滑平板、看影片',plans:[{t:'先看 10 頁書，再拿平板',k:'g'},{t:'把書疊在平板上面，拿平板前先看一頁',k:'g'},{t:'少看一點影片',k:'v'}]},
+    {t:'圖書館的書都不好看',ext:1,fix:'翻了兩頁覺得沒興趣，很想放棄',plans:[{t:'先看到第一章結束，再決定要不要換一本',k:'g'},{t:'請同學推薦他最喜歡的一本',k:'g'},{t:'等圖書館買新書再看',k:'e'}]}
+   ]},
+  {t:'每天第一節下課去跑操場兩圈',ic:'woop_run',tiny:'走到操場跑第一圈',
+   outs:['體育課跑步時，比較不會那麼喘','跑完回教室，上課比較有精神','運動會大隊接力時跑得更快'],
+   obs:[
+    {t:'下課鐘一響，很想坐在位子上聊天',plans:[{t:'先跑兩圈，回來再聊',k:'g'},{t:'約聊天的同學一起去跑',k:'g'},{t:'告訴自己要多運動',k:'v'}]},
+    {t:'天氣好熱，不想流汗',plans:[{t:'帶小毛巾和水壺，跑完馬上擦汗、喝水',k:'g'},{t:'走樹蔭那一邊，慢慢跑兩圈',k:'g'},{t:'等天氣變涼再開始',k:'p'}]},
+    {t:'同學都不陪我去跑',ext:1,fix:'沒有人陪我，不想自己去',plans:[{t:'自己先跑一圈，回來再找同學',k:'g'},{t:'一邊跑一邊數圈數，跑完在聯絡簿畫一個圈',k:'g'},{t:'等同學願意陪我再去',k:'e'}]}
+   ]}
+];
+var OTHER={other:1,t:'其他：我想到的是＿＿'};
+var COMMON=[
+  {t:'覺得好累，只想躺著',plans:[{t:'先喝一口水，數到 20，再{t}',k:'g'},{t:'只先{t}，做完就可以休息',k:'g'},{t:'跟自己說「我不累」',k:'v'}]},
+  {t:'很想一直滑平板、看影片',plans:[{t:'先把平板放到客廳，等我{t}以後再拿回來',k:'g'},{t:'設一個鬧鐘，鐘響就放下平板，去{t}',k:'g'},{t:'盡量少看一點',k:'v'}]},
+  {t:'心裡想「明天再做就好」',plans:[{t:'告訴自己只做 2 分鐘，馬上{t}',k:'g'},{t:'在聯絡簿今天那一格寫下來，做完畫一個圈',k:'g'},{t:'明天做兩倍',k:'p'}]},
+  {t:'覺得太難，不知道從哪裡開始',plans:[{t:'只做第一個小步驟：{t}',k:'g'},{t:'去問家人或老師，第一步要怎麼做',k:'g'},{t:'等我想清楚再開始',k:'p'}]},
+  {t:'心情不好，什麼都不想做',plans:[{t:'先深呼吸三次，再{t}',k:'g'},{t:'先跟家人說說話，說完再{t}',k:'g'},{t:'等心情變好再說',k:'p'}]},
+  {t:'很想先跟同學去玩',plans:[{t:'跟同學說「等我一下」，先{t}再去',k:'g'},{t:'約同學做完再一起玩',k:'g'},{t:'先去玩，回來再說',k:'p'}]}
+];
+var PFB={
+  g:'這是一個馬上做得到的小動作。落石一出現，不用再想，直接照著做就好。',
+  v:'這句話很有心，可是落石出現的那一刻，身體還是不知道要「做什麼動作」。可以換一個看得到、馬上做得到的小動作。',
+  p:'這樣其實是把事情往後推，落石還留在原地。可以換一個「現在就做得到」的小動作。',
+  e:'這是要等別人（或東西）先改變，可是別人不一定會照做。計畫最好是你自己就做得到的事。'
+};
+
+/* ---------- state ---------- */
+function lv0(){return {ph:'w',w:null,o:null,b:null,bFix:false,bx:null,p:null,first:null}}
+function fresh(){return {step:'story',sb:0,D:lv0(),M:lv0(),hard:null}}
+var st=load();if(!st||!st.step||!st.D||!st.M)st=fresh();
+var ANIM=0;
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+function L(k){return k==='D'?st.D:st.M}
+function wishes(k){return k==='D'?DW:OW}
+function wishText(k){var l=L(k);return l.w==null?'':wishes(k)[l.w].t}
+function outs(k){return k==='D'?DO:OW[st.M.w].outs}
+function obsList(k){return k==='D'?DB:OW[st.M.w].obs.concat([OTHER])}
+function curObs(k){var l=L(k);if(l.b==null)return null;var o=obsList(k)[l.b];if(o.other)return l.bx!=null?COMMON[l.bx]:o;return o}
+function obsText(k){var l=L(k),o=curObs(k);if(!o)return '';if(o.other)return '我想到的是＿＿';return o.ext&&l.bFix?o.fix:o.t}
+function tiny(k){return k==='D'?'吹一首直笛曲':OW[st.M.w].tiny}
+function planList(k){var o=curObs(k);if(!o||!o.plans)return [];var t=tiny(k);return o.plans.map(function(p){return {t:p.t.replace('{t}',t),k:p.k}})}
+function planText(k){var l=L(k);var ps=planList(k);return l.p!=null&&ps[l.p]?ps[l.p].t:''}
+function sentence(k){return '如果'+obsText(k)+'，我就'+planText(k)+'。'}
+function sentenceHTML(k){return '如果<span class="ob">'+obsText(k)+'</span>，我就<span class="pl">'+planText(k)+'</span>。'}
+function obsReady(k){var l=L(k),o=l.b!=null?obsList(k)[l.b]:null;if(!o)return false;if(o.other)return l.bx!=null;if(o.ext)return !!l.bFix;return true}
+function placed(k,ph){var l=L(k);if(ph==='b')return l.b!=null;return l[ph]!=null}
+
+/* ---------- mountain scene (SVG) ---------- */
+var TRAIL=[[60,386],[160,336],[250,284],[300,256],[380,206],[410,178],[470,118],[518,74]];
+var START=[90,371];
+var ROUTE=[[90,371],[160,336],[250,284],[280,266],[300,198],[344,168],[392,200],[410,178],[470,118],[494,96]];
+var LADDER_AT=3; /* index where the ladder starts */
+function icon(k,x,y,s,color){return '<svg x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="'+(color||'#1F2A2E')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[k]+'</svg>'}
+function ladderSVG(){
+  var x0=279,y0=268,x1=300,y1=194,dx=x1-x0,dy=y1-y0,len=Math.sqrt(dx*dx+dy*dy),nx=-dy/len,ny=dx/len,w=11;
+  var ax0=x0+nx*w,ay0=y0+ny*w,ax1=x1+nx*w,ay1=y1+ny*w,bx0=x0-nx*w,by0=y0-ny*w,bx1=x1-nx*w,by1=y1-ny*w;
+  var s='<line class="halo" x1="'+x0+'" y1="'+y0+'" x2="'+x1+'" y2="'+y1+'" stroke="#F3D27A" stroke-width="46" stroke-linecap="round"/>';
+  for(var i=1;i<=5;i++){var t=i/6;s+='<line x1="'+(ax0+dx*t).toFixed(1)+'" y1="'+(ay0+dy*t).toFixed(1)+'" x2="'+(bx0+dx*t).toFixed(1)+'" y2="'+(by0+dy*t).toFixed(1)+'" stroke="#8A6414" stroke-width="6" stroke-linecap="round"/><line x1="'+(ax0+dx*t).toFixed(1)+'" y1="'+(ay0+dy*t).toFixed(1)+'" x2="'+(bx0+dx*t).toFixed(1)+'" y2="'+(by0+dy*t).toFixed(1)+'" stroke="#E8C795" stroke-width="3" stroke-linecap="round"/>'}
+  s+='<path d="M'+ax0.toFixed(1)+' '+ay0.toFixed(1)+' Q'+((ax0+ax1)/2+3).toFixed(1)+' '+((ay0+ay1)/2).toFixed(1)+' '+ax1.toFixed(1)+' '+ay1.toFixed(1)+'" stroke="#1F2A2E" stroke-width="3.2" fill="none"/>';
+  s+='<path d="M'+bx0.toFixed(1)+' '+by0.toFixed(1)+' Q'+((bx0+bx1)/2+3).toFixed(1)+' '+((by0+by1)/2).toFixed(1)+' '+bx1.toFixed(1)+' '+by1.toFixed(1)+'" stroke="#1F2A2E" stroke-width="3.2" fill="none"/>';
+  s+='<circle cx="'+ax1.toFixed(1)+'" cy="'+ay1.toFixed(1)+'" r="4" fill="#1F2A2E"/><circle cx="'+bx1.toFixed(1)+'" cy="'+by1.toFixed(1)+'" r="4" fill="#1F2A2E"/>';
+  return s;
+}
+function figSVG(id,shirt,hair,x,y,bub){
+  var h=hair==='tail'?'<path d="M-9 -43 Q-9 -54 0 -54 Q9 -54 9 -44 Q4 -49 -3 -48 Q-8 -47 -9 -43 Z" fill="#3A2A1C"/><path d="M-8 -48 Q-17 -44 -15 -34" stroke="#3A2A1C" stroke-width="4" fill="none" stroke-linecap="round"/>'
+        :hair==='cap'?'<path d="M-9 -44 Q-9 -55 0 -55 Q9 -55 9 -44 Z" fill="'+shirt+'" stroke="#1F2A2E" stroke-width="2"/><path d="M6 -46 L16 -45" stroke="#1F2A2E" stroke-width="3" stroke-linecap="round"/>'
+        :'<path d="M-9 -42 Q-9 -54 0 -54 Q9 -54 9 -43 Q3 -48 -4 -47 Q-8 -46 -9 -42 Z" fill="#2B2118"/>';
+  return '<g id="'+id+'" transform="translate('+x+','+y+')"><g class="body" transform="scale(1.35)">'+
+    '<path d="M-4 -14 L-6 0 M4 -14 L6 0" stroke="#1F2A2E" stroke-width="4" stroke-linecap="round"/>'+
+    '<rect x="-15" y="-32" width="9" height="16" rx="3" fill="#E8C795" stroke="#1F2A2E" stroke-width="2"/>'+
+    '<rect x="-9" y="-34" width="18" height="22" rx="7" fill="'+shirt+'" stroke="#1F2A2E" stroke-width="2"/>'+
+    '<circle cx="0" cy="-43" r="9.5" fill="#F2CFAE" stroke="#1F2A2E" stroke-width="2"/>'+h+
+    '<circle cx="4" cy="-43" r="1.6" fill="#1F2A2E"/></g>'+(bub||'')+'</g>';
+}
+function bubble(cls,icons,extra,dx){
+  dx=dx||0;var w=24+icons.length*62+(extra?50:0),s='<g class="bub '+cls+'" transform="translate('+dx+',0)"><rect x="-14" y="-170" width="'+w+'" height="80" rx="26" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="2.5"/><circle cx="'+(2-dx)+'" cy="-80" r="6" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="2.5"/><circle cx="'+(-1-dx*0.4)+'" cy="-93" r="4" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="2"/>';
+  icons.forEach(function(k,i){s+=icon(k,i*62,-160,60)});
+  if(extra)s+='<text class="cnt" x="'+(icons.length*62+20)+'" y="-118" text-anchor="middle" font-size="34" font-weight="900" fill="#205E86" font-family="Noto Sans TC,sans-serif">'+extra+'</text>';
+  return s+'</g>';
+}
+/* o: {flag,photo,rock,ladder,target,figs:[svg strings],rockFall,popKey} */
+function sceneSVG(o){
+  var s='<svg class="scene" viewBox="0 0 720 400" role="img" aria-label="一座山的側面圖，左邊是登山步道，山頂可以插旗子">';
+  s+='<ellipse cx="140" cy="60" rx="56" ry="15" fill="#FBFCF9" opacity=".9"/><ellipse cx="660" cy="150" rx="44" ry="11" fill="#FBFCF9" opacity=".9"/><ellipse cx="330" cy="92" rx="38" ry="10" fill="#FBFCF9" opacity=".8"/>';
+  s+='<path d="M0 330 Q120 250 230 300 Q330 200 420 250 Q560 150 680 240 Q750 210 800 230 V400 H0Z" fill="#CFE0D8"/>';
+  s+='<path d="M0 400 V388 L60 386 L160 336 L250 284 L300 256 L380 206 L410 178 L470 118 L520 72 L560 92 L600 120 L680 220 L750 300 L800 326 V400Z" fill="#9CC28A" stroke="#5F8A4F" stroke-width="3" stroke-linejoin="round"/>';
+  s+='<path d="M520 72 L560 92 L600 120 L640 170 Q560 150 520 72Z" fill="#86B074"/><path d="M430 260 l18 -10 M520 210 l14 -8 M600 280 l16 -8 M200 360 l14 -8 M660 330 l14 -6" stroke="#5F8A4F" stroke-width="3" stroke-linecap="round"/>';
+  s+='<polyline points="'+TRAIL.map(function(p){return p[0]+','+(p[1]+2)}).join(' ')+'" fill="none" stroke="#FBF4E2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 13"/>';
+  s+='<rect x="0" y="386" width="800" height="14" fill="#D9C9A3"/>';
+  if(o.photo){s+='<g class="ph'+(o.popKey==='o'?' pop':'')+'" id="ph"><rect class="halo" x="562" y="24" width="100" height="78" rx="10" fill="#F3D27A"/><path d="M612 132 V92" stroke="#6B4A1E" stroke-width="5" stroke-linecap="round"/><rect x="572" y="34" width="80" height="58" rx="4" fill="#E8C795" stroke="#1F2A2E" stroke-width="2.5"/><rect x="579" y="41" width="66" height="44" fill="#DCE8F0"/><rect x="579" y="70" width="66" height="15" fill="#9CC3E0"/><path d="M579 74 L596 58 L606 66 L616 54 L634 74Z" fill="#9CC28A" stroke="#5F8A4F" stroke-width="1.5"/><circle cx="634" cy="51" r="5" fill="#F3D27A"/><path d="M584 80 q4 -3 8 0 t8 0 M612 80 q4 -3 8 0 t8 0" stroke="#FBFCF9" stroke-width="1.5" fill="none"/></g>'}
+  if(o.rock){s+='<g class="rk'+(o.rockFall?' fall':'')+(o.popKey==='b'?' pop':'')+'" id="rk"><path d="M296 260 C286 240 286 210 302 194 C318 176 340 166 360 168 C382 170 398 186 390 205 Z" fill="#C9BFAF" stroke="#1F2A2E" stroke-width="2.5" stroke-linejoin="round"/><path d="M304 196 Q322 214 300 238 M322 214 Q350 206 376 186 M344 170 Q340 186 346 204" stroke="#8F8574" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>'}
+  if(o.ladder){s+='<g class="ld'+(o.popKey==='p'?' pop':'')+'" id="ld">'+ladderSVG()+'</g>'}
+  if(o.flag){s+='<g class="fl'+(o.popKey==='w'?' pop':'')+'" id="fl"><circle class="halo" cx="530" cy="40" r="40" fill="#F3D27A"/><path d="M520 74 V14" stroke="#1F2A2E" stroke-width="4" stroke-linecap="round"/><path class="flagc" d="M521 16 H566 L556 29 L566 42 H521Z" fill="#F3D27A" stroke="#1F2A2E" stroke-width="2.5" stroke-linejoin="round"/><path d="M512 74 h16" stroke="#1F2A2E" stroke-width="4" stroke-linecap="round"/></g>'}
+  if(o.letters){
+    var B={w:[488,26],o:[690,52],b:[410,236],p:[252,214]};
+    PH.forEach(function(ph){if(o.letters[ph]){var b=B[ph],c={w:'#8A6414',o:'#205E86',b:'#A8441A',p:'#2F7D4F'}[ph];s+='<g><circle cx="'+b[0]+'" cy="'+b[1]+'" r="17" fill="'+c+'" stroke="#FBFCF9" stroke-width="3"/><text x="'+b[0]+'" y="'+(b[1]+8)+'" text-anchor="middle" font-size="23" font-weight="900" fill="#FFF" font-family="Noto Sans TC,sans-serif">'+PL[ph]+'</text></g>'}});
+  }
+  if(o.target){var T={w:[520,40,36],o:[612,66,42],b:[338,214,50],p:[270,222,36]};
+  var t=T[o.target];s+='<g class="tg"><circle class="ring" cx="'+t[0]+'" cy="'+t[1]+'" r="'+t[2]+'" fill="rgba(251,252,249,.6)" stroke="#B7862B" stroke-width="4" stroke-dasharray="9 7"/>'+icon(PI[o.target],t[0]-22,t[1]-22,44,'#8A6414')+'</g>'}
+  (o.figs||[]).forEach(function(f){s+=f});
+  return s+'</svg>';
+}
+function sceneBox(o,zone){var b=el('div','sbox'+(zone?' zone':''));b.innerHTML=sceneSVG(o);return b}
+
+/* ---------- animation helpers ---------- */
+function setPos(g,x,y){g.setAttribute('transform','translate('+x.toFixed(1)+','+y.toFixed(1)+')')}
+function walk(g,pts,speed,done){
+  var tok=ANIM,segs=[],tot=0;
+  for(var i=1;i<pts.length;i++){var dx=pts[i][0]-pts[i-1][0],dy=pts[i][1]-pts[i-1][1],d=Math.sqrt(dx*dx+dy*dy);segs.push(d);tot+=d}
+  if(RM||!tot){setPos(g,pts[pts.length-1][0],pts[pts.length-1][1]);done&&done();return}
+  var t0=null;
+  function fr(ts){
+    if(tok!==ANIM)return;
+    if(t0==null)t0=ts;
+    var d=(ts-t0)/1000*speed;
+    if(d>=tot){setPos(g,pts[pts.length-1][0],pts[pts.length-1][1]);done&&done();return}
+    var i=0;while(d>segs[i]){d-=segs[i];i++}
+    var f=d/segs[i],x=pts[i][0]+(pts[i+1][0]-pts[i][0])*f,y=pts[i][1]+(pts[i+1][1]-pts[i][1])*f;
+    setPos(g,x,y-Math.abs(Math.sin((ts-t0)/110))*3);
+    requestAnimationFrame(fr);
+  }
+  requestAnimationFrame(fr);
+}
+function later(ms,fn){var tok=ANIM;setTimeout(function(){if(tok===ANIM)fn()},RM?0:ms)}
+
+/* ---------- 1. story ---------- */
+var SB=[
+  '這座山的山頂插著一面旗子，站在上面可以看到很漂亮的風景。<b>阿美</b>（黃衣服）和<b>阿青</b>（藍衣服）都很想爬上去看看。',
+  '阿美在山腳想著山頂的風景：「站在上面吹著風、看著遠遠的海，一定好舒服！」她越想越開心。',
+  '想著想著，阿美覺得好滿足，好像已經站在山頂了。可是，她一直待在山腳，還沒有出發。',
+  '阿青也想了山頂的風景。接著他又想：「爬到半山腰，我一定會很累，會很想回家。」',
+  '所以阿青先準備好一個辦法：「<b>如果累了、想回家，我就喝一口水，數到 20 再走。</b>」然後他出發了。',
+  '半山腰有一顆大落石，阿青也真的累了。他照著準備好的辦法，喝一口水、數到 20，再繼續往上爬。',
+  '阿青爬到山頂了。阿美很想去，她只是一直停在美好的想像裡；阿青除了想山頂，也先想了路上會遇到什麼，還準備好辦法。這個方法叫做 <b>WOOP</b>，等一下你也來畫一條自己的登山路線。'
+];
+var AMY=[30,387],QF=[124,354],QMID=[250,284],QTOP=[494,96];
+function storyPage(animate){
+  var b=st.sb;
+  app.append(el('h1',null,'WOOP 登山路線'));
+  if(b===0)app.append(el('p','lead','這是這一節的最後一個遊戲。先看兩位登山者的小故事。'));
+  var lg=el('p','legend','<span><i style="background:#E7B53C"></i>阿美</span><span><i style="background:#4F8FC0"></i>阿青</span>');
+  var qb=b===3?bubble('qb',['frame','woop_rock'],null,20):b===4?bubble('qb',['woop_bottle'],null,20):'';
+  var qpos=b<=3?QF:b===4?(animate?QF:QMID):(animate?QMID:QTOP);
+  var amyB=b>=1?bubble('ab',['frame'],null,-4):'';
+  var o={flag:true,rock:b>=5,rockFall:animate&&b===5,figs:[figSVG('amy','#E7B53C','tail',AMY[0],AMY[1],amyB),figSVG('qing','#4F8FC0','cap',qpos[0],qpos[1],qb)]};
+  var sb=sceneBox(o);
+  var cap=el('p','cap',SB[b]);
+  var c=el('div','card');c.append(lg,sb,cap);
+  app.append(c);
+  var row=el('div','row2');
+  if(b>0)row.append(button(ic('undo')+' 從頭再看一次','btn soft',function(){st.sb=0;save(st);render()}));
+  if(b<SB.length-1)row.append(button('下一句 '+ic('chev'),'btn',function(){st.sb++;save(st);render(true)}));
+  else row.append(button('開始示範關 '+ic('chev'),'btn go',function(){go('demo')}));
+  app.append(row);
+  var svg=sb.querySelector('svg'),q=svg.querySelector('#qing');
+  if(animate&&b===4){later(600,function(){walk(q,[QF,[160,336],QMID],95)})}
+  if(animate&&b===5){
+    var p1=[QMID,[283,267]],p2=[[283,267],[294,222],[344,168],[392,200],[410,178],[470,118],QTOP];
+    later(700,function(){walk(q,p1,90,function(){
+      q.insertAdjacentHTML('beforeend',bubble('qb',['woop_bottle'],'1'));
+      var cnt=q.querySelector('.cnt'),n=1;
+      (function tick(){if(n>=20){later(500,function(){var bb=q.querySelector('.qb');if(bb)bb.remove();walk(q,p2,95)});return}later(90,function(){n++;if(cnt)cnt.textContent=n;tick()})})();
+    })});
+  }
+}
+
+/* ---------- 2/3. placing on the mountain ---------- */
+var justPlaced=null;
+function chipsRow(k){
+  var l=L(k),c=el('div','chips');
+  PH.forEach(function(ph){var done=placed(k,ph)&&PH.indexOf(ph)<PH.indexOf(l.ph),now=ph===l.ph;
+    c.append(el('span','chip'+(now?' now':'')+(done?' done':''),lt(ph)+'<span>'+PN[ph]+'</span>'+(done?ic('check'):'')))});
+  return c;
+}
+function levelScene(k,opt){
+  var l=L(k);opt=opt||{};
+  var o={flag:l.w!=null,photo:l.o!=null,rock:l.b!=null,ladder:l.p!=null,popKey:opt.pop||null,
+    letters:{w:l.w!=null,o:l.o!=null,b:l.b!=null,p:l.p!=null},figs:[figSVG('you','#2F7D4F','short',START[0],START[1])]};
+  if(opt.target&&!placed(k,opt.target))o.target=opt.target;
+  return o;
+}
+var H2={
+  Dw:'W 願望：選一張願望卡，把旗子插在山頂。',
+  Mw:'W 願望：換你自己了！從四個願望裡挑一個，把旗子插在山頂。',
+  o:'O 最好的結果：如果願望真的做到了，最棒的畫面是什麼？選一張風景照，掛在山頂旁邊。',
+  b:'O 障礙：半路上，什麼會擋住你？選一顆落石，放到半山腰。',
+  p:'P 計畫：在落石旁邊放一架繩梯。選一塊句子積木，把計畫說完整。'
+};
+function cardsFor(k){
+  var l=L(k),ph=l.ph,arr=[];
+  if(ph==='w')wishes(k).forEach(function(w,i){arr.push({i:i,ic:k==='D'?'woop_flute':w.ic,t:(k==='M'?'<span class="lt n">'+'ABCD'[i]+'</span> ':'')+w.t,demo:k==='D'&&i===0})});
+  if(ph==='o')outs(k).forEach(function(t,i){arr.push({i:i,ic:'frame',t:t,demo:k==='D'&&i===0})});
+  if(ph==='b')obsList(k).forEach(function(o,i){arr.push({i:i,ic:o.other?'woop_more':'woop_rock',t:o.t,demo:k==='D'&&i===0,dash:!!o.other})});
+  if(ph==='p')planList(k).forEach(function(p,i){arr.push({i:i,ic:'woop_ladder',t:'我就'+p.t,demo:k==='D'&&i===0})});
+  return arr;
+}
+function setVal(k,ph,i){
+  var l=L(k);
+  if(ph==='w'){if(k==='M'&&l.w!==i){l.o=null;l.b=null;l.bx=null;l.bFix=false;l.p=null}l.w=i}
+  else if(ph==='o')l.o=i;
+  else if(ph==='b'){if(l.b!==i){l.bFix=false;l.bx=null;l.p=null}l.b=i;var ob=obsList(k)[i];if(k==='D'&&l.first==null)l.first=ob.ext?'other':'self'}
+  else if(ph==='p')l.p=i;
+  justPlaced=ph;save(st);render();
+}
+function buildPage(k){
+  var l=L(k),ph=l.ph;
+  app.append(el('p','case',k==='D'?'示範關：跟著老師一起做':'你自己的山'+(l.w!=null?'：'+wishText(k):'')));
+  app.append(chipsRow(k));
+  app.append(el('h2',null,ph==='w'?H2[k+'w']:H2[ph]));
+  if(ph==='b')app.append(el('p','lead','落石要找<b>自己心裡或身上</b>的，不要找別人的錯。'));
+  var pop=justPlaced;justPlaced=null;
+  var sb=sceneBox(levelScene(k,{target:ph,pop:pop}),true);
+  app.append(sb);
+  if(ph==='p'&&obsReady(k)){
+    var bd=el('p','builder','<span class="k">如果</span><span class="ob">'+obsText(k)+'</span>，<span class="k">我就</span>'+(l.p!=null?'<span class="pl">'+planText(k)+'</span>':'<span class="slot">&nbsp;</span>')+'。');
+    app.append(bd);
+  }
+  var fb=feedback(k);if(fb)app.append(fb);
+  var arr=cardsFor(k);
+  app.append(el('p','hint',ic('chev')+'<span class="drag">按住卡片拖到山上；也可以直接點一下卡片。</span><span class="tap">點一下卡片，就會放到山上。</span>'));
+  var g=el('div','pcards');g.style.setProperty('--n',arr.length===4?2:3);
+  var cur=ph==='b'?l.b:l[ph];
+  arr.forEach(function(a){
+    var b=el('button','pcard '+ph+(cur===a.i?' pick':'')+(a.dash?' dash':''),'<span class="top">'+ic(a.ic)+(a.demo?'<span class="tag">老師的示範</span>':'')+'<span class="on">'+ic('check')+'已放上去</span></span><span class="tx">'+a.t+'</span>');
+    b.type='button';b.setAttribute('aria-pressed',cur===a.i?'true':'false');
+    b.setAttribute('aria-label',PT[ph]+'：'+b.querySelector('.tx').textContent);
+    dragify(b,sb,function(){setVal(k,ph,a.i)});
+    g.append(b);
+  });
+  app.append(g);
+  if(pop){
+    try{var r=sb.getBoundingClientRect();if(r.top<0||r.bottom>window.innerHeight)window.scrollTo({top:window.scrollY+r.top-12,behavior:RM?'auto':'smooth'})}catch(e){}
+  }
+}
+function nextBtn(k,label){
+  var l=L(k);
+  return button(label+' '+ic('chev'),'btn go',function(){
+    var i=PH.indexOf(l.ph);
+    if(i<3){l.ph=PH[i+1];save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+    else go(k==='D'?'dclimb':'mclimb');
+  });
+}
+function feedback(k){
+  var l=L(k),ph=l.ph,c=el('div','card fb');
+  if(ph==='w'&&l.w!=null){
+    c.append(el('p',null,k==='D'?DW[l.w].fb:'好！你的山頂是「<b>'+wishText(k)+'</b>」。接下來的卡片，都是為這個願望準備的。'));
+    c.append(nextBtn(k,'下一步：O 最好的結果'));return c;
+  }
+  if(ph==='o'&&l.o!=null){
+    c.append(el('p',null,'風景照掛好了。想像一下：真的做到的那一天，你會是什麼表情？最好的結果想得越清楚，越知道自己為什麼要爬。'));
+    c.append(nextBtn(k,'下一步：O 障礙'));return c;
+  }
+  if(ph==='b'&&l.b!=null){
+    var ob=obsList(k)[l.b];
+    if(ob.other){
+      c.append(el('p',null,'你想到的落石是哪一個？從下面選一個最像你的（不用打字）。'));
+      var pk=el('div','picker');
+      COMMON.forEach(function(co,i){var bt=button(ic('woop_rock')+'<span>'+co.t+'</span>','btn alt'+(l.bx===i?' pick':''),function(){l.bx=i;l.p=null;save(st);render()});bt.setAttribute('aria-pressed',l.bx===i?'true':'false');pk.append(bt)});
+      c.append(pk);
+      if(l.bx!=null){c.append(el('p',null,'這是你自己心裡或身上的落石，你自己就可以想辦法。'));c.append(nextBtn(k,'下一步：P 計畫'))}
+      return c;
+    }
+    if(ob.ext&&!l.bFix){
+      c.append(el('p',null,'這一張說的是<b>別人（或東西）</b>的問題。WOOP 的落石要找「自己心裡或身上」的，因為那是你自己可以想辦法的。'));
+      c.append(el('p',null,'可以改成自己的說法：<span class="fix">「'+ob.fix+'」</span>'));
+      var r=el('div','row2');
+      r.append(button('改成自己的說法','btn go',function(){l.bFix=true;justPlaced='b';save(st);render()}));
+      r.append(button(ic('undo')+' 換一張','btn soft',function(){l.b=null;l.p=null;save(st);render()}));
+      c.append(r);return c;
+    }
+    c.append(el('p',null,(ob.ext?'改好了！落石變成「<span class="fix">'+ob.fix+'</span>」。':'')+'這是你自己心裡或身上的落石，只有你最清楚它什麼時候會出現，也只有你自己可以想辦法。'));
+    c.append(nextBtn(k,'下一步：P 計畫'));return c;
+  }
+  if(ph==='p'&&l.p!=null){
+    var kd=planList(k)[l.p].k;
+    c.append(el('p',null,PFB[kd]));
+    if(kd!=='g')c.append(el('p',null,'你可以換一塊積木，也可以就用這一句出發。'));
+    c.append(nextBtn(k,'讓登山者出發'));return c;
+  }
+  return null;
+}
+
+/* drag (pointer) + tap/keyboard (click) */
+function dragify(btn,zone,onPlace){
+  var sx,sy,ghost=null,dragged=false,offX,offY,pid=null;
+  function over(x,y){var r=zone.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+  btn.addEventListener('pointerdown',function(e){if(e.button>0)return;sx=e.clientX;sy=e.clientY;dragged=false;pid=e.pointerId;var r=btn.getBoundingClientRect();offX=sx-r.left;offY=sy-r.top});
+  btn.addEventListener('pointermove',function(e){
+    if(pid!==e.pointerId)return;
+    if(!ghost){if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)<10)return;
+      if(getComputedStyle(btn).touchAction.indexOf('pan')>=0&&e.pointerType!=='mouse')return;
+      try{btn.setPointerCapture(e.pointerId)}catch(_){}
+      var r=btn.getBoundingClientRect();ghost=btn.cloneNode(true);ghost.classList.add('ghost');ghost.style.width=r.width+'px';ghost.removeAttribute('id');document.body.appendChild(ghost);dragged=true}
+    ghost.style.left=(e.clientX-offX)+'px';ghost.style.top=(e.clientY-offY)+'px';
+    zone.classList.toggle('over',over(e.clientX,e.clientY));
+  });
+  function end(e,ok){if(pid!==e.pointerId)return;pid=null;if(ghost){ghost.remove();ghost=null;zone.classList.remove('over');if(ok&&over(e.clientX,e.clientY)){onPlace()}}}
+  btn.addEventListener('pointerup',function(e){end(e,true)});
+  btn.addEventListener('pointercancel',function(e){end(e,false)});
+  btn.addEventListener('click',function(){if(dragged){dragged=false;return}onPlace()});
+}
+
+/* ---------- climb ---------- */
+var climbDone=false;
+function routeList(k){
+  var ul=el('ul','route');
+  [['w','願望（山頂的旗子）',wishText(k)],['o','最好的結果（風景照）',outs(k)[L(k).o]],['b','障礙（半山腰的落石）',obsText(k)],['p','計畫（繩梯）',sentence(k)]].forEach(function(r){
+    ul.append(el('li',null,lt(r[0])+'<span><span class="lb">'+r[1]+'</span><span class="vv">'+r[2]+'</span></span>'));
+  });
+  return ul;
+}
+function climbPage(k){
+  climbDone=false;
+  app.append(el('p','case',k==='D'?'示範關：讓登山者出發':'你自己的山：'+wishText(k)));
+  app.append(el('h2',null,'看看小登山者能不能照著你畫的路線爬上山頂。'));
+  var sb=sceneBox(levelScene(k,{}));
+  var cap=el('p','cap','小登山者出發了！');
+  var c=el('div','card');c.append(sb,cap);app.append(c);
+  var rc=el('div','card');rc.append(el('h3',null,'我畫的登山路線'),routeList(k));app.append(rc);
+  var row=el('div','row2');
+  var again=button(ic('undo')+' 再爬一次','btn soft',function(){render()});
+  var nx=button((k==='D'?'換你自己的山':'下一步')+' '+ic('chev'),'btn go',function(){go(k==='D'?'own':'tip')});
+  nx.disabled=true;row.append(again,nx);app.append(row);
+  var svg=sb.querySelector('svg'),you=svg.querySelector('#you'),ld=svg.querySelector('#ld'),fl=svg.querySelector('#fl'),ph=svg.querySelector('#ph');
+  function finish(){climbDone=true;nx.disabled=false;
+    if(fl)fl.classList.add('lit');if(ph)ph.classList.add('lit');
+    cap.innerHTML='到山頂了！山頂的旗子是「<b>'+wishText(k)+'</b>」，旁邊的風景照是「'+outs(k)[L(k).o]+'」。'+(k==='D'?'示範完成，接下來換你自己。':'');}
+  later(500,function(){
+    walk(you,ROUTE.slice(0,LADDER_AT+1),120,function(){
+      if(ld)ld.classList.add('lit');
+      cap.innerHTML='落石擋住路了：「'+obsText(k)+'」。繩梯亮起來！<b>如果'+obsText(k)+'，我就'+planText(k)+'。</b>';
+      later(2200,function(){walk(you,ROUTE.slice(LADDER_AT),70,function(){if(ld)ld.classList.remove('lit');walk(you,[ROUTE[ROUTE.length-1]],1,finish)})});
+    });
+  });
+}
+
+/* ---------- 4. reminder ---------- */
+function tipPage(){
+  app.append(el('p','case','小提醒'));
+  app.append(el('h2',null,'只想山頂，和把整條路都想好，差在哪裡？'));
+  var w=el('div','cmp2');
+  var a=el('div','card');a.append(el('h3',null,'只想山頂的風景'));
+  a.append(sceneBox({flag:true,photo:true,figs:[figSVG('a1','#E7B53C','tail',AMY[0],AMY[1],bubble('ab',['frame']))]}));
+  a.append(el('p',null,'想得很開心，心裡好像已經到了山頂，人卻還停在山腳。'));
+  var b=el('div','card');b.append(el('h3',null,'山頂＋落石＋繩梯'));
+  b.append(sceneBox({flag:true,photo:true,rock:true,ladder:true,figs:[figSVG('b1','#2F7D4F','short',QTOP[0],QTOP[1])]}));
+  b.append(el('p',null,'先想到會擋路的落石，也準備好繩梯；落石真的出現時，馬上知道要做什麼。'));
+  w.append(a,b);app.append(w);
+  app.append(el('p','note warm','<b>為什麼要想障礙？</b>因為先把落石想出來、準備好「如果……我就……」的繩梯，它真的出現時，你就不會停在原地，而是照著計畫爬過去。'));
+  app.append(el('p','note',lt('w')+' 願望　'+lt('o')+' 最好的結果　'+lt('b')+' 障礙　'+lt('p')+' 計畫：四步合起來，就是 <b>WOOP</b>。'));
+  app.append(button('下一步 '+ic('chev'),'btn go',function(){go('hard')}));
+}
+
+/* ---------- 5. which step is hardest (no right answer) ---------- */
+var HD={
+  w:{n:'想一個願望',e:'挑一件「有一點難、但做得到」的事，山頂才看得清楚。覺得這步難，常常是因為想做的事太多、太大，還不知道先挑哪一件。'},
+  o:{n:'想最好的結果',e:'結果想得越清楚，越知道自己為什麼要爬。覺得這步難，可能是還不確定自己最在乎的是什麼。'},
+  b:{n:'找出自己的障礙',e:'找到「自己心裡或身上」的落石，才是自己可以想辦法的。覺得這步難很正常，因為要老實承認自己會累、會想偷懶、會分心。'},
+  p:{n:'訂一個計畫',e:'把計畫說成「如果……我就……」，落石一出現，不用再想，直接照著做。覺得這步難，常常是因為要想出一個馬上做得到的小動作。'}
+};
+function hardPage(){
+  app.append(el('p','case','最後一題'));
+  app.append(el('h2',null,'你覺得 WOOP 哪一步最難？'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。選好以後，會看到這一步的作用，等一下全班一起討論。'));
+  var o=el('div','opts'),bs={},fb=el('div');
+  PH.forEach(function(k){var b=button(lt(k)+'<span>'+HD[k].n+'</span>','btn alt',function(){st.hard=k;save(st);upd()});bs[k]=b;o.append(b)});
+  var nx=button('下一步 '+ic('chev'),'btn go',function(){if(st.hard)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    PH.forEach(function(k){bs[k].classList.toggle('pick',st.hard===k);bs[k].setAttribute('aria-pressed',st.hard===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.hard;
+    if(st.hard){var h=HD[st.hard],c=el('div','card');c.append(el('h3',null,lt(st.hard)+' '+h.n));c.append(el('dl','ec','<dt>這一步的作用</dt><dd>'+h.e+'</dd>'));fb.append(c)}
+  }
+  upd();
+}
+
+/* ---------- 6. end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var m=st.M,wl='ABCD'[m.w];
+  var c=el('div','card');
+  c.append(el('h3',null,lt('p')+' 我的計畫（請抄到聯絡簿）'));
+  c.append(el('p','bigplan',sentenceHTML('M')));
+  app.append(c);
+  var rows=[
+    [lt('w')+' 我選的願望','<span class="lt n">'+wl+'</span> '+wishText('M')],
+    [lt('o')+' 最好的結果',outs('M')[m.o]],
+    [lt('b')+' 障礙（落石）',obsText('M')+(obsList('M')[m.b].other?'（從「其他」選的）':'')],
+    ['我覺得最難的一步',lt(st.hard)+' '+HD[st.hard].n],
+    ['示範關第一次放的落石',st.D.first==='other'?'別人（或東西）的問題，後來改成自己的':'自己心裡或身上的']
+  ];
+  var c2=el('div','card'),tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c2.append(tb);app.append(c2);
+  app.append(el('p','note warm','老師等一下會請大家舉手：選願望 A、B、C、D 的各有幾個人？覺得 W、O（結果）、O（障礙）、P 哪一步最難的各有幾個人？'));
+}
+
+function render(animate){
+  ANIM++;
+  app.innerHTML='';
+  var s=st.step,D=st.D,M=st.M;
+  if(s==='story')storyPage(!!animate);
+  else if(s==='demo')buildPage('D');
+  else if(s==='dclimb'&&D.p!=null&&obsReady('D'))climbPage('D');
+  else if(s==='own')buildPage('M');
+  else if(s==='mclimb'&&M.p!=null&&obsReady('M'))climbPage('M');
+  else if(s==='tip')tipPage();
+  else if(s==='hard')hardPage();
+  else if(s==='end'&&st.hard&&M.p!=null&&D.first)endPage();
+  else{st=fresh();save(st);storyPage(false)}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

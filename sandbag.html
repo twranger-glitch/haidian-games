@@ -1,0 +1,136 @@
+<title>菜園補沙包</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{--bg:#FAF7F2;--card:#FFFFFF;--ink:#1E242B;--co:#D95D39;--te:#2A6F68;--mu:#475569;--ln:#E3DED7;--col:#FFF5F2;--tel:#F0F7F6;
+--font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(28px,5vw,46px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--co);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.6vw,24px);margin:0;color:var(--mu)}
+.card{background:var(--card);border:2px solid var(--ln);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:10px}
+.card p{margin:0;font-size:clamp(19px,2.6vw,23px)}
+.card.warm{background:var(--col);border-color:#F3D9CF}
+.card.cool{background:var(--tel);border-color:#CFE3E0}
+.btn{font:inherit;font-size:clamp(19px,2.7vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--co);color:#fff;cursor:pointer;line-height:1.45}
+.btn.te{background:var(--te)}
+.btn.ghost{background:var(--card);color:var(--ink);border:3px solid var(--ln);padding:8px 14px}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--ln);text-align:left;font-weight:700;width:100%}
+.btn.alt.pick{border-color:var(--te);background:var(--tel)}
+.btn:focus-visible{outline:4px solid var(--te);outline-offset:3px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-weight:900;border-radius:999px;padding:2px 12px;font-size:19px}
+.tag.red{background:var(--col);color:var(--co)} .tag.blue{background:var(--tel);color:var(--te)}
+.ic{width:1.2em;height:1.2em;flex:none}
+.scene{width:100%;height:auto;display:block;border-radius:16px;background:#FFFFFF;border:2px solid var(--ln)}
+.tray{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:44px}
+.chip{width:40px;height:30px;border-radius:15px;background:var(--col);border:3px solid var(--co)}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.zones{grid-template-columns:1fr}}
+.zone{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.zone .head{display:flex;align-items:center;gap:10px;font-weight:900;font-size:clamp(19px,2.6vw,23px)}
+.zone .head svg{width:44px;height:44px;flex:none}
+.zone .cnt{font-size:clamp(28px,5vw,40px);font-weight:900;text-align:center;margin:0}
+.zone .ctl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.week{display:flex;gap:6px}
+.week span{flex:1;text-align:center;border-radius:12px;border:2px solid var(--ln);padding:4px 0;font-weight:700;color:var(--mu);background:#fff}
+.week span.now{border-color:var(--co);color:var(--ink);background:var(--col)}
+.week span.done{background:var(--tel);color:var(--te)}
+.sum .row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:2px solid var(--ln);padding:8px 0;font-size:clamp(19px,2.6vw,23px)}
+.sum .row b{color:var(--co);font-size:clamp(20px,3vw,27px);text-align:right}
+.mini{font-size:19px;color:var(--mu);margin:0}
+.news{border-left:6px solid var(--co);padding-left:14px}
+</style>
+<div class="wrap" id="app"></div>
+<script>
+var KEY='u2c-sandbag-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function fresh(){var h=location.hash;var g=h==='#red'?'red':h==='#blue'?'blue':(rnd(2)?'red':'blue');return {g:g,step:0,wk:0,bag:[0,0,0,0],box:[0,0,0,0],cur:{bag:0,box:0},goal:null,next:null}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(!st||(location.hash==='#red'||location.hash==='#blue')&&st.step===0){st=fresh();save(st)}
+var RED='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="#D95D39"/></svg>';
+var BLUE='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" fill="#2A6F68"/></svg>';
+var I_BAG='<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="26" width="18" height="12" rx="6" fill="#FFF5F2" stroke="#D95D39" stroke-width="4"/><rect x="24" y="26" width="18" height="12" rx="6" fill="#FFF5F2" stroke="#D95D39" stroke-width="4"/><rect x="15" y="14" width="18" height="12" rx="6" fill="#FFF5F2" stroke="#D95D39" stroke-width="4"/></svg>';
+var I_BOX='<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="24" width="36" height="16" rx="4" fill="#F0F7F6" stroke="#2A6F68" stroke-width="4"/><path d="M16 24 L16 14 M16 18 Q10 10 6 14 M32 24 L32 12 M32 17 Q38 9 42 13" fill="none" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/></svg>';
+var NEWS=[
+ '第 1 週：連續下了三天大雨。水從菜園旁邊的水溝漫進來，剛種下的菜苗都泡在水裡。',
+ '第 2 週：沙包堤補高了一些。可是這一次，水從菜園另一邊比較低的地方滲進來，有一半的菜苗爛掉了。',
+ '第 3 週：又下了兩場雨，菜園還是積水。同一個星期，隔壁班把菜種在可以搬動的種菜箱裡，放在走廊上，菜長得很好。',
+ '第 4 週：氣象預報說，下個星期還會下雨。離園遊會只剩下一個月了。'
+];
+function who(){return st.g==='red'?'這塊低窪的空地，是<b>你當初提議的</b>，大家聽了你的意見才選了它。':'這塊低窪的空地，是<b>上一任股長選的</b>。他轉學了，現在換你負責。'}
+function tag(){return st.g==='red'?'<span class="tag red">'+RED+'紅組</span>':'<span class="tag blue">'+BLUE+'藍組</span>'}
+function sum(a){return a.reduce(function(x,y){return x+y},0)}
+function scene(){var bags=sum(st.bag)+st.cur.bag;var box=sum(st.box)+st.cur.box;var w=st.wk;
+ var lv=Math.min(bags,40);var rows=Math.min(4,Math.ceil(lv/10));var out='';
+ for(var r=0;r<rows;r++){var n=Math.min(6-r,Math.ceil((lv-r*10)/2));for(var k=0;k<n;k++)out+='<rect x="'+(120+k*30+r*15)+'" y="'+(196-r*16)+'" width="30" height="16" rx="8" fill="#FFF5F2" stroke="#D95D39" stroke-width="3"/>'}
+ var water=150+Math.min(w,3)*6;
+ var crops='';var alive=[6,6,3,2][Math.min(w,3)];
+ for(var c=0;c<6;c++){var x=40+c*14;crops+=c<alive?'<path d="M'+x+' 212 L'+x+' 198 M'+x+' 204 Q'+(x-7)+' 196 '+(x-9)+' 200" fill="none" stroke="#2A6F68" stroke-width="3" stroke-linecap="round"/>':'<path d="M'+(x-4)+' 212 L'+(x+4)+' 206" stroke="#475569" stroke-width="3" stroke-linecap="round"/>'}
+ var bx='';if(box>0){var g=Math.min(30,6+box*1.2);bx='<rect x="330" y="178" width="70" height="26" rx="6" fill="#F0F7F6" stroke="#2A6F68" stroke-width="4"/>'+
+  '<path d="M350 178 L350 '+(178-g)+' M350 '+(184-g)+' Q340 '+(174-g)+' 334 '+(180-g)+' M380 178 L380 '+(178-g*0.9)+' M380 '+(184-g*0.9)+' Q390 '+(172-g*0.9)+' 396 '+(178-g*0.9)+'" fill="none" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/>'}
+ return '<svg class="scene" viewBox="0 0 430 230" aria-label="菜園的樣子：左邊低窪菜園，中間沙包堤，右邊走廊的種菜箱">'+
+ '<path d="M10 40 L22 20 M60 40 L72 20 M110 40 L122 20 M160 40 L172 20 M210 40 L222 20" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/>'+
+ '<path d="M10 '+water+' Q50 '+(water-6)+' 100 '+water+' L110 '+water+' L110 214 L10 214 Z" fill="#F0F7F6" stroke="#2A6F68" stroke-width="3" opacity="'+(w>0?1:0.4)+'"/>'+
+ crops+out+'<path d="M8 214 L300 214" stroke="#475569" stroke-width="4" stroke-linecap="round"/>'+
+ '<path d="M310 204 L420 204 M310 204 L310 120" stroke="#475569" stroke-width="4" stroke-linecap="round"/>'+bx+'</svg><p class="mini">左邊是低窪的菜園，淺青色的部分是積水；中間是沙包堤；右邊是放在走廊上的種菜箱。</p>'}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var app=document.getElementById('app');
+function render(){var h='';var s=st.step;
+ if(s===0){
+  h='<p class="kick">UNIT 2 第 3 課・活動三 '+tag()+'</p><h1>菜園補沙包</h1>'+
+  '<p class="lead">五年13班要在學校後面的一塊空地種菜，準備在園遊會上賣自己種的菜。這塊空地比旁邊低，下大雨的時候很容易積水。你是負責這件事的股長。</p>'+
+  '<div class="card warm"><p>'+who()+'</p></div>'+
+  '<div class="card"><p>接下來有四週。每一週，班上有 <b>10 位同學</b>可以來幫忙，你要決定派他們去做什麼：</p>'+
+  '<p>一、補沙包堤：在菜園旁邊多堆一些沙包，把雨水擋在外面。</p><p>二、試新方法：做可以搬動的種菜箱，放到不會淹水的走廊上。</p>'+
+  '<p class="mini">你可以把同學全部派去做同一件事，也可以分成兩邊。這裡沒有標準答案。請不要告訴旁邊的同學你是哪一組。</p></div>'+
+  '<button class="btn" onclick="go(1)">開始第 1 週</button>';
+ } else if(s===1){
+  var left=10-st.cur.bag-st.cur.box;
+  h='<p class="kick">第 '+(st.wk+1)+' 週 '+tag()+'</p><div class="week">'+[0,1,2,3].map(function(i){return '<span class="'+(i<st.wk?'done':i===st.wk?'now':'')+'">第 '+(i+1)+' 週</span>'}).join('')+'</div>'+
+  '<div class="card"><p class="news">'+NEWS[st.wk]+'</p><p class="mini">'+who().replace(/<\/?b>/g,'')+'</p></div>'+scene()+
+  '<p class="lead">還有 <b>'+left+'</b> 位同學還沒有安排工作（下面每一個小格子，代表一位還沒安排的同學）：</p><div class="tray" aria-hidden="true">'+Array(left+1).join('<span class="chip"></span>')+'</div>'+
+  '<div class="zones">'+zone('bag',I_BAG,'補沙包堤')+zone('box',I_BOX,'試新方法：種菜箱')+'</div>'+
+  '<button class="btn te" '+(left===0?'':'disabled')+' onclick="week()">'+(left===0?'這一週就這樣安排':'請先把 10 位同學都安排好')+'</button>';
+ } else if(s===2){
+  h='<p class="kick">四週結束了</p><h2>請停下來想一想：五年13班做這個計畫，真正的目標是什麼？</h2>';
+  var G=['把這塊低窪地顧好，不要讓它淹水。','園遊會時，有自己種的菜可以賣。','證明當初選這塊地沒有選錯。','把沙包堤蓋得又高又漂亮。'];
+  for(var i=0;i<4;i++)h+='<button class="btn alt'+(st.goal===i?' pick':'')+'" onclick="pick(\'goal\','+i+')">'+G[i]+'</button>';
+  h+='<button class="btn" '+(st.goal===null?'disabled':'')+' onclick="go(3)">下一題</button>';
+ } else if(s===3){
+  h='<p class="kick">最後一題（沒有標準答案）</p><h2>第 5 週，又有 10 位同學可以來幫忙。你打算怎麼安排？</h2>';
+  var N=['10 位同學全部去補沙包堤。','一半去補沙包，一半去做種菜箱。','10 位同學全部去做種菜箱。','先找全班一起討論，再決定。'];
+  for(var j=0;j<4;j++)h+='<button class="btn alt'+(st.next===j?' pick':'')+'" onclick="pick(\'next\','+j+')">'+N[j]+'</button>';
+  h+='<button class="btn" '+(st.next===null?'disabled':'')+' onclick="go(4)">看結果</button>';
+ } else {
+  var tb=sum(st.bag),tx=sum(st.box);
+  var band=tb<=20?'20 位以下':tb<=30?'21 到 30 位':'超過 30 位';
+  var G2=['顧好這塊地','園遊會有菜可以賣','證明沒選錯','把堤蓋漂亮'],N2=['全部補沙包','一半一半','全部做種菜箱','先全班討論'];
+  h='<h1>做完了！請停在這一頁，等其他同學。</h1><div class="card sum">'+
+  '<div class="row"><span>你的組別</span><b>'+(st.g==='red'?RED+'紅組':BLUE+'藍組')+'</b></div>'+
+  '<div class="row"><span>四週加起來，派去補沙包的同學</span><b>'+tb+' 位（'+band+'）</b></div>'+
+  '<div class="row"><span>四週加起來，派去做種菜箱的同學</span><b>'+tx+' 位</b></div>'+
+  '<div class="row"><span>每一週派去補沙包的人數</span><b>'+st.bag.join('、')+' 位</b></div>'+
+  '<div class="row"><span>你認為的目標</span><b>'+G2[st.goal]+'</b></div>'+
+  '<div class="row"><span>第 5 週的打算</span><b>'+N2[st.next]+'</b></div></div>'+
+  '<p class="mini">同一位同學來幫忙兩週，就算兩位。</p><p class="lead">想一想：沙包堤和種菜箱，都是「方法」。如果目標是園遊會時有菜可以賣，哪一個方法比較有希望？</p>'+
+  '<p class="mini">（老師要換下一班之前，在網址後面加上 #reset，就可以重新開始。）</p>';
+ }
+ app.innerHTML=h;
+}
+function zone(k,icon,label){return '<div class="card zone'+(k==='bag'?' warm':' cool')+'"><div class="head">'+icon+label+'</div><p class="cnt">'+st.cur[k]+' 位</p><div class="ctl"><button class="btn ghost" onclick="add(\''+k+'\',-1)" aria-label="'+label+'少 1 位同學">少 1 位</button><button class="btn ghost" onclick="add(\''+k+'\',1)" aria-label="'+label+'多 1 位同學">多 1 位</button></div><button class="btn ghost" onclick="all_(\''+k+'\')">剩下的同學都派到這裡</button></div>'}
+function add(k,d){var left=10-st.cur.bag-st.cur.box;if(d>0&&left<=0)return;if(d<0&&st.cur[k]<=0)return;st.cur[k]+=d;save(st);render()}
+function all_(k){var left=10-st.cur.bag-st.cur.box;st.cur[k]+=left;save(st);render()}
+function week(){st.bag[st.wk]=st.cur.bag;st.box[st.wk]=st.cur.box;st.cur={bag:0,box:0};st.wk++;if(st.wk>=4){go(2)}else{save(st);render();try{window.scrollTo(0,0)}catch(e){}}}
+function pick(k,v){st[k]=v;save(st);render()}
+window.addEventListener('hashchange',function(){if((location.hash==='#red'||location.hash==='#blue')&&st.step===0){st=fresh();save(st);render();return}if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render()}});
+render();
+</script>

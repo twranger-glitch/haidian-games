@@ -1,0 +1,242 @@
+<title>福利社販賣機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: the tablet secretly puts each student in group 甲 or 乙 → a vending machine with two snacks (甲: chocolate 15, candy 1; 乙: chocolate 14, candy free) → press a machine button, the snack drops → why → reveal of both groups and the zero-price effect → free-shipping question → summary for a show of hands. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default;opacity:.55}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+td.v{font-weight:900}
+/* vending machine */
+.vm{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start}
+.vm svg{width:100%;height:auto;max-height:520px;display:block}
+.keys{display:flex;flex-direction:column;gap:12px}
+.key{font:inherit;display:flex;align-items:center;gap:14px;width:100%;text-align:left;cursor:pointer;background:#2B3A40;color:#fff;border:0;border-radius:18px;padding:12px 14px;box-shadow:0 6px 0 #11191C;font-size:clamp(19px,2.6vw,24px);font-weight:700;line-height:1.4;transition:transform .08s,box-shadow .08s}
+.key:active,.key.down{transform:translateY(5px);box-shadow:0 1px 0 #11191C}
+.key .dot{flex:none;width:52px;height:52px;border-radius:50%;background:#E2B23C;color:#1F2A2E;display:grid;place-items:center;font-size:26px;font-weight:900;border:4px solid #fff3}
+.key.none .dot{background:#B9C2BE}
+.key small{display:block;font-size:.85em;color:#F6D58A;font-weight:900}
+.key:disabled{cursor:default;opacity:.5}
+.key.pick{opacity:1;outline:4px solid var(--gold);outline-offset:3px}
+.key:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.wallet{font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--rust);margin:0}
+.item{transform-box:fill-box;transform-origin:center}
+.item.drop0{animation:drop0 .9s cubic-bezier(.5,0,.8,.6) forwards}
+.item.drop1{animation:drop1 .8s cubic-bezier(.5,0,.8,.6) forwards}
+@keyframes drop0{0%{transform:translateY(0)}15%{transform:translateY(-6px) rotate(-4deg)}100%{transform:translateY(292px) rotate(8deg)}}
+@keyframes drop1{0%{transform:translateY(0)}15%{transform:translateY(-6px) rotate(4deg)}100%{transform:translateY(172px) rotate(-10deg)}}
+.item.in0{transform:translateY(292px) rotate(8deg)}
+.item.in1{transform:translateY(172px) rotate(-10deg)}
+@media (prefers-reduced-motion:reduce){.item.drop0,.item.drop1{animation-duration:.01s}}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mini{border:3px solid var(--line);border-radius:18px;padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:6px}
+.mini.me{border-color:var(--gold);background:#FBF1DC}
+.mini h3{margin:0;font-size:clamp(22px,3.2vw,28px);font-weight:900}
+.mini p{margin:0;font-size:clamp(19px,2.5vw,23px)}
+.mini .gap{color:var(--rust);font-weight:900}
+.free{color:var(--good);font-weight:900}
+@media (max-width:640px){.vm{grid-template-columns:1fr}.vm svg{max-height:400px}.pair{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='vending-zero-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+var st=load();
+if(!st||(st.g!=='A'&&st.g!=='B')){st={g:rnd()?'B':'A',step:'intro',pick:null,why:null,ship:null};save(st)}
+var WALLET=20;
+function price(k){return k===0?(st.g==='A'?15:14):(st.g==='A'?1:0)}
+function pstr(n){return n===0?'免費！0 元':n+' 元'}
+var NAME=['七股鹽滷手工巧克力','普通水果糖','都不要'];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button',cls,t);b.type='button';b.addEventListener('click',fn);return b}
+function go(s){st.step=s;save(st);render();window.scrollTo(0,0)}
+
+function machine(){
+  var p0=price(0),p1=price(1);
+  var tag1=p1===0?'<rect x="44" y="268" width="196" height="40" rx="8" fill="#2F7D4F"/><text x="142" y="296" text-anchor="middle" font-size="24" font-weight="900" fill="#fff">免費！0 元</text>'
+                 :'<rect x="80" y="268" width="124" height="40" rx="8" fill="#FBF1DC"/><text x="142" y="296" text-anchor="middle" font-size="24" font-weight="900" fill="#A8441A">'+p1+' 元</text>';
+  return '<svg viewBox="0 0 360 520" role="img" aria-label="福利社販賣機：上層是七股鹽滷手工巧克力，'+pstr(p0)+'；下層是普通水果糖，'+pstr(p1)+'。">'+
+  '<rect x="6" y="6" width="348" height="508" rx="26" fill="#C9472A"/><rect x="6" y="6" width="348" height="54" rx="26" fill="#A8441A"/>'+
+  '<text x="180" y="43" text-anchor="middle" font-size="26" font-weight="900" fill="#FFF6E0">海佃福利社</text>'+
+  '<rect x="24" y="72" width="236" height="262" rx="12" fill="#E8F2F6" stroke="#8FB3C4" stroke-width="4"/>'+
+  '<line x1="24" y1="212" x2="260" y2="212" stroke="#8FB3C4" stroke-width="5"/>'+
+  '<path d="M40 86 L70 86 L44 140 Z" fill="#fff" opacity=".55"/>'+
+  tag1+
+  /* tray */
+  '<rect x="24" y="410" width="236" height="84" rx="12" fill="#1F2A2E"/><rect x="36" y="420" width="212" height="22" rx="6" fill="#3B4A50"/>'+
+  '<text x="142" y="478" text-anchor="middle" font-size="18" font-weight="700" fill="#B9C2BE">取物口</text>'+
+  /* side panel */
+  '<rect x="274" y="72" width="66" height="96" rx="10" fill="#1F2A2E"/><text x="307" y="104" text-anchor="middle" font-size="15" fill="#9BE3A7" font-weight="700">錢包</text>'+
+  '<text x="307" y="140" text-anchor="middle" font-size="28" fill="#9BE3A7" font-weight="900" id="wal">'+WALLET+'</text>'+
+  '<rect x="284" y="186" width="46" height="70" rx="8" fill="#8E3720"/><rect x="303" y="198" width="8" height="44" rx="4" fill="#1F2A2E"/>'+
+  '<text x="307" y="280" text-anchor="middle" font-size="14" fill="#FFF6E0" font-weight="700">投幣口</text>'+
+  '<circle cx="292" cy="320" r="11" fill="#E2B23C"/><text x="292" y="326" text-anchor="middle" font-size="15" font-weight="900">1</text>'+
+  '<circle cx="322" cy="320" r="11" fill="#E2B23C"/><text x="322" y="326" text-anchor="middle" font-size="15" font-weight="900">2</text>'+
+  '<circle cx="307" cy="352" r="11" fill="#B9C2BE"/><text x="307" y="358" text-anchor="middle" font-size="15" font-weight="900">0</text>'+
+  '<rect x="80" y="172" width="124" height="34" rx="8" fill="#FBF1DC"/><text x="142" y="197" text-anchor="middle" font-size="24" font-weight="900" fill="#A8441A">'+p0+' 元</text>'+
+  /* chocolate */
+  '<g class="item" id="it0"><rect x="72" y="104" width="140" height="62" rx="8" fill="#5A3420"/><rect x="72" y="104" width="140" height="22" rx="8" fill="#D9B24C"/>'+
+  '<text x="142" y="121" text-anchor="middle" font-size="15" font-weight="900" fill="#3A2214">七股鹽滷</text>'+
+  '<g stroke="#43261A" stroke-width="3"><line x1="107" y1="128" x2="107" y2="164"/><line x1="142" y1="128" x2="142" y2="164"/><line x1="177" y1="128" x2="177" y2="164"/><line x1="74" y1="146" x2="210" y2="146"/></g></g>'+
+  /* candy */
+  '<g class="item" id="it1"><path d="M96 244 L72 226 L72 262 Z" fill="#E86A8A"/><path d="M188 244 L212 226 L212 262 Z" fill="#E86A8A"/><ellipse cx="142" cy="244" rx="48" ry="26" fill="#F49AB0"/>'+
+  '<path d="M112 236 Q142 222 172 236" stroke="#fff" stroke-width="5" fill="none" opacity=".7"/><text x="142" y="252" text-anchor="middle" font-size="15" font-weight="900" fill="#7A2238">水果糖</text></g>'+
+  '</svg>';
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','下課了，你走到福利社。門口新放了一台販賣機，正在試賣兩樣點心。'),
+    el('p','lead','你的錢包裡有 <b>20 元遊戲幣</b>。這是遊戲裡的錢，不是真的錢，價格也是遊戲編出來的。'),
+    el('p','lead','規則：<b>只能選一樣</b>，也可以兩樣都不要，把錢留著。沒有對錯，選你真的會選的。'));
+  app.append(el('h1',null,'福利社販賣機'),c,btn('走到販賣機前面','btn',function(){go('buy')}));
+}
+
+function buy(){
+  app.innerHTML='';
+  var done=st.pick!=null;
+  var vm=el('div','vm');var box=el('div');box.innerHTML=machine();
+  var keys=el('div','keys');
+  var wal=el('p','wallet','錢包：'+(WALLET-(done&&st.pick<2?price(st.pick):0))+' 元遊戲幣');
+  var fb=el('div','opts');
+  var ks=[];
+  [[0,'1'],[1,'2'],[2,'0']].forEach(function(x){
+    var k=x[0];var sub=k<2?pstr(price(k)):'把錢留著';
+    var b=el('button','key'+(k===2?' none':''),'<span class="dot">'+x[1]+'</span><span>'+NAME[k]+'<small>'+sub+'</small></span>');
+    b.type='button';b.setAttribute('aria-label','按 '+x[1]+' 號：'+NAME[k]+'，'+sub);
+    b.addEventListener('click',function(){
+      if(st.pick!=null)return;
+      st.pick=k;save(st);
+      b.classList.add('down','pick');ks.forEach(function(o){o.disabled=true});
+      if(k<2){var it=box.querySelector('#it'+k);it.classList.add('drop'+k);}
+      wal.textContent='錢包：'+(WALLET-(k<2?price(k):0))+' 元遊戲幣';
+      var w=box.querySelector('#wal');if(w)w.textContent=WALLET-(k<2?price(k):0);
+      setTimeout(function(){showNext();b.classList.remove('down')},k<2?950:250);
+    });
+    ks.push(b);keys.appendChild(b);
+  });
+  keys.append(wal,fb);
+  vm.append(box,keys);
+  function showNext(){
+    fb.innerHTML='';
+    var msg=st.pick===2?'你兩樣都沒買，20 元遊戲幣都還在錢包裡。':'喀啦！「'+NAME[st.pick]+'」掉到取物口了。'+(price(st.pick)===0?'你一毛錢都沒花。':'你花了 '+price(st.pick)+' 元。');
+    fb.append(el('p','note',msg),btn('下一步','btn',function(){go('why')}));
+  }
+  if(done){
+    ks.forEach(function(o,i){o.disabled=true;if(i===st.pick)o.classList.add('pick')});
+    if(st.pick<2)box.querySelector('#it'+st.pick).classList.add('in'+st.pick);
+    var w=box.querySelector('#wal');if(w)w.textContent=WALLET-(st.pick<2?price(st.pick):0);
+    showNext();
+  }
+  app.append(el('p','case','福利社販賣機'),el('h2',null,'你要買哪一樣？按販賣機旁邊的按鈕。'),vm);
+}
+
+function whyList(){
+  var free=st.g==='B';
+  if(st.pick===0)return['巧克力比較好吃',price(0)+' 元換一大塊手工巧克力，比較划算','想吃吃看七股的特產','難得來福利社，想買好一點的'];
+  if(st.pick===1)return[free?'免費耶！不拿白不拿':'只要 1 元，超便宜','我不想花錢','水果糖比較好吃','錢想留著買別的東西'];
+  return['我不想花錢','兩樣我都不太想吃','錢想留著買別的東西','我現在不餓'];
+}
+function why(){
+  app.innerHTML='';
+  var g=el('div','opts');
+  whyList().forEach(function(t,k){var b=btn(t.trim(),'btn alt',function(){st.why=t.trim();save(st);go('reveal')});if(st.why===t.trim())b.classList.add('pick');g.appendChild(b)});
+  app.append(el('p','case','你選了：'+NAME[st.pick]),el('h2',null,'你為什麼選它？選最接近你心裡想法的一個。'),el('p','lead','每一個理由都說得通，沒有對錯。'),g);
+}
+
+function reveal(){
+  app.innerHTML='';
+  var me=st.g;
+  var c1=el('div','card');
+  c1.append(el('p','lead','你一打開這個遊戲，平板就已經偷偷把全班分成兩組。兩組看到的販賣機一模一樣，只有<b>價錢</b>不一樣。'));
+  var pr=el('div','pair');
+  [['A','甲組',15,'1 元'],['B','乙組',14,'<span class="free">免費！0 元</span>']].forEach(function(x){
+    var m=el('div','mini'+(x[0]===me?' me':''));
+    m.append(el('h3',null,x[1]+(x[0]===me?'（你在這一組）':'')),el('p',null,'巧克力：'+x[2]+' 元'),el('p',null,'水果糖：'+x[3]),el('p','gap','兩樣差：14 元'));
+    pr.appendChild(m);
+  });
+  c1.appendChild(pr);
+  c1.appendChild(el('p','note warm','乙組只是兩樣都便宜了 1 元。兩組的巧克力和水果糖，<b>都差 14 元</b>，一點也沒變。'));
+  var c2=el('div','card');
+  c2.append(el('h2',null,'科學家也做過一樣的實驗'),
+    el('p','lead','美國有三位研究人員（Shampanier、Mazar 和 Ariely），在大學裡擺了一張小桌子賣巧克力：一種是很高級的松露巧克力，一種是普通的小顆巧克力。'),
+    el('p','lead','高級的比較貴、普通的很便宜時，<b>多數人選高級巧克力</b>。後來他們把兩種都降一點點價，讓普通巧克力變成<b>免費</b>，結果<b>多數人改拿免費的那一個</b>，雖然兩種的價差根本沒變。'),
+    el('p','note','價錢變成 0 的時候，很多人的選擇會突然改變，這叫做<b>「零價格效應」</b>。「免費」這兩個字特別有吸引力，好像一點壞處都沒有，讓人比較不會停下來想：我真正想要的是哪一個？'),
+    el('p','lead','選好吃的巧克力、選免費的糖，或兩樣都不要，都說得通。重點是知道：「免費」會悄悄推我們一把。'));
+  app.append(el('p','case','揭曉'),el('h2',null,'其實，平板偷偷分了組！'),c1,c2,btn('還有一題','btn',function(){go('ship')}));
+}
+
+var SHIP=[
+  ['A','付 60 元運費，只買水壺','總共花 310 元。比 250 元多了 60 元運費，但只買到你真正需要的東西，也不用出門。'],
+  ['B','再湊一樣 150 元的東西，拿到免運','總共花 400 元，運費變 0。不過比付運費多花了 90 元，還多了一樣東西。如果那樣東西你本來就要買，這樣很划算；如果只是為了湊免運，就等於為了「免費」多花錢。'],
+  ['C','去實體店買','可能只要花 250 元，不用運費。代價是要花時間、要有人陪你去或載你去，店裡也不一定有你要的那一款。'],
+  ['D','再想想，先不買','現在一毛錢都不用花，也可以想想水壺是不是真的急著要。代價是要再等，可能還要再找別的辦法。']
+];
+function ship(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','你在網路商店看到一個 250 元的水壺，剛好是你需要的。結帳時，商店跳出一句話：'),
+    el('p','note warm','<b>滿 399 元免運費！</b>（沒滿的話，運費 60 元）'),
+    el('p','lead','你只需要這一個水壺。'));
+  var g=el('div','opts');var fb=el('div','opts');
+  SHIP.forEach(function(x){var b=btn(x[0]+'　'+x[1],'btn alt',function(){
+    st.ship=x[0];save(st);Array.prototype.forEach.call(g.children,function(o){o.classList.remove('pick')});b.classList.add('pick');show();});
+    if(st.ship===x[0])b.classList.add('pick');g.appendChild(b)});
+  function show(){fb.innerHTML='';var x=SHIP.filter(function(s){return s[0]===st.ship})[0];
+    var nx=btn('看我的摘要','btn',function(){go('end')});
+    fb.append(el('p','note','<b>'+x[0]+'：</b>'+x[2]+'<br><span style="font-size:.85em;color:var(--muted)">每個選擇都有人選，想換也可以直接點別的。</span>'),nx);
+    nx.scrollIntoView({behavior:'smooth',block:'end'});}
+  app.append(el('p','case','延伸題'),el('h2',null,'網路商店說「滿 399 元免運」，你會怎麼做？'),c,g,fb);
+  if(st.ship)show();
+}
+
+function end(){
+  app.innerHTML='';
+  var sx=SHIP.filter(function(s){return s[0]===st.ship})[0];
+  var t=el('table');
+  [['我的組別',st.g==='A'?'甲組（糖 1 元）':'乙組（糖免費）'],['我選了',NAME[st.pick]],['我的理由',st.why],['免運題',sx?sx[0]+'　'+sx[1]:'—']].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+var S={intro:intro,buy:buy,why:why,reveal:reveal,ship:ship,end:end};
+function render(){
+  if(['why','reveal','ship','end'].indexOf(st.step)>=0&&st.pick==null)st.step='buy';
+  if(['reveal','ship','end'].indexOf(st.step)>=0&&st.why==null)st.step='why';
+  if(st.step==='end'&&!st.ship)st.step='ship';
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

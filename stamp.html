@@ -1,0 +1,274 @@
+<title>班級規則印章</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: the student is a class officer. Pick one of three rubber stamps (thanks / points / fine), then tap (or drag onto) one of six situation cards. Each stamp lands with a red-ink animation and opens a note on what that stamp may bring (good side and cost). Restamping is allowed. Then a no-right-answer question, then a summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --red:#C8102E; --paper:#FFFDF6;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:16px;padding-block:20px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:focus-visible,.stamp:focus-visible,.scard:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.opts{display:flex;flex-direction:column;gap:10px}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top}
+td.n{text-align:right;font-weight:900}
+
+/* stamp tray */
+.tray{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:8px;display:flex;flex-direction:column;gap:8px}
+.stamps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stamp{font:inherit;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:8px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink)}
+.stamp svg{width:clamp(54px,9vw,76px);height:auto;pointer-events:none}
+.stamp b{font-size:clamp(19px,2.8vw,25px);font-weight:900;pointer-events:none}
+.stamp small{font-size:clamp(16px,1.9vw,18px);color:var(--muted);line-height:1.35;text-align:center;pointer-events:none}
+.stamp.sel{border-color:var(--red);background:#FCECEC;transform:translateY(-3px);box-shadow:0 6px 0 #E8B4B4}
+.hint{font-size:clamp(19px,2.5vw,23px);font-weight:700;color:var(--rust);margin:0;min-height:1.6em}
+
+/* situation cards */
+.board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.scard{position:relative;background:var(--paper);border:3px dashed var(--line);border-radius:18px;padding:14px 16px 16px;cursor:pointer;min-height:170px;display:flex;flex-direction:column;gap:6px;text-align:left;font:inherit;color:var(--ink);overflow:hidden}
+.scard .no{font-size:clamp(16px,2.1vw,19px);font-weight:900;color:var(--sea);letter-spacing:1px}
+.scard .tx{font-size:clamp(19px,2.6vw,23px);font-weight:700;line-height:1.55;padding-right:clamp(70px,13vw,104px)}
+.scard.done{border-style:solid;border-color:#E2C4C4}
+.scard.over{border-color:var(--red);background:#FFF3F3}
+.scard.ready{border-color:var(--gold)}
+.scard .mark{position:absolute;right:8px;top:8px;width:clamp(76px,13vw,104px);height:auto;pointer-events:none}
+.mark.land{animation:land .45s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes land{0%{transform:scale(1.9) rotate(var(--r));opacity:0}55%{transform:scale(.92) rotate(var(--r));opacity:1}100%{transform:scale(1) rotate(var(--r));opacity:1}}
+.scard.thud{animation:thud .35s ease}
+@keyframes thud{0%,100%{transform:none}30%{transform:translateY(3px) scale(.985)}}
+.ghost{position:fixed;z-index:50;pointer-events:none;width:84px;height:84px;margin:-42px 0 0 -42px;opacity:.9;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25))}
+
+/* effect sheet */
+.veil{position:fixed;inset:0;z-index:40;background:rgba(31,42,46,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.sheet{width:100%;max-width:760px;max-height:calc(100% - 24px);overflow:auto;background:var(--card);border-radius:22px;padding:clamp(16px,3vw,26px);display:flex;flex-direction:column;gap:12px;animation:up .3s ease both}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.sheet .top{display:flex;gap:12px;align-items:center}
+.sheet .top svg{width:76px;height:auto;flex:none}
+.pc{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:clamp(19px,2.6vw,24px);line-height:1.65;margin:0}
+.pc dt{font-weight:900;white-space:nowrap}
+.pc dt.g{color:var(--good)} .pc dt.c{color:var(--rust)}
+.pc dd{margin:0}
+.tally{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tally div{background:var(--paper);border:3px solid #E2C4C4;border-radius:16px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.tally svg{width:clamp(48px,8vw,64px);height:auto}
+.tally b{font-size:clamp(40px,8vw,64px);font-weight:900;color:var(--red);line-height:1.1;font-variant-numeric:tabular-nums}
+.tally span{font-size:clamp(17px,2.3vw,21px);font-weight:700}
+.closing{font-size:clamp(21px,3vw,28px);font-weight:900;line-height:1.6;margin:0;color:var(--sea);text-wrap:balance}
+@media (max-width:620px){.board{grid-template-columns:1fr}.scard{min-height:0}.tray .stamp small{display:none}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+ <filter id="ink" x="-10%" y="-10%" width="120%" height="120%">
+  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" result="d"/>
+  <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.45" result="holes"/>
+  <feComposite in="d" in2="holes" operator="in"/>
+ </filter>
+</svg>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='class-stamp-v1';
+var ST={
+ t:{name:'謝謝章',word:'謝謝',how:'用感謝和約定，不給東西'},
+ p:{name:'點數章',word:'點數',how:'做了就給點數，可以換小獎品'},
+ f:{name:'罰款章',word:'罰款',how:'沒做到就扣點數'}
+};
+var ORDER=['t','p','f'];
+var CARDS=[
+ {k:'照顧植物和小魚缸',s:'小葳自願每天早上幫教室窗台的植物澆水，也幫小魚缸裡的魚餵飼料。',
+  e:{t:['小葳的心意被大家看見，她會覺得這是「我們班的事」，做得更開心。','如果一直只有她一個人做，久了可能會累，班上要記得說謝謝，也輪流幫她一下。'],
+     p:['短時間內，會有更多人想來澆水、餵魚。','以後沒有點數，大家可能就不做了；本來自願的小葳，也可能覺得「原來這是要算點數的事」，魚和植物變成換獎品的工具。'],
+     f:['忘了澆水、餵魚就扣點數，大家可能會比較小心。','小葳本來是好心幫忙，現在變成「做了還可能被罰」，她可能就不想再自願了。']}},
+ {k:'打掃拖拖拉拉',s:'每天打掃時間，總有幾個同學拖拖拉拉，走廊常常掃不完，別人只好幫忙收尾。',
+  e:{t:['全班一起訂約定、互相提醒，大家會覺得掃乾淨是「一起」的事，不是誰欠誰。','改變比較慢，有人可能還是拖拖拉拉，認真做的同學可能會覺得不公平。'],
+     p:['短時間內，大家的動作可能會變快。','大家可能只做「看得到、有點數」的地方；哪天不給點數，又可能慢下來。'],
+     f:['拖拉的人怕被扣點數，可能會比較快動起來。','有人可能會想：「扣就扣嘛，我寧可慢慢來」，把扣點數當成「買偷懶」；同學之間也可能開始互相告狀，氣氛變緊張。']}},
+ {k:'借橡皮擦',s:'數學課寫到一半，你發現自己沒帶橡皮擦，隔壁的同學二話不說，就把他的借給你。',
+  e:{t:['一句「謝謝」，下次換你借他，同學之間的信任一點一點累積起來。','沒有馬上拿到東西回報，要靠彼此記得、互相照顧。'],
+     p:['借一次就給一點，聽起來好像很公平。','同學之間變得像在做生意；下次沒有點數，可能就不想借了，借東西的好心情也不見了。'],
+     f:['借了沒還就扣點數，東西可能比較會還回來。','借東西變得很緊張，有人乾脆不借，也有人不敢開口借。']}},
+ {k:'拿資源回收',s:'每個星期五，班上都要有人把整週的資源回收，拿到學校的回收場分類。',
+  e:{t:['大家輪流排班，做完說聲謝謝，會覺得愛護環境是全班共同的事。','如果有人常常忘記，要靠一再提醒和約定，比較慢。'],
+     p:['很多人會搶著去，工作很快就有人做。','以後沒有點數，可能就沒人想去了；本來「愛護環境」的心意，也可能變成「只是為了點數」。'],
+     f:['輪到的人沒去就扣點數，比較不會漏掉。','大家可能只是怕被扣才去；有人被扣了，反而覺得「反正扣過了，算了」。']}},
+ {k:'球沒放回球櫃',s:'下課打完躲避球，常常有人忘記把球放回教室的球櫃，下一節要用的人到處找不到。',
+  e:{t:['一起約定「用完放回去，下一個人才找得到」，大家會替別人著想。','常常忘記的人，可能需要被提醒很多次。'],
+     p:['放回去就有點數，大家會比較記得放。','以後沒有點數，可能又亂放了；也可能有人故意把球拿出來再放回去，只為了拿點數。'],
+     f:['沒放回就扣點數，球櫃可能會比較整齊。','可能開始互相指責「是誰沒放？」；也有人會覺得被扣就被扣，沒放也無所謂。']}},
+ {k:'幫阿公顧攤',s:'週末，阿公在廟口賣肉粽，你去攤子幫忙招呼客人、找錢，忙了一整個下午。',
+  e:{t:['阿公一句「辛苦了」，祖孫一起吃一顆肉粽，感情更好，也留下回憶。','你沒有拿到東西，要靠你自己覺得「幫家人是應該的、是開心的」。'],
+     p:['阿公給你零用錢或點數，你下次可能更願意去。','幫家人變成「打工」；哪天沒有錢，你可能就不想去了，阿公心裡也可能覺得怪怪的。'],
+     f:['說好要去卻沒去，就扣零用錢，你大概還是會去。','你可能去得很不甘願；家人之間變得像老闆和員工，感情可能變淡。']}}
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,s:[null,null,null,null,null,null],sel:null,open:null,least:null};
+if(!Array.isArray(st.s)||st.s.length!==6)st.s=[null,null,null,null,null,null];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}
+
+/* red rubber-stamp impression */
+function mark(type,ink){
+  var w=ST[type].word;
+  var deco=type==='t'?'<path d="M50 26 c-4-6-13-4-13 3 c0 6 13 12 13 12 s13-6 13-12 c0-7-9-9-13-3z" fill="#C8102E"/>':
+           type==='p'?'<path d="M50 23 l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z" fill="#C8102E"/>':
+           '<path d="M42 27 h16 M42 34 h16" stroke="#C8102E" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="31" r="12" fill="none" stroke="#C8102E" stroke-width="3.5"/>';
+  return '<g'+(ink?' filter="url(#ink)"':'')+'><circle cx="50" cy="50" r="45" fill="none" stroke="#C8102E" stroke-width="6"/><circle cx="50" cy="50" r="37" fill="none" stroke="#C8102E" stroke-width="2"/>'+deco+
+    '<text x="50" y="74" text-anchor="middle" font-size="24" font-weight="900" fill="#C8102E" font-family="Noto Sans TC,sans-serif" letter-spacing="2">'+w+'</text></g>';
+}
+function markSvg(type,cls,rot){return '<svg class="'+(cls||'')+'" viewBox="0 0 100 100" aria-hidden="true" style="--r:'+(rot||0)+'deg;transform:rotate('+(rot||0)+'deg)">'+mark(type,true)+'</svg>'}
+function stampTool(type){
+  return '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="38" y="4" width="24" height="30" rx="10" fill="#7A4A2A"/><rect x="22" y="32" width="56" height="18" rx="6" fill="#A8693D"/><rect x="18" y="50" width="64" height="12" rx="3" fill="#2B2B2B"/><rect x="20" y="62" width="60" height="8" rx="2" fill="#C8102E"/>'+
+   '<text x="50" y="94" text-anchor="middle" font-size="22" font-weight="900" fill="#C8102E" font-family="Noto Sans TC,sans-serif">'+ST[type].word+'</text></svg>';
+}
+var ROT=[-8,6,-4,9,-10,5];
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','你是這學期的班級幹部。班上有 6 件事情要處理，老師請你替每一件事，決定要用哪一種方法。'),
+    el('p','lead','你有三個印章：'));
+  var g=el('div','stamps');ORDER.forEach(function(t){var d=el('div','stamp');d.style.cursor='default';d.innerHTML=stampTool(t)+'<b>'+ST[t].name+'</b><small>'+ST[t].how+'</small>';g.appendChild(d)});
+  c.append(g,el('p','lead','先點一個印章，再點一張卡片蓋上去；也可以直接把印章拖到卡片上。蓋完會看到這個印章可能帶來的效果。<b>沒有對錯，也可以換一個章重新蓋。</b>'));
+  var b=el('button','btn','開始蓋章');b.type='button';b.addEventListener('click',function(){st.step=1;save(st);render()});
+  app.append(el('h1',null,'班級規則印章'),c,b);
+}
+
+var hintEl=null,boardEl=null;
+function setHint(){if(!hintEl)return;var n=st.s.filter(Boolean).length;
+  hintEl.textContent=st.sel?('你拿著「'+ST[st.sel].name+'」，點一張卡片蓋上去。'):(n===6?'6 張都蓋好了！想改也可以，或按最下面的按鈕。':'先選一個印章（已蓋 '+n+' 張，共 6 張）');}
+function selStamp(t){st.sel=(st.sel===t)?null:t;save(st);
+  Array.prototype.forEach.call(document.querySelectorAll('.tray .stamp'),function(x){var on=x.dataset.t===st.sel;x.classList.toggle('sel',on);x.setAttribute('aria-pressed',on?'true':'false')});
+  Array.prototype.forEach.call(document.querySelectorAll('.scard'),function(x){x.classList.toggle('ready',!!st.sel)});
+  setHint();}
+
+function board(){
+  app.innerHTML='';
+  var tray=el('div','tray');var g=el('div','stamps');
+  ORDER.forEach(function(t){
+    var b=el('button','stamp'+(st.sel===t?' sel':''));b.type='button';b.dataset.t=t;b.setAttribute('aria-pressed',st.sel===t?'true':'false');
+    b.innerHTML=stampTool(t)+'<b>'+ST[t].name+'</b><small>'+ST[t].how+'</small>';
+    var sup=false;
+    b.addEventListener('click',function(){if(sup){sup=false;return}selStamp(t)});
+    b.addEventListener('pointerdown',function(ev){
+      if(ev.button!==0&&ev.pointerType==='mouse')return;
+      var x0=ev.clientX,y0=ev.clientY,ghost=null,over=null;
+      function mv(e){
+        if(!ghost){if(Math.abs(e.clientX-x0)+Math.abs(e.clientY-y0)<12)return;
+          ghost=el('div','ghost');ghost.innerHTML=stampTool(t);document.body.appendChild(ghost);}
+        e.preventDefault();ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
+        var hit=document.elementFromPoint(e.clientX,e.clientY);var c=hit&&hit.closest?hit.closest('.scard'):null;
+        if(over&&over!==c)over.classList.remove('over');if(c)c.classList.add('over');over=c;
+      }
+      function up(e){
+        document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);
+        if(ghost){ghost.remove();sup=true;setTimeout(function(){sup=false},400);
+          if(over){over.classList.remove('over');doStamp(+over.dataset.i,t)}}
+      }
+      document.addEventListener('pointermove',mv,{passive:false});document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
+    });
+    g.appendChild(b);
+  });
+  hintEl=el('p','hint');tray.append(g,hintEl);
+  boardEl=el('div','board');
+  CARDS.forEach(function(c,i){
+    var d=el('button','scard'+(st.s[i]?' done':'')+(st.sel?' ready':''));d.type='button';d.dataset.i=i;
+    d.innerHTML='<span class="no">狀況卡 '+(i+1)+'</span><span class="tx">'+c.s+'</span>'+(st.s[i]?markSvg(st.s[i],'mark',ROT[i]):'');
+    d.setAttribute('aria-label','狀況卡 '+(i+1)+'：'+c.s+(st.s[i]?'（已蓋'+ST[st.s[i]].name+'）':''));
+    d.addEventListener('click',function(){
+      if(st.sel)doStamp(i,st.sel);
+      else if(st.s[i]){openSheet(i)}
+      else{hintEl.textContent='先在上面選一個印章，再點這張卡片。';}
+    });
+    boardEl.appendChild(d);
+  });
+  app.append(el('h2',null,'替 6 張狀況卡，各蓋一個印章'),tray,boardEl);
+  if(st.s.every(Boolean)){
+    var nx=el('button','btn','6 張都蓋完了，看看我的印章');nx.type='button';nx.id='toQ';
+    nx.addEventListener('click',function(){st.step=2;st.sel=null;st.open=null;save(st);render()});
+    app.appendChild(nx);
+  }else app.appendChild(el('p','lead','已經蓋好的卡片，可以拿別的印章再蓋一次，看看效果有什麼不一樣。'));
+  setHint();
+  if(st.open!=null)openSheet(st.open,true);
+}
+function doStamp(i,t){
+  ROT[i]=Math.round(rnd()*20-10);
+  st.s[i]=t;st.open=i;save(st);
+  var d=boardEl.querySelector('.scard[data-i="'+i+'"]');
+  var old=d.querySelector('.mark');if(old)old.remove();
+  d.insertAdjacentHTML('beforeend',markSvg(t,'mark land',ROT[i]));
+  d.classList.add('done');d.classList.remove('thud');void d.offsetWidth;d.classList.add('thud');
+  d.setAttribute('aria-label','狀況卡 '+(i+1)+'：'+CARDS[i].s+'（已蓋'+ST[t].name+'）');
+  setTimeout(function(){openSheet(i)},520);
+}
+function openSheet(i,instant){
+  var old=document.querySelector('.veil');if(old)old.remove();
+  st.open=i;save(st);
+  var t=st.s[i],c=CARDS[i],e=c.e[t];
+  var v=el('div','veil');var s=el('div','sheet');s.setAttribute('role','dialog');s.setAttribute('aria-modal','true');s.setAttribute('aria-label',ST[t].name+'的效果');
+  var top=el('div','top');top.innerHTML=markSvg(t,'',-6);top.appendChild(el('p','case','狀況卡 '+(i+1)+'：'+c.k));
+  var dl=el('dl','pc');dl.innerHTML='<dt class="g">可能的好處</dt><dd>'+e[0]+'</dd><dt class="c">可能的代價</dt><dd>'+e[1]+'</dd>';
+  var n=st.s.filter(Boolean).length;
+  var ok=el('button','btn',n===6?'知道了':'知道了，蓋下一張');ok.type='button';
+  ok.addEventListener('click',function(){st.open=null;save(st);v.remove();
+    if(st.s.every(Boolean)&&!document.getElementById('toQ'))board();});
+  s.append(top,el('h2',null,'蓋上「'+ST[t].name+'」，可能會怎樣？'),dl,
+    el('p','note','這沒有對錯。想看看別的印章會怎樣，關掉這個視窗，拿另一個印章再蓋這張卡就可以。'),ok);
+  v.appendChild(s);document.body.appendChild(v);ok.focus({preventScroll:true});
+}
+
+function counts(){var o={t:0,p:0,f:0};st.s.forEach(function(x){if(x)o[x]++});return o}
+function tally(){var o=counts();var g=el('div','tally');ORDER.forEach(function(t){var d=el('div');d.innerHTML=markSvg(t,'',0)+'<b>'+o[t]+'</b><span>'+ST[t].name+'</span>';g.appendChild(d)});return g}
+
+function question(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','你蓋了：'),tally());
+  var h=el('h2',null,'哪一張卡，你覺得最不適合用錢或點數？');
+  var g=el('div','opts');var fb=el('div','opts');
+  CARDS.forEach(function(q,i){var b=el('button','btn alt'+(st.least===i?' pick':''),'狀況卡 '+(i+1)+'：'+q.k);b.type='button';
+    b.addEventListener('click',function(){st.least=i;save(st);
+      Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');show();});
+    g.appendChild(b)});
+  function show(){fb.innerHTML='';if(st.least==null)return;
+    fb.append(el('p','note warm','你選了「'+CARDS[st.least].k+'」。想一想：這件事如果改用錢或點數，會少了什麼？等一下可以說說你的理由。<br><span style="font-size:.85em;color:var(--muted)">沒有對錯，想換也可以直接點別張。</span>'));
+    var nx=el('button','btn','看看我的結果');nx.type='button';nx.addEventListener('click',function(){st.step=3;save(st);render()});fb.appendChild(nx);}
+  var back=el('button','btn alt','回去改印章');back.type='button';back.style.textAlign='center';back.addEventListener('click',function(){st.step=1;save(st);render()});
+  app.append(el('p','case','最後一題，沒有對錯'),c,h,g,fb);show();app.appendChild(back);
+}
+
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','三種印章，你各蓋了幾個：'),tally());
+  c.append(el('p','lead','你覺得最不適合用錢或點數的是：'),el('p','closing',st.least!=null?'狀況卡 '+(st.least+1)+'：'+CARDS[st.least].k:'（還沒選）'));
+  var t=el('table');
+  CARDS.forEach(function(q,i){var tr=el('tr');tr.append(el('td',null,'卡 '+(i+1)+'：'+q.k),el('td','n',st.s[i]?ST[st.s[i]].name:'—'));t.appendChild(tr)});
+  var c2=el('div','card');c2.append(el('p','lead','每張卡蓋了什麼：'),t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,c2,el('p','closing','用錢很快，人情很慢；可是人情一旦被換成錢，就不容易換回來。'));
+}
+function render(){var v=document.querySelector('.veil');if(v)v.remove();window.scrollTo(0,0);[intro,board,question,end][st.step]?[intro,board,question,end][st.step]():intro()}
+render();
+})();
+</script>

@@ -1,0 +1,512 @@
+<title>老鼠尾巴換獎金</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story + town-hall notice → five weeks on a week calendar; each week flip one of three action cards (catch / cut tail and release / breed rats), then a settlement page (tails bar chart, my coins, rat line chart, what the 99 computer residents did, who switches next week) → mayor cancels the bounty and caged rats are let go → result with the two lines side by side → "if you were mayor" (every option allowed, shows effect and cost) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --catch:#2F7D4F; --cut:#9A6A12; --farm:#7A4E9A; --tail:#205E86; --rat:#A8441A;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.go{background:var(--rust)}
+.btn:focus-visible,.flip:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.letter{display:inline-block;min-width:1.4em;font-weight:900;color:var(--sea)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.6em;height:1.6em}
+/* scene + notice */
+.scene{width:100%;height:auto;display:block}
+.notice{display:flex;align-items:center;gap:14px;background:var(--warm);border:3px dashed var(--gold);border-radius:18px;padding:12px 16px}
+.notice svg.i{width:56px;height:56px}
+.notice p{margin:0;font-size:clamp(21px,3.2vw,30px);font-weight:900;line-height:1.45}
+.notice small{display:block;font-size:clamp(19px,2.3vw,21px);font-weight:700;color:var(--muted)}
+.notice.slim svg.i{width:40px;height:40px}
+.notice.slim p{font-size:clamp(19px,2.6vw,23px)}
+/* week calendar */
+.calw{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.day{background:var(--card);border:3px solid var(--line);border-radius:14px;padding:6px 2px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0;min-height:96px;justify-content:flex-start}
+.day .dl{font-size:clamp(15px,2vw,19px);font-weight:900;color:var(--muted);white-space:nowrap}
+.day .dv{font-size:clamp(15px,2vw,19px);font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums}
+.day svg.i{width:34px;height:34px;margin:2px 0}
+.day.now{border-color:var(--gold);background:var(--warm)}
+.day.now .dl{color:#7A5A16}
+.day.later{opacity:.55;border-style:dashed}
+.day .ph{width:34px;height:34px;margin:2px 0;border-radius:50%;border:3px dashed var(--line)}
+.c-c{color:var(--catch)}.c-k{color:var(--cut)}.c-f{color:var(--farm)}
+/* flip cards */
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.flip{font:inherit;color:var(--ink);background:none;border:0;padding:0;cursor:pointer;perspective:1100px;text-align:left;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.flip .in{display:grid;transition:transform .6s cubic-bezier(.3,.7,.3,1);transform-style:preserve-3d;height:100%}
+.flip .face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:3px solid var(--line);border-radius:20px;background:var(--card);padding:14px;display:flex;flex-direction:column;gap:8px}
+.flip .back{transform:rotateY(180deg);background:var(--warm);border-color:var(--gold)}
+.flip.on .in{transform:rotateY(180deg)}
+.flip.dim{opacity:.55}
+.flip .top{display:flex;align-items:center;gap:10px}
+.flip .top svg.i{width:52px;height:52px}
+.flip .nm{font-size:clamp(21px,2.6vw,25px);font-weight:900;line-height:1.35}
+.flip .ds{margin:0;font-size:clamp(19px,2.2vw,21px);line-height:1.6;color:var(--muted)}
+.flip .tag{margin-top:auto;font-size:clamp(19px,2.3vw,22px);font-weight:900;display:block;line-height:1.45}
+.flip .tag svg.i{margin-right:4px}
+.flip .tap{font-size:19px;font-weight:700;color:var(--sea)}
+.flip .back .res{margin:0;font-size:clamp(19px,2.3vw,22px);line-height:1.6}
+.flip .back .res b{font-size:1.1em}
+.flip .back .me{font-size:clamp(19px,2.4vw,22px);font-weight:900;color:#7A5A16;display:flex;align-items:center;gap:10px}
+.flip .back .me svg.i{width:48px;height:48px}
+@media (prefers-reduced-motion:reduce){.flip .in{transition:none}}
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tile{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 12px;text-align:center}
+.tile .k{margin:0;font-size:clamp(19px,2.3vw,21px);font-weight:700;color:var(--muted);line-height:1.4}
+.tile .v{margin:0;font-size:clamp(36px,6vw,54px);font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:.42em;margin-left:3px}
+.tile .d{margin:0;font-size:19px;font-weight:700;color:var(--muted)}
+.tile.t .v{color:var(--tail)}.tile.m .v{color:#7A5A16}.tile.r .v{color:var(--rat)}
+/* charts */
+.chart{width:100%;height:auto;display:block}
+.solo .chart{max-width:600px;margin-inline:auto}
+.chart text{font-family:var(--font)}
+.cap{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted)}
+.twoc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.jump{stroke-dasharray:400;stroke-dashoffset:400;animation:draw 1.4s .3s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.pop{opacity:0;animation:pop .4s 1.5s forwards}
+@keyframes pop{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.jump{animation:none;stroke-dashoffset:0}.pop{animation:none;opacity:1}}
+/* residents dots */
+.dots{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;width:100%;max-width:520px;margin-inline:auto}
+.dot{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.dot svg.i{width:78%;height:78%}
+.dot.c{background:#E3EFE6}.dot.k{background:#F5EAD3}.dot.f{background:#ECE3F3}
+.dot.me{outline:3px solid var(--ink);outline-offset:-1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;font-size:clamp(19px,2.3vw,21px);font-weight:700}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+/* mayor */
+.say{display:flex;gap:14px;align-items:flex-start}
+.say .av{width:84px;height:84px;flex:none}
+.bubble{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 16px;font-size:clamp(19px,2.6vw,24px);line-height:1.65;margin:0;position:relative}
+.bubble b{display:block;color:var(--sea);font-size:.85em}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.e{color:var(--good)}.ec dt.c{color:var(--rust)}
+.other{border-top:2px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.other h4{margin:0;font-size:clamp(19px,2.5vw,23px);display:flex;align-items:center;gap:8px}
+/* chips + table */
+.chips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.chip{border:3px solid var(--line);border-radius:14px;background:var(--card);text-align:center;padding:6px 2px;font-weight:900;font-size:clamp(17px,2.2vw,20px);line-height:1.3}
+.chip svg.i{width:30px;height:30px;display:block;margin:2px auto}
+.chip small{display:block;font-size:clamp(15px,1.9vw,17px);color:var(--muted);font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;width:40%}
+td b{font-size:1.1em}
+@media (max-width:700px){
+  .cards{grid-template-columns:1fr}
+  .flip .top svg.i{width:44px;height:44px}
+  .twoc{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .tiles{grid-template-columns:1fr}
+  .tile{display:flex;align-items:center;justify-content:space-between;text-align:left;gap:8px}
+  .tile .k{flex:1}
+  .tile .v{font-size:40px}
+  .tile .d{display:none}
+  .day{min-height:84px;padding:4px 0}
+  .day svg.i,.day .ph{width:28px;height:28px}
+  .say .av{width:64px;height:64px}
+  td:first-child{width:auto}
+  table,tbody,tr,td{display:block}
+  td{border:0;padding:2px 0}
+  tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"rat": "<circle cx=\"6.4\" cy=\"7.4\" r=\"3.7\" fill=\"#F7D6E0\"/><circle cx=\"17.6\" cy=\"7.4\" r=\"3.7\" fill=\"#F7D6E0\"/><ellipse cx=\"12\" cy=\"13.6\" rx=\"7.2\" ry=\"6.4\" fill=\"#E9E4DE\"/><circle cx=\"9.3\" cy=\"12.6\" r=\"1.05\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"14.7\" cy=\"12.6\" r=\"1.05\" fill=\"currentColor\" stroke=\"none\"/><ellipse cx=\"12\" cy=\"15.4\" rx=\"1.2\" ry=\".95\" fill=\"#E58FA8\" stroke=\"none\"/><path d=\"M7.6 15.4l-5.2-.7M7.8 16.9l-4.8 1.3M16.4 15.4l5.2-.7M16.2 16.9l4.8 1.3\" stroke-width=\"1.1\"/>", "tail": "<path d=\"M3.4 19.4c3.4.6 6-1.2 7.2-4.6 1.2-3.4 3.4-6.6 9.8-8.4\" stroke-width=\"5\" stroke=\"#F2B8A0\"/><path d=\"M3.4 19.4c3.4.6 6-1.2 7.2-4.6 1.2-3.4 3.4-6.6 9.8-8.4\"/><rect x=\"1.6\" y=\"16.6\" width=\"4.6\" height=\"5\" rx=\"1.4\" fill=\"#F7D6E0\" transform=\"rotate(-12 3.9 19.1)\"/>", "net": "<circle cx=\"9.2\" cy=\"9.2\" r=\"6.4\" fill=\"#DCE8F0\"/><path d=\"M4.6 7.4h9.2M3.4 11h11.6M7.4 3.2l-.6 11.6M11.4 3.2l.4 11.6\" stroke-width=\"1.2\"/><path d=\"M13.8 13.8l7 7\"/>", "scissors": "<circle cx=\"6\" cy=\"6.6\" r=\"3\" fill=\"#DCE8F0\"/><circle cx=\"6\" cy=\"17.4\" r=\"3\" fill=\"#DCE8F0\"/><path d=\"M8.4 8.4L20.4 17.6M8.4 15.6L20.4 6.4\"/><circle cx=\"13.4\" cy=\"12\" r=\".6\" fill=\"currentColor\"/>", "cage": "<path d=\"M4.6 19.6V11a7.4 7.4 0 0 1 14.8 0v8.6z\" fill=\"#F3E3BE\"/><path d=\"M9.2 4.4v15.2M14.8 4.4v15.2M4.6 12.4h14.8\"/><path d=\"M12 3.6V1.8\"/><rect x=\"3\" y=\"19.4\" width=\"18\" height=\"2.6\" rx=\"1\" fill=\"#FBF4E2\"/>", "coin": "<circle cx=\"12\" cy=\"12\" r=\"8.6\" fill=\"#F3D27A\"/><circle cx=\"12\" cy=\"12\" r=\"5.6\" fill=\"#FBF4E2\" stroke-width=\"1.2\"/><rect x=\"10.3\" y=\"10.3\" width=\"3.4\" height=\"3.4\" rx=\".5\"/>", "hall": "<path d=\"M2.8 9.4L12 3.6l9.2 5.8z\" fill=\"#DCE8F0\"/><path d=\"M3.6 9.4h16.8\"/><path d=\"M6.2 11.6v6.2M10.1 11.6v6.2M13.9 11.6v6.2M17.8 11.6v6.2\"/><rect x=\"3.6\" y=\"17.8\" width=\"16.8\" height=\"2.2\" rx=\".6\" fill=\"#F3E3BE\"/><path d=\"M2.2 21.6h19.6\"/>", "cal": "<rect x=\"3.4\" y=\"4.6\" width=\"17.2\" height=\"16\" rx=\"2.2\" fill=\"#FBFCF9\"/><path d=\"M3.4 9.4h17.2V6.8a2.2 2.2 0 0 0-2.2-2.2H5.6a2.2 2.2 0 0 0-2.2 2.2z\" fill=\"#F2B8A0\"/><path d=\"M8 2.8v3.4M16 2.8v3.4\"/><path d=\"M7.4 13.2h1.6M11.2 13.2h1.6M15 13.2h1.6M7.4 16.8h1.6M11.2 16.8h1.6\"/>", "lens": "<circle cx=\"10.4\" cy=\"10.4\" r=\"6.6\" fill=\"#DCE8F0\"/><path d=\"M15.2 15.2l5.6 5.6\"/><path d=\"M7.6 10.6l2 2 3.6-3.8\"/>", "trend": "<path d=\"M7 7.4l4 4.4 3-2.2 5 6.2v4H7z\" fill=\"#CFE3C4\" stroke=\"none\"/><path d=\"M3.6 3.4v16.8h17\"/><path d=\"M7 7.4l4 4.4 3-2.2 5 6.2\"/><path d=\"M19.4 11.6v4.4H15\"/>", "helmet": "<path d=\"M5 16.6a7 7 0 0 1 14 0z\" fill=\"#F3D27A\"/><path d=\"M10.2 9.8V7.4h3.6v2.4\"/><path d=\"M2.8 16.6h18.4v1.8a1.2 1.2 0 0 1-1.2 1.2H4a1.2 1.2 0 0 1-1.2-1.2z\" fill=\"#FBF4E2\"/>", "broom": "<path d=\"M12 2v8.4\"/><rect x=\"9\" y=\"10.4\" width=\"6\" height=\"2.6\" rx=\".8\" fill=\"#DCE8F0\"/><path d=\"M9.2 13L5 21.2h14L14.8 13z\" fill=\"#F3E3BE\"/><path d=\"M8.4 21.2l1.8-5M12 21.2v-5M15.6 21.2l-1.8-5\"/>", "mega": "<path d=\"M3.5 9.5h3l8-4.5v14l-8-4.5h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z\" fill=\"#DCE8F0\"/><path d=\"M6.5 14.5l1.6 5h2.6l-1.4-4.2\"/><path d=\"M18 9.2a4 4 0 0 1 0 5.6M20.5 6.8a7.4 7.4 0 0 1 0 10.4\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var MAYOR='<svg class="av" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#EEF1EC"/><path d="M12 64 Q13 44 32 44 Q51 44 52 64 Z" fill="#205E86"/><path d="M21 47 L45 63" stroke="#E2B65A" stroke-width="5" fill="none"/><circle cx="32" cy="27" r="13" fill="#E9BE96"/><path d="M19 25 Q19 12 32 13 Q45 12 45 25 Q40 18 32 18.5 Q24 18 19 25 Z" fill="#7C8580"/><circle cx="27.5" cy="27" r="1.8" fill="#1F2A2E"/><circle cx="36.5" cy="27" r="1.8" fill="#1F2A2E"/><path d="M27.6 31.6 Q32 29.6 36.4 31.6" fill="none" stroke="#7C8580" stroke-width="2.4" stroke-linecap="round"/><path d="M28.5 34.6 Q32 37 35.5 34.6" fill="none" stroke="#1F2A2E" stroke-width="2" stroke-linecap="round"/></svg>';
+
+var app=document.getElementById('app');
+var KEY='rattail-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rnd(){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}catch(e){return Math.random()}}
+function ri(a,b){return a+Math.floor(rnd()*(b-a+1))}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+var R0=1000,GROW=0.2,WEEKS=5;
+var ACT={
+  c:{name:'下水溝抓老鼠',short:'抓老鼠',ab:'抓',icon:'net',cls:'c-c'},
+  k:{name:'剪尾巴、把老鼠放走',short:'剪尾巴放走',ab:'剪',icon:'scissors',cls:'c-k'},
+  f:{name:'在家後院養老鼠',short:'養老鼠',ab:'養',icon:'cage',cls:'c-f'}
+};
+
+/* ---------- computer residents (99) ----------
+   week 1: about 84 catch, 12 cut, 3 start breeding rats.
+   after each week: about 27-33% of catchers switch to cutting (cutting earned 4 coins, catching 3);
+   new breeders next week = about 50-65% of the current breeders ("neighbours are doing it"),
+   60% of them were catchers and 40% were cutters. Breeders keep breeding (they bought a cage).
+   every established cage lets 0-2 rats escape each week. */
+function genPlan(){
+  for(var tries=0;tries<300;tries++){
+    var c=ri(82,86),k=96-c,f=3,nf=3,P={c:[],k:[],f:[],nf:[],cc:[],cf:[],kf:[],esc:[]};
+    for(var w=0;w<WEEKS;w++){
+      if(w>0){
+        var p=0.27+rnd()*0.06,r=0.5+rnd()*0.15;
+        var n=Math.max(1,Math.round(f*r)),fromC=Math.min(c,Math.round(n*0.6)),fromK=n-fromC;
+        var cc=Math.round((c-fromC)*p);
+        c-=cc+fromC;k+=cc-fromK;f+=n;nf=n;
+        P.cc.push(cc);P.cf.push(fromC);P.kf.push(fromK);
+      }else{P.cc.push(0);P.cf.push(0);P.kf.push(0)}
+      P.c.push(c);P.k.push(k);P.f.push(f);P.nf.push(nf);
+      var e=0;for(var i=0;i<f-nf;i++)e+=ri(0,2);P.esc.push(e);
+    }
+    if(planOk(P))return P;
+  }
+  return {c:[84,58,37,23,12],k:[12,36,54,63,66],f:[3,5,8,13,21],nf:[3,2,3,5,8],cc:[0,25,18,11,7],cf:[0,1,2,3,5],kf:[0,1,1,2,3],esc:[0,3,5,8,13]};
+}
+function resTails(P,w){return 3*P.c[w]+4*P.k[w]+6*(P.f[w]-P.nf[w])}
+function planOk(P){
+  var R=[R0];for(var w=0;w<WEEKS;w++){var r=R[w];R.push(r+Math.round(r*GROW)-3*P.c[w]+P.esc[w])}
+  for(w=1;w<WEEKS;w++)if(resTails(P,w)-resTails(P,w-1)<8)return false;
+  if(R[1]>R0-25)return false;
+  for(w=2;w<=WEEKS;w++)if(R[w]-R[w-1]<12)return false;
+  return true;
+}
+
+function fresh(){return {step:'intro',plan:genPlan(),esc:[0,1,2,3,4].map(function(){return ri(0,2)}),picks:[],tmp:null,mayor:null}}
+var st=load();
+if(!st||!st.plan||!st.esc||!st.picks){st=fresh()}
+window.addEventListener('hashchange',function(){
+  if(location.hash!=='#reset')return;
+  save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  st=fresh();render();try{window.scrollTo(0,0)}catch(e){}
+});
+
+/* my outcome in week w with action a */
+function outcome(w,a){
+  var hadCage=st.picks.slice(0,w).indexOf('f')>=0;
+  if(a==='c')return {t:3,coin:3,caught:3,esc:0};
+  if(a==='k')return {t:4,coin:4,caught:0,esc:0};
+  if(!hadCage)return {t:0,coin:-2,caught:0,esc:0,cage:true};
+  return {t:6,coin:6,caught:0,esc:st.esc[w]};
+}
+function sim(){
+  var P=st.plan,R=[R0],T=[],coins=0,myT=0,out=[];
+  for(var w=0;w<st.picks.length;w++){
+    var o=outcome(w,st.picks[w]);out.push(o);
+    T.push(resTails(P,w)+o.t);coins+=o.coin;myT+=o.t;
+    var r=R[w];R.push(r+Math.round(r*GROW)-3*P.c[w]-o.caught+P.esc[w]+o.esc);
+  }
+  var relRes=0,hh=0;for(w=0;w<WEEKS;w++){relRes+=P.nf[w]*(8+2*(WEEKS-w));hh+=P.nf[w]}
+  var fw=st.picks.filter(function(x){return x==='f'}).length,relMe=fw?8+2*fw:0;
+  return {R:R,T:T,coins:coins,myT:myT,out:out,relRes:relRes,relMe:relMe,hh:hh+(fw?1:0),rel:relRes+relMe,final:R[R.length-1]+relRes+relMe};
+}
+function sgn(n){return n>0?'+'+n:(n<0?'−'+(-n):'0')}
+function sum(a){return a.reduce(function(s,x){return s+x},0)}
+
+/* ---------- charts ---------- */
+function chart(o){
+  /* o: {vals, slots(labels), max, ticks, color, type:'bar'|'line', unit, jumpLast} */
+  var W=340,H=214,L=52,Rr=12,Tp=26,B=36,iw=W-L-Rr,ih=H-Tp-B,n=o.slots.length,step=iw/n;
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+o.aria+'">';
+  o.ticks.forEach(function(t){var y=Tp+ih-ih*t/o.max;s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+y+'" y2="'+y+'" stroke="#D4D9D2" stroke-width="1.5"/><text x="'+(L-6)+'" y="'+(y+5)+'" text-anchor="end" font-size="16" fill="#56605C">'+t+'</text>'});
+  s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+(Tp+ih)+'" y2="'+(Tp+ih)+'" stroke="#56605C" stroke-width="2"/>';
+  o.slots.forEach(function(lb,i){var x=L+step*(i+.5);s+='<text x="'+x+'" y="'+(H-12)+'" text-anchor="middle" font-size="16" fill="#56605C" font-weight="700">'+lb+'</text>'});
+  function Y(v){return Tp+ih-ih*v/o.max}
+  if(o.type==='bar'){
+    var bw=Math.min(step*.62,40);
+    o.slots.forEach(function(lb,i){
+      var x=L+step*(i+.5)-bw/2,v=o.vals[i];
+      if(v==null){s+='<rect x="'+x+'" y="'+(Tp+ih-24)+'" width="'+bw+'" height="22" rx="4" fill="none" stroke="#D4D9D2" stroke-width="2" stroke-dasharray="4 4"/>';return}
+      var y=Y(v),last=i===o.vals.length-1;
+      s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+(Tp+ih-y)+'" rx="4" fill="'+o.color+'" opacity="'+(last?1:.55)+'"/>';
+      s+='<text x="'+(x+bw/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="17" font-weight="900" fill="#1F2A2E">'+v+'</text>';
+    });
+  }else{
+    var pts=o.vals.map(function(v,i){return [L+step*(i+.5),Y(v)]});
+    var main=o.jumpLast?pts.slice(0,-1):pts;
+    if(main.length>1)s+='<polyline points="'+main.map(function(p){return p[0]+','+p[1]}).join(' ')+'" fill="none" stroke="'+o.color+'" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    if(o.jumpLast&&pts.length>1){var a=pts[pts.length-2],b=pts[pts.length-1];s+='<line class="jump" x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="'+o.color+'" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="5 0"/>'}
+    pts.forEach(function(p,i){
+      var last=i===pts.length-1,cls=(o.jumpLast&&last)?' class="pop"':'';
+      s+='<g'+cls+'><circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+(last?6:4.5)+'" fill="'+(last?o.color:'#FBFCF9')+'" stroke="'+o.color+'" stroke-width="3"/>';
+      if(o.labelAll||last||i===0)s+='<text x="'+p[0]+'" y="'+(p[1]-11)+'" text-anchor="middle" font-size="17" font-weight="900" fill="#1F2A2E">'+o.vals[i]+'</text>';
+      s+='</g>';
+    });
+  }
+  return s+'</svg>';
+}
+var WK=['第1週','第2週','第3週','第4週','第5週'];
+function tailChart(T,line){
+  var v=WK.map(function(_,i){return i<T.length?T[i]:null});
+  if(line)return chart({type:'line',vals:T,slots:WK,max:450,ticks:[150,300,450],color:'#205E86',labelAll:true,aria:'鎮公所每週收到的尾巴數'});
+  return chart({type:'bar',vals:v,slots:WK,max:450,ticks:[150,300,450],color:'#205E86',aria:'鎮公所每週收到的尾巴數'});
+}
+function ratChart(R,withEnd,jump){
+  var slots=['開始','1','2','3','4','5'];if(withEnd)slots.push('取消後');
+  var vals=R.slice();
+  return chart({type:'line',vals:vals,slots:slots,max:2000,ticks:[500,1000,1500,2000],color:'#A8441A',labelAll:false,jumpLast:!!jump,aria:'鎮上老鼠的數量'});
+}
+
+/* ---------- pieces ---------- */
+function calendar(curIdx){
+  var s=sim(),c=el('div','calw');c.setAttribute('aria-label','五週的週曆');
+  for(var w=0;w<WEEKS;w++){
+    var d;
+    if(w<st.picks.length&&w!==curIdx){
+      var a=ACT[st.picks[w]],o=s.out[w];
+      d=el('div','day','<span class="dl">'+WK[w]+'</span>'+ic(a.icon,a.cls)+'<span class="dv">'+sgn(o.coin)+' 枚</span>');
+    }else if(w===curIdx){
+      var inner='<span class="dl">'+WK[w]+'</span>';
+      if(w<st.picks.length){var a2=ACT[st.picks[w]];inner+=ic(a2.icon,a2.cls)+'<span class="dv">'+sgn(s.out[w].coin)+' 枚</span>'}
+      else inner+='<span class="ph"></span><span class="dv">這週</span>';
+      d=el('div','day now',inner);
+    }else d=el('div','day later','<span class="dl">'+WK[w]+'</span><span class="ph"></span>');
+    c.appendChild(d);
+  }
+  return c;
+}
+function notice(slim){return el('div','notice'+(slim?' slim':''),ic('hall')+'<p><small>港邊鎮公所告示</small>每交一條老鼠尾巴，就給 1 枚銅板。</p>')}
+
+function scene(){
+  function g(k,x,y,sc,col){return '<g transform="translate('+x+' '+y+') scale('+sc+')" fill="none" stroke="'+(col||'#1F2A2E')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[k]+'</g>'}
+  return '<svg class="scene" viewBox="0 0 360 150" aria-hidden="true">'+
+    '<rect x="0" y="128" width="360" height="22" fill="#DDE3DA"/>'+
+    g('hall',4,10,5)+
+    '<rect x="132" y="44" width="92" height="58" rx="6" fill="#FBF4E2" stroke="#B7862B" stroke-width="3"/><path d="M150 102v26M206 102v26" stroke="#56605C" stroke-width="3" stroke-linecap="round"/>'+
+    '<text x="178" y="68" text-anchor="middle" font-size="15" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">1 條尾巴</text><text x="178" y="90" text-anchor="middle" font-size="15" font-weight="900" fill="#7A5A16" font-family="Noto Sans TC,sans-serif">= 1 枚銅板</text>'+
+    '<rect x="242" y="122" width="112" height="14" rx="5" fill="#C9CCD1" stroke="#1F2A2E" stroke-width="2.5"/><path d="M256 125v8M270 125v8M284 125v8M298 125v8M312 125v8M326 125v8M340 125v8" stroke="#1F2A2E" stroke-width="2"/>'+
+    g('rat',240,84,1.9)+g('rat',280,70,2.3)+g('rat',318,90,1.6)+
+  '</svg>';
+}
+
+/* ---------- step: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.innerHTML=scene();
+  c.append(el('p','lead','港邊鎮剛蓋好地下水溝。沒想到，水溝又暗又溫暖，老鼠紛紛搬進來住，而且越生越多。鎮長擔心大家生病，就在鎮公所門口貼了一張告示：'),notice(),
+    el('p','lead','你是港邊鎮的一位居民。接下來的 <b>5 週</b>，每一週你都要從三張行動卡裡選一張來做。鎮上還有另外 <b>99 位居民</b>，他們也會自己決定要怎麼做。'));
+  app.append(el('p','case',ic('cal')+'週曆鎮公所'),el('h1',null,'老鼠尾巴換獎金'),c,
+    el('p','note','銅板是遊戲裡的錢。三張卡都可以選；選好以後，就會看到這一週鎮上發生了什麼事。'),
+    button('翻開第 1 週','btn',function(){go('pick')}));
+}
+
+/* ---------- step: pick a card ---------- */
+function pick(){
+  var w=st.picks.length;if(w>=WEEKS){go('cancel');return}
+  var s=sim();
+  app.innerHTML='';
+  app.append(el('p','case',ic('cal')+WK[w]+'／一共 5 週'),calendar(w));
+  app.appendChild(el('h2',null,'這一週，你要做什麼？'));
+  app.appendChild(el('p','lead','點一張卡片翻過來，看看這週會發生什麼事。想換也可以，點另一張就好。選好了，再按最下面的按鈕。'+(w>0?(s.coins<0?'目前你的銅板是 <b>'+sgn(s.coins)+'</b> 枚（買籠子先花掉了）。':'目前你有 <b>'+s.coins+'</b> 枚銅板。'):'')));
+  var hadCage=st.picks.indexOf('f')>=0;
+  var wrap=el('div','cards'),cards={};
+  ['c','k','f'].forEach(function(a){
+    var A=ACT[a],o=outcome(w,a),front,back;
+    if(a==='c'){
+      front='很累，要鑽進又暗又臭的水溝。這週可以抓到 3 隻老鼠，交 3 條尾巴。鎮上的老鼠真的少了 3 隻。';
+      back='你在水溝裡忙了一整週，抓到 3 隻老鼠。<br>交了 <b>3</b> 條尾巴，拿到 <b>3</b> 枚銅板。<br>鎮上的老鼠少了 <b>3</b> 隻。';
+    }else if(a==='k'){
+      front='很輕鬆。抓到老鼠，剪下尾巴，再把老鼠放走。這週可以交 4 條尾巴。老鼠沒有少，放走的老鼠下週還會生小老鼠。';
+      back='你剪了 4 條尾巴，把 4 隻老鼠放回水溝。<br>交了 <b>4</b> 條尾巴，拿到 <b>4</b> 枚銅板。<br>鎮上的老鼠<b>沒有少</b>。';
+    }else if(!hadCage){
+      front='第一次要先花 2 枚銅板買籠子，這週還沒有尾巴可以交；從下一次開始，每週可以交 6 條。籠子裡的老鼠，可能有幾隻會跑出去。';
+      back='你花 2 枚銅板買了籠子，開始在後院養老鼠。<br>這週還沒有尾巴，銅板 <b>−2</b> 枚。<br>從下一次開始，每週可以交 6 條。';
+    }else{
+      front='你家後院已經有籠子了。這週可以交 6 條尾巴。籠子裡的老鼠，可能有幾隻會跑出去。';
+      back='你從籠子裡的老鼠剪下 6 條尾巴。<br>交了 <b>6</b> 條尾巴，拿到 <b>6</b> 枚銅板。<br>'+(o.esc?'這週有 <b>'+o.esc+'</b> 隻老鼠從籠子跑出去，鑽進水溝了。':'這週籠子關得很好，沒有老鼠跑出去。');
+    }
+    var tag=a==='f'&&!hadCage?ic('coin')+'先 −2 枚，之後每週 +6 枚':ic('coin')+sgn(o.coin)+' 枚';
+    var b=el('button','flip'+(st.tmp===a?' on':(st.tmp?' dim':'')));b.type='button';
+    b.innerHTML='<div class="in"><div class="face front"><div class="top">'+ic(A.icon,A.cls)+'<span class="nm">'+A.name+'</span></div><p class="ds">'+front+'</p><span class="tag">'+tag+'</span><span class="tap">點一下翻開</span></div>'+
+      '<div class="face back"><span class="me">'+ic(A.icon,A.cls)+' 你選了：'+A.short+'</span><p class="res">'+back+'</p></div></div>';
+    b.setAttribute('aria-pressed',st.tmp===a?'true':'false');
+    b.setAttribute('aria-label',A.name+'。'+(st.tmp===a?back.replace(/<[^>]+>/g,''):front));
+    b.addEventListener('click',function(){
+      st.tmp=st.tmp===a?null:a;save(st);
+      Object.keys(cards).forEach(function(x){var cb=cards[x];cb.classList.toggle('on',st.tmp===x);cb.classList.toggle('dim',!!st.tmp&&st.tmp!==x);cb.setAttribute('aria-pressed',st.tmp===x?'true':'false')});
+      ok.disabled=!st.tmp;
+    });
+    cards[a]=b;wrap.appendChild(b);
+  });
+  var ok=button('把尾巴交到鎮公所，看這週結算','btn go',function(){
+    if(!st.tmp)return;st.picks.push(st.tmp);st.tmp=null;go('settle');
+  });
+  ok.disabled=!st.tmp;
+  app.append(wrap,notice(true),ok);
+}
+
+/* ---------- step: weekly settlement ---------- */
+var MAY=['鎮長看到第一週就收到這麼多尾巴，覺得這個辦法很有效。',
+ '有人發現：剪尾巴、把老鼠放走，比鑽水溝輕鬆，拿到的銅板還比較多。',
+ '鎮公所收到的尾巴越來越多。可是晚上走在街上，好像還是常常看到老鼠。',
+ '有人在市場邊看到好幾隻沒有尾巴的老鼠跑來跑去。',
+ '鎮長覺得怪怪的，決定派人到每一戶人家看一看。'];
+function settle(){
+  var w=st.picks.length-1;if(w<0){go('pick');return}
+  var s=sim(),P=st.plan,o=s.out[w],a=ACT[st.picks[w]];
+  app.innerHTML='';
+  app.append(el('p','case',ic('hall')+WK[w]+'結算'),calendar(w));
+  app.appendChild(el('h2',null,'鎮公所這週收到 '+s.T[w]+' 條尾巴'));
+  var tiles=el('div','tiles');
+  tiles.append(
+    el('div','tile t','<p class="k">'+ic('tail')+' 鎮公所這週收到</p><p class="v">'+s.T[w]+'<small>條</small></p>'+(w>0?'<p class="d">上週 '+s.T[w-1]+' 條</p>':'<p class="d">第一週</p>')),
+    el('div','tile m','<p class="k">'+ic('coin')+' 我的銅板</p><p class="v">'+s.coins+'<small>枚</small></p><p class="d">這週 '+sgn(o.coin)+' 枚</p>'),
+    el('div','tile r','<p class="k">'+ic('rat')+' 鎮上的老鼠</p><p class="v">'+s.R[w+1]+'<small>隻</small></p><p class="d">上週 '+s.R[w]+' 隻</p>'));
+  app.appendChild(tiles);
+  var c1=el('div','card');c1.append(el('h3',null,ic('tail')+' 鎮公所每週收到的尾巴'));c1.insertAdjacentHTML('beforeend',tailChart(s.T));
+  var c2=el('div','card');c2.append(el('h3',null,ic('rat')+' 鎮上老鼠的數量'));c2.insertAdjacentHTML('beforeend',ratChart(s.R));
+  c2.append(el('p','cap','鎮公所只數得到交上來的尾巴；這條線鎮長看不到，只有你在遊戲裡看得到。'));
+  var tw=el('div','twoc');tw.append(c1,c2);app.appendChild(tw);
+  /* residents */
+  var c3=el('div','card');
+  c3.append(el('h3',null,'這週鎮上 100 個人在做什麼？'));
+  var lg=el('p','legend');
+  var me=st.picks[w],cnt={c:P.c[w]+(me==='c'?1:0),k:P.k[w]+(me==='k'?1:0),f:P.f[w]+(me==='f'?1:0)};
+  ['c','k','f'].forEach(function(x){lg.appendChild(el('span',ACT[x].cls,ic(ACT[x].icon)+'<span style="color:var(--ink)">'+ACT[x].short+' '+cnt[x]+' 人</span>'))});
+  var d=el('div','dots');d.setAttribute('role','img');d.setAttribute('aria-label','抓老鼠 '+cnt.c+' 人、剪尾巴放走 '+cnt.k+' 人、養老鼠 '+cnt.f+' 人；有框的是你');
+  var list=[];list.push(me);
+  ['c','k','f'].forEach(function(x){for(var i=0;i<P[x][w];i++)list.push(x)});
+  list.forEach(function(x,i){d.appendChild(el('span','dot '+x+(i===0?' me':''),ic(ACT[x].icon,ACT[x].cls)))});
+  c3.append(lg,d,el('p','cap','黑框的那一格是你，其他 99 格是鎮上的居民。'));
+  app.appendChild(c3);
+  /* news */
+  if(w<WEEKS-1){
+    var cc=P.cc[w+1],nf=P.cf[w+1]+P.kf[w+1];
+    var txt='<b>鎮上的消息：</b>剪尾巴的人每週拿 4 枚，比抓老鼠的 3 枚多，又比較輕鬆。下週有 <b>'+cc+'</b> 位原本抓老鼠的居民，要改成剪尾巴。';
+    txt+='另外，看到鄰居在後院養老鼠，下週又有 <b>'+nf+'</b> 戶人家要開始養'+(w===0?'（聽說買了籠子以後，每週可以交 6 條）':'（養老鼠的人家，每週交 6 條）')+'。';
+    app.appendChild(el('p','note',txt));
+  }
+  var say=el('div','say');say.innerHTML=MAYOR;say.appendChild(el('p','bubble','<b>鎮長</b>'+MAY[w]));
+  app.appendChild(say);
+  app.appendChild(button(w<WEEKS-1?'翻開'+WK[w+1]:'看看鎮長發現了什麼','btn',function(){go(w<WEEKS-1?'pick':'cancel')}));
+}
+
+/* ---------- step: bounty cancelled ---------- */
+function cancel(){
+  if(st.picks.length<WEEKS){go('pick');return}
+  var s=sim();
+  app.innerHTML='';
+  var say=el('div','say');say.innerHTML=MAYOR;
+  say.appendChild(el('p','bubble','<b>鎮長</b>我派人到每一戶看過了：街上有很多沒有尾巴的老鼠，還有人家在後院養了一籠又一籠的老鼠。從今天起，老鼠尾巴<b style="display:inline;color:var(--rust);font-size:1em">不再換銅板</b>，獎金取消！'));
+  var c=el('div','card solo');
+  var meTxt=s.relMe?'你家後院籠子裡的 <b>'+s.relMe+'</b> 隻老鼠，也一起放走了。':'';
+  c.append(el('p','lead','籠子裡的老鼠不能換銅板了，養著還要花錢餵。養老鼠的 <b>'+s.hh+'</b> 戶人家，就把籠子打開，讓老鼠跑掉。一共放出 <b>'+s.rel+'</b> 隻老鼠。'+meTxt));
+  var R=s.R.concat([s.final]);
+  c.insertAdjacentHTML('beforeend',ratChart(R,true,true));
+  c.append(el('p','cap','最後一個點：獎金取消、籠子打開以後。'));
+  app.append(el('p','case',ic('mega')+'第 5 週結束'),el('h2',null,'鎮長發現怎麼回事了'),say,c,
+    button('看看五週的結果','btn',function(){go('result')}));
+}
+
+/* ---------- step: result ---------- */
+function myChips(){
+  var s=sim(),ch=el('div','chips');
+  st.picks.forEach(function(p,i){var A=ACT[p];ch.appendChild(el('div','chip','<small>'+WK[i]+'</small>'+ic(A.icon,A.cls)+A.ab+'<small>'+sgn(s.out[i].coin)+' 枚</small>'))});
+  return ch;
+}
+function result(){
+  if(st.picks.length<WEEKS){go('pick');return}
+  var s=sim();
+  app.innerHTML='';
+  var c1=el('div','card');c1.append(el('h3',null,ic('tail')+' 鎮公所收到的尾巴'));c1.insertAdjacentHTML('beforeend',tailChart(s.T,true));
+  c1.append(el('p','cap','第 1 週 '+s.T[0]+' 條 → 第 5 週 '+s.T[4]+' 條，一直往上。'));
+  var c2=el('div','card');c2.append(el('h3',null,ic('rat')+' 鎮上老鼠的數量'));c2.insertAdjacentHTML('beforeend',ratChart(s.R.concat([s.final]),true,false));
+  c2.append(el('p','cap','一開始 '+R0+' 隻，第 1 週後 '+s.R[1]+' 隻，獎金取消後 '+s.final+' 隻。'));
+  var tw=el('div','twoc');tw.append(c1,c2);
+  var mine=el('div','card');mine.append(el('h3',null,'你五週的選擇'),myChips(),el('p','cap','你一共交了 '+s.myT+' 條尾巴，拿到 '+s.coins+' 枚銅板。'));
+  app.append(el('p','case','五週的結果'),el('h2',null,'尾巴越收越多，老鼠呢？'),tw,
+    el('p','note warm','獎勵看的是<b>尾巴</b>，大家想要的是<b>老鼠變少</b>。兩件事不一樣，大家就去追尾巴。'),
+    mine,button('下一步','btn',function(){go('mayor')}));
+}
+
+/* ---------- step: if you were mayor ---------- */
+var MO=[
+ {k:'A',icon:'lens',t:'改成交老鼠的身體（要確認是死的）',e:'剪尾巴、把老鼠放走就沒有用了。交上來的每一隻，鎮上就真的少一隻。',c:'還是有人可以養老鼠、再整隻拿來交。鎮公所要派人一隻一隻檢查，處理一大堆死老鼠，又臭又辛苦，也可能讓人生病。'},
+ {k:'B',icon:'trend',t:'照全鎮老鼠有沒有變少來給獎勵',e:'獎勵直接看大家真正想要的結果。養老鼠、剪尾巴都拿不到好處。',c:'老鼠躲在水溝裡，很難數得準。全鎮一起變少時，也很難算出誰出了多少力，有人可能等別人去做。'},
+ {k:'C',icon:'helmet',t:'請專人抓老鼠，付他們薪水',e:'薪水看工作，不看尾巴，抓的人沒有理由去養老鼠。抓老鼠的人也會越來越熟練。',c:'鎮上要一直花錢請人；也要有人看看他們是不是真的認真在抓。'},
+ {k:'D',icon:'broom',t:'不用獎金，大家一起清水溝',e:'把老鼠住的地方、吃的垃圾清掉，從根本讓老鼠變少。大家是為了自己住的地方，不是為了銅板。',c:'要很多人願意出力；有人不來幫忙，也拿他沒辦法。清水溝很累，可能要一直做下去。'}];
+function mayor(){
+  if(st.picks.length<WEEKS){go('pick');return}
+  app.innerHTML='';
+  var g=el('div','opts'),panel=el('div');
+  var nx=button('下一步','btn',function(){if(st.mayor!=null)go('end')});nx.disabled=st.mayor==null;
+  function show(){
+    panel.innerHTML='';if(st.mayor==null)return;
+    var m=MO[st.mayor],c=el('div','card');
+    c.append(el('h3',null,'你選了 '+m.k+'：'+m.t));
+    var dl=el('dl','ec');dl.innerHTML='<dt class="e">作用</dt><dd>'+m.e+'</dd><dt class="c">代價</dt><dd>'+m.c+'</dd>';c.appendChild(dl);
+    var ot=el('div','other');ot.appendChild(el('p','cap','其他做法也有各自的作用和代價：'));
+    MO.forEach(function(o,i){if(i===st.mayor)return;ot.appendChild(el('h4',null,ic(o.icon)+o.k+'　'+o.t));var d2=el('dl','ec');d2.innerHTML='<dt class="e">作用</dt><dd>'+o.e+'</dd><dt class="c">代價</dt><dd>'+o.c+'</dd>';ot.appendChild(d2)});
+    c.appendChild(ot);panel.appendChild(c);
+  }
+  MO.forEach(function(m,i){
+    var b=button(ic(m.icon)+'<span><span class="letter">'+m.k+'</span>'+m.t+'</span>','btn alt'+(st.mayor===i?' pick':''),function(){
+      st.mayor=i;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;show();
+      try{panel.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}
+    });
+    g.appendChild(b);
+  });
+  show();
+  app.append(el('p','case','換你想一想'),el('h2',null,'如果你是鎮長，你會改成？'),
+    el('p','lead','每一個做法都可以選。選了以後，會看到這個做法的作用和代價。沒有標準答案，等一下全班一起討論。'),g,panel,nx);
+}
+
+/* ---------- step: end ---------- */
+function end(){
+  if(st.picks.length<WEEKS||st.mayor==null){go(st.picks.length<WEEKS?'pick':'mayor');return}
+  var s=sim(),m=MO[st.mayor];
+  app.innerHTML='';
+  var cnt={c:0,k:0,f:0};st.picks.forEach(function(p){cnt[p]++});
+  var t=el('table');
+  [['五週我各選了什麼',st.picks.map(function(p,i){return '第'+(i+1)+'週 <b>'+ACT[p].ab+'</b>'}).join('、')+'<br>（抓老鼠 '+cnt.c+' 週、剪尾巴放走 '+cnt.k+' 週、養老鼠 '+cnt.f+' 週）'],
+   ['我賺了幾枚銅板','<b>'+s.coins+'</b> 枚'],
+   ['鎮公所總共收到幾條尾巴','<b>'+sum(s.T)+'</b> 條'],
+   ['鎮上的老鼠','第 1 週結束 <b>'+s.R[1]+'</b> 隻，最後（獎金取消後）<b>'+s.final+'</b> 隻'],
+   ['如果我是鎮長，我會改成','<b>'+m.k+'</b>　'+m.t]].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,myChips());
+}
+
+function render(){
+  var S={intro:intro,pick:pick,settle:settle,cancel:cancel,result:result,mayor:mayor,end:end};
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

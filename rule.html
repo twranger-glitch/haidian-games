@@ -1,0 +1,113 @@
+<title>數字規則偵探</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: the tablet hides a rule that 2-4-6 fits → student picks a first guess → tests their own three numbers, saying beforehand whether they expect a yes or a no → announces the rule → result with "how many times did you try to prove yourself wrong". Single light classroom look on purpose. */
+:root{
+  --bg:#F0F1EC; --card:#FCFCF8; --ink:#1F2A2E; --muted:#56605C; --line:#D3D6CB;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.nums{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.n{min-width:86px;height:86px;border-radius:18px;background:#E3EEF5;border:4px solid var(--sea);display:grid;place-items:center;font-size:42px;font-weight:900;color:var(--sea);font-variant-numeric:tabular-nums;padding:0 10px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left}
+.btn.alt[aria-pressed="true"]{border-color:var(--gold);background:#FBF1DC}
+.btn.yes{background:var(--good)} .btn.no{background:var(--rust)}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.inputs{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+input{font:inherit;font-size:clamp(32px,6vw,48px);font-weight:900;width:min(30vw,150px);text-align:center;padding:6px;border:3px solid var(--line);border-radius:16px;background:#fff;color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{color:var(--rust);font-weight:700;margin:0;min-height:1.4em;font-size:clamp(17px,2.4vw,21px)}
+.hist{display:flex;flex-direction:column;gap:6px}
+.h{display:grid;grid-template-columns:2.5em 1fr auto;gap:10px;align-items:center;border:2px solid var(--line);border-radius:12px;padding:6px 12px;font-size:clamp(18px,2.6vw,24px);font-weight:700;font-variant-numeric:tabular-nums}
+.h .k{color:var(--muted);font-size:.8em}
+.h .r{font-weight:900} .h .r.ok{color:var(--good)} .h .r.no{color:var(--rust)}
+.h .pred{display:block;font-size:.7em;color:var(--muted);font-weight:700}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.7vw,25px);line-height:1.7;margin:0}
+.big{font-size:clamp(46px,9vw,80px);font-weight:900;line-height:1.15;margin:0;text-align:center;font-variant-numeric:tabular-nums;color:var(--sea)}
+@media (max-width:480px){.two{grid-template-columns:1fr}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "x": "<path d=\"M7 7l10 10M17 7L7 17\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='rule-246-v1';
+var FIRST=['每次都加 2','都是雙數','一個比一個大','我還不知道'];
+var FINAL=['每次都加 2','三個都是雙數','三個數字一個比一個大','中間的數字是另外兩個的一半'];
+var RIGHT=2;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,first:null,tests:[],final:null};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function fits(a){return a[0]<a[1]&&a[1]<a[2]}
+function nums(a){var d=el('div','nums');a.forEach(function(x){d.appendChild(el('span','n',String(x)))});return d}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','平板心裡想了一個「三個數字的規則」。下面這三個數字，符合這個規則：'),nums([2,4,6]),el('p','lead','你可以自己出三個數字，平板會告訴你「符合」還是「不符合」。試夠了，再說出規則。'));
+  var h=el('h2',null,'先猜猜看：你現在覺得規則是什麼？');
+  var g=el('div','opts');var bs=[];var go=el('button','btn','開始出題測試');go.type='button';go.disabled=true;
+  FIRST.forEach(function(t,k){var b=el('button','btn alt',t);b.type='button';b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){st.first=k;bs.forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');go.disabled=false});bs.push(b);g.appendChild(b)});
+  go.addEventListener('click',function(){st.step=1;save(st);test()});
+  app.append(el('h1',null,'數字規則偵探'),c,h,g,go);
+}
+function test(){
+  app.innerHTML='';
+  var h=el('h2',null,'出三個數字來測試。按下去之前，先想好：你覺得它會「符合」，還是「不符合」？');
+  var c=el('div','card');var ins=el('div','inputs');var fs=[];
+  for(var k=0;k<3;k++){var i=document.createElement('input');i.type='text';i.inputMode='numeric';i.autocomplete='off';i.setAttribute('aria-label','第'+(k+1)+'個數字');fs.push(i);ins.appendChild(i)}
+  var err=el('p','err');
+  var two=el('div','two');
+  var y=el('button','btn yes','測試（我猜會「符合」）');y.type='button';
+  var n=el('button','btn no','測試（我猜「不符合」）');n.type='button';
+  two.append(y,n);c.append(ins,err,two);
+  var hist=el('div','hist');
+  var done=el('button','btn','我知道規則了！');done.type='button';
+  function draw(){hist.innerHTML='';st.tests.slice().reverse().forEach(function(t,j){var r=el('div','h');r.append(el('span','k','第'+(st.tests.length-j)+'組'),el('span',null,t.a.join('、')+'<span class="pred">我猜：'+(t.p?'符合':'不符合')+'</span>'),el('span','r '+(t.ok?'ok':'no'),t.ok?ic('check')+' 符合':ic('x')+' 不符合'));hist.appendChild(r)});
+    done.disabled=st.tests.length<3;done.textContent=st.tests.length<3?'至少測試 3 組，才能說出規則（還差 '+(3-st.tests.length)+' 組）':'我知道規則了！'}
+  function go(p){var a=fs.map(function(f){return f.value.trim().replace(/[，,\s]/g,'')});
+    if(!a.every(function(v){return /^-?\d+$/.test(v)})){err.textContent='請在三個格子裡都填入整數。';return}
+    a=a.map(Number);if(a.some(function(v){return Math.abs(v)>99999})){err.textContent='數字請小一點（五位數以內）。';return}
+    err.textContent='';st.tests.push({a:a,p:p,ok:fits(a)});save(st);fs.forEach(function(f){f.value=''});fs[0].focus();draw()}
+  y.addEventListener('click',function(){go(true)});n.addEventListener('click',function(){go(false)});
+  done.addEventListener('click',function(){if(st.tests.length<3)return;st.step=2;save(st);announce()});
+  app.append(el('p','lead','已知：2、4、6 符合規則。'),h,c,done,hist);draw();
+}
+function announce(){
+  app.innerHTML='';
+  var h=el('h2',null,'你覺得規則是哪一個？選一個就不能改囉！');
+  var g=el('div','opts');
+  FINAL.forEach(function(t,k){var b=el('button','btn alt',t);b.type='button';b.addEventListener('click',function(){st.final=k;st.step=3;save(st);end()});g.appendChild(b)});
+  var back=el('button','btn alt','我想再多測試幾組');back.type='button';back.style.textAlign='center';back.addEventListener('click',function(){st.step=1;save(st);test()});
+  app.append(h,g,back);
+}
+function end(){
+  app.innerHTML='';
+  var ok=st.final===RIGHT;var tried=st.tests.filter(function(t){return !t.p}).length;
+  var c=el('div','card');
+  c.append(el('p','big',ok?'猜對了！':'差一點！'),el('p','note','平板的規則是：<b>三個數字一個比一個大</b>。<br>像 1、2、3，或 5、80、1000 都符合；6、4、2 就不符合。'));
+  c.append(el('p','note','你一共測試了 <b>'+st.tests.length+'</b> 組。<br>其中，你「猜不符合」、想故意證明自己錯的，有 <b>'+tried+'</b> 組。'));
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+var S=[intro,test,announce,end];(S[st.step]||intro)();
+})();
+</script>

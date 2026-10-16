@@ -1,0 +1,156 @@
+<title>平均數變變變</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: tablet screens — meet 9 classmates' weekly pocket money (bars) → guess the new average when one classmate with 1,000 元 joins → reveal mean vs median → playground: change the newcomer's amount and try two missions. Single light classroom look on purpose. */
+:root{
+  --bg:#EFF1EC; --card:#FBFCF8; --ink:#1F2A2E; --muted:#56605C; --line:#D2D7CC;
+  --sea:#205E86; --rust:#A8441A; --good:#2F7D4F; --bar:#7FA6B8; --new:#D98A3D;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(24px,4vw,36px);font-weight:900;margin:0;line-height:1.4;text-wrap:balance}
+.lead{font-size:clamp(19px,2.6vw,24px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,26px);display:flex;flex-direction:column;gap:12px}
+.chart{display:flex;flex-direction:column;gap:6px}
+.row{display:grid;grid-template-columns:4.2em 1fr 4.6em;align-items:center;gap:10px;font-size:clamp(16px,2.2vw,20px)}
+.row .who{font-weight:700;color:var(--muted);text-align:right}
+.row .track{height:22px;background:#E4E8E1;border-radius:8px;position:relative;overflow:visible}
+.row .fill{height:100%;border-radius:8px;background:var(--bar);transition:width .5s ease}
+.row.new .fill{background:var(--new)}
+.row.new .who{color:var(--new)}
+.row .v{font-weight:900;font-variant-numeric:tabular-nums;text-align:right}
+.mark{position:absolute;top:-6px;bottom:-6px;width:4px;border-radius:2px;transition:left .5s ease}
+.mark.mean{background:var(--rust)} .mark.med{background:var(--good)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:clamp(16px,2.2vw,20px);font-weight:700;margin:0}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{border:3px solid var(--line);border-radius:18px;padding:12px;text-align:center;background:var(--card)}
+.stat p{margin:0;font-size:clamp(17px,2.3vw,21px);font-weight:700;color:var(--muted)}
+.stat strong{display:block;font-size:clamp(40px,8vw,68px);font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat.mean strong{color:var(--rust)} .stat.med strong{color:var(--good)}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.btn{font:inherit;font-size:clamp(22px,3.2vw,30px);font-weight:900;border:0;border-radius:16px;padding:14px 20px;background:var(--sea);color:#fff;cursor:pointer}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn.alt.right{border-color:var(--good);background:#E3F1E8}
+.btn.alt.wrong{border-color:var(--rust);background:#F6E4DC}
+.btn:disabled{cursor:default}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--rust);outline-offset:3px}
+.say{margin:0;font-size:clamp(20px,2.8vw,26px);font-weight:700;line-height:1.6}
+.say b{color:var(--rust)} .say em{font-style:normal;color:var(--good);font-weight:900}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.ctl .btn{font-size:clamp(18px,2.6vw,24px);padding:10px 14px}
+input[type=range]{flex:1 1 220px;accent-color:var(--new);height:34px}
+.mission{display:flex;align-items:flex-start;gap:12px;font-size:clamp(18px,2.5vw,23px);font-weight:700;margin:0}
+.mission .box{flex:0 0 auto;width:32px;height:32px;border-radius:8px;border:3px solid var(--line);display:grid;place-items:center;color:#fff;font-size:20px}
+.mission.done .box{background:var(--good);border-color:var(--good)}
+.note{background:#EAF1F5;border-radius:16px;padding:14px 18px;margin:0;font-size:clamp(18px,2.5vw,23px);line-height:1.7}
+@media (max-width:440px){.opts{grid-template-columns:1fr}.stats{grid-template-columns:1fr}}
+@media (max-width:560px){input[type=range]{order:-1;flex-basis:100%}}
+@media (prefers-reduced-motion:reduce){.fill,.mark{transition:none}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='avg-game-v1';
+var BASE=[{n:'阿明',v:50},{n:'小芳',v:60},{n:'志豪',v:80},{n:'小安',v:100},{n:'佳佳',v:100},{n:'阿哲',v:100},{n:'小琪',v:120},{n:'宇翔',v:140},{n:'美美',v:150}];
+var MAX=2000;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,guess:null,m1:false,m2:false,tried:[]};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function mean(a){var s=0;a.forEach(function(x){s+=x});return s/a.length}
+function median(a){var b=a.slice().sort(function(x,y){return x-y});var m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2}
+function fmt(x){return (Math.round(x*10)/10).toLocaleString('zh-TW')}
+function chart(list,showMarks,scale){
+  var vals=list.map(function(p){return p.v});
+  var top=scale||Math.max.apply(null,vals.concat([200]));
+  var c=el('div','chart');
+  var mu=mean(vals),md=median(vals);
+  list.slice().sort(function(a,b){return a.v-b.v}).forEach(function(p){
+    var r=el('div','row'+(p.isNew?' new':''));
+    var tr=el('div','track');var f=el('div','fill');f.style.width=Math.max(1,p.v/top*100)+'%';tr.appendChild(f);
+    if(showMarks){var a=el('span','mark mean');a.style.left='calc('+(mu/top*100)+'% - 2px)';var b=el('span','mark med');b.style.left='calc('+(md/top*100)+'% - 2px)';tr.append(a,b)}
+    r.append(el('span','who',p.n),tr,el('span','v',p.v.toLocaleString('zh-TW')+' 元'));c.appendChild(r);
+  });
+  return c;
+}
+function legend(){var l=el('p','legend','<span><i style="background:var(--rust)"></i>紅線：平均數</span><span><i style="background:var(--good)"></i>綠線：中位數</span>');return l}
+function stats(vals){var s=el('div','stats');s.append(el('div','stat mean','<p>平均數（全部加起來 ÷ 人數）</p><strong>'+fmt(mean(vals))+' 元</strong>'),el('div','stat med','<p>中位數（排好隊，站中間的）</p><strong>'+fmt(median(vals))+' 元</strong>'));return s}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','海佃小隊有 9 位同學。下面是他們每個星期的零用錢，從少排到多。'),chart(BASE,false,200));
+  var b=el('button','btn','我看完了');b.type='button';b.addEventListener('click',function(){st.step=1;save(st);q1()});
+  app.append(el('h1',null,'平均數變變變'),c,b);
+}
+function q1(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','say','這 9 位同學，每週零用錢的平均是 <b>100 元</b>。'),el('p','say','今天轉來一位新同學「阿富」，他每週的零用錢是 <b>1,000 元</b>。'));
+  var h=el('h2',null,'猜猜看：10 個人的平均，會變成多少？');
+  var g=el('div','opts');var bs=[];
+  [100,190,1000].forEach(function(v,k){var b=el('button','btn alt',v.toLocaleString('zh-TW')+' 元');b.type='button';b.addEventListener('click',function(){st.guess=v;save(st);bs.forEach(function(x){x.disabled=true});b.classList.add(v===190?'right':'wrong');if(v!==190)bs[1].classList.add('right');setTimeout(reveal,900)});bs.push(b);g.appendChild(b)});
+  app.append(c,h,g);
+}
+function reveal(){
+  st.step=2;save(st);app.innerHTML='';
+  var list=BASE.concat([{n:'阿富',v:1000,isNew:true}]);var vals=list.map(function(p){return p.v});
+  var c=el('div','card');c.append(chart(list,true),legend());
+  var note=el('p','note','全部加起來：900 ＋ 1,000 ＝ 1,900 元，除以 10 個人 ＝ <b style="color:var(--rust)">190 元</b>。<br>可是，排好隊站在中間的人，還是 <b style="color:var(--good)">100 元</b>。');
+  var cnt=vals.filter(function(x){return x<mean(vals)}).length;
+  var say=el('p','say','10 個人裡面，有 <b>'+cnt+' 個人</b>的零用錢比「平均」還少！');
+  var b=el('button','btn','換我來調調看');b.type='button';b.addEventListener('click',function(){st.step=3;save(st);play()});
+  app.append(el('h2',null,'阿富來了以後……'),c,stats(vals),note,say,b);
+}
+function play(){
+  app.innerHTML='';
+  var cur=st.cur!=null?st.cur:1000;
+  var h=el('h2',null,'拉拉看：阿富的零用錢改成多少？');
+  var ctl=el('div','ctl');
+  var minus=el('button','btn alt','－100');minus.type='button';
+  var plus=el('button','btn alt','＋100');plus.type='button';
+  var r=document.createElement('input');r.type='range';r.min=0;r.max=MAX;r.step=10;r.value=cur;r.setAttribute('aria-label','阿富每週的零用錢');
+  ctl.append(minus,r,plus);
+  var box=el('div','card');
+  var m1=el('p','mission'),m2=el('p','mission');
+  var ms=el('div','card');ms.append(el('p','say','任務'),m1,m2);
+  var tip=el('p','note');
+  function draw(){
+    var v=+r.value;st.cur=v;
+    var list=BASE.concat([{n:'阿富',v:v,isNew:true}]);var vals=list.map(function(p){return p.v});
+    var mu=mean(vals),md=median(vals);
+    if(Math.round(mu)===150)st.m1=true;
+    if(st.tried.indexOf(v)<0&&st.tried.length<200)st.tried.push(v);
+    var lowV=st.tried.some(function(x){return x<=50}),highV=st.tried.some(function(x){return x>=1500});
+    if(lowV&&highV)st.m2=true;
+    save(st);
+    box.innerHTML='';box.append(chart(list,true,MAX),legend());
+    var s=stats(vals);box.appendChild(s);
+    m1.className='mission'+(st.m1?' done':'');m1.innerHTML='<span class="box">'+(st.m1?ic('check'):'')+'</span><span>讓平均數剛好變成 150 元。阿富的零用錢要是多少？</span>';
+    m2.className='mission'+(st.m2?' done':'');m2.innerHTML='<span class="box">'+(st.m2?ic('check'):'')+'</span><span>把阿富拉到很少（50 元以下），再拉到很多（1,500 元以上）。中位數有沒有跟著變？</span>';
+    tip.innerHTML=(st.m1&&st.m2)?'兩個任務都完成了！<br>阿富一個人，就能把平均數拉高很多；可是不管他拿多少，<b style="color:var(--good)">中位數都是 100 元</b>。<br>請停在這一頁，等其他同學。':'阿富現在每週 <b>'+v.toLocaleString('zh-TW')+' 元</b>。平均數是 '+fmt(mu)+' 元，中位數是 '+fmt(md)+' 元。';
+  }
+  r.addEventListener('input',draw);
+  minus.addEventListener('click',function(){r.value=Math.max(0,+r.value-100);draw()});
+  plus.addEventListener('click',function(){r.value=Math.min(MAX,+r.value+100);draw()});
+  app.append(h,ctl,box,ms,tip);draw();
+}
+if(st.step>=3)play();else if(st.step===2)reveal();else if(st.step===1)q1();else intro();
+})();
+</script>

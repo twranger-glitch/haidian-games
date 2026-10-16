@@ -1,0 +1,276 @@
+<title>互助罐</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: choose to join a 30-person mutual-help jar (or not) → flip 12 months one tap at a time; a glass jar in the middle, 30 avatars around it → year result + "what if I had chosen the other side" with the same random draws → a 3-person jar for 12 months → one-tap comparison (plus 100 replayed years) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:15px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.alt b{display:block;font-size:1.1em;font-weight:900}
+.btn.alt span{display:block;font-size:.78em;color:var(--muted);font-weight:500}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.stage{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+.stage svg{width:100%;height:auto;display:block}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 14px}
+.stat .k{font-size:clamp(17px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0}
+.stat .v{font-size:clamp(28px,3.8vw,38px);white-space:nowrap;font-weight:900;margin:0;font-variant-numeric:tabular-nums;line-height:1.25}
+.stat.you{border-color:var(--gold)}
+.stat .v.neg{color:var(--rust)}
+.stat .v small{font-size:.55em;margin-left:4px}
+.log{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.log li{background:var(--note);border-radius:14px;padding:8px 12px;font-size:clamp(18px,2.3vw,21px);line-height:1.5}
+.log li.me{background:var(--warm);font-weight:700}
+.log li.short{background:#F7E1D7}
+.side{display:flex;flex-direction:column;gap:12px}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-size:.9em}
+td.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.me td{background:var(--warm)}
+.grid100{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px}
+.grid100 i{display:block;aspect-ratio:1;border-radius:3px;background:#CFE3D6}
+.grid100 i.bad{background:var(--rust)}
+.big{font-size:clamp(50px,10vw,90px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea)}
+.pulse{animation:pl 1.2s ease-in-out 2}
+@keyframes pl{50%{opacity:.35}}
+@media (max-width:760px){.stage{grid-template-columns:1fr}}
+@media (max-width:440px){.two,.stats{grid-template-columns:1fr 1fr}.stat{padding:8px 10px}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='mutual-jar-v1';
+var LOSS=600, PREM=50, SEED=200, START=1000, P=1/12;
+var NAMES=['安','哲','佳','翔','美','豪','芳','明','琪','宇','妤','柏','恩','晴','傑','婷','凱','瑜','廷','萱','浩','涵','睿','彤','澤','瑄','祐','蓁','辰'];
+var NAMES3=['你','小晴','阿傑'];
+var CARDS=['腳踏車停在公園門口，被偷了','手機掉到地上，螢幕裂了','眼鏡放在椅子上，被坐壞了','去七股看黑面琵鷺，望遠鏡掉進魚塭','颱風天跌了一跤，平板摔壞了','打躲避球時，手錶被球打壞了','下大雨，放在走廊的新球鞋泡壞了','書包拉鍊整條裂開，要換新的'];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function go(s){st.step=s;save(st);render();window.scrollTo(0,0)}
+function fmt(n){return (n<0?'−':'')+Math.abs(n).toLocaleString('zh-TW')}
+
+/* ---------- 亂數 ---------- */
+function rnds(k){var a=new Uint32Array(k);crypto.getRandomValues(a);return Array.prototype.map.call(a,function(x){return x/4294967296})}
+/* 一年的抽卡：每月一串，'.' 代表沒事，數字代表抽到第幾張倒楣卡 */
+function year(n){var out=[];for(var m=0;m<12;m++){var r=rnds(n*2),s='';for(var i=0;i<n;i++){s+=r[2*i]<P?String(Math.floor(r[2*i+1]*CARDS.length)):'.'}out.push(s)}return out}
+
+/* ---------- 計算罐子 ---------- */
+function sim(hits,n,youIn){
+  var members=youIn?n:n-1, pool=members*SEED, wallet=START, low=pool, rows=[], shortM=0;
+  for(var m=0;m<hits.length;m++){
+    var line=hits[m], inc=members*PREM, start=pool;pool+=inc;if(youIn)wallet-=PREM;
+    var claim=[];for(var i=0;i<n;i++){if(line[i]!=='.'&&(i>0||youIn))claim.push(i)}
+    var each=LOSS, short=false;
+    if(claim.length*LOSS>pool){each=Math.floor(pool/claim.length);short=true;shortM++}
+    pool-=each*claim.length;
+    if(line[0]!=='.'){wallet-=LOSS;if(youIn)wallet+=each}
+    low=Math.min(low,pool);
+    rows.push({start:start,inc:inc,claim:claim,each:each,short:short,pool:pool,wallet:wallet});
+  }
+  return {seed:members*SEED,rows:rows,pool:pool,wallet:wallet,low:low,shortM:shortM,members:members};
+}
+function myHits(h){var c=0;h.forEach(function(l){if(l[0]!=='.')c++});return c}
+function allHits(h){var c=0;h.forEach(function(l){for(var i=0;i<l.length;i++)if(l[i]!=='.')c++});return c}
+function luckyCount(h,n){var c=0;for(var i=0;i<n;i++){var hit=false;h.forEach(function(l){if(l[i]!=='.')hit=true});if(!hit)c++}return c}
+
+/* ---------- 畫罐子 ---------- */
+function jarSVG(n,youIn,line,pool,max,label){
+  var W=600,cx=300,cy=300,R=n>3?256:220,ar=n>3?24:46;
+  var s='<svg viewBox="0 '+(n===3?100:0)+' '+W+' '+(n===3?500:600)+'" role="img" aria-label="'+label+'">';
+  s+='<defs><clipPath id="jb"><path d="M215 170 Q200 172 200 200 V430 Q200 470 240 470 H360 Q400 470 400 430 V200 Q400 172 385 170 Z"/></clipPath></defs>';
+  var pos=[];if(n===3){pos=[[300,540],[86,320],[514,320]]}else{for(var i=0;i<n;i++){var a=-Math.PI/2+i*2*Math.PI/n;pos.push([cx+R*Math.cos(a),cy+R*Math.sin(a)])}}
+  /* 拿錢的線 */
+  if(line){for(var i=0;i<n;i++){if(line[i]!=='.'&&(i>0||youIn)){s+='<line x1="'+cx+'" y1="'+(cy+20)+'" x2="'+pos[i][0].toFixed(1)+'" y2="'+pos[i][1].toFixed(1)+'" stroke="#A8441A" stroke-width="5" stroke-dasharray="10 8" class="pulse"/>'}}}
+  /* 罐子 */
+  var f=Math.max(0,Math.min(1,pool/max)),top=470-f*290;
+  s+='<rect x="228" y="132" width="144" height="34" rx="8" fill="#9AA6A0"/>';
+  s+='<g clip-path="url(#jb)"><rect x="200" y="160" width="200" height="320" fill="#F3F7F6"/>';
+  s+='<rect x="200" y="'+top.toFixed(1)+'" width="200" height="'+(480-top).toFixed(1)+'" fill="#E9C46A"/>';
+  for(var y=470-16;y>top+6;y-=26){for(var x=218;x<392;x+=38){s+='<ellipse cx="'+(x+((y/26|0)%2)*14)+'" cy="'+y+'" rx="15" ry="6" fill="#D4A63A" opacity=".75"/>'}}
+  s+='</g><path d="M215 170 Q200 172 200 200 V430 Q200 470 240 470 H360 Q400 470 400 430 V200 Q400 172 385 170 Z" fill="none" stroke="#56605C" stroke-width="6"/>';
+  s+='<path d="M222 205 V420" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".8"/>';
+  s+='<rect x="222" y="262" width="156" height="66" rx="14" fill="#FBFCF9" opacity=".92"/>';
+  s+='<text x="300" y="309" text-anchor="middle" font-size="38" font-weight="900" fill="'+(pool<=0?'#A8441A':'#1F2A2E')+'">'+fmt(pool)+'</text>';
+  /* 頭像 */
+  for(var i=0;i<n;i++){
+    var p=pos[i],you=i===0,hit=line&&line[i]!=='.',mem=you?youIn:true;
+    var fill=hit?'#A8441A':(mem?'#CFE0EA':'#FFFFFF');
+    var stroke=you?'#B7862B':(mem?'#205E86':'#56605C');
+    s+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+ar+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+(you?7:3)+'"'+(mem?'':' stroke-dasharray="6 5"')+'/>';
+    var t=n>3?(you?'你':NAMES[i-1]):NAMES3[i];
+    s+='<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+(n>3?8:10)).toFixed(1)+'" text-anchor="middle" font-size="'+(n>3?(you?24:22):(t.length>1?26:32))+'" font-weight="900" fill="'+(hit?'#FFFFFF':'#1F2A2E')+'">'+t+'</text>';
+    if(hit){var dx=p[0]-cx,dy=p[1]-cy,dl=Math.sqrt(dx*dx+dy*dy)||1,ex=p[0]+dx/dl*(ar+16),ey=p[1]+dy/dl*(ar+16)+8;s+='<text x="'+ex.toFixed(1)+'" y="'+ey.toFixed(1)+'" text-anchor="middle" font-size="'+(n>3?22:30)+'" font-weight="900" fill="#A8441A">!</text>'}
+  }
+  return s+'</svg>';
+}
+
+/* ---------- 畫面 ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','你和班上另外 29 位同學，每個人手上都有 <b>1,000 枚遊戲幣</b>，接下來要過一年，也就是 12 個月。'),
+    el('p','lead','每個月，每個人都可能抽到一張「倒楣卡」：腳踏車被偷、手機摔壞、眼鏡被坐壞……抽到一次，就要花 <b>600 枚</b>修理或買新的。'),
+    el('p','lead','抽到倒楣卡的機會，大約是 12 張牌裡抽到唯一的那張鬼牌。有人一整年都沒事，有人可能連續倒楣好幾次，誰都說不準。'));
+  app.append(el('h1',null,'互助罐'),c,btn('聽聽班長的提議',null,function(){go(1)}));
+}
+function choose(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','班長拿出一個透明的大罐子，說：「我們來做一個<b>互助罐</b>吧！」'),
+    el('p','note','加入的人，<b>每個月放 50 枚</b>進罐子。<br>只要加入的人抽到倒楣卡，<b>罐子就幫他付 600 枚</b>。<br>罐子開張時，家長會依照人數，替每位加入的人先放 200 枚當「罐底」。'),
+    el('p','lead','另外 29 位同學都加入了。你呢？兩種都可以選，沒有對錯。'));
+  var g=el('div','opts');
+  [[true,'加入互助罐','每個月都要放 50 枚；出事時，罐子幫你付。'],[false,'不加入','每個月不用放錢；出事時，600 枚自己付。']].forEach(function(x){
+    var b=btn('<b>'+x[1]+'</b><span>'+x[2]+'</span>','alt',function(){
+      st.join=x[0];st.h30=year(30);st.m30=0;go(2)});g.appendChild(b)});
+  app.append(el('h2',null,'你要不要加入互助罐？'),c,g);
+}
+function runStage(n,key,mkey,next,doneLabel){
+  var hits=st[key],m=st[mkey],youIn=n>3?st.join:true;
+  var r=sim(hits,n,youIn),row=m>0?r.rows[m-1]:null;
+  var pool=row?row.pool:r.seed,wallet=row?row.wallet:START,line=row?hits[m-1]:null;
+  app.innerHTML='';
+  app.append(el('p','case',(n>3?'第一關・30 人的互助罐':'第二關・只有 3 個人的互助罐')),el('h2',null,m===0?'罐子開張了！還沒開始過月份。':'第 '+m+' 個月（共 12 個月）'));
+  var stage=el('div','stage');
+  var pic=el('div');pic.innerHTML=jarSVG(n,youIn,line,pool,r.members*(SEED+12*PREM),'互助罐裡有 '+pool+' 枚，四周是 '+n+' 位同學');
+  var side=el('div','side');
+  var sts=el('div','stats');
+  var s1=el('div','stat');s1.append(el('p','k','罐子裡'),el('p','v'+(pool<=0?' neg':''),fmt(pool)+'<small>枚</small>'));
+  var s2=el('div','stat you');s2.append(el('p','k','你的錢包'),el('p','v'+(wallet<0?' neg':''),fmt(wallet)+'<small>枚</small>'));
+  sts.append(s1,s2);side.appendChild(sts);
+  var log=el('ul','log');
+  if(!row){
+    log.appendChild(el('li',null,'罐子裡先放了罐底 '+fmt(r.seed)+' 枚（'+r.members+' 人 × 200 枚）。'));
+    log.appendChild(el('li',null,youIn?'你有加入：你的頭像是實心的金色圈圈。':'你沒有加入：你的頭像是虛線的空心圈圈。'));
+    log.appendChild(el('li',null,'按「翻到下個月」，看看這個月誰抽到倒楣卡。'));
+  }else{
+    log.appendChild(el('li',null,'這個月有 '+r.members+' 個人各放 50 枚，罐子多了 '+fmt(row.inc)+' 枚。'));
+    var who=[];for(var i=0;i<n;i++){if(line[i]!=='.')who.push(i)}
+    if(!who.length)log.appendChild(el('li',null,'這個月大家都平安，沒有人抽到倒楣卡。'));
+    who.forEach(function(i){
+      var nm=n>3?(i===0?'你':NAMES[i-1]):NAMES3[i],card=CARDS[+line[i]];
+      var paid=(i>0||youIn)?(row.each>=LOSS?'罐子幫忙付了 600 枚。':'罐子不夠，只幫忙付了 '+fmt(row.each)+' 枚，剩下的自己付。'):'沒有加入，600 枚自己付。';
+      log.appendChild(el('li',i===0?'me':null,nm+'：'+card+'。'+paid));
+    });
+    if(row.short)log.appendChild(el('li','short','<b>罐子空了，只能付一部分！</b>'));
+  }
+  side.appendChild(log);
+  stage.append(pic,side);app.appendChild(stage);
+  if(m<12)app.appendChild(btn('翻到下個月',null,function(){st[mkey]=m+1;save(st);render()}));
+  else app.appendChild(btn(doneLabel,null,function(){go(next)}));
+}
+function result30(){
+  app.innerHTML='';
+  var me=sim(st.h30,30,st.join),ot=sim(st.h30,30,!st.join),k=myHits(st.h30);
+  var c=el('div','card');
+  c.append(el('p','lead','這一年，你抽到倒楣卡 <b>'+k+' 次</b>。全班 30 人一共出事 '+allHits(st.h30)+' 次，其中有 '+luckyCount(st.h30,30)+' 個人一整年都平安。'));
+  var t=el('table');t.innerHTML='<tr><th></th><th style="text-align:right">你的錢包</th><th style="text-align:right">罐子剩下</th></tr>';
+  [[st.join,me,'你真的選了'],[!st.join,ot,'如果你選另一邊']].forEach(function(x,j){
+    var tr=el('tr',j===0?'me':null);tr.append(el('td',null,x[2]+'<br><b>'+(x[0]?'加入':'不加入')+'</b>'),el('td','n',fmt(x[1].wallet)+' 枚'),el('td','n',fmt(x[1].pool)+' 枚'));t.appendChild(tr)});
+  c.appendChild(t);
+  c.appendChild(el('p','lead','兩邊用的是同一組倒楣卡，只差在你有沒有加入。'));
+  var nt=el('p','note','加入的人，不管這一年出事幾次，罐子付得出來，年底的錢包就一樣是 400 枚：12 個月一共放了 600 枚，出事的損失都由罐子付。沒有出事的那幾個月，你放進去的錢，其實是拿去幫了出事的同學。');
+  var nt2=el('p','note warm','所以有人會覺得「我都沒出事，錢白付了」，這是很真實的感覺。不加入的人，平安的話就把錢省下來；一出事，600 枚要一次自己付，倒楣兩次以上，錢包就會變成負的。兩種選擇都有人選。');
+  app.append(el('p','case','第一關的結果'),el('h2',null,'這一年過完了'),c,nt,nt2);
+  app.appendChild(el('h2',null,'這一年下來，你心裡比較像哪一句？'));
+  var g=el('div','opts'),fb=el('div','side');
+  var F=[['安心','不管出不出事，結果都差不多，心裡比較踏實。','這個感覺就是互助罐想給大家的：把「不知道會不會出事」，換成「每個月固定放一點」。'],
+    ['白付了','我放了錢，別人卻拿去用，有點可惜。','很多人都有這種感覺。你放的錢沒有消失，而是幫了這一年比較倒楣的同學。'],
+    ['後悔','早知道就選另一邊。','「早知道」是一年過完才看得到的。選的時候，誰都不知道自己會不會抽到倒楣卡。'],
+    ['剛剛好','這次的選擇，我覺得還不錯。','你可以想一想：如果明年又倒楣了，你還會這樣選嗎？']];
+  F.forEach(function(x){var b=btn('<b>'+x[0]+'</b><span>'+x[1]+'</span>','alt'+(st.feel===x[0]?' pick':''),function(){st.feel=x[0];save(st);show()});g.appendChild(b)});
+  function show(){Array.prototype.forEach.call(g.children,function(b,i){b.classList.toggle('pick',F[i][0]===st.feel)});fb.innerHTML='';var f=F.filter(function(x){return x[0]===st.feel})[0];if(!f)return;
+    fb.append(el('p','note',f[2]+'<br><span style="font-size:.85em;color:var(--muted)">想換一句也可以，直接點別的。</span>'),btn('進入第二關',null,function(){st.h3=year(3);st.m3=0;go(4)}))}
+  app.append(g,fb);show();
+}
+function intro3(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','隔壁班也想做互助罐，可是只有 <b>3 個人</b>參加：你、小晴、阿傑。'),
+    el('p','note','規則完全一樣：每人每個月放 50 枚，罐底一樣是每人 200 枚（3 人 × 200 ＝ 600 枚）。出事時罐子幫忙付 600 枚。'),
+    el('p','lead','這一關你一定是成員之一。一樣一個月一個月翻，看看小罐子會怎樣。'));
+  app.append(el('p','case','第二關'),el('h2',null,'只有 3 個人的互助罐'),c,btn('打開 3 人罐子',null,function(){go(5)}));
+}
+function result3(){
+  app.innerHTML='';
+  var r=sim(st.h3,3,true),k=myHits(st.h3);
+  var c=el('div','card');
+  c.append(el('p','lead','這一年，3 個人一共出事 '+allHits(st.h3)+' 次，你自己出事 '+k+' 次。'));
+  var t=el('table');
+  [['罐子最低的時候剩',fmt(r.low)+' 枚'],['罐子不夠付的月份',r.shortM?r.shortM+' 個月':'沒有'],['年底罐子剩下',fmt(r.pool)+' 枚'],['你的錢包',fmt(r.wallet)+' 枚']].forEach(function(x){var tr=el('tr');tr.append(el('td',null,x[0]),el('td','n',x[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  var msg=r.shortM?'這個小罐子這一年有 '+r.shortM+' 個月不夠付，出事的人只拿到一部分。3 人罐子每個月只進來 150 枚，一張倒楣卡卻要 600 枚。':'這一年小罐子撐過去了，算是運氣不錯。不過 3 人罐子每個月只進來 150 枚，一張倒楣卡就要 600 枚，只要兩個人接連出事，罐子就可能見底。';
+  app.append(el('p','case','第二關的結果'),el('h2',null,'3 人罐子的一年'),c,el('p','note'+(r.shortM?' warm':''),msg),
+    btn('一鍵比較 30 人罐子和 3 人罐子',null,function(){
+      var a=0,b=0;for(var y=0;y<100;y++){if(sim(year(30),30,true).shortM)a++;if(sim(year(3),3,true).shortM)b++}
+      st.cmp={a:a,b:b};go(7)}));
+}
+function compare(){
+  app.innerHTML='';
+  var A=sim(st.h30,30,st.join),B=sim(st.h3,3,true);
+  var t=el('table');t.innerHTML='<tr><th></th><th style="text-align:right">30 人罐</th><th style="text-align:right">3 人罐</th></tr>';
+  [['開張時的罐底',fmt(A.seed),fmt(B.seed)],['每個月放進來',fmt(A.members*PREM),fmt(3*PREM)],['一年出事幾次',allHits(st.h30),allHits(st.h3)],['罐子最低剩',fmt(A.low),fmt(B.low)],['不夠付的月份',A.shortM,B.shortM],['年底剩下',fmt(A.pool),fmt(B.pool)]].forEach(function(x){
+    var tr=el('tr');tr.append(el('td',null,x[0]),el('td','n',String(x[1])),el('td','n',String(x[2])));t.appendChild(tr)});
+  var c1=el('div','card');c1.append(el('h2',null,'你剛剛玩的這一年'),t);
+  var c2=el('div','card');c2.append(el('h2',null,'電腦再幫兩種罐子各過 100 年'),el('p','lead','紅色格子代表那一年「罐子曾經空掉、只能付一部分」。'));
+  [['30 人罐子',st.cmp.a],['3 人罐子',st.cmp.b]].forEach(function(x){
+    var g=el('div','grid100');for(var i=0;i<100;i++)g.appendChild(el('i',i<x[1]?'bad':null));
+    c2.append(el('p','lead','<b style="color:var(--ink)">'+x[0]+'</b>：100 年裡有 <b style="color:var(--rust)">'+x[1]+' 年</b>罐子空掉過'),g)});
+  app.append(el('p','case','比一比'),c1,c2,
+    el('p','note','兩種罐子的規則一模一樣，每個人放的錢也一樣多。差別在人數：人多的時候，這個月有人倒楣、那個月換別人倒楣，可是很少大家同時倒楣。一張 600 枚的倒楣卡，對大罐子只是一小口；對小罐子，可能一口就見底。<b>人越多，越不容易被一次意外掏空。</b>'),
+    btn('看我的總結',null,function(){go(8)}));
+}
+function end(){
+  app.innerHTML='';
+  var A=sim(st.h30,30,st.join),B=sim(st.h3,3,true);
+  var t=el('table');
+  [['我有沒有加入 30 人罐','<b>'+(st.join?'加入':'不加入')+'</b>'],['這一年我出事幾次',myHits(st.h30)+' 次'],['年底我的錢包',fmt(A.wallet)+' 枚'],['30 人罐子年底剩',fmt(A.pool)+' 枚'],['3 人罐子有沒有被掏空',B.shortM?'有（'+B.shortM+' 個月不夠付）':'沒有'],['我心裡的感覺',st.feel||'—'],['再跑 100 年：罐子空掉過','30 人罐 '+st.cmp.a+' 年<br>3 人罐 '+st.cmp.b+' 年']].forEach(function(x){
+    var tr=el('tr');tr.append(el('td',null,x[0]),el('td','n',x[1]));t.appendChild(tr)});
+  var c=el('div','card');c.append(el('p','lead','我選的是'),el('p','big',st.join?'加入':'不加入'),t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+function render(){
+  if(st.step>=2&&!st.h30){st.step=1}
+  if(st.step>=4&&!st.h3){st.step=3}
+  if(st.step>=8&&!st.cmp){st.step=6}
+  if(st.step===7&&!st.cmp){st.step=6}
+  switch(st.step){
+    case 0:intro();break;case 1:choose();break;
+    case 2:runStage(30,'h30','m30',3,'看看這一年的結果');break;
+    case 3:result30();break;case 4:intro3();break;
+    case 5:runStage(3,'h3','m3',6,'看看 3 人罐子的結果');break;
+    case 6:result3();break;case 7:compare();break;default:end();
+  }
+}
+render();
+})();
+</script>

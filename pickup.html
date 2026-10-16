@@ -1,0 +1,217 @@
+<title>六點的安親班</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: 12 workdays as a parent picking up 小哲 at an after-school class that closes at 6:00. Each day: a small situation → turn the clock's minute hand (5:45–6:30) → 出發 → neutral result. Secret groups (crypto): blue = fine from day 5–8, yellow = teacher's plea from day 5–8. One feelings question, then a summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:20px 36px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:1px;margin:0}
+.wallet{font-size:clamp(19px,2.4vw,22px);font-weight:900;color:var(--gold);margin:0;white-space:nowrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.scene{font-size:clamp(23px,3.3vw,30px);font-weight:900;line-height:1.5;margin:0}
+.board{background:#FFF8E6;border:3px dashed var(--gold);border-radius:18px;padding:12px 16px;font-size:clamp(19px,2.7vw,24px);line-height:1.6;margin:0}
+.board b{display:block;color:var(--rust)}
+.board.small{font-size:clamp(19px,2.3vw,21px);border-style:solid;border-width:2px;color:var(--muted)}
+.dial{display:flex;align-items:center;justify-content:center;gap:clamp(10px,3vw,28px);flex-wrap:wrap}
+.dial svg{width:min(300px,72vw);height:auto;touch-action:none;cursor:grab;user-select:none}
+.side{display:flex;flex-direction:column;align-items:center;gap:10px}
+.time{font-size:clamp(54px,10vw,84px);font-weight:900;margin:0;font-variant-numeric:tabular-nums;line-height:1.1}
+.time.late{color:var(--rust)} .time.ok{color:var(--good)}
+.tag{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--muted);margin:0}
+.steps{display:flex;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.sq{min-width:96px}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.track{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px}
+.track span{display:block;border-radius:8px;background:#E3E7E1;text-align:center;font-size:clamp(12px,1.8vw,16px);font-weight:700;padding:4px 0;color:var(--muted);font-variant-numeric:tabular-nums}
+.track span.ok{background:#DCEFE3;color:var(--good)} .track span.late{background:#F6E1D6;color:var(--rust)} .track span.now{outline:3px solid var(--sea)}
+.nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.num{background:var(--note);border-radius:16px;padding:12px 6px;text-align:center}
+.num b{display:block;font-size:clamp(46px,9vw,80px);font-weight:900;line-height:1.1;color:var(--rust);font-variant-numeric:tabular-nums}
+.num span{font-size:clamp(17px,2.4vw,22px);font-weight:700;color:var(--muted)}
+.grp{font-size:clamp(28px,5vw,42px);font-weight:900;margin:0;text-align:center}
+.grp.blue{color:#1F5FA8} .grp.yellow{color:#9A6B00}
+@media (max-width:440px){.two{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='pickup-clock-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+var st=load();
+if(!st||!st.g){st={g:rnd()?'blue':'yellow',who:null,stage:'intro',day:0,t:[],fine:[],wallet:200,cur:-5,ans:null};save(st)}
+var NAME={blue:'藍色安親班',yellow:'黃色安親班'};
+var DAYS=[
+ '今天公司的事情還差一點點就做完了。',
+ '想順路去菜市場，買今天晚餐要煮的菜。',
+ '路上有點塞車，不過應該還趕得上。',
+ '同事約你下班一起去買飲料。',
+ '主管快下班時問你：「這份資料可以再幫我看一下嗎？」',
+ '今天工作很順利，一下子就做完了。',
+ '車子快沒油了，想先去加油站加油。',
+ '下雨了，安和路上的車子比平常多。',
+ '朋友打電話來，想跟你聊週末要去七股看黑面琵鷺的事。',
+ '想先去藥局，幫家裡的長輩買一點東西。',
+ '公司開會比平常晚一點結束。',
+ '今天是星期五，想先去買小哲最愛吃的雞蛋糕。'
+];
+var FINE=30;
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function fmt(t){var m=360+t,h=Math.floor(m/60),mm=m%60;return h+':'+(mm<10?'0':'')+mm}
+var fmt12=fmt;
+function ruleOn(d){return st.g==='blue'&&d>=4&&d<=7}
+function track(cur){
+  var tr=el('div','track');
+  for(var i=0;i<12;i++){var s=el('span');if(st.t[i]!=null){s.className=st.t[i]>0?'late':'ok';s.textContent=fmt12(st.t[i])}else s.textContent=(i+1);if(i===cur)s.classList.add('now');tr.appendChild(s)}
+  return tr;
+}
+function header(){
+  var top=el('div','top');
+  top.append(el('p','case','小哲'+(st.who||'')+'・'+NAME[st.g]+'・第 '+(st.day+1)+' 天，共 12 天'),el('p','wallet','錢包 '+st.wallet+' 枚代幣'));
+  return top;
+}
+/* ---------- intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','小哲每天放學以後，會到安南區的海佃安親班寫功課。小哲的教室是「'+NAME[st.g]+'」，帶他們的是林老師。'),
+    el('p','lead','安親班 <b>6 點</b>關門。老師要等最後一位小朋友被接走，才能下班回家。'),
+    el('p','lead','接下來 12 天，你要扮演小哲的家長。每天下班，看看當天發生什麼事，再把時鐘撥到你想到安親班的時間。'),
+    el('p','lead','你還有一個錢包，裡面有 200 枚代幣（只是遊戲用的）。'));
+  var h=el('h2',null,'你想當小哲的誰？');
+  var g=el('div','two');
+  ['爸爸','媽媽'].forEach(function(w){g.appendChild(btn('小哲'+w,'btn alt',function(){st.who=w;st.stage='day';st.day=0;st.cur=-5;save(st);render()}))});
+  app.append(el('h1',null,'六點的安親班'),c,h,g);
+}
+/* ---------- clock ---------- */
+function clockSVG(){
+  var s='<svg viewBox="0 0 300 300" role="slider" aria-label="拖動分針，決定幾點到安親班" tabindex="0"><circle cx="150" cy="150" r="140" fill="#fff" stroke="#1F2A2E" stroke-width="6"/>';
+  /* allowed band 5:45–6:30 = minute 45 → 30 clockwise */
+  s+='<path id="band" d="'+arc(270,360,128,104)+'" fill="#DCEFE3"/><path d="'+arc(0,180,128,104)+'" fill="#F6E1D6"/>';
+  for(var i=0;i<60;i++){var a=i*6*Math.PI/180,r1=i%5?128:118,x1=150+Math.sin(a)*r1,y1=150-Math.cos(a)*r1,x2=150+Math.sin(a)*134,y2=150-Math.cos(a)*134;s+='<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="#56605C" stroke-width="'+(i%5?2:4)+'"/>'}
+  for(var n=1;n<=12;n++){var b=n*30*Math.PI/180;s+='<text x="'+(150+Math.sin(b)*90).toFixed(1)+'" y="'+(150-Math.cos(b)*90+10).toFixed(1)+'" text-anchor="middle" font-size="28" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">'+n+'</text>'}
+  s+='<line id="hh" x1="150" y1="150" x2="150" y2="85" stroke="#1F2A2E" stroke-width="10" stroke-linecap="round"/>';
+  s+='<line id="mh" x1="150" y1="150" x2="150" y2="34" stroke="#A8441A" stroke-width="7" stroke-linecap="round"/><circle id="knob" cx="150" cy="34" r="16" fill="#A8441A" opacity=".85"/><circle cx="150" cy="150" r="9" fill="#1F2A2E"/></svg>';
+  return s;
+}
+function arc(a0,a1,ro,ri){
+  function p(a,r){a=a*Math.PI/180;return (150+Math.sin(a)*r).toFixed(1)+' '+(150-Math.cos(a)*r).toFixed(1)}
+  var lg=(a1-a0)>180?1:0;
+  return 'M'+p(a0,ro)+' A'+ro+' '+ro+' 0 '+lg+' 1 '+p(a1,ro)+' L'+p(a1,ri)+' A'+ri+' '+ri+' 0 '+lg+' 0 '+p(a0,ri)+' Z';
+}
+function setHands(svg,t){
+  var m=(360+t)%60,h=Math.floor((360+t)/60);
+  var ma=m*6*Math.PI/180,ha=(h*30+m*0.5)*Math.PI/180;
+  var mx=150+Math.sin(ma)*116,my=150-Math.cos(ma)*116;
+  svg.querySelector('#mh').setAttribute('x2',mx.toFixed(1));svg.querySelector('#mh').setAttribute('y2',my.toFixed(1));
+  svg.querySelector('#knob').setAttribute('cx',mx.toFixed(1));svg.querySelector('#knob').setAttribute('cy',my.toFixed(1));
+  svg.querySelector('#hh').setAttribute('x2',(150+Math.sin(ha)*62).toFixed(1));svg.querySelector('#hh').setAttribute('y2',(150-Math.cos(ha)*62).toFixed(1));
+  svg.setAttribute('aria-valuetext',fmt(t));
+}
+/* ---------- a day ---------- */
+function day(){
+  var d=st.day;app.innerHTML='';
+  app.append(header(),track(d));
+  if(st.g==='blue'&&d===4)app.appendChild(el('p','board','<b>安親班公告</b>從今天開始，接小朋友晚到 10 分鐘以上，每次罰 '+FINE+' 枚代幣。'));
+  else if(st.g==='blue'&&d>4&&d<=7)app.appendChild(el('p','board small','安親班的規定：晚到 10 分鐘以上，每次罰 '+FINE+' 枚代幣。'));
+  else if(st.g==='blue'&&d===8)app.appendChild(el('p','board','<b>安親班公告</b>罰款規定取消了。'));
+  else if(st.g==='yellow'&&d===4)app.appendChild(el('p','board','<b>林老師在聯絡簿上寫</b>「拜託家長盡量準時。老師晚下班，家裡的孩子也在等她。」'));
+  else if(st.g==='yellow'&&d>4&&d<=7)app.appendChild(el('p','board small','林老師說過：「拜託家長盡量準時。老師晚下班，家裡的孩子也在等她。」'));
+  var c=el('div','card');c.append(el('p','tag','下班前的小狀況'),el('p','scene',DAYS[d]));app.appendChild(c);
+  app.appendChild(el('h2',null,'你打算幾點到安親班？'));
+  var dial=el('div','dial');dial.innerHTML=clockSVG();var svg=dial.querySelector('svg');
+  var side=el('div','side');var tm=el('p','time');var tg=el('p','tag');
+  var minus=btn('－5 分','btn alt sq',function(){upd(st.cur-5)}),plus=btn('＋5 分','btn alt sq',function(){upd(st.cur+5)});
+  var sp=el('div','steps');sp.append(minus,plus);side.append(tm,tg,sp);dial.appendChild(side);
+  function upd(t){t=Math.max(-15,Math.min(30,t));st.cur=t;save(st);setHands(svg,t);tm.textContent=fmt(t);tm.className='time '+(t>0?'late':'ok');
+    tg.textContent=t<0?'比 6 點早 '+(-t)+' 分鐘':t===0?'剛好 6 點':'比 6 點晚 '+t+' 分鐘';minus.disabled=t<=-15;plus.disabled=t>=30;svg.setAttribute('aria-valuenow',t)}
+  svg.setAttribute('aria-valuemin',-15);svg.setAttribute('aria-valuemax',30);
+  function fromPt(e){var r=svg.getBoundingClientRect();var x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;
+    var ang=Math.atan2(x,-y)*180/Math.PI;if(ang<0)ang+=360;var m=Math.round(ang/30)*5%60;
+    var t;if(m>=45)t=m-60;else if(m<=30)t=m;else t=(m<=35)?30:-15;upd(t)}
+  var drag=false;
+  svg.addEventListener('pointerdown',function(e){drag=true;try{svg.setPointerCapture(e.pointerId)}catch(_){}fromPt(e)});
+  svg.addEventListener('pointermove',function(e){if(drag)fromPt(e)});
+  svg.addEventListener('pointerup',function(){drag=false});svg.addEventListener('pointercancel',function(){drag=false});
+  svg.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowUp'){upd(st.cur+5);e.preventDefault()}else if(e.key==='ArrowLeft'||e.key==='ArrowDown'){upd(st.cur-5);e.preventDefault()}});
+  app.append(dial,el('p','tag','可以拖動紅色的分針，或按 －5 分、＋5 分。'),btn('出發','btn',go));
+  upd(st.cur);
+}
+function go(){
+  var d=st.day,t=st.cur;st.t[d]=t;
+  st.fine[d]=(ruleOn(d)&&t>=10)?FINE:0;st.wallet-=st.fine[d];
+  st.stage='res';save(st);render();
+}
+function result(){
+  var d=st.day,t=st.t[d];app.innerHTML='';
+  app.append(header(),track(d));
+  var c=el('div','card');
+  c.appendChild(el('p','time '+(t>0?'late':'ok'),fmt(t)));
+  if(t<=0)c.appendChild(el('p','scene','你 '+fmt(t)+' 到了安親班。小哲背好書包跑出來，跟林老師說再見。'));
+  else c.appendChild(el('p','scene','林老師陪小哲等到 '+fmt(t)+'。你到了以後，小哲背好書包，跟林老師說再見。'));
+  if(st.fine[d])c.appendChild(el('p','note warm','你付了 '+FINE+' 枚罰款。錢包還有 '+st.wallet+' 枚代幣。'));
+  app.appendChild(c);
+  app.appendChild(btn(d<11?'下一天':'12 天過完了','btn',function(){st.day++;st.cur=-5;st.stage=st.day>=12?'q':'day';save(st);render()}));
+}
+/* ---------- question ---------- */
+var QA=[['A','對老師不好意思'],['B','反正付錢了／反正可以'],['C','沒什麼感覺']];
+function question(){
+  app.innerHTML='';
+  var lateN=st.t.filter(function(x){return x>0}).length;
+  app.append(el('h1',null,'12 天過完了'),track(-1));
+  app.appendChild(el('p','lead','這 12 天，你晚到了 '+lateN+' 次。這一題沒有對錯，選最接近你心裡的那一個就好。'+(lateN?'':'（就算一次都沒有晚到，也可以想像一下：如果晚到了，你會比較像哪一個？）')));
+  app.appendChild(el('h2',null,'晚到的時候，你心裡比較像？'));
+  var g=el('div','opts');var fb=el('div','opts');
+  QA.forEach(function(q){var b=btn(q[0]+'　'+q[1],'btn alt'+(st.ans===q[0]?' pick':''),function(){
+    st.ans=q[0];save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');showNext()});g.appendChild(b)});
+  function showNext(){fb.innerHTML='';fb.append(el('p','note','每一種感覺都很常見，等一下全班一起聊聊。想換也可以，直接點別的選項。'),btn('看我的結果','btn',function(){st.stage='end';save(st);render()}))}
+  app.append(g,fb);if(st.ans)showNext();
+}
+/* ---------- end ---------- */
+function end(){
+  app.innerHTML='';
+  function cnt(a,b){var n=0;for(var i=a;i<=b;i++)if(st.t[i]>0)n++;return n}
+  app.appendChild(el('h2',null,'做完了！請停在這一頁，等其他同學。'));
+  var c=el('div','card');
+  c.appendChild(el('p','grp '+st.g,'你是'+NAME[st.g]));
+  c.appendChild(el('p','tag','你晚到（超過 6 點）的次數：'));
+  var nums=el('div','nums');
+  [['第 1～4 天',cnt(0,3)],['第 5～8 天',cnt(4,7)],['第 9～12 天',cnt(8,11)]].forEach(function(x){var n=el('div','num');n.append(el('b',null,x[1]),el('span',null,x[0]));nums.appendChild(n)});
+  c.appendChild(nums);
+  var q=QA.filter(function(x){return x[0]===st.ans})[0];
+  c.appendChild(el('p','note','晚到的時候，你心裡比較像：<b>'+(q?q[0]+'　'+q[1]:'—')+'</b>'));
+  app.appendChild(c);
+  app.appendChild(el('p','note warm','罰錢，有時候會把「不好意思」變成「付錢就好」。'));
+}
+function render(){({intro:intro,day:day,res:result,q:question,end:end}[st.stage]||intro)();window.scrollTo(0,0)}
+render();
+})();
+</script>

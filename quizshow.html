@@ -1,0 +1,315 @@
+<title>問答大賽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: draw lots (who asks, who answers) → round 1: the asker's 5 self-chosen questions play one by one → place 10 weights on a balance (who knows more?) → round 2 with roles swapped → weights again → both balances side by side + "did you notice who picked the questions?" → summary for a show of hands. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.small{font-size:clamp(17px,2.3vw,20px);padding:8px 12px;background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,[tabindex]:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+/* people */
+.duo{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.ava{width:clamp(52px,9vw,72px);height:clamp(52px,9vw,72px);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:clamp(24px,4vw,32px);flex:none}
+.ava.p0{background:var(--sea)} .ava.p1{background:var(--rust)}
+.who{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;font-size:clamp(18px,2.4vw,22px)}
+/* lots */
+.lots{display:flex;justify-content:center}
+.lots svg{width:min(260px,70vw);height:auto}
+.shake{animation:shake .18s linear infinite;transform-origin:130px 300px;transform-box:view-box}
+@keyframes shake{0%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}100%{transform:rotate(-7deg)}}
+.result{font-size:clamp(28px,5vw,46px);font-weight:900;line-height:1.5;margin:0;text-align:center;text-wrap:balance}
+.result b.p0{color:var(--sea)} .result b.p1{color:var(--rust)}
+.result small{display:block;font-size:.62em;color:var(--muted);font-weight:700}
+.pop{animation:pop .45s ease-out}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
+/* quiz rows */
+.row{display:flex;gap:12px;align-items:flex-start}
+.row.r{flex-direction:row-reverse}
+.bub{background:var(--note);border-radius:18px;padding:12px 16px;font-size:clamp(23px,3.3vw,30px);font-weight:700;line-height:1.5;margin:0;min-width:0}
+.bub.ans{background:#FBF1DC}
+.bub .nm{display:block;font-size:.65em;color:var(--muted);font-weight:700}
+.dots span{display:inline-block;animation:blink 1s infinite;font-weight:900}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+.mark{font-size:clamp(22px,3.2vw,28px);font-weight:900;text-align:center;margin:0}
+.mark.ok{color:var(--good)} .mark.no{color:var(--rust)}
+.score{font-variant-numeric:tabular-nums}
+.hide{visibility:hidden}
+/* balance */
+.bal svg{width:100%;max-width:600px;margin:0 auto;height:auto;display:block;touch-action:manipulation}
+.bal .beam,.bal .pan{transition:transform .5s cubic-bezier(.3,1.4,.5,1)}
+.bal .beam{transform-origin:300px 96px;transform-box:view-box}
+.bal .hit{cursor:pointer;outline:none}
+.bal .hit:focus-visible{stroke:var(--gold);stroke-width:5}
+.bal .wt{cursor:pointer}
+.pool{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;min-height:40px;font-weight:700;font-size:clamp(19px,2.6vw,23px)}
+.pool i{display:inline-block;width:26px;height:22px;border-radius:5px;background:var(--gold);border:2px solid #8C6720}
+.pans{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pans>div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:clamp(19px,2.6vw,23px);font-weight:700;text-align:center}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pair .card{padding:12px}
+.cap{font-size:clamp(19px,2.5vw,22px);font-weight:700;margin:0;text-align:center}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;width:38%}
+td b{color:var(--sea)}
+@media (max-width:620px){.pair{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='quiz-show-v1';
+var P=[
+ {n:'小安',c:'安',hobby:'小安最愛釣魚。放假的時候，阿公常常載他到台江的魚塭旁邊，一坐就是一個早上。',topic:'釣魚',
+  q:[
+   {q:'我阿公教我的：釣虱目魚的時候，他最喜歡用什麼當魚餌？',g:'嗯……是蚯蚓嗎？',ok:false,a:'是阿公自己揉的麵團，裡面還加了一點米糠。'},
+   {q:'我第一次跟阿公去釣魚，釣到的第一條魚，我幫牠取了什麼名字？',g:'這我怎麼會知道……',ok:false,a:'叫「小胖」，因為牠圓滾滾的。'},
+   {q:'阿公說，坐在魚塭旁邊釣魚的時候，最不可以做哪一件事？',g:'是不是……不可以大聲講話？',ok:true,a:'對！大聲講話，魚會被嚇跑。'},
+   {q:'我的釣竿把手上貼了一張貼紙，上面畫的是什麼？',g:'一隻小狗？',ok:false,a:'是一隻招潮蟹，阿公在廟口買給我的。'},
+   {q:'每次跟阿公去釣魚，我們早上大概幾點就出門？',g:'八點吧？',ok:false,a:'五點半，那時候天還沒全亮。'}
+  ]},
+ {n:'小芸',c:'芸',hobby:'小芸家在七股種瓜。到了採瓜的季節，她每天放學都會到瓜田幫忙。',topic:'種瓜',
+  q:[
+   {q:'我阿嬤會在瓜田裡每一顆小瓜的下面墊一樣東西，那是什麼？',g:'報紙嗎？',ok:false,a:'是一小把稻草，瓜才不會直接碰到濕濕的泥土。'},
+   {q:'我爸爸要看一顆瓜熟了沒，他第一個會看哪裡？',g:'用手敲敲看，聽聲音？',ok:false,a:'我爸爸會先看瓜蒂旁邊那片小葉子，有沒有開始變黃。'},
+   {q:'我們家瓜田裡有一隻狗，每天幫忙趕走來偷吃的鳥。牠叫什麼名字？',g:'該不會是……阿黃吧？',ok:true,a:'答對了！牠就叫阿黃。'},
+   {q:'採瓜那幾天，我們全家早上幾點就要起床？',g:'六點？',ok:false,a:'四點，要趁太陽出來以前、瓜還涼涼的時候採。'},
+   {q:'我自己在瓜田旁邊種了一小盆植物，那是什麼？',g:'向日葵？',ok:false,a:'是一盆九層塔，阿嬤炒菜的時候會來摘。'}
+  ]}
+];
+var THINK={yes:'有想到',no:'沒想到',bit:'有一點'};
+var THINKFB={
+ yes:'你有注意到題目是誰挑的。等一下可以跟大家說說，你是怎麼想到的，這個想法有沒有影響你放砝碼。',
+ no:'看比賽的時候，大家的眼睛常常都盯著「誰答得出來」，不太會去想題目是誰挑的。等一下全班可以一起聊聊這件事。',
+ bit:'你心裡有閃過這個念頭。等一下可以想想：這個念頭，有沒有讓你少放幾個砝碼給出題的人？'};
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,asker:null,drawn:false,q:-1,w1:[0,0],w2:[0,0],think:null};
+var timers=[];
+function clearT(){timers.forEach(clearTimeout);timers=[]}
+function later(f,ms){timers.push(setTimeout(f,ms))}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,f){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',f);return b}
+function go(s){st.step=s;save(st);render()}
+function rnd2(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Date.now()&1}}
+// who asks in round r (1 or 2)
+function askerOf(r){return r===1?st.asker:1-st.asker}
+function ava(i){return '<div class="ava p'+i+'" aria-hidden="true">'+P[i].c+'</div>'}
+function nameB(i){return '<b class="p'+i+'">'+P[i].n+'</b>'}
+
+function intro(){
+  var d=el('div','duo');[0,1].forEach(function(i){var w=el('div','who');w.innerHTML=ava(i)+P[i].n;d.appendChild(w)});
+  var c=el('div','card');
+  c.append(d,el('p','lead','海佃國小六年級有兩位同學：小安和小芸。今天班上要舉行一場問答大賽，一個人出題，另一個人答題。'),
+    el('p','lead','你是台下的觀眾。誰出題、誰答題，要用抽籤決定。'));
+  app.append(el('h1',null,'問答大賽'),c,btn('去抽籤','btn',function(){go(1)}));
+}
+
+function lotsSVG(out){
+  // a bamboo cup with sticks; out=true pushes the two named sticks up
+  var s='<svg viewBox="0 0 260 320" role="img" aria-label="籤筒"><g class="cup">';
+  var up=out?80:0;
+  function stick(x,top,lab,col){var t='';if(lab){t='<text x="'+(x+17)+'" y="'+(top+34)+'" text-anchor="middle" font-size="24" font-weight="900" fill="'+col+'">'+lab[0]+'</text><text x="'+(x+17)+'" y="'+(top+62)+'" text-anchor="middle" font-size="24" font-weight="900" fill="'+col+'">'+lab[1]+'</text>'}return '<g><rect x="'+x+'" y="'+top+'" width="34" height="200" rx="6" fill="#F4E3B5" stroke="#8C6720" stroke-width="3"/>'+t+'</g>'}
+  s+=stick(78,90-up,out?'出題':'','#A8441A')+stick(148,90-up*0.8,out?'答題':'','#205E86');
+  s+='<rect x="114" y="96" width="30" height="190" rx="6" fill="#EBD69B" stroke="#8C6720" stroke-width="3"/>';
+  s+='<path d="M60 120 H200 L192 300 Q130 316 68 300 Z" fill="#B7862B" stroke="#7A5A1C" stroke-width="4"/>'+
+     '<ellipse cx="130" cy="120" rx="70" ry="14" fill="#8C6720"/>'+
+     '<text x="130" y="225" text-anchor="middle" font-size="40" font-weight="900" fill="#FBF1DC">籤</text></g></svg>';
+  return s;
+}
+function draw(){
+  app.append(el('p','case','<span>抽籤</span>'));
+  if(!st.drawn){
+    var lots=el('div','lots',lotsSVG(false));
+    var c=el('div','card');
+    c.append(el('p','lead','籤筒裡有兩支籤，一支寫著「出題」，一支寫著「答題」。小安先抽，剩下的那一支就是小芸的。'));
+    var b=btn('搖一搖，抽籤！','btn',function(){
+      b.disabled=true;b.textContent='抽籤中……';
+      if(st.asker==null)st.asker=rnd2();save(st);
+      lots.querySelector('.cup').classList.add('shake');
+      later(function(){st.drawn=true;save(st);render()},1500);
+    });
+    app.append(el('h2',null,'誰出題、誰答題？'),lots,c,b);
+  }else{
+    var a=st.asker,o=1-a;
+    var lots2=el('div','lots',lotsSVG(true));
+    var r=el('p','result pop','出題的是'+nameB(a)+'，<br>答題的是'+nameB(o)+'，<small>這是抽籤決定的。</small>');
+    var c2=el('div','card');c2.append(r);
+    app.append(lots2,c2,btn('比賽開始','btn',function(){st.q=-1;go(2)}));
+  }
+}
+
+function round(r){
+  var a=askerOf(r),o=1-a,Q=P[a].q;
+  var head=el('p','case','<span>第'+(r===1?'一':'二')+'回合：'+P[a].n+'出題、'+P[o].n+'答題</span>');
+  app.appendChild(head);
+  if(st.q<0){
+    var c=el('div','card');
+    if(r===2){c.appendChild(el('p','lead','現在兩個人交換：換'+P[a].n+'出題，'+P[o].n+'答題。'))}
+    c.append(el('p','lead','規則是：'+P[a].n+'可以自己想 5 題，什麼題目都可以。'),
+      el('p','lead',P[a].hobby),
+      el('p','lead',P[a].n+'想了想，決定出自己最熟的事：'+P[a].topic+'。'));
+    var d=el('div','duo');var w1=el('div','who');w1.innerHTML=ava(a)+P[a].n+'（出題）';var w2=el('div','who');w2.innerHTML=ava(o)+P[o].n+'（答題）';d.append(w1,w2);
+    app.append(el('h2',null,P[a].n+'要出題了'),d,c,btn('第 1 題','btn',function(){st.q=0;save(st);render()}));
+    return;
+  }
+  if(st.q>=Q.length){
+    var c3=el('div','card');
+    c3.append(el('p','result',P[a].n+'出的 5 題，<br>'+P[o].n+'答對了 1 題。'));
+    app.append(c3,btn('用天平表示你的想法','btn',function(){go(r===1?3:5)}));
+    return;
+  }
+  var i=st.q,x=Q[i];
+  var right=0;for(var k=0;k<i;k++)if(Q[k].ok)right++;
+  head.appendChild(el('span','score','第 '+(i+1)+' 題／共 5 題　答對 '+right+' 題'));
+  var c2=el('div','card');
+  var r1=el('div','row');r1.innerHTML=ava(a);r1.appendChild(el('p','bub','<span class="nm">'+P[a].n+'出題</span>'+x.q));
+  var r2=el('div','row r');r2.innerHTML=ava(o);var b2=el('p','bub','<span class="nm">'+P[o].n+'想了一下……</span><span class="dots"><span>．</span><span>．</span><span>．</span></span>');r2.appendChild(b2);r2.classList.add('hide');
+  var r3=el('div','row');r3.innerHTML=ava(a);var b3=el('p','bub ans','<span class="nm">'+P[a].n+'公布答案</span>'+x.a);r3.appendChild(b3);r3.classList.add('hide');
+  var mk=el('p','mark '+(x.ok?'ok':'no'),x.ok?P[o].n+'答對了！':P[o].n+'沒有答對。');mk.classList.add('hide');
+  c2.append(r1,r2,r3,mk);
+  var nx=btn(i<Q.length-1?'下一題':'看這一回合的結果','btn',function(){st.q++;save(st);render()});nx.disabled=true;
+  app.append(c2,nx);
+  later(function(){r2.classList.remove('hide')},900);
+  later(function(){b2.innerHTML='<span class="nm">'+P[o].n+'回答</span>'+x.g},2300);
+  later(function(){r3.classList.remove('hide');mk.classList.remove('hide');nx.disabled=false},3500);
+}
+
+/* ---------- balance ---------- */
+var CX=300,CY=96,ARM=170,PY=226;
+function ang(L,R){var d=(R-L)*1.8;return Math.max(-18,Math.min(18,d))}
+function weightsSVG(n,side,live){
+  var s='';for(var k=0;k<n;k++){var row=Math.floor(k/5),col=k%5;var x=CX+(side?ARM:-ARM)-110+col*44,y=PY-38-row*38;
+    s+='<rect class="'+(live?'wt':'')+'" data-side="'+side+'" x="'+x+'" y="'+y+'" width="40" height="34" rx="6" fill="#B7862B" stroke="#7A5A1C" stroke-width="3"'+(live?' role="button" aria-label="拿回這個砝碼"':'')+'/>';}
+  return s;
+}
+function balSVG(L,R,ln,rn,live){
+  var a=ang(L,R)*Math.PI/180,dyL=-ARM*Math.sin(a),dyR=ARM*Math.sin(a),dxL=ARM-ARM*Math.cos(a),dxR=ARM*Math.cos(a)-ARM;
+  var deg=ang(L,R);
+  function pan(side,name,role,n,dx,dy,col){
+    var x=CX+(side?ARM:-ARM);
+    return '<g class="pan p'+side+'" style="transform:translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)">'+
+      '<line x1="'+x+'" y1="'+CY+'" x2="'+(x-112)+'" y2="'+PY+'" stroke="#56605C" stroke-width="3"/><line x1="'+x+'" y1="'+CY+'" x2="'+(x+112)+'" y2="'+PY+'" stroke="#56605C" stroke-width="3"/>'+
+      (live?'<rect class="hit" data-side="'+side+'" x="'+(x-125)+'" y="'+(CY+4)+'" width="250" height="'+(PY-CY+40)+'" fill="transparent" role="button" tabindex="0" aria-label="放一個砝碼給'+name+'"/>':'')+
+      '<path d="M'+(x-120)+' '+PY+' H'+(x+120)+' Q'+x+' '+(PY+34)+' '+(x-120)+' '+PY+' Z" fill="'+col+'" stroke="#1F2A2E" stroke-width="3" pointer-events="none"/>'+
+      '<g class="wts" pointer-events="'+(live?'all':'none')+'">'+weightsSVG(n,side,live)+'</g>'+
+      '<text x="'+x+'" y="'+(PY+66)+'" text-anchor="middle" font-size="32" font-weight="900" fill="#1F2A2E" pointer-events="none">'+name+'（'+role+'）</text>'+
+      '<text class="cnt" x="'+x+'" y="'+(PY+104)+'" text-anchor="middle" font-size="30" font-weight="700" fill="#56605C" pointer-events="none">'+n+' 個</text></g>';
+  }
+  return '<svg viewBox="0 0 600 450" role="img" aria-label="天平：'+ln+' '+L+' 個砝碼，'+rn+' '+R+' 個砝碼">'+
+    '<path d="M250 430 H350 L330 404 H270 Z" fill="#56605C"/><rect x="292" y="'+CY+'" width="16" height="312" fill="#56605C"/>'+
+    '<g class="beam" style="transform:rotate('+deg+'deg)"><rect x="'+(CX-ARM-8)+'" y="'+(CY-7)+'" width="'+(2*ARM+16)+'" height="14" rx="7" fill="#1F2A2E"/></g>'+
+    '<circle cx="'+CX+'" cy="'+CY+'" r="13" fill="#B7862B" stroke="#1F2A2E" stroke-width="3"/>'+
+    pan(0,ln,'出題',L,dxL,dyL,'#D6E6F0')+pan(1,rn,'答題',R,dxR,dyR,'#F5DCCF')+'</svg>';
+}
+function placeTrans(svg,L,R){
+  var a=ang(L,R)*Math.PI/180;
+  svg.querySelector('.beam').style.transform='rotate('+ang(L,R)+'deg)';
+  svg.querySelector('.pan.p0').style.transform='translate('+(ARM-ARM*Math.cos(a)).toFixed(1)+'px,'+(-ARM*Math.sin(a)).toFixed(1)+'px)';
+  svg.querySelector('.pan.p1').style.transform='translate('+(ARM*Math.cos(a)-ARM).toFixed(1)+'px,'+(ARM*Math.sin(a)).toFixed(1)+'px)';
+}
+function balance(r){
+  var a=askerOf(r),o=1-a,w=r===1?st.w1:st.w2;
+  app.append(el('p','case','<span>第'+(r===1?'一':'二')+'次放砝碼</span>'),
+    el('h2',null,'看完第'+(r===1?'一':'二')+'回合，你覺得'+P[a].n+'和'+P[o].n+'，誰的常識比較豐富？'),
+    el('p','lead','你有 10 個砝碼。點一下盤子，就放一個砝碼上去；點盤子上的砝碼，可以拿回來。覺得兩個人一樣，也可以放 5 比 5。'));
+  var pool=el('div','pool');
+  var box=el('div','card bal');box.innerHTML=balSVG(w[0],w[1],P[a].n,P[o].n,true);
+  var svg=box.querySelector('svg');
+  var pans=el('div','pans');
+  var minus=[0,1].map(function(s){var d=el('div');var b=btn('拿回一個','btn small',function(){take(s)});d.appendChild(b);pans.appendChild(d);return b});
+  box.appendChild(pans);
+  var ok=btn('確定','btn',function(){if(w[0]+w[1]===10){if(r===1)st.q=-1;go(r===1?4:6)}});
+  function upd(){
+    var left=10-w[0]-w[1];
+    pool.innerHTML=left?('還剩 '+left+' 個砝碼：'+new Array(left+1).join('<i></i>')):'10 個砝碼都放好了，可以按確定。';
+    [0,1].forEach(function(s){
+      var g=svg.querySelector('.pan.p'+s);g.querySelector('.wts').innerHTML=weightsSVG(w[s],s,true);g.querySelector('.cnt').textContent=w[s]+' 個';
+      minus[s].disabled=!w[s];
+    });
+    placeTrans(svg,w[0],w[1]);
+    svg.setAttribute('aria-label','天平：'+P[a].n+' '+w[0]+' 個砝碼，'+P[o].n+' '+w[1]+' 個砝碼');
+    ok.disabled=left!==0;ok.textContent=left?'還有 '+left+' 個砝碼沒放':'確定';
+    save(st);
+  }
+  function add(s){if(w[0]+w[1]<10){w[s]++;upd()}}
+  function take(s){if(w[s]>0){w[s]--;upd()}}
+  svg.addEventListener('click',function(e){
+    var t=e.target;if(!t.getAttribute)return;var s=t.getAttribute('data-side');if(s==null)return;s=+s;
+    if(t.classList.contains('wt'))take(s);else if(t.classList.contains('hit'))add(s);
+  });
+  svg.addEventListener('keydown',function(e){var t=e.target;if((e.key==='Enter'||e.key===' ')&&t.classList&&t.classList.contains('hit')){e.preventDefault();add(+t.getAttribute('data-side'))}});
+  app.append(pool,box,ok);upd();
+}
+
+function lean(r){
+  var a=askerOf(r),o=1-a,w=r===1?st.w1:st.w2;
+  if(w[0]>w[1])return '偏出題的'+P[a].n+'，'+w[0]+' 比 '+w[1];
+  if(w[0]<w[1])return '偏答題的'+P[o].n+'，'+w[1]+' 比 '+w[0];
+  return '一樣重，5 比 5';
+}
+function compare(){
+  app.append(el('p','case','<span>兩次天平放在一起</span>'),el('h2',null,'兩個人沒有變，只是換了誰出題。'));
+  var pair=el('div','pair');
+  [1,2].forEach(function(r){var a=askerOf(r),w=r===1?st.w1:st.w2;var c=el('div','card bal');c.innerHTML=balSVG(w[0],w[1],P[a].n,P[1-a].n,false);
+    c.insertBefore(el('p','cap','第'+(r===1?'一':'二')+'回合：'+P[a].n+'出題'),c.firstChild);c.appendChild(el('p','cap',lean(r)));pair.appendChild(c)});
+  app.appendChild(pair);
+  app.appendChild(el('p','note','第一回合，'+P[st.asker].n+'挑自己最熟的事（'+P[st.asker].topic+'）出題；第二回合，'+P[1-st.asker].n+'也挑自己最熟的事（'+P[1-st.asker].topic+'）出題。兩次都是出題的人比較會。'));
+  var a1=P[st.asker].n;
+  app.appendChild(el('h2',null,'第一回合時，你有想到「題目是'+a1+'自己挑的」嗎？'));
+  app.appendChild(el('p','lead','沒有對錯，照你當時心裡的感覺選。'));
+  var g=el('div','opts'),fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(k){
+    Array.prototype.forEach.call(g.children,function(x){x.classList.toggle('pick',x.getAttribute('data-k')===k)});
+    fb.innerHTML='';
+    fb.append(el('p','note',THINKFB[k]+'<br><span style="font-size:.85em;color:var(--muted)">想換一個也可以，直接點別的選項。</span>'),btn('看我的摘要','btn',function(){go(7)}));
+  }
+  ['yes','no','bit'].forEach(function(k){var b=btn(THINK[k],'btn alt',function(){st.think=k;save(st);show(k);fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})});b.setAttribute('data-k',k);g.appendChild(b)});
+  app.append(g,fb);if(st.think)show(st.think);
+}
+function end(){
+  var a=P[st.asker].n,o=P[1-st.asker].n;
+  var c=el('div','card');var t=el('table');
+  [['抽籤結果','第一回合'+a+'出題、'+o+'答題'],
+   ['第一次天平','<b>'+lean(1)+'</b>'],
+   ['第二次天平','<b>'+lean(2)+'</b>'],
+   ['第一回合有想到題目是'+a+'自己挑的嗎？','<b>'+(THINK[st.think]||'—')+'</b>']].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,
+    el('p','note','只看到「這個人」，忘了看「他遇到的狀況」，是每個人都很容易犯的錯。心理學家幫它取了一個名字，叫做「基本歸因謬誤」。'));
+}
+function render(){
+  clearT();app.innerHTML='';window.scrollTo(0,0);
+  if(st.step>=1&&st.step<=7&&st.asker==null&&st.step!==1)st.step=1;
+  var s=st.step;
+  if(s===0)intro();else if(s===1)draw();else if(s===2)round(1);else if(s===3)balance(1);
+  else if(s===4)round(2);else if(s===5)balance(2);else if(s===6)compare();else end();
+}
+render();
+})();
+</script>

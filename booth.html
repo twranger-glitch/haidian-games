@@ -1,0 +1,263 @@
+<title>攤位帳本</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: school fair winter-melon tea booth. Guess the profit per cup → stick expense notes into a hand-ruled ledger (fixed vs per-cup) → choose how many cups to prepare, open the shop (random customers) and watch the ledger + break-even chart → up to 3 rounds → reveal → summary. Single light classroom look on purpose. */
+:root{
+  --bg:#F1EFE8; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --paper:#FFFDF6; --rule:#C9DCEA; --margin:#E3A3A3; --sticky:#FFF0A8; --sticky2:#FFE07A;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,2.9vw,26px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.sn:focus-visible,.col:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.row .btn{flex:1 1 220px;text-align:center}
+/* ledger */
+.book{background:var(--paper);border:3px solid #CBBF9E;border-radius:10px 22px 22px 10px;padding:18px clamp(12px,3vw,24px) 18px clamp(30px,6vw,56px);
+  background-image:linear-gradient(90deg,transparent calc(clamp(30px,6vw,56px) - 14px),var(--margin) calc(clamp(30px,6vw,56px) - 14px),var(--margin) calc(clamp(30px,6vw,56px) - 12px),transparent calc(clamp(30px,6vw,56px) - 12px)),repeating-linear-gradient(180deg,transparent 0 37px,var(--rule) 37px 39px);
+  box-shadow:6px 6px 0 #E2DCCB;display:flex;flex-direction:column;gap:12px}
+.book h3{font-size:clamp(21px,3vw,28px);font-weight:900;margin:0;color:var(--rust)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{font:inherit;color:inherit;text-align:left;border:3px dashed #B9AE8E;background:rgba(255,255,255,.55);border-radius:14px;padding:10px;min-height:150px;display:flex;flex-direction:column;gap:8px;cursor:pointer}
+.col.ready{border-color:var(--sea);border-style:solid;background:#EEF5FA}
+.col b.t{font-size:clamp(20px,2.8vw,25px);font-weight:900}
+.col span.s{font-size:19px;color:var(--muted);line-height:1.4}
+.col .sum{margin-top:auto;font-size:clamp(20px,2.8vw,25px);font-weight:900;color:var(--sea)}
+.pile{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sn{font:inherit;color:var(--ink);background:var(--sticky);border:0;border-radius:4px;padding:12px 10px 14px;box-shadow:2px 4px 0 rgba(0,0,0,.12);cursor:pointer;text-align:left;line-height:1.35;transition:transform .15s}
+.sn:nth-child(3n+1){transform:rotate(-2deg)} .sn:nth-child(3n+2){transform:rotate(1.5deg)} .sn:nth-child(3n){transform:rotate(-.8deg)}
+.sn b{display:block;font-size:clamp(19px,2.6vw,23px);font-weight:900}
+.sn i{display:block;font-style:normal;font-size:clamp(19px,2.6vw,23px);color:var(--rust);font-weight:900}
+.sn.pick{background:var(--sticky2);outline:4px solid var(--gold);transform:rotate(0) scale(1.04)}
+.mini{background:var(--sticky);border-radius:4px;padding:6px 10px;font-size:clamp(19px,2.3vw,21px);font-weight:700;box-shadow:1px 2px 0 rgba(0,0,0,.1);display:flex;justify-content:space-between;gap:8px}
+.mini.moved{background:#FBE0D3}
+/* shop */
+.stepper{display:flex;align-items:center;justify-content:center;gap:14px}
+.stepper .btn{min-width:96px}
+.count{font-size:clamp(54px,10vw,90px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums;line-height:1.1}
+.count small{font-size:.4em}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:8px 6px;border-bottom:2px solid var(--rule);vertical-align:top}
+td.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tot td{border-top:3px double var(--ink);border-bottom:0;font-weight:900}
+.neg{color:var(--rust)} .pos{color:var(--good)}
+svg.chart{width:100%;height:auto;display:block;background:#fff;border:2px solid var(--line);border-radius:12px}
+.big{font-size:clamp(30px,6vw,52px);font-weight:900;text-align:center;margin:0;line-height:1.3}
+.eq{font-size:clamp(24px,4.4vw,38px);font-weight:900;text-align:center;margin:0;font-variant-numeric:tabular-nums}
+@media (max-width:620px){.pile{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.cols{grid-template-columns:1fr}.col{min-height:110px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='booth-ledger-v1';
+var PRICE=30,FIX=600,VAR=10,MAXR=3;
+var NOTES=[
+ {id:'stall',name:'攤位費',amt:'300 元',sub:'租一天',k:'fix',v:300,why:'攤位費是向學校租一天的位子，不管賣 1 杯還是 100 杯，都是 300 元，所以是固定成本。'},
+ {id:'cooler',name:'冰桶租金',amt:'200 元',sub:'租一天',k:'fix',v:200,why:'冰桶一天的租金是 200 元，賣多賣少都一樣，所以是固定成本。'},
+ {id:'poster',name:'海報紙和招牌',amt:'100 元',sub:'做一次',k:'fix',v:100,why:'招牌做一次就好，不會因為多賣一杯就多做一張，所以是固定成本。'},
+ {id:'cup',name:'杯子＋吸管',amt:'每杯 3 元',sub:'',k:'var',v:3,why:'每多賣一杯，就要多用一個杯子和一根吸管，所以是每杯成本。'},
+ {id:'tea',name:'冬瓜茶原料',amt:'每杯 5 元',sub:'',k:'var',v:5,why:'每多倒一杯冬瓜茶，就要多用一份原料，所以是每杯成本。'},
+ {id:'ice',name:'冰塊',amt:'每杯 2 元',sub:'',k:'var',v:2,why:'每一杯都要加一份冰塊，杯數越多，冰塊越多，所以是每杯成本。'}
+];
+var BYID={};NOTES.forEach(function(n){BYID[n.id]=n});
+var GUESS=['30 元','20 元左右','10 元左右','不知道'];
+function rint(a,b){var u=new Uint32Array(1);crypto.getRandomValues(u);return a+u[0]%(b-a+1)}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=rint(0,i);var t=a[i];a[i]=a[j];a[j]=t}return a}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load();
+if(!st||typeof st!=='object'){st={step:0,guess:null,order:shuffle(NOTES.map(function(n){return n.id})),put:{},ok:{},prep:60,rounds:[],phase:'choose'}}
+var sel=null,timer=null;
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function money(n){return (n<0?'−':'')+Math.abs(n)+' 元'}
+function go(s){st.step=s;save(st);render()}
+function stopT(){if(timer){clearTimeout(timer);timer=null}}
+
+/* step 0: guess */
+function guess(){
+  var c=el('div','card');
+  c.append(el('p','lead','海佃國小一年一度的園遊會到了！你們班決定賣冬瓜茶，一杯 30 元。'),el('p','lead','你是攤位的小老闆。客人拿 30 元給你，換走一杯冬瓜茶。'));
+  var h=el('h2',null,'先猜猜看：賣出一杯 30 元的冬瓜茶，你們班「真的」賺到多少錢？');
+  var g=el('div','opts');
+  GUESS.forEach(function(t){g.appendChild(btn(t,'btn alt',function(){st.guess=t;go(1)}))});
+  app.append(el('h1',null,'園遊會攤位帳本'),c,h,el('p','lead','沒有猜錯這回事，選你心裡最先想到的。等一下會回來看。'),g);
+}
+
+/* step 1: ledger */
+function ledger(){
+  var left=st.order.filter(function(id){return !st.put[id]});
+  app.append(el('p','case','第一步：列帳本'));
+  app.append(el('h2',null,left.length?'把每一張「費用便條」貼到帳本上正確的那一欄。':'帳本列好了！'));
+  if(left.length)app.append(el('p','lead','先點一張便條，再點帳本上的一欄。'));
+  var book=el('div','book');book.appendChild(el('h3',null,'冬瓜茶攤位・費用帳本'));
+  var cols=el('div','cols');
+  [['fix','固定成本','不管賣幾杯，都要付的錢'],['var','每杯成本','每多賣一杯，就多一份的錢']].forEach(function(x){
+    var col=el('button','col'+(sel?' ready':''));col.type='button';col.setAttribute('aria-label','貼到「'+x[1]+'」');
+    col.append(el('b','t',x[1]),el('span','s',x[2]));
+    var sum=0,cnt=0;
+    st.order.forEach(function(id){if(st.put[id]===x[0]){var n=BYID[id];sum+=n.v;cnt++;col.appendChild(el('div','mini'+(st.ok[id]?'':' moved'),'<span>'+n.name+'</span><span>'+n.amt+'</span>'))}});
+    if(cnt)col.appendChild(el('div','sum',x[0]==='fix'?'合計 '+sum+' 元':'每杯合計 '+sum+' 元'));
+    col.addEventListener('click',function(){drop(x[0])});
+    cols.appendChild(col);
+  });
+  book.appendChild(cols);
+  var fb=el('div');fb.id='fb';
+  if(left.length){
+    var pile=el('div','pile');
+    left.forEach(function(id){var n=BYID[id];var s=el('button','sn'+(sel===id?' pick':''),'<b>'+n.name+'</b><i>'+n.amt+'</i>'+(n.sub?'<span>'+n.sub+'</span>':''));s.type='button';
+      s.addEventListener('click',function(){sel=(sel===id?null:id);var m=st.msg;rerender(m)});pile.appendChild(s)});
+    app.append(el('p','case','費用便條（還剩 '+left.length+' 張）'),pile,book,fb);
+  }else{
+    var good=NOTES.filter(function(n){return st.ok[n.id]}).length;
+    app.append(book,fb);
+    fb.appendChild(el('p','note','固定成本一共 <b>600 元</b>；每杯成本一共 <b>10 元</b>（3＋5＋2）。<br>你第一次就貼對 '+good+' 張，共 6 張。'));
+    app.appendChild(btn('去開店','btn',function(){st.msg=null;go(2)}));
+  }
+  if(st.msg&&left.length){fb.appendChild(el('p','note'+(st.msg.ok?'':' warm'),st.msg.t))}
+}
+function rerender(){app.innerHTML='';ledger()}
+function drop(k){
+  if(!sel){st.msg={ok:true,t:'請先點一張黃色的便條，再點這一欄。'};rerender();return}
+  var n=BYID[sel];var ok=n.k===k;
+  st.put[sel]=n.k;st.ok[sel]=ok;
+  st.msg=ok?{ok:true,t:'貼對了！'+n.why}:{ok:false,t:'這張貼到另一欄會比較合適，已經幫你移過去了。'+n.why};
+  sel=null;save(st);rerender();
+  var f=document.getElementById('fb');if(f&&f.scrollIntoView)f.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* step 2: shop */
+var W=600,H=320,FS=16,PL=62,PR=16,PT=20,PB=44,XMAX=120,YMIN=-900,YMAX=1200;
+function sx(x){return PL+(W-PL-PR)*x/XMAX}
+function sy(y){return PT+(H-PT-PB)*(YMAX-y)/(YMAX-YMIN)}
+function chartSVG(r,shownSold,showWaste){
+  W=Math.max(340,Math.min(600,(app.clientWidth||600)-32));H=W<500?300:320;PL=W<500?54:62;
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="淨賺隨賣出杯數變化的折線圖，第 30 杯回本">';
+  [-600,0,600,1200].forEach(function(y){s+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+sy(y)+'" y2="'+sy(y)+'" stroke="'+(y===0?'#1F2A2E':'#E1E4DE')+'" stroke-width="'+(y===0?2:1)+'"/><text x="'+(PL-6)+'" y="'+(sy(y)+6)+'" text-anchor="end" font-size="'+FS+'" fill="#56605C">'+(y<0?'−'+(-y):y)+'</text>'});
+  [0,30,60,90,120].forEach(function(x){s+='<text x="'+sx(x)+'" y="'+(H-PB+22)+'" text-anchor="middle" font-size="'+FS+'" fill="#56605C">'+x+'</text>'});
+  s+='<text x="'+((PL+W-PR)/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="'+FS+'" fill="#56605C">賣出的杯數</text>';
+  s+='<line x1="'+sx(30)+'" x2="'+sx(30)+'" y1="'+PT+'" y2="'+(H-PB)+'" stroke="#B7862B" stroke-width="3" stroke-dasharray="8 6"/>';
+  s+='<text x="'+(sx(30)+8)+'" y="'+(PT+18)+'" font-size="18" font-weight="900" fill="#B7862B">第 30 杯回本</text>';
+  if(r){
+    var k=shownSold, y=20*k-FIX;
+    s+='<polyline fill="none" stroke="#205E86" stroke-width="5" stroke-linecap="round" points="'+sx(0)+','+sy(-FIX)+' '+sx(k)+','+sy(y)+'"/>';
+    s+='<circle cx="'+sx(0)+'" cy="'+sy(-FIX)+'" r="6" fill="#A8441A"/>';
+    if(showWaste&&r.prep>r.sold){var y2=r.net;s+='<line x1="'+sx(k)+'" x2="'+sx(k)+'" y1="'+sy(y)+'" y2="'+sy(y2)+'" stroke="#A8441A" stroke-width="5" stroke-dasharray="4 4"/><circle cx="'+sx(k)+'" cy="'+sy(y2)+'" r="7" fill="#A8441A"/>';
+      s+='<text x="'+(sx(k)+(k>80?-10:10))+'" y="'+Math.min(H-PB-6,sy(y2)+6)+'" text-anchor="'+(k>80?'end':'start')+'" font-size="17" font-weight="700" fill="#A8441A">沒賣完 −'+(r.prep-r.sold)*VAR+'</text>'}
+    else s+='<circle cx="'+sx(k)+'" cy="'+sy(y)+'" r="7" fill="#205E86"/>';
+  }
+  return s+'</svg>';
+}
+function bookTable(r,k,done){
+  var t=el('table');
+  var rows=[['收入（賣出 '+k+' 杯 × 30 元）',money(PRICE*k),'pos'],['固定成本',money(-FIX),'neg'],['賣出杯子的每杯成本（'+k+' 杯 × 10 元）',money(-VAR*k),'neg']];
+  if(done&&r.prep>r.sold)rows.push(['沒賣完、浪費掉的杯子（'+(r.prep-r.sold)+' 杯 × 10 元）',money(-VAR*(r.prep-r.sold)),'neg']);
+  var net=PRICE*k-FIX-VAR*k-(done?VAR*(r.prep-r.sold):0);
+  rows.forEach(function(x){var tr=el('tr');tr.append(el('td',null,x[0]),el('td','n '+x[2],x[1]));t.appendChild(tr)});
+  var tr=el('tr','tot');tr.append(el('td',null,'淨賺'),el('td','n '+(net<0?'neg':'pos'),money(net)));t.appendChild(tr);
+  return t;
+}
+function shop(){
+  stopT();
+  var n=st.rounds.length;
+  if(st.phase==='choose'){
+    app.append(el('p','case','第二步：開店（第 '+(n+1)+' 次，最多 '+MAXR+' 次）'));
+    app.append(el('h2',null,'園遊會那天，你要先準備幾杯冬瓜茶？'));
+    app.append(el('p','lead','杯子、原料和冰塊要在開店前先買好。來幾位客人，要開店以後才知道。'));
+    var c=el('div','card');
+    var cnt=el('p','count');var pre=el('p','note');
+    var minus=btn('−10','btn',function(){if(st.prep>30){st.prep-=10;save(st);upd()}});
+    var plus=btn('+10','btn',function(){if(st.prep<120){st.prep+=10;save(st);upd()}});
+    minus.setAttribute('aria-label','少準備 10 杯');plus.setAttribute('aria-label','多準備 10 杯');
+    var sp=el('div','stepper');sp.append(minus,cnt,plus);
+    function upd(){cnt.innerHTML=st.prep+'<small> 杯</small>';minus.disabled=st.prep<=30;plus.disabled=st.prep>=120;
+      pre.innerHTML='開店前，要先花掉：<br>固定成本 600 元＋每杯成本 10 元 × '+st.prep+' 杯＝<b>'+(FIX+VAR*st.prep)+' 元</b>'}
+    upd();
+    c.append(sp,el('p','lead','可以準備 30～120 杯。'),pre);
+    if(n){var last=st.rounds[n-1];c.appendChild(el('p','lead','上一次你準備 '+last.prep+' 杯，來了 '+last.demand+' 位客人。'))}
+    app.append(c,btn('開賣！','btn',function(){
+      var d=rint(35,80),s=Math.min(d,st.prep);
+      st.rounds.push({prep:st.prep,demand:d,sold:s,net:PRICE*s-FIX-VAR*st.prep});st.phase='result';st.anim=true;save(st);render();
+    }));
+  }else{
+    var r=st.rounds[n-1];var anim=!!st.anim;st.anim=false;save(st);
+    app.append(el('p','case','第 '+n+' 次開店：準備 '+r.prep+' 杯'));
+    var h=el('h2',null,anim?'開賣中……':'');var chart=el('div');var tb=el('div');var msg=el('div','opts');
+    app.append(h,chart,el('div','book'),msg);
+    var book=app.querySelector('.book');book.append(el('h3',null,'今天的帳本'),tb);
+    function draw(k,done){chart.innerHTML=chartSVG(r,k,done);tb.innerHTML='';tb.appendChild(bookTable(r,k,done))}
+    function finish(){
+      draw(r.sold,true);
+      h.textContent='今天來了 '+r.demand+' 位客人，你賣出 '+r.sold+' 杯。';
+      var lines=[];
+      if(r.demand>r.prep)lines.push('還有 '+(r.demand-r.prep)+' 位客人想買，可是冬瓜茶已經賣完了。');
+      if(r.prep>r.sold)lines.push('有 '+(r.prep-r.sold)+' 杯沒賣完。這些杯子、原料和冰塊的錢已經花掉了，變成浪費。');
+      if(r.prep===r.demand)lines.push('準備的杯數剛好等於客人數，一杯都沒有浪費。');
+      lines.push(r.net===0?'扣掉所有成本，這次剛好打平：沒賺也沒虧。':r.net>0?'扣掉所有成本，這次淨賺 '+r.net+' 元。':'扣掉所有成本，這次還少了 '+(-r.net)+' 元，也就是虧錢。');
+      msg.appendChild(el('p','note'+(r.net<0?' warm':''),lines.join('<br>')));
+      var row=el('div','row');
+      if(n<MAXR)row.appendChild(btn('再開一次店（還可以 '+(MAXR-n)+' 次）','btn',function(){st.phase='choose';go(2)}));
+      row.appendChild(btn('看看答案','btn'+(n<MAXR?' alt':''),function(){go(3)}));
+      msg.appendChild(row);
+    }
+    if(!anim){finish();return}
+    var k=0,dt=Math.max(25,Math.min(80,2600/Math.max(1,r.sold)));draw(0,false);
+    (function tick(){k++;draw(k,false);if(k<r.sold)timer=setTimeout(tick,dt);else timer=setTimeout(function(){timer=null;finish()},r.prep>r.sold?500:200)})();
+  }
+}
+
+/* step 3: reveal */
+function reveal(){
+  app.append(el('p','case','揭曉'));
+  app.append(el('h2',null,'一開始你猜，賣一杯 30 元的冬瓜茶，真的賺到「'+st.guess+'」。'));
+  var c=el('div','card');
+  c.append(el('p','eq','30 元 − 10 元 ＝ 20 元'),el('p','lead','一杯賣 30 元，扣掉杯子、原料和冰塊的每杯成本 10 元，每賣一杯，其實只多出 20 元。'));
+  c.append(el('p','eq','600 元 ÷ 20 元 ＝ 30 杯'),el('p','lead','可是開店前，已經先付了 600 元的固定成本。每杯多出的 20 元，要先拿去把這 600 元補回來。所以要賣到第 30 杯才回本，從第 31 杯開始，才是真的賺。'));
+  c.append(el('p','note','還有一件事：準備了卻沒賣出去的杯子，每杯 10 元一樣花掉了。準備太少，客人來了買不到；準備太多，剩下的就是浪費。'));
+  var g={'30 元':'很多人第一眼看到的都是「一杯 30 元」這個數字，因為它寫在價目表上，看得最清楚。','20 元左右':'你已經想到要扣掉每杯的成本了。再加上前面那 600 元，整個帳本就完整了。','10 元左右':'你想到了賣一杯不會全部都是賺的，有很多成本要扣。仔細算，每杯多出 20 元，但要先補回 600 元。','不知道':'一開始不知道很正常，因為成本大多藏在帳本裡，客人看不到。'}[st.guess]||'';
+  app.append(c,el('p','note warm',g+'<br>客人和新手老闆，常常都只看到「一杯 30 元」；攤位費、冰桶、杯子這些錢，是看不到的那一部分。'));
+  app.append(btn('看我的帳本摘要','btn',function(){go(4)}));
+}
+
+/* step 4: end */
+function end(){
+  var c=el('div','card');var t=el('table');
+  function tr(a,b){var r=el('tr');r.append(el('td',null,a),el('td','n',b));t.appendChild(r)}
+  var good=NOTES.filter(function(n){return st.ok[n.id]}).length;
+  tr('一開始猜一杯賺',st.guess||'—');
+  tr('便條第一次就貼對',good+' / 6 張');
+  var best=-1;st.rounds.forEach(function(r,i){if(best<0||r.net>st.rounds[best].net)best=i});
+  st.rounds.forEach(function(r,i){tr('第 '+(i+1)+' 次開店','準備 '+r.prep+' 杯・賣出 '+r.sold+' 杯<br><span class="'+(r.net<0?'neg':'pos')+'">淨賺 '+money(r.net)+'</span>')});
+  c.appendChild(t);
+  if(best>=0){var b=st.rounds[best];c.appendChild(el('p','big',(st.rounds.length>1?'最好的一次：第 '+(best+1)+' 次<br>':'')+'<span class="'+(b.net<0?'neg':'pos')+'">淨賺 '+money(b.net)+'</span>'));c.appendChild(el('p','lead','那一次準備 '+b.prep+' 杯，來了 '+b.demand+' 位客人。'))}
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){stopT();app.innerHTML='';[guess,ledger,shop,reveal,end][st.step]();window.scrollTo(0,0)}
+if(st.step>=3&&!st.rounds.length)st.step=2;
+render();
+})();
+</script>

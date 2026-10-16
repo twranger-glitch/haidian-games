@@ -1,0 +1,264 @@
+<title>九成把握撒網</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: two rounds of five questions. Each question is a river with a hidden fish (the answer); the student sets the left and right ends of a net with two number boxes (type or −/+), then casts. After all five, the nets are pulled in one by one. Round 1 ends with a feeling question and a locked "wait for teacher" page (double press to start round 2). Round 2 ends with a side-by-side comparison, then the summary page for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --river:#7FB3D1; --river2:#5E9CC2;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(20px,2.9vw,26px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.warn{background:var(--rust)}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.note.good{background:#E3F1E7}
+/* river */
+.river{position:relative;height:clamp(110px,18vw,150px);border-radius:18px;background:linear-gradient(180deg,var(--river) 0%,var(--river2) 100%);overflow:hidden}
+.river::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(170deg,rgba(255,255,255,.0) 0 26px,rgba(255,255,255,.22) 26px 30px)}
+.net{position:absolute;top:10%;bottom:10%;min-width:8px;border-left:6px solid #6B4A2B;border-right:6px solid #6B4A2B;border-radius:4px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.75) 0 2px,transparent 2px 12px),repeating-linear-gradient(-45deg,rgba(255,255,255,.75) 0 2px,transparent 2px 12px);background-color:rgba(255,255,255,.12);transition:left .25s,width .25s}
+.net.hit{background-color:rgba(247,214,96,.55);box-shadow:0 0 0 4px #F2C94C,0 0 24px 8px rgba(242,201,76,.8)}
+.fish{position:absolute;top:50%;width:64px;height:34px;margin-left:-32px;margin-top:-17px;animation:swim .9s ease-out both}
+@keyframes swim{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+.scale{display:flex;justify-content:space-between;font-size:clamp(17px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0;gap:8px}
+.ends{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.end label{display:block;font-size:clamp(19px,2.5vw,23px);font-weight:900;margin-bottom:6px}
+.stepper{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:stretch}
+.stepper button{font:inherit;font-size:clamp(26px,4vw,34px);font-weight:900;width:clamp(48px,7vw,62px);border-radius:14px;border:3px solid var(--line);background:var(--card);color:var(--sea);cursor:pointer;line-height:1}
+.stepper input{font:inherit;font-size:clamp(22px,3.4vw,30px);font-weight:900;min-width:0;width:100%;text-align:center;border:3px solid var(--line);border-radius:14px;padding:8px 4px;color:var(--ink);background:#fff;font-variant-numeric:tabular-nums}
+.unit{font-size:clamp(19px,2.4vw,22px);color:var(--muted);margin:4px 0 0;text-align:center}
+.nettext{font-size:clamp(20px,2.8vw,26px);font-weight:900;text-align:center;margin:0}
+.big{font-size:clamp(56px,11vw,100px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea)}
+.fishrow{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.fishrow svg{width:clamp(48px,10vw,72px);height:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{background:var(--note);border-radius:16px;padding:14px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.col b{font-size:clamp(19px,2.6vw,24px)}
+.col .n{font-size:clamp(40px,8vw,64px);font-weight:900;color:var(--sea);line-height:1.1}
+.bands{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.band{border:3px solid var(--line);border-radius:14px;padding:8px;text-align:center;font-weight:900;font-size:clamp(19px,2.6vw,24px);color:var(--muted)}
+.band.on{border-color:var(--gold);background:#FBF1DC;color:var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.n{text-align:right;font-weight:900}
+@media (max-width:560px){.ends{grid-template-columns:1fr}.two{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='ninety-net-v1';
+/* q: question, u: unit, a: answer, about: answer is approximate, s: step, mn/mx: river scale, why: one sentence after reveal */
+var R=[
+ [{q:'玉山大約有多高？',u:'公尺',a:3952,about:1,s:100,mn:0,mx:8000,why:'玉山是台灣最高的山，也是東亞數一數二高的山。'},
+  {q:'鄭成功的船隊從鹿耳門進入台江內海，是哪一年？',u:'年',a:1661,s:10,mn:1400,mx:2000,why:'鹿耳門就在我們安南區，那時候船隊趁著漲潮開進台江內海。'},
+  {q:'流過安南區北邊的曾文溪，全長大約多長？',u:'公里',a:138,about:1,s:10,mn:0,mx:400,why:'曾文溪從阿里山一帶的山上流下來，最後在七股、安南之間流進大海。'},
+  {q:'台灣本島從最北到最南，大約有多長？',u:'公里',a:394,about:1,s:10,mn:0,mx:1000,why:'台灣本島從最北的富貴角，到最南的鵝鑾鼻，大約 394 公里。'},
+  {q:'一年總共有幾個小時？',u:'小時',a:8760,s:100,mn:0,mx:20000,why:'一年 365 天，每天 24 小時，乘起來就是 8,760 小時。'}],
+ [{q:'荷蘭人在台江邊蓋熱蘭遮城（現在的安平古堡），是哪一年？',u:'年',a:1624,s:10,mn:1400,mx:2000,why:'熱蘭遮城蓋在當年台江內海旁邊的沙洲上，比鄭成功來台灣早了三十多年。'},
+  {q:'台北 101 大樓大約有多高？',u:'公尺',a:508,s:10,mn:0,mx:1200,why:'台北 101 從地面到塔尖大約 508 公尺。'},
+  {q:'台灣海峽最窄的地方，大約有多寬？',u:'公里',a:130,about:1,s:10,mn:0,mx:500,why:'最窄的地方在新竹外海到對岸福建之間，大約 130 公里。'},
+  {q:'台江國家公園是哪一年成立的？',u:'年',a:2009,s:1,mn:1900,mx:2030,why:'台江國家公園在 2009 年成立，範圍包含安南、七股一帶的濕地和海岸。'},
+  {q:'一個月以 30 天來算，總共有幾分鐘？',u:'分鐘',a:43200,s:1000,mn:0,mx:100000,why:'30 天 × 24 小時 × 60 分鐘，就是 43,200 分鐘。'}]
+];
+var FEEL={narrow:['網子太窄','很多人第一回都有這種感覺：明明覺得很有把握，魚卻常常游在網子外面。第二回你可以試試看，把網子撒得寬一點。'],
+ just:['網子剛好','你覺得網子的寬度剛剛好。第二回可以再看看，網到的條數會不會一樣。'],
+ wide:['網子太寬','你覺得網子撒得有點寬。網子寬，比較容易網到魚；可是太寬，就不太能幫你做決定了。第二回可以想想看，寬度要怎麼拿捏。']};
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+if(location.hash==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}}
+function fresh(){return {p:'intro',r:0,i:0,k:0,lo:[[],[]],hi:[[],[]],feel:null}}
+var st=load();if(!st||!st.lo||!st.hi)st=fresh();
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function fmt(n){return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+function fmtYear(q,n){return q.u==='年'?String(n):fmt(n)}
+function parse(v){
+  v=String(v||'').replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248)}).replace(/[,，\s]/g,'');
+  if(!/^\d+(\.\d+)?$/.test(v))return null;return Number(v);
+}
+function hit(r,i){var q=R[r][i],lo=st.lo[r][i],hi=st.hi[r][i];return lo!=null&&hi!=null&&lo<=q.a&&q.a<=hi}
+function caught(r){var n=0;for(var i=0;i<5;i++)if(hit(r,i))n++;return n}
+function fishSvg(color){return '<svg viewBox="0 0 64 34" aria-hidden="true"><path d="M4 17 Q18 2 38 6 Q52 9 56 17 Q52 25 38 28 Q18 32 4 17 Z" fill="'+color+'"/><path d="M52 17 L64 5 L62 17 L64 29 Z" fill="'+color+'"/><circle cx="16" cy="14" r="3" fill="#1F2A2E"/></svg>'}
+function fishSvgRev(color){return '<svg viewBox="0 0 64 34" aria-hidden="true"><g transform="translate(64,0) scale(-1,1)"><path d="M4 17 Q18 2 38 6 Q52 9 56 17 Q52 25 38 28 Q18 32 4 17 Z" fill="'+color+'"/><path d="M52 17 L64 5 L62 17 L64 29 Z" fill="'+color+'"/><circle cx="16" cy="14" r="3" fill="#1F2A2E"/></svg>'}
+/* river view: question scale, stretched to include the net (and the fish after reveal) */
+function view(q,lo,hi,showFish){
+  var a=q.mn,b=q.mx;
+  if(lo!=null){a=Math.min(a,lo);b=Math.max(b,lo)}
+  if(hi!=null){a=Math.min(a,hi);b=Math.max(b,hi)}
+  if(showFish){a=Math.min(a,q.a);b=Math.max(b,q.a)}
+  if(b<=a)b=a+1;return [a,b];
+}
+function drawRiver(box,q,lo,hi,showFish,isHit){
+  box.innerHTML='';
+  var v=view(q,lo,hi,showFish),span=v[1]-v[0];
+  function pct(x){return 4+92*(x-v[0])/span}
+  var rv=el('div','river');rv.setAttribute('role','img');
+  if(lo!=null&&hi!=null&&lo<hi){
+    var n=el('div','net'+(isHit?' hit':''));n.style.left=pct(lo)+'%';n.style.width='calc('+(pct(hi)-pct(lo))+'% + 0px)';rv.appendChild(n);
+    rv.setAttribute('aria-label','網子從 '+fmtYear(q,lo)+' 撒到 '+fmtYear(q,hi)+' '+q.u);
+  }else rv.setAttribute('aria-label','河面上還沒有網子');
+  if(showFish){var f=el('div','fish',fishSvg(isHit?'#F2A93B':'#E8EEF2'));f.style.left=pct(q.a)+'%';rv.appendChild(f)}
+  var sc=el('p','scale');sc.append(el('span',null,fmtYear(q,v[0])+' '+q.u),el('span',null,fmtYear(q,v[1])+' '+q.u));
+  box.append(rv,sc);
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('div','fishrow',fishSvg('#F2A93B')+fishSvgRev('#5E9CC2')+fishSvg('#B7862B')),
+    el('p','lead','接下來有 5 題，每一題都是一條河，答案是一條藏在河裡的魚。'),
+    el('p','lead','你不用猜一個數字，而是撒一張網：設定網子的左端和右端，網子要撒到你「有九成把握」魚就在裡面。'),
+    el('p','lead','九成把握的意思是：像這樣的題目做 10 題，大概有 9 題的魚會在你的網子裡。網子太窄容易漏掉，太寬又沒什麼用處，自己拿捏看看。'),
+    el('p','lead','5 題都撒完，才會一起收網。'));
+  app.append(el('h1',null,'九成把握撒網'),c,btn('開始第一回',null,function(){st.p='cast';st.r=0;st.i=0;save();render()}));
+}
+
+function cast(){
+  var r=st.r,i=st.i,q=R[r][i];app.innerHTML='';
+  var lo=st.lo[r][i],hi=st.hi[r][i];
+  var h=el('h2',null,q.q+(q.u==='年'?'':'（'+q.u+'）'));
+  var rbox=el('div');drawRiver(rbox,q,lo,hi,false,false);
+  var txt=el('p','nettext');
+  var tip=el('p','note warm');tip.style.display='none';
+  function upd(){
+    drawRiver(rbox,q,lo,hi,false,false);
+    if(lo!=null&&hi!=null&&lo<hi)txt.textContent='網子：從 '+fmtYear(q,lo)+' 到 '+fmtYear(q,hi)+' '+q.u;
+    else txt.textContent='在下面設定網子的左端和右端。';
+    st.lo[r][i]=lo;st.hi[r][i]=hi;save();
+  }
+  function box(label,which){
+    var w=el('div','end');var lb=el('label',null,label);var id='in-'+which;lb.htmlFor=id;
+    var sp=el('div','stepper');
+    var inp=document.createElement('input');inp.type='text';inp.inputMode='numeric';inp.id=id;inp.autocomplete='off';
+    var cur=which==='lo'?lo:hi;inp.value=cur==null?'':fmtYear(q,cur);inp.placeholder='輸入數字';
+    function set(v){if(which==='lo')lo=v;else hi=v;}
+    function bump(d){
+      var v=parse(inp.value);
+      if(v==null){var o=which==='lo'?hi:lo;v=o!=null?o:Math.round((q.mn+q.mx)/2/q.s)*q.s}
+      v=Math.max(0,v+d*q.s);inp.value=fmtYear(q,v);set(v);tip.style.display='none';upd();
+    }
+    var m=el('button',null,'－');m.type='button';m.setAttribute('aria-label',label+'減 '+q.s);m.addEventListener('click',function(){bump(-1)});
+    var p=el('button',null,'＋');p.type='button';p.setAttribute('aria-label',label+'加 '+q.s);p.addEventListener('click',function(){bump(1)});
+    inp.addEventListener('input',function(){set(parse(inp.value));tip.style.display='none';upd()});
+    inp.addEventListener('blur',function(){var v=parse(inp.value);if(v!=null)inp.value=fmtYear(q,v)});
+    sp.append(m,inp,p);w.append(lb,sp,el('p','unit','單位：'+q.u+'　每按一下 ±'+fmt(q.s)));return w;
+  }
+  var ends=el('div','ends');ends.append(box('網子左端（小）','lo'),box('網子右端（大）','hi'));
+  var go=btn(i<4?'撒網，下一題':'撒網，5 題都撒完了',null,function(){
+    if(lo==null||hi==null){tip.innerHTML='網子的兩端都要填上數字，才能撒網喔。';tip.style.display='';return}
+    if(!(lo<hi)){tip.innerHTML='網子的左端要比右端小一點，網子才張得開。再調整一下吧！';tip.style.display='';return}
+    st.lo[r][i]=lo;st.hi[r][i]=hi;
+    if(i<4){st.i++}else{st.p='reveal';st.k=0}
+    save();render();window.scrollTo(0,0);
+  });
+  upd();
+  app.append(el('p','case','第'+(r?'二':'一')+'回・第 '+(i+1)+' 條河，共 5 條'),h,el('p','lead','你有九成把握，魚會游在哪兩個數字中間？'),rbox,txt,ends,tip,go);
+}
+
+function reveal(){
+  var r=st.r,k=st.k;app.innerHTML='';
+  if(k>=5){roundDone();return}
+  var q=R[r][k],ok=hit(r,k);
+  var rbox=el('div');drawRiver(rbox,q,st.lo[r][k],st.hi[r][k],true,ok);
+  var ans=(q.about?'約 ':'')+fmtYear(q,q.a)+' '+q.u;
+  var msg=el('p','note'+(ok?' good':''),(ok?'<b>網到了！</b>':'<b>這條魚游在網子外面。</b>')+'答案是 '+ans+'。<br>'+q.why);
+  var mine=el('p','nettext','你的網子：'+fmtYear(q,st.lo[r][k])+' 到 '+fmtYear(q,st.hi[r][k])+' '+q.u);
+  var nx=btn(k<4?'收下一張網':'看看我網到幾條',null,function(){st.k++;save();render();window.scrollTo(0,0)});
+  app.append(el('p','case','第'+(r?'二':'一')+'回收網・第 '+(k+1)+' 條河'),el('h2',null,q.q),rbox,mine,msg,nx);
+}
+
+function fishes(r){var s='';for(var i=0;i<5;i++)s+=hit(r,i)?fishSvg('#F2A93B'):fishSvg('#D4D9D2');return el('div','fishrow',s)}
+
+function roundDone(){
+  var r=st.r,n=caught(r);app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','第'+(r?'二':'一')+'回，你網到了'),el('p','big',n+' 條'),fishes(r));
+  if(r===0){
+    c.append(el('p','note','如果每一題都真的有九成把握，5 題大概要網到 4～5 條。'));
+    app.append(el('h2',null,'第一回收網完成'),c,btn('下一步',null,function(){st.p='feel';save();render()}));
+  }else{
+    app.append(el('h2',null,'第二回收網完成'),c,btn('和第一回比一比',null,function(){st.p='cmp';save();render()}));
+  }
+}
+
+function feel(){
+  app.innerHTML='';
+  var g=el('div','opts');var fb=el('div','opts');
+  ['narrow','just','wide'].forEach(function(key){
+    var b=btn(FEEL[key][0],'alt'+(st.feel===key?' pick':''),function(){st.feel=key;save();feel()});g.appendChild(b);
+  });
+  if(st.feel){
+    fb.append(el('p','note',FEEL[st.feel][1]+'<br><span style="font-size:.85em;color:var(--muted)">沒有對錯，想換也可以直接點別的。</span>'),
+      btn('完成第一回',null,function(){st.p='wait';save();render();window.scrollTo(0,0)}));
+  }
+  app.append(el('p','case','第一回，你網到 '+caught(0)+' 條'),el('h2',null,'回頭看看第一回，你覺得自己的網子……'),g,fb);
+}
+
+var armTimer=null;
+function wait(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('div','fishrow',fishSvg('#5E9CC2')+fishSvgRev('#B7862B')),el('p','lead','你第一回網到 '+caught(0)+' 條，覺得網子「'+FEEL[st.feel||'just'][0].replace('網子','')+'」。'),
+    el('p','lead','先把平板放著。等一下老師說開始，再按「第二回」。'));
+  var b=btn('第二回','alt',function(){
+    if(!b.dataset.arm){b.dataset.arm='1';b.className='btn warn';b.textContent='老師說開始了嗎？再按一次開始第二回';
+      clearTimeout(armTimer);armTimer=setTimeout(function(){delete b.dataset.arm;b.className='btn alt';b.textContent='第二回'},4000);return}
+    clearTimeout(armTimer);st.p='cast';st.r=1;st.i=0;save();render();window.scrollTo(0,0);
+  });
+  app.append(el('h2',null,'第一回完成，等老師說開始，再按「第二回」'),c,b);
+}
+
+/* average net width as a share of each river's own scale, so different questions can be compared */
+function avgW(r){var s=0;for(var i=0;i<5;i++){var q=R[r][i];s+=Math.min(1,(st.hi[r][i]-st.lo[r][i])/(q.mx-q.mn))}return s/5}
+function wider(){var a=avgW(0),b=avgW(1);if(b>a*1.25)return '寬';if(b<a*0.8)return '窄';return '差不多'}
+function wSay(w){return w==='差不多'?'和第一回差不多':'比第一回'+w}
+
+function cmp(){
+  app.innerHTML='';
+  var two=el('div','two');
+  [0,1].forEach(function(r){var c=el('div','col');c.append(el('b',null,'第'+(r?'二':'一')+'回'),el('div','n',caught(r)+' 條'),fishes(r));
+    c.appendChild(el('p','lead',r?'網子'+wSay(wider()):'網子寬度：拿來比較的起點'));two.appendChild(c)});
+  var w=wider();
+  var t=w==='寬'?'第二回你把網子撒得比較寬。':w==='窄'?'第二回你的網子比第一回窄。':'兩回的網子寬度差不多。';
+  app.append(el('h2',null,'兩回並排比一比'),two,el('p','note',t+'九成把握的網子，5 題大概要網到 4～5 條。想一想：你哪一回比較接近？'),
+    btn('看最後摘要',null,function(){st.p='end';save();render();window.scrollTo(0,0)}));
+}
+
+function end(){
+  app.innerHTML='';
+  var n0=caught(0),n1=caught(1),band=n0<=1?0:n0<=3?1:2;
+  var c=el('div','card');
+  c.append(el('p','lead','第一回網到幾條：'));
+  var bd=el('div','bands');['0～1 條','2～3 條','4～5 條'].forEach(function(t,j){bd.appendChild(el('div','band'+(j===band?' on':''),t))});
+  c.appendChild(bd);
+  var t=el('table');
+  [['第一回網到',n0+' 條'],['第一回覺得網子',FEEL[st.feel||'just'][0].replace('網子','')],['第二回網到',n1+' 條'],['第二回的網子',wSay(wider())]].forEach(function(x){var tr=el('tr');tr.append(el('td',null,x[0]),el('td','n',x[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var f={intro:intro,cast:cast,reveal:reveal,feel:feel,wait:wait,cmp:cmp,end:end}[st.p]||intro;f();
+}
+render();
+})();
+</script>

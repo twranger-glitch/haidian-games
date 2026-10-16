@@ -1,0 +1,190 @@
+<title>標題記者會</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: three made-up local headlines, each with only one percentage. For each: the student is a reporter at a press conference with six question buttons but may ask only three; only asked questions get answered → judge the headline (any choice allowed; the page explains what the asked answers show and what the unasked ones might hide) → pick the most honest of three rewrites (with explanation, never blocking) → summary for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;min-width:0}
+.paper{border-color:var(--rust);background:#FFFDF8}
+.paper .src{font-size:clamp(19px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0;letter-spacing:1px}
+.paper .hl{font-size:clamp(27px,4.6vw,44px);font-weight:900;color:var(--rust);line-height:1.35;margin:0;text-wrap:balance}
+.left{font-size:clamp(19px,2.6vw,24px);font-weight:700;margin:0}
+.left b{color:var(--rust);font-size:1.2em}
+.qs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.alt.used{border-color:var(--sea);background:var(--note);color:var(--sea)}
+.btn:disabled{cursor:default}
+.btn.alt:disabled:not(.used){opacity:.45}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.ans{display:flex;flex-direction:column;gap:10px}
+.a{background:var(--note);border-radius:16px;padding:12px 16px;font-size:clamp(19px,2.6vw,23px);line-height:1.65;margin:0}
+.a b{display:block;color:var(--sea);font-size:.92em}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.note ul{margin:6px 0 0;padding-left:1.2em}
+.note li{margin:4px 0}
+.mic{display:flex;align-items:center;gap:14px}
+.mic svg{width:72px;height:72px;flex:none}
+.big{font-size:clamp(40px,8vw,72px);font-weight:900;line-height:1.15;margin:0;text-align:center;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+@media (max-width:560px){.qs{grid-template-columns:1fr}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='press-conference-v1';
+var Q=['原本有多少？','後來有多少？','分母是誰？','跟誰比？','調查了幾個人？','哪一段時間？'];
+var J=['很誇張','有點誇張','還算公平'];
+var H=[
+ {src:'海佃國小自然社・社刊頭條',hl:'海佃溪的白鷺鷥增加 300%！',
+  a:['上個星期六早上，自然社的阿哲在海佃溪的小橋下面，數到 1 隻白鷺鷥。',
+     '這個星期六早上，他在同一個地方數到 4 隻。',
+     '分母是上星期看到的 1 隻。多了 3 隻，3 ÷ 1 ＝ 300%。',
+     '只跟上一個星期六比。再往前幾個星期，阿哲有時候看到 5 隻，有時候看到 2 隻。',
+     '只有阿哲 1 個人在數，每次大約數 10 分鐘。',
+     '兩次都是星期六早上 7 點，在同一座小橋下面數 10 分鐘。'],
+  hide:['沒問原本有多少，就不知道「300%」其實可能只是從 1 隻變成 4 隻。',
+     '沒問後來有多少，就不知道現在溪邊到底有幾隻白鷺鷥。',
+     '沒問分母，就不知道 300% 是拿「1 隻」當原本，分母很小，百分比就很容易變得很大。',
+     '沒問跟誰比，就不知道它只挑了上一個星期六來比；白鷺鷥的數量本來就每個星期忽多忽少。',
+     '沒問是誰在數，就不知道只有 1 個人、每次只數 10 分鐘，很容易剛好多看到或少看到幾隻。',
+     '沒問哪一段時間，就不知道每次只看了 10 分鐘，鳥飛來飛去，數字本來就會跳動。'],
+  see:["原本只有 1 隻，數字很小。", "現在是 4 隻，其實只多了 3 隻。", "分母只有 1，多一點點，百分比就會變得很大。", "白鷺鷥每個星期本來就忽多忽少，這一次可能只是剛好比較多。", "只有 1 個人數 10 分鐘，數字不太穩。", "兩次的時間和地點都一樣，這一點比得還算公平。"],
+  rw:['海佃溪的白鷺鷥暴增，數量變成四倍！','上星期六早上在小橋下看到 1 隻白鷺鷥，這星期六看到 4 隻。','海佃溪的白鷺鷥，一下子大量飛回來了！'],ok:1,
+  rwe:['「四倍」和「300%」其實是同一件事，還是沒說出原本只有 1 隻，讀的人會以為多了很多。','這個標題把原本和後來的數字都說出來，讀的人自己就能判斷「多了 3 隻」到底多不多。','「大量」這兩個字沒有任何數字，只是換一種方式說得很厲害。']},
+ {src:'六年三班・校外教學小報',hl:'七股潟湖校外教學，100% 的同學都說好玩！',
+  a:['這個標題不是在比「以前和現在」，所以沒有「原本」的數字。',
+     '調查只做了一次，沒有「後來」。',
+     '分母是被問到的 2 個人。可是那天全班一共有 28 個人去。',
+     '沒有跟別的地方比，也沒有跟去年的校外教學比。',
+     '寫報導的小記者在遊覽車上，只問了坐在旁邊的 2 位同學，2 個人都說好玩。',
+     '是在回程的遊覽車上問的，那時候大家剛吃完冰，心情都很好。'],
+  hide:['這一則沒有比前後，就算沒問「原本」，也沒有漏掉什麼。不是每個問題都對每一則標題有用。',
+     '這一則只調查一次，沒問「後來」也沒有漏掉什麼。',
+     '沒問分母，就不知道「100%」的分母只有 2 個人，不是全班 28 個人。',
+     '沒問跟誰比，影響不大；這一則的問題主要在「問了誰」。',
+     '沒問調查了幾個人，就不知道只問了坐在旁邊的 2 位同學，另外 26 個人的想法都沒有被問到。',
+     '沒問哪一段時間，就不知道是在大家剛吃完冰、心情最好的時候問的，答案可能會比較好聽。'],
+  see:["這一則沒有比前後，這一題幫不上忙。", "這一則只調查一次，這一題幫不上忙。", "分母只有 2 個人，不是全班 28 個人。", "沒有拿來比的對象，這一題幫不上什麼忙。", "只問了 2 個人，「100%」其實就是「2 個人裡有 2 個」。", "在大家心情最好的時候問，答案可能比較好聽。"],
+  rw:['參加潟湖校外教學的人，全都說好玩！','七股潟湖校外教學，滿意度破表！','回程時問了坐在旁邊的 2 位同學，2 位都說好玩；其他 26 位還沒問。'],ok:2,
+  rwe:['「全都」聽起來像是 28 個人都說好玩，可是其實只問了 2 個人。','「破表」沒有數字，也沒說問了誰，讀的人還是會以為大家都很滿意。','這個標題說出問了幾個人、在什麼時候問，讀的人知道這只是 2 個人的想法。']},
+ {src:'安南區小學生新聞・福利社快報',hl:'福利社的鮮奶，一天的銷量暴跌 50%！',
+  a:['星期一，福利社賣了 40 瓶鮮奶。',
+     '星期二，福利社賣了 20 瓶鮮奶。',
+     '分母是星期一的 40 瓶。少了 20 瓶，20 ÷ 40 ＝ 50%。',
+     '只跟前一天星期一比。上個星期二其實也賣了大約 40 瓶。',
+     '這不是問人的調查，是福利社阿姨看帳本算出來的。',
+     '星期二那一天，五、六年級都去校外教學，學校裡少了快一半的人。'],
+  hide:['沒問原本有多少，就不知道「暴跌 50%」其實是從 40 瓶變成 20 瓶。',
+     '沒問後來有多少，就不知道一天還是賣了 20 瓶，鮮奶並不是沒人喝。',
+     '沒問分母，就不知道 50% 是拿星期一的 40 瓶當原本。',
+     '沒問跟誰比，就不知道它只挑了前一天來比；如果跟上個星期二比，其實差不多。',
+     '沒問調查了幾個人，影響不大；這一則的數字是看帳本算的。',
+     '沒問哪一段時間，就不知道星期二五、六年級都不在學校，買鮮奶的人本來就變少了。'],
+  see:["原本是 40 瓶。", "後來還是賣了 20 瓶，鮮奶不是沒人喝。", "分母是 40 瓶，「少一半」的算法沒有錯。", "跟上個星期二比，其實差不多。", "這一則不是問人的調查，這一題幫不上忙。", "那天有一半的人不在學校，少賣是很正常的。"],
+  rw:['福利社的鮮奶，沒有人要喝了！','星期二福利社鮮奶賣了 20 瓶，比星期一少一半；那天五、六年級去校外教學。','鮮奶銷量腰斬，福利社出現危機！'],ok:1,
+  rwe:['「沒有人要喝」說得太過頭了，那天其實還是賣了 20 瓶。','這個標題說出兩天的數字，也說出那天有一半的人不在學校，讀的人就知道為什麼會變少。','「腰斬」和「危機」聽起來很嚴重，可是沒說出那天有一半的人去校外教學。']}
+];
+var JN=['你覺得這個數字把一件小事說得很大。','你覺得標題說得太滿了一點，可是也不完全是錯的。','你覺得這個數字算得對，標題沒有亂說。'];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+function fresh(){return {go:false,i:0,stage:0,asked:[[],[],[]],judge:[],rw:[]}}
+var st=load();if(!st||!st.asked||st.asked.length!==H.length)st=fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(cls,t,f){var b=el('button',cls,t);b.type='button';b.addEventListener('click',f);return b}
+var MIC='<svg viewBox="0 0 72 72" aria-hidden="true"><rect x="24" y="6" width="24" height="38" rx="12" fill="#205E86"/><path d="M16 34 Q16 54 36 54 Q56 54 56 34" fill="none" stroke="#56605C" stroke-width="5" stroke-linecap="round"/><line x1="36" y1="54" x2="36" y2="66" stroke="#56605C" stroke-width="5"/><line x1="24" y1="66" x2="48" y2="66" stroke="#56605C" stroke-width="5" stroke-linecap="round"/></svg>';
+function paper(h){var c=el('div','card paper');c.append(el('p','src',h.src),el('p','hl','「'+h.hl+'」'));return c}
+function answers(i){var w=el('div','ans');st.asked[i].forEach(function(k){w.appendChild(el('p','a','<b>你問：'+Q[k]+'</b>'+H[i].a[k]))});return w}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');var m=el('div','mic');m.innerHTML=MIC;m.appendChild(el('p','lead','今天你是小記者，要參加 3 場記者會。每一場都有一個很誇張的標題，標題裡只有一個百分比。'));
+  c.append(m,el('p','lead','你有 6 個問題可以問，可是每一場<b>只能問 3 個</b>。你問了，才會得到回答。'),el('p','lead','問完以後，判斷這個標題誇不誇張，再選一個最誠實的改寫標題。'));
+  app.append(el('h1',null,'標題記者會'),c,btn('btn','開始採訪',function(){st.go=true;save(st);show()}));
+}
+function show(){
+  if(!st.go){intro();return}
+  if(st.i>=H.length){end();return}
+  var i=st.i,h=H[i];app.innerHTML='';window.scrollTo(0,0);
+  app.appendChild(el('p','case','<span>第 '+(i+1)+' 場記者會，共 '+H.length+' 場</span><span>'+['① 提問','② 判斷','③ 改寫'][st.stage]+'</span>'));
+  app.appendChild(paper(h));
+  if(st.stage===0){
+    var n=st.asked[i].length;
+    app.append(el('h2',null,'你是記者，舉手發問吧！'),el('p','left','還可以問 <b>'+(3-n)+'</b> 題（一共 6 題，只能選 3 題）'));
+    var g=el('div','qs');
+    Q.forEach(function(t,k){var used=st.asked[i].indexOf(k)>=0;var b=btn('btn alt'+(used?' used':''),(used?ic('check')+' ':'')+t,function(){
+      if(used||st.asked[i].length>=3)return;st.asked[i].push(k);save(st);show();
+      var a=document.querySelectorAll('.a');if(a.length)a[a.length-1].scrollIntoView({behavior:'smooth',block:'center'});
+    });if(used||n>=3)b.disabled=true;g.appendChild(b)});
+    app.appendChild(g);
+    if(n)app.appendChild(answers(i));
+    if(n>=3){var nx=btn('btn','問完了，來判斷這個標題',function(){st.stage=1;save(st);show()});app.appendChild(nx)}
+  }else if(st.stage===1){
+    app.appendChild(answers(i));
+    app.appendChild(el('h2',null,'根據你問到的回答，這個標題……'));
+    var g2=el('div','opts');var fb=el('div','opts');
+    J.forEach(function(t,k){var b=btn('btn alt'+(st.judge[i]===k?' pick':''),t,function(){st.judge[i]=k;save(st);mark(g2,b);judgeFb(fb,i)});g2.appendChild(b)});
+    app.append(g2,fb);if(st.judge[i]!=null)judgeFb(fb,i);
+  }else{
+    app.appendChild(el('h2',null,'如果要改寫這個標題，哪一個最誠實？'));
+    var g3=el('div','opts');var fb3=el('div','opts');
+    h.rw.forEach(function(t,k){var b=btn('btn alt'+(st.rw[i]===k?' pick':''),t,function(){st.rw[i]=k;save(st);mark(g3,b);rwFb(fb3,i)});g3.appendChild(b)});
+    app.append(g3,fb3);if(st.rw[i]!=null)rwFb(fb3,i);
+  }
+}
+function mark(g,b){Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick')}
+function judgeFb(fb,i){
+  var h=H[i],k=st.judge[i];fb.innerHTML='';
+  var got='<b>你問到的回答，讓你看出：</b><ul>'+st.asked[i].map(function(q){return '<li>'+Q[q]+'——'+h.see[q]+'</li>'}).join('')+'</ul>';
+  var miss=[0,1,2,3,4,5].filter(function(q){return st.asked[i].indexOf(q)<0});
+  var hid='<b>你沒問的問題，可能藏著：</b><ul>'+miss.map(function(q){return '<li>'+h.hide[q]+'</li>'}).join('')+'</ul>';
+  fb.append(el('p','note warm','你選了「'+J[k]+'」。'+JN[k]+'這三個選項都可以選，等一下全班一起比比看，大家的理由有什麼不一樣。'),el('div','note',got),el('div','note',hid));
+  var nx=btn('btn','下一步：改寫標題',function(){st.stage=2;save(st);show()});fb.appendChild(nx);
+}
+function rwFb(fb,i){
+  var h=H[i],k=st.rw[i];fb.innerHTML='';
+  var txt=k===h.ok?'這一個最誠實。'+h.rwe[k]:'你選的這一個還不夠誠實：'+h.rwe[k]+'<br><br>最誠實的是「'+h.rw[h.ok].replace(/[。！]$/,'')+'」。'+h.rwe[h.ok];
+  fb.append(el('p','note'+(k===h.ok?'':' warm'),txt+'<br><span style="font-size:.85em;color:var(--muted)">想換一個也可以，直接點別的標題。</span>'));
+  fb.appendChild(btn('btn',st.i<H.length-1?'前往下一場記者會':'看看我的採訪紀錄',function(){st.i++;st.stage=0;save(st);show()}));
+}
+function end(){
+  app.innerHTML='';window.scrollTo(0,0);
+  var cnt=[0,0,0,0,0,0];st.asked.forEach(function(a){a.forEach(function(k){cnt[k]++})});
+  var mx=Math.max.apply(null,cnt);var top=Q.filter(function(t,k){return cnt[k]===mx&&mx>0});
+  var c=el('div','card');c.append(el('p','lead','你最常問的問題是'),el('p','big',top.join('<br>')||'—'),el('p','lead',mx?'（3 場記者會裡問了 '+mx+' 次）':''));
+  var t=el('table');
+  H.forEach(function(h,k){var tr=el('tr');
+    var a=st.asked[k].map(function(q){return Q[q]}).join('、')||'—';
+    var ok=st.rw[k]==null?'—':(st.rw[k]===h.ok?'選到最誠實的改寫':'改寫選了別的');
+    tr.append(el('td','k','第 '+(k+1)+' 場'),el('td',null,'<b>'+h.hl+'</b><br>問了：'+a+'<br>判斷：<b>'+(st.judge[k]!=null?J[st.judge[k]]:'—')+'</b>　'+ok));t.appendChild(tr)});
+  var c2=el('div','card');c2.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,c2);
+}
+show();
+})();
+</script>

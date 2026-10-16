@@ -1,0 +1,339 @@
+<title>颱風前夜的雜貨店</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro with a secret colour (blue/orange) → story card (shared part + the colour's reason for the price rise, with a scene picture) → stick one round vote sticker on one of four fairness cards (can move it) → "if you were the owner": 20 raincoats vs 40 people, pick one of five ways to sell, each shows its effect and cost (can change) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --blue:#2369A8; --blueBg:#E3EEF8; --orange:#C9621A; --orangeBg:#FBE9DA;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible,.vote:focus-visible,.opt:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.hero{display:flex;gap:14px;align-items:center}
+.hero svg.i{width:64px;height:64px;color:var(--ink)}
+/* colour badge */
+.chip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:4px 16px 4px 6px;font-weight:900;font-size:clamp(19px,2.6vw,24px);color:#fff;white-space:nowrap}
+.chip .dot{width:26px;height:26px;border-radius:50%;background:#fff;opacity:.9;border:5px solid rgba(0,0,0,.12)}
+.chip.c0{background:var(--blue)} .chip.c1{background:var(--orange)}
+.mine{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;font-size:clamp(19px,2.7vw,25px);font-weight:700}
+/* story card */
+.story{border-width:4px;padding:0;overflow:hidden;gap:0}
+.story.c0{border-color:var(--blue)} .story.c1{border-color:var(--orange)}
+.story .band{display:flex;align-items:center;gap:10px;padding:8px 16px;color:#fff;font-weight:900;font-size:clamp(19px,2.5vw,22px)}
+.story.c0 .band{background:var(--blue)} .story.c1 .band{background:var(--orange)}
+.story .scene{display:block;width:100%;height:auto;background:#DDE6EC}
+.story .txt{padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.story .txt p{margin:0;font-size:clamp(20px,2.9vw,26px);line-height:1.75}
+.story .txt .turn{font-weight:700;color:var(--ink)}
+.story.c0 .turn{border-left:6px solid var(--blue);padding-left:12px}
+.story.c1 .turn{border-left:6px solid var(--orange);padding-left:12px}
+.gloss{font-size:clamp(19px,2.3vw,21px)!important;color:var(--muted)}
+.tagrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-weight:900;font-size:clamp(22px,3.2vw,30px)}
+.tagrow .old{color:var(--muted);text-decoration:line-through;text-decoration-thickness:3px}
+.tagrow .new{color:var(--rust)}
+.tagrow .pr{white-space:nowrap}
+.tagrow small{font-size:.6em;color:var(--muted);font-weight:700}
+.tagrow svg.i{width:1.5em;height:1.5em}
+/* sticker vote */
+.sheet{display:flex;align-items:center;gap:14px;background:var(--card);border:3px dashed var(--line);border-radius:18px;padding:10px 16px}
+.sheet p{margin:0;font-size:clamp(19px,2.5vw,23px);font-weight:700;color:var(--muted)}
+.sheet .slot{width:62px;height:62px;flex:none;border-radius:50%;border:3px dashed var(--line);display:flex;align-items:center;justify-content:center}
+.votes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.vote{position:relative;font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:20px;min-height:170px;padding:18px 12px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .15s,background .15s,transform .08s}
+.vote:active{transform:scale(.97)}
+.vote .face{width:64px;height:64px}
+.vote .lb{font-size:clamp(23px,3.6vw,32px);font-weight:900;line-height:1.25}
+.vote.on{border-color:var(--gold);background:var(--warm)}
+.stk{position:absolute;width:80px;height:80px;pointer-events:none;filter:drop-shadow(0 3px 3px rgba(31,42,46,.25))}
+.stk.pop{animation:stick .42s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes stick{0%{transform:translate(-30px,-60px) scale(1.5) rotate(-30deg);opacity:0}60%{opacity:1}100%{transform:translate(0,0) scale(1) rotate(var(--r,-8deg));opacity:1}}
+.stk.still{transform:rotate(var(--r,-8deg))}
+@media (prefers-reduced-motion:reduce){.stk.pop{animation:none;transform:rotate(var(--r,-8deg))}}
+/* owner step */
+.stock{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center}
+.stock .k{font-weight:900;font-size:clamp(19px,2.6vw,24px);white-space:nowrap;display:flex;flex-direction:column;line-height:1.3}
+.stock .k b{font-size:1.5em;font-variant-numeric:tabular-nums}
+.stock .k.coat b{color:#9A7410} .stock .k.ppl b{color:var(--sea)}
+.minis{display:flex;flex-wrap:wrap;gap:2px}
+.minis svg.i{width:clamp(20px,3.3vw,30px);height:clamp(20px,3.3vw,30px)}
+.minis.coat{color:#6B5410}
+.minis.ppl{color:var(--sea)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 16px;cursor:pointer;text-align:left;display:flex;gap:14px;align-items:center;font-size:clamp(19px,2.8vw,25px);font-weight:700;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.opt .ico{flex:none;width:52px;height:52px;border-radius:14px;background:var(--note);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.opt .ico svg.i{width:34px;height:34px}
+.opt .letter{font-weight:900;color:var(--sea);margin-right:6px}
+.opt.on{border-color:var(--gold);background:var(--warm)}
+.opt.on .ico{background:#F6E2B8}
+.detail{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:baseline;background:var(--card);border:3px solid var(--gold);border-top:0;border-radius:0 0 18px 18px;margin:-16px 0 0;padding:20px 16px 14px}
+.detail .tg{font-weight:900;font-size:clamp(19px,2.4vw,21px);color:#fff;border-radius:10px;padding:2px 10px;white-space:nowrap}
+.detail .tg.a{background:var(--good)} .detail .tg.b{background:var(--rust)}
+.detail p{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.6}
+/* end */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:12px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;width:34%}
+td b{color:var(--ink)}
+td+td{font-size:clamp(21px,3vw,27px);line-height:1.55}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .votes{gap:10px}
+  .vote{min-height:150px;padding:16px 8px 12px}
+  .vote .face{width:54px;height:54px}
+  .stk{width:60px;height:60px}
+  .opt{padding:10px 12px;gap:10px}
+  .opt .ico{width:44px;height:44px}
+  .opt .ico svg.i{width:30px;height:30px}
+  td:first-child{width:38%}
+  th,td{padding:10px 4px}
+}
+@media (max-width:440px){
+  table,tbody,tr,td{display:block;width:100%!important}
+  tr{border-bottom:2px solid var(--line);padding:8px 0}
+  td{border:0;padding:2px 2px}
+  .hero svg.i{width:52px;height:52px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+/* duotone icons: 24x24, stroke 1.8 round, dark line + light fill (same style as icons/icons.py) */
+var ICI={
+ coat:'<path d="M12 2.6c-2.9 0-4.9 2.1-4.9 4.9v1.3L3.4 19.4a1.3 1.3 0 0 0 1.2 1.8h14.8a1.3 1.3 0 0 0 1.2-1.8L16.9 8.8V7.5c0-2.8-2-4.9-4.9-4.9z" fill="#F6E3A1"/><ellipse cx="12" cy="8.4" rx="2.9" ry="2.6" fill="#F2CFAE"/><path d="M12 13.4v7.8M7.1 14.5l-1.6 3.2M16.9 14.5l1.6 3.2"/>',
+ storm:'<path d="M8 12.6C7.6 6.8 11.4 3 19 3.2c-2.6 1.3-4 3-4.4 5.3" fill="#DCE8F0"/><path d="M16 11.4c.4 5.8-3.4 9.6-11 9.4 2.6-1.3 4-3 4.4-5.3" fill="#DCE8F0"/><circle cx="12" cy="12" r="4.1" fill="#FBFCF9"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/>',
+ store:'<path d="M4.5 10v10.5h15V10" fill="#FBFCF9"/><path d="M4 3.5h16l1.8 5.2a2 2 0 0 1-1.9 2.4H4.1a2 2 0 0 1-1.9-2.4z" fill="#F2B8A0"/><path d="M8.6 3.5l-.9 7.6M12 3.5v7.6M15.4 3.5l.9 7.6"/><path d="M9.7 20.5v-5.3h4.6v5.3" fill="#DCE8F0"/>',
+ truck:'<path d="M2.5 6h11v10.5h-11z" fill="#F3E3BE"/><path d="M13.5 9.5h4.2l3.8 3.8v3.2h-8z" fill="#DCE8F0"/><circle cx="6.5" cy="17.6" r="2.1" fill="#FBFCF9"/><circle cx="17.2" cy="17.6" r="2.1" fill="#FBFCF9"/>',
+ tag:'<path d="M3 12.4V4.6A1.6 1.6 0 0 1 4.6 3h7.8l8.6 8.6a1.6 1.6 0 0 1 0 2.2l-7.2 7.2a1.6 1.6 0 0 1-2.2 0z" fill="#F3E3BE"/><circle cx="7.9" cy="7.9" r="1.7" fill="#FBFCF9"/><path d="M11 14l4-4"/>',
+ crowd:'<circle cx="5.6" cy="9" r="2.4" fill="#E9EEF1"/><circle cx="18.4" cy="9" r="2.4" fill="#E9EEF1"/><path d="M1.8 18.5v-.8a3.9 3.9 0 0 1 5.8-3.4M22.2 18.5v-.8a3.9 3.9 0 0 0-5.8-3.4"/><circle cx="12" cy="7.6" r="3.1" fill="#F6EBD2"/><path d="M6.2 20.5v-1.2a5.8 5.8 0 0 1 11.6 0v1.2z" fill="#DCE8F0"/>',
+ coatS:'<path d="M12 3.2c-2.6 0-4.4 1.9-4.4 4.4v1.2L4 19.2a1.3 1.3 0 0 0 1.2 1.7h13.6a1.3 1.3 0 0 0 1.2-1.7L16.4 8.8V7.6c0-2.5-1.8-4.4-4.4-4.4z" fill="#F6E3A1"/><path d="M9.8 8.6a2.2 2.2 0 0 1 4.4 0"/>',
+ person:'<circle cx="12" cy="7.4" r="3.6" fill="#F6EBD2"/><path d="M5 21v-1.3a7 7 0 0 1 14 0V21z" fill="#DCE8F0"/>',
+ coins:'<path d="M3.5 6.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6V6.5" fill="#F3E3BE"/><ellipse cx="9.5" cy="6.5" rx="6" ry="2.6" fill="#FBF4E2"/><path d="M8.5 13.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-4.2" fill="#F3E3BE"/><ellipse cx="14.5" cy="13.5" rx="6" ry="2.6" fill="#FBF4E2"/>',
+ line:'<circle cx="5" cy="6.5" r="2.3" fill="#F6EBD2"/><circle cx="12" cy="6.5" r="2.3" fill="#F6EBD2"/><circle cx="19" cy="6.5" r="2.3" fill="#F6EBD2"/><path d="M1.8 14v-.6a3.2 3.2 0 0 1 6.4 0v.6zM8.8 14v-.6a3.2 3.2 0 0 1 6.4 0v.6zM15.8 14v-.6a3.2 3.2 0 0 1 6.4 0v.6z" fill="#DCE8F0"/><path d="M3 19h17M17 16.5l3 2.5-3 2.5"/>',
+ one:'<path d="M8.6 2.8c-2.2 0-3.7 1.6-3.7 3.7v1L2.3 16a1.1 1.1 0 0 0 1 1.5h10.6a1.1 1.1 0 0 0 1-1.5l-2.6-8.5v-1c0-2.1-1.5-3.7-3.7-3.7z" fill="#F6E3A1"/><path d="M6.8 7.4a1.8 1.8 0 0 1 3.6 0"/><circle cx="17.2" cy="16.8" r="5.3" fill="#FBFCF9"/><path d="M15.8 15l1.8-1.3v6.2"/>',
+ draw:'<path d="M4.5 10h15v9.5a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5z" fill="#DCE8F0"/><path d="M3.5 7.5h17V10h-17z" fill="#FBFCF9"/><path d="M9.5 10V3.2h5.4V10" fill="#F3E3BE"/><path d="M11 5.6h2.4"/><path d="M9.5 14.5h5"/>',
+ ask:'<path d="M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-8.5L6.5 20.5v-4H4A1.5 1.5 0 0 1 2.5 15V6A1.5 1.5 0 0 1 4 4.5z" fill="#F6EBD2"/><path d="M9.6 8.6a2.4 2.4 0 1 1 3.4 2.2c-.6.3-1 .8-1 1.5v.2"/><circle cx="12" cy="14.4" r=".5" fill="currentColor"/>',
+ f0:'<circle cx="12" cy="12" r="9.5" fill="#F6EBD2"/><circle cx="8.8" cy="10" r=".9" fill="currentColor"/><circle cx="15.2" cy="10" r=".9" fill="currentColor"/><path d="M7.6 13.6c1 2.3 2.6 3.4 4.4 3.4s3.4-1.1 4.4-3.4z" fill="#FBFCF9"/>',
+ f1:'<circle cx="12" cy="12" r="9.5" fill="#F6EBD2"/><circle cx="8.8" cy="10" r=".9" fill="currentColor"/><circle cx="15.2" cy="10" r=".9" fill="currentColor"/><path d="M8.6 14.6c1 1 2.1 1.5 3.4 1.5s2.4-.5 3.4-1.5"/>',
+ f2:'<circle cx="12" cy="12" r="9.5" fill="#F6EBD2"/><circle cx="8.8" cy="10" r=".9" fill="currentColor"/><circle cx="15.2" cy="10" r=".9" fill="currentColor"/><path d="M8.8 15.6c1.2-.9 2.3-1.2 3.4-1.1 1 .1 1.9.5 2.9 1.2"/>',
+ f3:'<circle cx="12" cy="12" r="9.5" fill="#F6EBD2"/><path d="M7.4 8.2l2.6 1.2M16.6 8.2L14 9.4"/><circle cx="8.9" cy="11" r=".9" fill="currentColor"/><circle cx="15.1" cy="11" r=".9" fill="currentColor"/><path d="M8.4 17c1.1-1.5 2.3-2.2 3.6-2.2s2.5.7 3.6 2.2"/>'
+};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='storm-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+/* g=0 藍組: price goes up because many people are queuing. g=1 橘組: price goes up because the wholesale price went up. */
+var st=load();
+if(!st||(st.g!==0&&st.g!==1)){st={g:rnd(),step:0,fair:null,sell:null}}
+save(st);
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+var COL=[{name:'藍色',k:'blue'},{name:'橘色',k:'orange'}];
+var SHARED='海佃路上有一家雜貨店，賣飲料、零食和文具，也賣輕便雨衣。一件輕便雨衣，平常賣 50 元（假設）。';
+var TURN=['颱風明天要來，今天大家都搶著買雨衣。老闆看到排隊的人很多，就把雨衣漲到 80 元（假設）。',
+          '颱風要來，送貨的路不好走，批發商賣給雜貨店的雨衣變貴了。老闆也把雨衣漲到 80 元（假設）。'];
+var REASON=['排隊買雨衣的人很多，老闆就把雨衣從 50 元漲到 80 元（假設）。',
+            '批發商賣給雜貨店的雨衣變貴了，老闆也把雨衣從 50 元漲到 80 元（假設）。'];
+var FAIR=[['f0','很公平'],['f1','還算可以'],['f2','有點不公平'],['f3','很不公平']];
+var STK=[{x:'64%',y:'-10px',r:'-10deg'},{x:'6%',y:'-12px',r:'9deg'},{x:'66%',y:'-8px',r:'7deg'},{x:'5%',y:'-10px',r:'-12deg'}];
+var SELL=[
+ ['A','coins','漲價，願意多付的人先買','最想要雨衣的人會買到，老闆也比較願意再多進一些雨衣。','錢比較少的人可能買不到，很多人會覺得不公平。'],
+ ['B','line','照原價，先到先買','價錢不變，大家會覺得比較公平。','排在後面的人買不到，也可能有人一次買很多件。'],
+ ['C','one','照原價，每人限買 1 件','更多人買得到雨衣。','家裡人多的，一件可能不夠。'],
+ ['D','draw','照原價，抽籤','每個人買到的機會都一樣。','最需要雨衣的人，不一定抽得到。'],
+ ['E','ask','先問誰最需要（例如要騎車上學、要去工作）','可以先照顧最急著要雨衣的人。','很難判斷誰最需要，也要花不少時間一個一個問。']
+];
+
+function chip(){return '<span class="chip c'+st.g+'"><span class="dot"></span>'+COL[st.g].name+'</span>'}
+function sticker(){
+  var c=st.g===0?'#2369A8':'#C9621A';
+  return '<svg viewBox="0 0 66 66" aria-hidden="true"><circle cx="33" cy="33" r="31" fill="#FBFCF9"/><circle cx="33" cy="33" r="26" fill="'+c+'"/><circle cx="33" cy="33" r="21" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="3 4" opacity=".75"/><text x="33" y="41.5" text-anchor="middle" font-size="23" font-weight="900" fill="#fff" font-family="Noto Sans TC,PingFang TC,sans-serif">我</text></svg>';
+}
+
+/* scene picture for the story card */
+function scene(g){
+  var s='<svg class="scene" viewBox="0 0 360 190" role="img" aria-label="'+(g===0?'雜貨店門口排了很多人，雨衣的價錢牌從 50 元改成 80 元。':'送貨的貨車在颳風的路上慢慢開，雜貨店雨衣的價錢牌從 50 元改成 80 元。')+'">';
+  s+='<rect width="360" height="190" fill="#DCE5EC"/>';
+  s+='<path d="M0 32 Q28 12 60 26 Q86 6 118 24 Q148 10 178 26 Q206 8 238 24 Q268 6 300 22 Q330 10 360 24 L360 0 L0 0Z" fill="#B9C6D0"/>';
+  s+='<g stroke="#8FA3B2" stroke-width="2" stroke-linecap="round">';
+  for(var i=0;i<14;i++){var x=14+i*26,y=40+(i%3)*10;s+='<path d="M'+x+' '+y+'l-6 12"/>'}
+  s+='</g>';
+  s+='<rect x="0" y="160" width="360" height="30" fill="#C9CFC7"/>';
+  /* store */
+  s+='<g stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">';
+  s+='<rect x="22" y="70" width="150" height="92" fill="#FBFCF9"/>';
+  s+='<path d="M14 52h166l8 26H6z" fill="#F2B8A0"/><path d="M47 52l-7 26M80 52l-3 26M114 52l3 26M147 52l7 26" />';
+  s+='<rect x="34" y="92" width="64" height="52" fill="#E9F0F4"/>';
+  s+='<rect x="112" y="98" width="44" height="64" fill="#DCE8F0"/>';
+  s+='<path d="M34 100h64" />';
+  for(var j=0;j<3;j++){var cx=46+j*20;s+='<path d="M'+cx+' 103c-4 0-6 3-6 6v2l-5 16a2 2 0 0 0 2 2.5h18a2 2 0 0 0 2-2.5l-5-16v-2c0-3-2-6-6-6z" fill="#F6E3A1" stroke-width="2"/>'}
+  s+='</g>';
+  s+='<text x="97" y="45" text-anchor="middle" font-size="17" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">海佃雜貨店</text>';
+  /* price tag */
+  s+='<g transform="translate(178 74) rotate(8)" stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round"><path d="M0 0h64v50H0z" fill="#FBF1DC"/></g>';
+  s+='<g transform="translate(178 74) rotate(8)" font-family="Noto Sans TC,sans-serif" font-weight="900"><text x="32" y="15" text-anchor="middle" font-size="12" fill="#56605C">50 元</text><path d="M15 11h34" stroke="#A8441A" stroke-width="2.4"/><text x="32" y="31" text-anchor="middle" font-size="15" fill="#A8441A">80 元</text><text x="32" y="44" text-anchor="middle" font-size="10" font-weight="700" fill="#56605C">（假設）</text></g>';
+  if(g===0){
+    /* queue of people */
+    var cols=['#205E86','#2F7D4F','#B7862B','#A8441A','#5B6F86','#7A5A16'];
+    s+='<g stroke="#1F2A2E" stroke-width="2.4">';
+    for(var k=0;k<6;k++){var px=238+k*20,py=130-(k%2)*4;s+='<path d="M'+(px-9)+' 163v-12a9 9 0 0 1 18 0v12z" fill="'+cols[k]+'"/><circle cx="'+px+'" cy="'+(py+3)+'" r="7.5" fill="#F2CFAE"/>'}
+    s+='</g>';
+    s+='<g stroke="#1F2A2E" stroke-width="2.4"><path d="M196 163v-12a9 9 0 0 1 18 0v12z" fill="#8A6CB0"/><circle cx="205" cy="138" r="7.5" fill="#F2CFAE"/></g>';
+  }else{
+    /* windy road and delivery truck */
+    s+='<path d="M196 170 Q230 160 262 170 T330 168 T380 170" fill="none" stroke="#9AA39A" stroke-width="3"/>';
+    s+='<g stroke="#56605C" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M262 84h40M276 94h44M256 104h28"/></g>';
+    s+='<g transform="rotate(-3 290 150)" stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round"><rect x="246" y="122" width="58" height="36" fill="#F3E3BE"/><path d="M304 132h18l12 12v14h-30z" fill="#DCE8F0"/><circle cx="264" cy="162" r="7" fill="#FBFCF9"/><circle cx="318" cy="162" r="7" fill="#FBFCF9"/></g>';
+    s+='<text x="275" y="146" text-anchor="middle" font-size="12" font-weight="900" fill="#7A5A16" font-family="Noto Sans TC,sans-serif" transform="rotate(-3 290 150)">雨衣</text>';
+  }
+  s+='</svg>';
+  return s;
+}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var hero=el('div','hero',ic('storm')+ic('store'));
+  var c=el('div','card');
+  c.append(el('p','lead','接下來你會讀到一個發生在海佃路上的小故事，然後回答兩個問題。'),
+           el('p','lead','這兩個問題<b>沒有標準答案</b>，照你自己的想法選就好。你選的答案，等一下會被算進全班統計。'));
+  var m=el('p','mine');m.innerHTML='你拿到的故事卡是：'+chip();
+  app.append(hero,el('h1',null,'颱風前夜的雜貨店'),c,m,el('p','note','每個人的平板自己做，不用看旁邊同學的畫面。'),button('打開故事卡','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: story ---------- */
+function story(){
+  app.innerHTML='';
+  var s=el('div','card story c'+st.g);
+  s.appendChild(el('div','band','<span>'+COL[st.g].name+'故事卡</span>'));
+  s.insertAdjacentHTML('beforeend',scene(st.g));
+  var t=el('div','txt');
+  t.append(el('p',null,SHARED),el('p','turn',TURN[st.g]));
+  if(st.g===1)t.appendChild(el('p','gloss','批發商：把一大批雨衣一起賣給商店的人。'));
+  var tr=el('div','tagrow');tr.innerHTML=ic('coat')+'<span>一件輕便雨衣</span><span class="pr"><span class="old">50 元</span> → <span class="new">80 元</span><small>（假設）</small></span>';
+  t.appendChild(tr);
+  s.appendChild(t);
+  app.append(el('p','case',ic('store')+'故事'),el('h2',null,'颱風來的前一天，雜貨店發生了什麼事？'),s,button('讀完了','btn',function(){go(2)}));
+}
+
+/* ---------- step 2: stick a vote sticker ---------- */
+function vote(){
+  app.innerHTML='';
+  var sheet=el('div','sheet');var slot=el('div','slot');var sp=el('p');
+  sheet.append(slot,sp);
+  function sheetUpd(){
+    if(st.fair==null){slot.innerHTML=sticker();slot.style.border='0';sp.textContent='這是你的投票貼紙。點一張卡，就會把貼紙貼上去。'}
+    else{slot.innerHTML='';slot.style.border='';sp.textContent='貼好了！想改的話，點另一張卡，貼紙就會換過去。'}
+  }
+  var grid=el('div','votes');grid.setAttribute('role','group');grid.setAttribute('aria-label','你覺得老闆這樣做公平嗎');
+  var cards=[];
+  var nx=button('貼好了，下一步','btn',function(){if(st.fair!=null)go(3)});nx.disabled=st.fair==null;
+  function place(k,anim){
+    cards.forEach(function(b,i){
+      b.classList.toggle('on',i===k);b.setAttribute('aria-pressed',i===k?'true':'false');
+      var old=b.querySelector('.stk');if(old&&i!==k)old.remove();
+    });
+    if(k==null)return;
+    var b=cards[k];if(b.querySelector('.stk'))return;
+    var p=STK[k],d=el('span','stk '+(anim?'pop':'still'),sticker());
+    d.style.left=p.x;d.style.top=p.y;d.style.setProperty('--r',p.r);
+    b.appendChild(d);
+  }
+  FAIR.forEach(function(f,k){
+    var b=el('button','vote','<span class="face">'+ic(f[0])+'</span><span class="lb">'+f[1]+'</span>');
+    b.type='button';b.querySelector('svg').style.width='100%';b.querySelector('svg').style.height='100%';
+    b.addEventListener('click',function(){
+      if(st.fair===k)return;
+      st.fair=k;save(st);place(k,true);sheetUpd();nx.disabled=false;
+    });
+    cards.push(b);grid.appendChild(b);
+  });
+  place(st.fair,false);sheetUpd();
+  var mini=el('p','note','<b>'+COL[st.g].name+'故事卡：</b>'+TURN[st.g]);
+  app.append(el('p','case',ic('tag')+'問題一'),el('h2',null,'你覺得老闆這樣做？'),mini,
+    el('p','lead','這是你的感受，沒有標準答案。你的想法會被算進全班統計。'),sheet,grid,nx);
+}
+
+/* ---------- step 3: if you were the owner ---------- */
+function owner(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','現在換你當雜貨店的老闆。颱風明天就要來了，店裡只剩 <b>20 件</b>輕便雨衣，原價一件 50 元（假設），門口卻排了 <b>40 個人</b>。'));
+  var stock=el('div','stock');
+  var a='',b='',i;for(i=0;i<20;i++)a+=ic('coatS');for(i=0;i<40;i++)b+=ic('person');
+  stock.append(el('div','k coat','雨衣<b>20 件</b>'),el('div','minis coat',a),el('div','k ppl','排隊<b>40 人</b>'),el('div','minis ppl',b));
+  c.appendChild(stock);
+  c.appendChild(el('p','note warm','雨衣只夠一半的人。你要怎麼賣？'));
+  var opts=el('div','opts');opts.setAttribute('role','group');opts.setAttribute('aria-label','五種賣法');
+  var nx=button('選好了，下一步','btn',function(){if(st.sell!=null)go(4)});nx.disabled=st.sell==null;
+  function draw(){
+    opts.innerHTML='';
+    SELL.forEach(function(o,k){
+      var on=st.sell===k;
+      var b=el('button','opt'+(on?' on':''),'<span class="ico">'+ic(o[1])+'</span><span><span class="letter">'+o[0]+'</span>'+o[2]+'</span>');
+      b.type='button';b.setAttribute('aria-pressed',on?'true':'false');
+      b.addEventListener('click',function(){st.sell=k;save(st);draw();nx.disabled=false;try{b2[k].scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}});
+      opts.appendChild(b);
+      if(on){
+        var d=el('div','detail');
+        d.append(el('span','tg a','作用'),el('p',null,o[3]),el('span','tg b','代價'),el('p',null,o[4]));
+        opts.appendChild(d);b2[k]=d;
+      }
+    });
+  }
+  var b2={};draw();
+  app.append(el('p','case',ic('store')+'問題二'),el('h2',null,'如果你是老闆，雨衣要怎麼賣？'),c,
+    el('p','lead','每一種賣法都可以選。選了以後會看到它的作用和代價，想改也可以再點別的。'),opts,nx);
+}
+
+/* ---------- step 4: end ---------- */
+function end(){
+  app.innerHTML='';
+  var f=st.fair!=null?FAIR[st.fair][1]:'—',o=st.sell!=null?SELL[st.sell]:null;
+  var t=el('table');
+  [['我的顏色',chip()],
+   ['我看到的漲價理由','<b>'+REASON[st.g]+'</b>'],
+   ['我覺得老闆這樣做',ic(st.fair!=null?FAIR[st.fair][0]:'f1')+' <b>'+f+'</b>'],
+   ['如果我是老闆，我會',o?'<b>'+o[0]+'　'+o[2]+'</b>':'—']].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var S=[intro,story,vote,owner,end];
+  if(st.step>=3&&st.fair==null)st.step=2;
+  if(st.step>=4&&st.sell==null)st.step=3;
+  (S[st.step]||intro)();
+}
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);location.replace(location.pathname+location.search);location.reload()}});
+render();
+})();
+</script>

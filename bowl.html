@@ -1,0 +1,181 @@
+<title>舀粥換算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: temple-front milkfish congee stall story → two guesses (no right/wrong shown yet) → for each of three eras, spend one day's wage by scooping bowls one at a time (bowls pile up in rows of ten) → comparison table with the guesses → one reasoning question with feedback → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+svg.pic{width:100%;max-height:260px;height:auto}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.ghost{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.fact{display:flex;flex-wrap:wrap;gap:10px}
+.fact span{background:var(--note);border-radius:14px;padding:8px 14px;font-size:clamp(19px,2.6vw,24px);font-weight:700}
+.wallet{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.wallet svg{width:64px;height:64px;flex:none}
+.money{font-size:clamp(44px,8vw,76px);font-weight:900;color:var(--rust);margin:0;font-variant-numeric:tabular-nums;line-height:1.1}
+.money small{font-size:.42em;color:var(--muted);font-weight:700;margin-right:6px}
+.scoop{font-size:clamp(26px,4.4vw,38px);padding:18px;display:flex;align-items:center;justify-content:center;gap:14px;background:var(--rust)}
+.scoop svg{width:56px;height:56px;flex:none}
+.table-top{background:#E7DCC8;border-radius:18px;padding:14px;min-height:88px}
+.bowls{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px 6px}
+.bowl{position:relative;aspect-ratio:5/3;max-width:56px;width:100%;justify-self:center}
+.bowl::before{content:"";position:absolute;left:0;right:0;top:0;height:22%;background:#F4ECDC;border:2px solid #8C6A3A;border-radius:50%}
+.bowl::after{content:"";position:absolute;left:4%;right:4%;top:14%;bottom:0;background:#FFFFFF;border:2px solid #8C6A3A;border-top:0;border-radius:0 0 50% 50%/0 0 100% 100%;box-shadow:inset 0 -5px 0 #D9E6EE}
+.bowl.new{animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.cnt{font-size:clamp(19px,2.6vw,24px);font-weight:700;margin:8px 0 0;color:var(--muted)}
+.big{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;text-align:center;line-height:1.5}
+.big b{color:var(--rust);font-size:1.4em}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:10px 4px;border-bottom:2px solid var(--line);text-align:center;vertical-align:middle}
+th{color:var(--muted);font-weight:700;font-size:.9em}
+td.k{text-align:left;font-weight:700}
+td.n{font-weight:900;color:var(--rust);font-size:1.15em}
+.guess{border-top:2px solid var(--line);padding-top:10px}
+.gq{font-size:clamp(19px,2.6vw,24px);font-weight:700;margin:0}
+.ga{font-size:clamp(19px,2.6vw,24px);margin:0}.ga b{color:var(--rust)}
+.nw{white-space:nowrap}
+.sum td{text-align:left} .sum td.n{text-align:right}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='bowl-v1';
+var ERA=[
+ {n:'阿祖年輕的時候',w:40,p:2},
+ {n:'阿嬤小時候',w:240,p:10},
+ {n:'現在',w:1500,p:50}
+];
+var ABC=['A','B','C'];
+var Q1='哪一個年代的人，一天賺的錢最多？';
+var Q2='哪一個年代的人，一天的工錢可以買到最多碗粥？';
+var RQ='阿嬤說「以前一碗粥才 10 塊」，這句話少說了什麼？';
+var RO=['那時候一天的工錢也比較少','那時候的粥比較小碗','那時候的人比較不愛吃粥'];
+var RF=[
+ '對，就是這一點。阿嬤那時候一碗粥 10 元，看起來很便宜；可是她那個年代，在魚塭工作一天也只賺 240 元。只說粥的價錢、不說工錢，就看不出這碗粥到底貴不貴。把一天的工錢拿來換算，看「能買幾碗」，才比得出來。',
+ '在這個遊戲裡，三個年代的粥都是一樣大碗的，所以碗的大小不是答案。這句話真正少說的是：那時候一天的工錢也比較少。只說粥的價錢、不說工錢，就看不出這碗粥到底貴不貴；要用一天的工錢換算「能買幾碗」才比得出來。',
+ '在這個遊戲裡，我們沒有比誰比較愛吃粥。這句話真正少說的是：那時候一天的工錢也比較少。只說粥的價錢、不說工錢，就看不出這碗粥到底貴不貴；要用一天的工錢換算「能買幾碗」才比得出來。'
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,g1:null,g2:null,b:[0,0,0],r:null};
+if(!st.b)st.b=[0,0,0];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function go(n){st.step=n;save(st);render();window.scrollTo(0,0)}
+function btn(t,cls,fn){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',fn);return b}
+function nm(i){return i==null?'—':ABC[i]+' '+ERA[i].n}
+
+var STALL='<svg class="pic" viewBox="0 0 600 260" role="img" aria-label="廟口的虱目魚粥攤，阿嬤站在攤子後面，桌上有一碗冒著熱氣的粥"><rect width="600" height="260" rx="16" fill="#F4EEE2"/><path d="M40 70 L300 20 L560 70 Z" fill="#A8441A"/><rect x="60" y="70" width="480" height="14" fill="#B7862B"/><rect x="70" y="84" width="10" height="150" fill="#8C6A3A"/><rect x="520" y="84" width="10" height="150" fill="#8C6A3A"/><circle cx="420" cy="122" r="26" fill="#F2CFAE"/><path d="M394 116 Q420 86 446 116 Q440 100 420 100 Q400 100 394 116Z" fill="#D9D9D9"/><circle cx="411" cy="124" r="3" fill="#1F2A2E"/><circle cx="429" cy="124" r="3" fill="#1F2A2E"/><path d="M412 134 Q420 140 428 134" stroke="#1F2A2E" stroke-width="3" fill="none"/><rect x="392" y="148" width="56" height="40" rx="10" fill="#205E86"/><rect x="100" y="180" width="400" height="18" rx="6" fill="#8C6A3A"/><rect x="90" y="198" width="420" height="40" fill="#C9B48F"/><path d="M180 150 Q240 150 240 150 L232 176 Q210 182 188 176 Z" fill="#fff" stroke="#8C6A3A" stroke-width="4"/><ellipse cx="210" cy="150" rx="31" ry="7" fill="#F4ECDC" stroke="#8C6A3A" stroke-width="4"/><path d="M198 136 q-8 -12 0 -24 M212 134 q-8 -12 0 -24 M226 136 q-8 -12 0 -24" stroke="#9AA7AD" stroke-width="4" fill="none" stroke-linecap="round"/><text x="300" y="60" text-anchor="middle" font-size="26" font-weight="900" fill="#FBFCF9">虱目魚粥</text></svg>';
+var SPOON='<svg viewBox="0 0 56 56" aria-hidden="true"><ellipse cx="18" cy="38" rx="14" ry="10" fill="#FBFCF9"/><path d="M28 32 L50 8" stroke="#FBFCF9" stroke-width="6" stroke-linecap="round"/></svg>';
+var PURSE='<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="18" width="52" height="38" rx="10" fill="#B7862B"/><rect x="6" y="18" width="52" height="12" rx="6" fill="#8C6A3A"/><circle cx="46" cy="40" r="5" fill="#FBF1DC"/></svg>';
+
+function intro(){
+  var c=el('div','card');c.innerHTML=STALL;
+  c.append(
+   el('p','lead','放學後，你和同學走到廟口，阿嬤的虱目魚粥攤正冒著熱氣。阿嬤一邊舀粥，一邊笑著說：「我小時候啊，一碗粥才 10 塊！」'),
+   el('p','lead','你心裡想：10 塊？那以前的人不就很好過？可是，阿祖、阿嬤和現在的大人，在魚塭工作一天拿到的工錢，其實都不一樣。'),
+   el('p','note warm','為了好算，下面的數字都是假設的，不是真的價格。'));
+  app.append(el('h1',null,'舀粥換算機'),c,btn('開始','btn',function(){go(1)}));
+}
+function guess(n){
+  var key=n===1?'g1':'g2';
+  app.append(el('p','case','先猜猜看　第 '+n+' 題，共 2 題'),el('h2',null,n===1?Q1:Q2),el('p','lead','現在先不公布答案，選你心裡想的就好。'));
+  var g=el('div','opts');
+  ERA.forEach(function(e,i){g.appendChild(btn(ABC[i]+'　'+e.n,'btn alt',function(){st[key]=i;go(n+1)}))});
+  app.appendChild(g);
+}
+function bowlEl(isNew){var s=el('span','bowl'+(isNew?' new':''));s.setAttribute('aria-hidden','true');return s}
+function scoopPage(k){
+  var e=ERA[k];
+  app.append(el('p','case','舀粥時間　第 '+(k+1)+' 個年代，共 3 個'),el('h2',null,e.n));
+  var info=el('div','card');
+  var f=el('div','fact');f.append(el('span',null,'魚塭工作一天的工錢：'+e.w+' 元'),el('span',null,'一碗粥：'+e.p+' 元'));
+  var wl=el('div','wallet');wl.innerHTML=PURSE;var money=el('p','money');wl.appendChild(money);
+  info.append(f,wl);
+  var tt=el('div','table-top');var bw=el('div','bowls');var cnt=el('p','cnt');tt.append(bw,cnt);
+  var sc=el('button','btn scoop');sc.type='button';sc.innerHTML=SPOON+'<span>舀一碗</span>';
+  var all=btn('剩下的一次舀完','btn ghost',null);
+  var done=el('div');done.style.display='flex';done.style.flexDirection='column';done.style.gap='12px';
+  app.append(info,tt,sc,all,done);
+  for(var i=0;i<st.b[k];i++)bw.appendChild(bowlEl(false));
+  function left(){return e.w-st.b[k]*e.p}
+  function upd(){
+    money.innerHTML='<small>錢包還剩</small>'+left()+' 元';
+    cnt.textContent='桌上已經有 '+st.b[k]+' 碗粥';
+    var can=left()>=e.p;
+    sc.disabled=!can;
+    all.style.display=(can&&st.b[k]>=5)?'':'none';
+    if(!can&&!done.firstChild){
+      done.append(el('p','big','這一天的工錢，可以買 <b>'+st.b[k]+'</b> 碗粥'),
+        btn(k<2?'下一個年代':'把三個年代放在一起比','btn',function(){go(k+4)}));
+    }
+  }
+  sc.addEventListener('click',function(){if(left()<e.p)return;st.b[k]++;save(st);bw.appendChild(bowlEl(true));upd();if(left()<e.p)done.scrollIntoView({behavior:'smooth',block:'end'})});
+  all.addEventListener('click',function(){while(left()>=e.p){st.b[k]++;bw.appendChild(bowlEl(true))}save(st);upd();done.scrollIntoView({behavior:'smooth',block:'end'})});
+  upd();
+}
+function compare(){
+  app.append(el('p','case','把三個年代放在一起'),el('h2',null,'一天的工錢，可以買幾碗粥？'));
+  var c=el('div','card');var t=el('table');
+  t.innerHTML='<tr><th>年代</th><th>一天工錢</th><th>一碗粥</th><th>可以買幾碗</th></tr>';
+  ERA.forEach(function(e,i){var tr=el('tr');tr.append(el('td','k',e.n),el('td','nw',e.w+' 元'),el('td','nw',e.p+' 元'),el('td','n',st.b[i]+' 碗'));t.appendChild(tr)});
+  c.append(t,el('p','note','錢的數字從 40 元變成 1500 元，多了好幾十倍；可是一天的工錢能買到的粥，只從 20 碗變成 30 碗。'));
+  var g=el('div','card');g.appendChild(el('p','lead','你剛剛猜的，和真正的答案'));
+  [[Q1,st.g1,'C 現在'],[Q2,st.g2,'C 現在，但只多一點點：20、24、30 碗']].forEach(function(r,i){
+    var q=el('div','guess');q.append(el('p','gq','第 '+(i+1)+' 題：'+r[0]),el('p','ga','你猜：<b>'+nm(r[1])+'</b>'),el('p','ga','真正的答案：<b>'+r[2]+'</b>'));g.appendChild(q)});
+  app.append(c,g,btn('下一步：想一想','btn',function(){go(7)}));
+}
+function reason(){
+  app.append(el('p','case','想一想'),el('h2',null,RQ));
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(i){
+    Array.prototype.forEach.call(g.children,function(x,j){x.classList.toggle('pick',j===i)});
+    fb.innerHTML='';
+    fb.append(el('p','note'+(i===0?'':' warm'),RF[i]),btn('看看我的紀錄','btn',function(){go(8)}));
+  }
+  RO.forEach(function(t,i){g.appendChild(btn(ABC[i]+'　'+t,'btn alt',function(){st.r=i;save(st);show(i);fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})}))});
+  app.append(g,fb);
+  if(st.r!=null)show(st.r);
+}
+function end(){
+  var c=el('div','card');var t=el('table','sum');
+  var rows=[['第 1 題你猜（誰賺的錢最多）',nm(st.g1)],['第 2 題你猜（誰買到最多碗）',nm(st.g2)]];
+  ERA.forEach(function(e,i){rows.push([e.n+'，一天的工錢可以買',st.b[i]+' 碗'])});
+  rows.push(['想一想，你選了',st.r==null?'—':ABC[st.r]+' '+RO[st.r]]);
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+function render(){
+  app.innerHTML='';
+  var s=st.step;
+  if(s===0)intro();else if(s===1||s===2)guess(s);else if(s>=3&&s<=5)scoopPage(s-3);else if(s===6)compare();else if(s===7)reason();else end();
+}
+render();
+})();
+</script>

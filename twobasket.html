@@ -1,0 +1,606 @@
+<title>猜猜是哪一簍</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: harbour story + two baskets drawn as 10-crab grids → play page (basket scene with hand animation on the left, a vertical "confidence flagpole" on the right, tray of drawn crabs below; flag must be re-set after every draw) → reveal (a second, computed flag climbs crab by crab to 97 % beside the student's flag, plain-words explanation) → the student's 13 flags as a small line chart with reference lines and three neutral shape descriptions → one reflection question (each option shows only its effect) → summary for a show of hands. Fixed script (left basket, 8 red / 4 flower), no randomness. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --lt:#F6DCCF; --rt:#DCE8F0; --myf:#F3D27A; --cf:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:20px 36px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.6vw,24px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;min-width:0}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;justify-content:flex-start;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:focus-visible,.ptrack:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.5vw,23px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn svg.i{width:1.5em;height:1.5em}
+.lt{display:inline-flex;align-items:center;justify-content:center;min-width:1.7em;height:1.7em;border-radius:50%;color:#fff;font-weight:900;font-size:.9em;flex:none;line-height:1;background:var(--sea)}
+.L{color:var(--rust);font-weight:900}.R{color:var(--sea);font-weight:900}
+.say{display:flex;gap:14px;align-items:center}
+.say .av{width:72px;height:72px;flex:none}
+.say p{margin:0}
+.bub{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 16px;font-size:clamp(19px,2.5vw,23px);font-weight:700;position:relative}
+/* intro */
+.harbor{width:100%;height:auto;display:block;border-radius:18px;border:3px solid var(--line);background:#E3EFF4}
+.bk2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bk{background:var(--card);border:3px solid var(--line);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center;min-width:0}
+.bk.l{border-top:8px solid var(--rust)}.bk.r{border-top:8px solid var(--sea)}
+.bk h3{display:flex;align-items:center;gap:6px}
+.bk h3 svg.i{width:40px;height:40px}
+.g10{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;width:100%;max-width:300px}
+.g10 span{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;border:2px solid var(--line)}
+.g10 span.cr{background:#FCEDE6}.g10 span.cf{background:#EEF3FA}
+.g10 svg.i{width:84%;height:84%}
+.bk p{margin:0;font-size:clamp(19px,2.3vw,22px);line-height:1.5}
+.key{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:clamp(19px,2.3vw,22px)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key svg.i{width:40px;height:40px}
+/* play */
+.play{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start}
+.lcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sbox{position:relative;background:#E3EFF4;border:3px solid var(--line);border-radius:20px;overflow:hidden}
+.scene{width:100%;height:auto;display:block}
+.pop{position:absolute;left:4%;top:6%;transform:scale(.6);transform-origin:0 0;opacity:0;background:var(--card);border:4px solid var(--ink);border-radius:18px;padding:6px 14px 6px 8px;display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(21px,3vw,28px);white-space:nowrap;pointer-events:none;box-shadow:0 5px 0 rgba(31,42,46,.2);transition:opacity .25s,transform .25s}
+.pop.on{opacity:1;transform:scale(1)}
+.pop svg.i{width:58px;height:58px}
+.status{min-height:3.4em}
+.status b{font-weight:900}
+.cnt{font-variant-numeric:tabular-nums}
+/* tray */
+.tray h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tray h3 small{font-size:clamp(19px,2.2vw,21px);color:var(--muted);font-weight:700}
+.slots{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}
+.slot{border:2px dashed var(--line);border-radius:12px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 0;position:relative;transition:background .25s,border-color .25s,box-shadow .25s}
+.slot .no{position:absolute;top:1px;left:5px;font-size:15px;line-height:1.2;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.slot svg.i{width:40px;height:40px;margin-top:8px}
+.slot em{font-style:normal;font-weight:900;font-size:16px;line-height:1.2}
+.slot.cr{border:2px solid #E5B7A4;background:#FCEDE6}.slot.cr em{color:var(--rust)}
+.slot.cf{border:2px solid #B9CDE4;background:#EEF3FA}.slot.cf em{color:var(--sea)}
+.slots.six{grid-template-columns:repeat(6,minmax(0,1fr))}
+.slot.new{animation:slotin .45s ease-out}
+.slot.hl{box-shadow:0 0 0 4px var(--cf);border-color:var(--cf)}
+@keyframes slotin{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+/* pole */
+.rcol{display:flex;flex-direction:column;align-items:center;gap:8px}
+.polebox{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);border:3px solid var(--line);border-radius:20px;padding:10px 10px 12px}
+.pcap{font-weight:900;font-size:19px;line-height:1.3;border-radius:12px;padding:3px 10px;white-space:nowrap}
+.pcap.t{background:var(--lt);color:var(--rust)}.pcap.b{background:var(--rt);color:var(--sea)}
+.ptrack{--lw:84px;--cw:0px;--mw:14px;--fw:74px;position:relative;height:var(--ph,440px);width:calc(var(--lw) + var(--cw) + var(--mw) + var(--fw) + 6px);touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer;margin:34px 0 18px}
+.ptrack.comp{--cw:86px}
+.ptrack .mast{position:absolute;top:-12px;bottom:-12px;left:calc(var(--lw) + var(--cw));width:var(--mw);border:2.5px solid var(--ink);border-radius:7px;background:linear-gradient(var(--lt) 0 50%,var(--rt) 50% 100%)}
+.ptrack .ball{position:absolute;top:-30px;left:calc(var(--lw) + var(--cw) + var(--mw)/2 - 10px);width:20px;height:20px;border-radius:50%;background:var(--myf);border:2.5px solid var(--ink)}
+.ptrack .tk{position:absolute;left:0;width:calc(var(--lw) - 8px);transform:translateY(-50%);text-align:right;font-size:19px;font-weight:700;color:var(--muted);line-height:1.2;white-space:nowrap}
+.ptrack .tk.mid{color:var(--ink);font-weight:900}
+.ptrack .tk.end{color:var(--ink);font-weight:900}
+.ptrack .gl{position:absolute;left:calc(var(--lw) - 4px);right:0;height:0;border-top:2px dotted #C9CFC7;pointer-events:none}
+.ptrack .gl.mid{border-top:2px solid #AEB5AC}
+.ptrack .tm{position:absolute;left:calc(var(--lw) + var(--cw) - 6px);width:calc(var(--mw) + 12px);height:3px;margin-top:-1.5px;background:var(--ink);border-radius:2px;pointer-events:none}
+.flag{position:absolute;width:var(--fw);height:44px;transform:translateY(-50%);transition:top .28s ease-out;pointer-events:none;display:flex;align-items:center}
+.flag svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.flag span{position:relative;font-weight:900;font-size:17px;line-height:1;padding-left:8px;white-space:nowrap}
+.flag.my{left:calc(var(--lw) + var(--cw) + var(--mw) - 1px);pointer-events:auto;cursor:grab}
+.flag.my.off{pointer-events:none}
+.flag.cp{left:calc(var(--lw) + 1px);width:calc(var(--cw) - 2px)}
+.flag.cp span{color:#fff;padding-left:16px;font-size:16px}
+.flag.my.pend svg path{stroke-dasharray:6 5;fill:#FBF4E2}
+.flag.my.pend{animation:wob 1.3s ease-in-out infinite}
+@keyframes wob{0%,100%{margin-left:0}50%{margin-left:5px}}
+.flag.off{opacity:0}
+.ptrack.drag .flag{transition:none}
+.ptrack.lock{cursor:default}
+.ptrack .start{position:absolute;left:calc(var(--lw) + var(--cw) + var(--mw) + 4px);top:50%;transform:translateY(-50%);background:var(--warm);border:3px dashed var(--gold);border-radius:12px;padding:4px 6px;font-size:17px;font-weight:900;line-height:1.3;width:calc(var(--fw) + 4px);text-align:center;pointer-events:none;animation:pul 1.4s ease-in-out infinite}
+@keyframes pul{0%,100%{opacity:1}50%{opacity:.55}}
+.readout{text-align:center;font-size:19px;line-height:1.4;margin:0}
+.readout b{display:block;font-size:clamp(21px,2.6vw,24px)}
+.keep{font-size:19px;padding:8px 12px;border-radius:14px;max-width:190px}
+@media (prefers-reduced-motion:reduce){.flag,.slot,.pop{transition:none!important;animation:none!important}}
+/* reveal */
+.rev{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:start}
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cmp2 div{border-radius:16px;padding:10px 14px;border:3px solid var(--line);background:var(--card)}
+.cmp2 .m{border-color:var(--gold);background:var(--warm)}
+.cmp2 .c{border-color:var(--cf);background:#E8F2EC}
+.cmp2 small{display:block;font-size:19px;color:var(--muted);font-weight:700}
+.cmp2 b{font-size:clamp(22px,3vw,28px)}
+.steps4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.steps4 div{border:3px solid var(--line);border-radius:16px;padding:8px;text-align:center;background:var(--card);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:19px;line-height:1.4}
+.steps4 .rr{display:flex;gap:0;flex-wrap:wrap;justify-content:center;min-height:30px}
+.steps4 .rr svg.i{width:28px;height:28px}
+.steps4 b{font-size:clamp(21px,2.8vw,26px);color:var(--rust)}
+.steps4 div:last-child{border-color:var(--rust);background:#FCEDE6}
+.dots{display:grid;grid-template-columns:repeat(16,minmax(0,1fr));gap:4px;max-width:520px}
+.dots i{aspect-ratio:1;border-radius:50%;background:var(--lt);border:2.5px solid var(--rust)}
+.dots i.r{background:var(--rt);border-color:var(--sea)}
+.dkey{display:flex;gap:16px;flex-wrap:wrap;font-size:19px;font-weight:700}
+.dkey span{display:inline-flex;align-items:center;gap:6px}
+.dkey i{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--lt);border:2.5px solid var(--rust)}
+.dkey i.r{background:var(--rt);border-color:var(--sea)}
+.fade{animation:fadein .5s ease-out}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* track */
+.chart{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;gap:4px 8px}
+.ylab{display:flex;flex-direction:column;justify-content:space-between;font-size:19px;font-weight:700;line-height:1.2;text-align:right;padding:2px 0}
+.ylab .t{color:var(--rust)}.ylab .b{color:var(--sea)}.ylab .m{color:var(--ink)}
+.chart svg{width:100%;height:auto;display:block;background:#FDFDFB;border:2px solid var(--line);border-radius:12px}
+.xlab{grid-column:2;display:flex;justify-content:space-between;font-size:19px;color:var(--muted);font-weight:700}
+.lgd{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:19px;font-weight:700}
+.lgd span{display:inline-flex;align-items:center;gap:6px}
+.lgd svg{width:36px;height:12px}
+.kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kind{border:3px solid var(--line);border-radius:18px;padding:10px 12px;background:var(--card);display:flex;flex-direction:column;gap:6px}
+.kind svg{width:100%;height:auto;display:block}
+.kind h3{font-size:clamp(20px,2.4vw,23px)}
+.kind p{margin:0;font-size:19px;line-height:1.55;color:var(--muted)}
+.kind.me{border-color:var(--gold);background:var(--warm);box-shadow:0 0 0 3px var(--myf)}
+.kind .tag{display:inline-block;align-self:flex-start;background:var(--gold);color:#fff;font-weight:900;font-size:19px;border-radius:10px;padding:0 10px}
+/* end */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+.sum td:first-child{color:var(--muted);font-weight:700;width:44%}
+.sum td b{font-size:1.1em}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap;color:var(--good)}
+.ec dd{margin:0}
+@media (max-width:760px){
+  .rev{grid-template-columns:minmax(0,1fr)}
+  .rev .rcol{order:-1}
+  .kinds{grid-template-columns:1fr}
+  .kind{flex-direction:row;align-items:center;gap:12px}
+  .kind svg{width:110px;flex:none}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .play{gap:8px}
+  .ptrack{--lw:62px;--fw:62px;--mw:12px;height:var(--ph,400px)}
+  .ptrack.comp{--cw:76px}
+  .pop{top:auto;bottom:4%;padding:4px 10px 4px 6px}
+  .pop svg.i{width:42px;height:42px}
+  .ptrack .tk{font-size:19px;letter-spacing:-1px}
+  .ptrack .tk.mid span{display:block;line-height:1.1}
+  .flag span{font-size:16px;padding-left:6px}
+  .polebox{padding:8px 4px 10px}
+  .pcap{font-size:18px;padding:2px 6px}
+  .slots{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .status{min-height:0}
+  .bk{padding:10px 6px}
+  .bk h3 svg.i{width:32px;height:32px}
+  .cmp2{grid-template-columns:1fr}
+  .sum td:first-child{width:auto}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .say .av{width:58px;height:58px}
+  .dots{grid-template-columns:repeat(11,minmax(0,1fr))}
+  .keep{max-width:150px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"basket_red": "<path d=\"M7.2 11.4L5.2 9M16.8 11.4l2-2.4\"/><path d=\"M4.9 9.6C2.6 9 1.8 6.8 3.2 5.2c.6 1.2 1.6 1.6 2.6 1.4-.2-1.2.2-2.2 1.2-2.8.8 2 .4 4.6-2.1 5.8z\" fill=\"#F2A68C\"/><path d=\"M19.1 9.6c2.3-.6 3.1-2.8 1.7-4.4-.6 1.2-1.6 1.6-2.6 1.4.2-1.2-.2-2.2-1.2-2.8-.8 2-.4 4.6 2.1 5.8z\" fill=\"#F2A68C\"/><path d=\"M10.2 9.4V7.8M13.8 9.4V7.8\"/><circle cx=\"10.2\" cy=\"7.2\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"13.8\" cy=\"7.2\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M6.4 15.2l-2.8 1.2M6.9 16.9l-2.1 2.3M17.6 15.2l2.8 1.2M17.1 16.9l2.1 2.3\"/><ellipse cx=\"12\" cy=\"13.8\" rx=\"6.6\" ry=\"4.6\" fill=\"#F2A68C\"/>", "basket_flower": "<path d=\"M7.4 10.6L5.8 6.8M16.6 10.6l1.6-3.8\"/><path d=\"M5.8 6.8L4.4 4.6M5.8 6.8l.7-2.4M18.2 6.8l1.4-2.2M18.2 6.8l-.7-2.4\"/><path d=\"M10.6 9.2V7.6M13.4 9.2V7.6\"/><circle cx=\"10.6\" cy=\"7.1\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"13.4\" cy=\"7.1\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M6.6 15.6L4.4 17.8M17.4 15.6l2.2 2.2\"/><ellipse cx=\"3.6\" cy=\"18.6\" rx=\"1.5\" ry=\"1.1\" fill=\"#C9D9EE\"/><ellipse cx=\"20.4\" cy=\"18.6\" rx=\"1.5\" ry=\"1.1\" fill=\"#C9D9EE\"/><path d=\"M2.4 12.4L5.4 11c1.8-1.5 4-2.1 6.6-2.1s4.8.6 6.6 2.1l3 1.4-2.6.9c-1.1 2.6-3.7 4-7 4s-5.9-1.4-7-4z\" fill=\"#C9D9EE\"/><circle cx=\"9\" cy=\"12.6\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"11.6\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"12.6\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"14.6\" r=\".8\" fill=\"currentColor\" stroke=\"none\"/>", "basket_bamboo": "<path d=\"M4.6 11.6h14.8l-1.5 8.2a1.6 1.6 0 0 1-1.6 1.3H7.7a1.6 1.6 0 0 1-1.6-1.3z\" fill=\"#E6CF9E\"/><path d=\"M5.4 15h13.2M6 18.2h12M9.6 11.6l.5 9.5M14.4 11.6l-.5 9.5\"/><path d=\"M3.4 11.8c.8-4 4.2-6.4 8.6-6.4s7.8 2.4 8.6 6.4c-1.4.7-2.6-.3-4 .3-1.4.6-2.9-.5-4.6.1-1.7-.6-3.2.5-4.6-.1-1.4-.6-2.6.4-4-.3z\" fill=\"#DCE8F0\"/><path d=\"M12 5.4V3.2\"/>", "trend": "<path d=\"M7 7.4l4 4.4 3-2.2 5 6.2v4H7z\" fill=\"#CFE3C4\" stroke=\"none\"/><path d=\"M3.6 3.4v16.8h17\"/><path d=\"M7 7.4l4 4.4 3-2.2 5 6.2\"/><path d=\"M19.4 11.6v4.4H15\"/>", "think": "<path d=\"M7.2 16.6a3.9 3.9 0 0 1-.7-7.7 5.4 5.4 0 0 1 10.4-1.3 4.4 4.4 0 0 1 .6 9z\" fill=\"#EEF0EC\"/><circle cx=\"6.2\" cy=\"19.4\" r=\"1.2\" fill=\"#EEF0EC\"/><circle cx=\"3.6\" cy=\"21.4\" r=\".6\" fill=\"currentColor\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"grandpa": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#56605C\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19 26 Q19 12.5 32 13 Q45 12.5 45 26 Q43 19.5 38 18.5 Q32 20.5 26 18.5 Q21 19.5 19 26 Z\" fill=\"#D5D8DC\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M28.5 31.2 Q32 30 35.5 31.2\" fill=\"none\" stroke=\"#B9BEC4\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='twobasket-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+
+/* ---------- fixed script: the basket is the left one; 8 red, 4 flower ---------- */
+var SEQ=['R','F','R','R','R','F','R','R','F','R','F','R'];
+var COMP=[50];(function(){var d=0;SEQ.forEach(function(c){d+=c==='R'?1:-1;var a=Math.pow(7,d),b=Math.pow(3,d);COMP.push(100*a/(a+b))})})();
+var CN=['零','一','二','三','四','五','六','七','八','九','十'];
+var CW=['','一','兩','三','四','五','六','七','八','九','十'];
+function cn(v){v=Math.round(v);if(v>=100)return '十成';var t=Math.floor(v/10),o=v%10;return CN[t]+'成'+(o?CN[o]:'')}
+function pos(v){if(v==null)return '還沒升旗';v=Math.round(v);return v===50?'一半一半':v>50?'左簍 '+cn(v):'右簍 '+cn(100-v)}
+function posH(v){v=Math.round(v);return v===50?'一半一半':v>50?'<span class="L">左簍</span> '+cn(v):'<span class="R">右簍</span> '+cn(100-v)}
+var FINAL=COMP[12];
+function diffTxt(s){var h=Math.round(Math.abs(FINAL-s)/5);if(h===0)return '不到半成';var w=Math.floor(h/2),half=h%2;return (w?CW[w]+'成':'')+(half?(w?'半':'半成'):'')}
+function crabName(c){return c==='R'?'紅蟳':'花蟹'}
+function crabIc(c,cls){return ic(c==='R'?'basket_red':'basket_flower',cls)}
+
+/* ---------- trajectory shape (descriptive only) ---------- */
+var KIND={
+  still:{n:'一直不太敢動',d:'旗子大多停在「一半一半」附近。新的螃蟹出來，旗子只移一點點，或是不太動。',ex:[50,55,50,55,60,60,55,60,62,60,65,62,65]},
+  jump:{n:'跟著每一隻跳來跳去',d:'摸到紅蟳就往上拉一大截，摸到花蟹又往下拉一大截。旗子主要跟著「剛剛摸到的那一隻」走。',ex:[50,80,30,80,85,90,45,90,95,50,95,50,90]},
+  up:{n:'慢慢往上',d:'摸到紅蟳就升一些，摸到花蟹退一點或不動。整體來看，一路往「左簍」那邊升上去。',ex:[50,60,55,65,72,80,76,83,88,85,90,88,92]},
+  down:{n:'慢慢往右簍那邊移',d:'整體來看，旗子一路往「右簍」那邊移動。',ex:[50,45,45,40,40,35,35,30,30,25,25,20,20]}
+};
+function kindOf(s){
+  var moves=0,drops=0;for(var k=1;k<=12;k++){var d=s[k]-s[k-1];moves+=Math.abs(d);if(d<=-15)drops++}
+  if(drops>=3||(drops>=2&&moves>=120))return 'jump';
+  if(s[12]<=70&&s[12]>=30)return 'still';
+  return s[12]>50?'up':'down';
+}
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',s:[null,null,null,null,null,null,null,null,null,null,null,null,null],n:0,rev:false,r:null}}
+var st=load();if(!st||!st.step||!st.s||st.s.length!==13)st=fresh();
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* ---------- intro ---------- */
+function harborSVG(){
+  var s='<svg class="harbor" viewBox="0 0 800 300" role="img" aria-label="漁船回到漁港，岸邊放著兩個一模一樣、蓋著布的竹簍">';
+  s+='<rect width="800" height="150" fill="#E3EFF4"/><circle cx="700" cy="56" r="26" fill="#F3D27A"/><ellipse cx="180" cy="50" rx="50" ry="14" fill="#FBFCF9"/><ellipse cx="214" cy="40" rx="30" ry="12" fill="#FBFCF9"/>';
+  s+='<rect y="130" width="800" height="70" fill="#9CC3E0"/><path d="M40 160q14-6 28 0M300 176q14-6 28 0M560 158q14-6 28 0M680 182q14-6 28 0" stroke="#FBFCF9" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  // boat
+  s+='<g transform="translate(70 92)"><path d="M0 50h230l-26 36H26z" fill="#F2B8A0" stroke="#8B3A1A" stroke-width="3" stroke-linejoin="round"/><rect x="60" y="14" width="74" height="36" rx="4" fill="#FBFCF9" stroke="#56605C" stroke-width="3"/><rect x="72" y="24" width="20" height="14" rx="2" fill="#DCE8F0" stroke="#56605C" stroke-width="2"/><rect x="102" y="24" width="20" height="14" rx="2" fill="#DCE8F0" stroke="#56605C" stroke-width="2"/><path d="M170 50V-4M170 0l40 26" stroke="#56605C" stroke-width="3" fill="none"/><path d="M14 64h200" stroke="#8B3A1A" stroke-width="2.5"/></g>';
+  // dock
+  s+='<rect y="200" width="800" height="100" fill="#D9B98A"/><path d="M0 200h800" stroke="#8C6A3E" stroke-width="4"/>';
+  for(var i=0;i<9;i++)s+='<path d="M'+(i*100+40)+' 204v96" stroke="#BC9C73" stroke-width="3"/>';
+  s+=basketMini(450,'左簍？')+basketMini(640,'右簍？');
+  return s+'</svg>';
+}
+function basketMini(x,t){
+  return '<g transform="translate('+x+' 150)"><path d="M-62 60 Q0 76 62 60 L52 128 Q0 140 -52 128 Z" fill="#E6CF9E" stroke="#8C6A3E" stroke-width="3"/><path d="M-57 86Q0 100 57 86M-54 110Q0 122 54 110M-22 70v62M22 70v62" stroke="#B89363" stroke-width="2.5" fill="none"/><path d="M-66 60 Q-58 26 0 24 Q58 26 66 60 Q52 70 38 62 Q22 72 8 64 Q-8 72 -24 63 Q-40 72 -54 62 Q-60 66 -66 60Z" fill="#DCE8F0" stroke="#56605C" stroke-width="3" stroke-linejoin="round"/><path d="M-30 40q10 8 8 20M18 34q8 10 4 24" stroke="#9FB4C4" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>';
+}
+function g10(nr){var h='';for(var i=0;i<10;i++){var c=i<nr?'R':'F';h+='<span class="'+(c==='R'?'cr':'cf')+'" title="'+crabName(c)+'">'+crabIc(c)+'</span>'}return '<div class="g10" role="img" aria-label="10 隻裡有 '+nr+' 隻紅蟳、'+(10-nr)+' 隻花蟹">'+h+'</div>'}
+function intro(){
+  app.append(el('h1',null,'猜猜是哪一簍'));
+  var c=el('div','card');
+  c.append(el('div',null,harborSVG()));
+  c.append(el('p','lead','傍晚，漁船回到臺江的漁港。阿伯從船上搬下<b>兩個竹簍</b>，兩個竹簍長得一模一樣，上面都蓋著布。'));
+  app.append(c);
+  var k=el('div','key','<span>'+ic('basket_red')+'<b class="L">紅蟳</b>：殼紅紅的、大螯</span><span>'+ic('basket_flower')+'<b class="R">花蟹</b>：殼上有斑點</span>');
+  app.append(k);
+  var two=el('div','bk2');
+  two.append(el('div','bk l','<h3>'+ic('basket_bamboo')+'<span class="L">左簍</span></h3>'+g10(7)+'<p>10 隻裡有<br><b class="L">7 隻紅蟳</b><br>3 隻花蟹</p>'));
+  two.append(el('div','bk r','<h3>'+ic('basket_bamboo')+'<span class="R">右簍</span></h3>'+g10(3)+'<p>10 隻裡有<br>3 隻紅蟳<br><b class="R">7 隻花蟹</b></p>'));
+  app.append(two);
+  var say=el('div','say');say.innerHTML=av('grandpa');say.append(el('p','bub','「這兩簍，我隨便搬一簍給你。你猜猜看，是哪一簍？」'));
+  app.append(say);
+  app.append(el('p','note','你看不到簍子裡面，只能伸手進去<b>摸一隻出來看</b>。看完要<b>放回去、搖一搖</b>，所以每一次簍子裡都還是原本那 10 隻。一共可以摸 <b>12 次</b>。'));
+  app.append(el('p','note warm','畫面右邊有一根<b>旗桿</b>：旗子越高，表示你越覺得是<b class="L">左簍</b>；越低，越覺得是<b class="R">右簍</b>；正中間是「一半一半」。每摸一隻，都要重新升一次旗。'));
+  app.append(button(ic('basket_bamboo')+'我知道了，去拿竹簍','btn',function(){go('play')}));
+}
+
+/* ---------- flagpole ---------- */
+function flagSVG(dir,fill,stroke){
+  var p=dir>0?'M0 3H70L58 22L70 41H0Z':'M78 3H8L20 22L8 41H78Z';
+  return '<svg viewBox="0 0 '+(dir>0?72:80)+' 44" preserveAspectRatio="none" aria-hidden="true"><path d="'+p+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>';
+}
+function makePole(opt){
+  var box=el('div','polebox');
+  box.append(el('div','pcap t','一定是左簍'));
+  var tr=el('div','ptrack'+(opt.comp?' comp':''));
+  if(opt.h)tr.style.setProperty('--ph',opt.h+'px');
+  tr.append(el('div','mast'),el('div','ball'));
+  for(var v=100;v>=0;v-=10){
+    var top=(100-v)+'%';
+    var g=el('div','gl'+(v===50?' mid':''));g.style.top=top;tr.append(g);
+    var tm=el('div','tm');tm.style.top=top;tr.append(tm);
+    var lab=v===50?'<span>一半</span><span>一半</span>':cn(v>50?v:100-v);
+    var t=el('div','tk'+(v===50?' mid':'')+(v===100||v===0?' end':''),lab);t.style.top=top;t.setAttribute('data-v',v);tr.append(t);
+  }
+  var cp=null;
+  if(opt.comp){cp=el('div','flag cp',flagSVG(-1,'#2F7D4F','#1E5233')+'<span>算出來</span>');cp.style.top='50%';tr.append(cp)}
+  var my=el('div','flag my',flagSVG(1,'#F3D27A','#1F2A2E')+'<span>你的</span>');tr.append(my);
+  var start=el('div','start','點一下<br>升旗');tr.append(start);
+  box.append(tr);
+  box.append(el('div','pcap b','一定是右簍'));
+  tr.setAttribute('role','slider');tr.setAttribute('aria-label','你的把握：越高越覺得是左簍，越低越覺得是右簍');
+  tr.setAttribute('aria-valuemin','0');tr.setAttribute('aria-valuemax','100');
+  var api={el:box,track:tr,locked:!opt.interactive,onSet:null,
+    setMy:function(v,pend){
+      if(v==null){my.classList.add('off');start.style.display=opt.interactive?'':'none';tr.removeAttribute('aria-valuenow');tr.setAttribute('aria-valuetext','還沒升旗')}
+      else{my.classList.remove('off');start.style.display='none';my.style.top=(100-v)+'%';tr.setAttribute('aria-valuenow',Math.round(v));tr.setAttribute('aria-valuetext',pos(v))}
+      my.classList.toggle('pend',!!pend);
+    },
+    setComp:function(v){if(cp)cp.style.top=(100-v)+'%'},
+    lock:function(b){api.locked=b;tr.classList.toggle('lock',b);tr.tabIndex=b?-1:0}
+  };
+  api.lock(!opt.interactive);
+  if(opt.interactive){
+    var down=false,moved=false,sy=0,tgt=null,tkv=null;
+    function fromY(y){var r=tr.getBoundingClientRect();var v=100-(y-r.top)/r.height*100;v=Math.round(v/5)*5;return Math.max(0,Math.min(100,v))}
+    function emit(v){if(api.onSet)api.onSet(v)}
+    tr.addEventListener('pointerdown',function(e){
+      if(api.locked||e.button>0)return;down=true;moved=false;sy=e.clientY;
+      var tk=e.target.closest('.tk');tgt=tk?'tk':(e.target.closest('.flag.my')?'flag':null);tkv=tk?+tk.getAttribute('data-v'):null;
+      try{tr.setPointerCapture(e.pointerId)}catch(_){}
+      if(!tgt)emit(fromY(e.clientY));
+      tr.classList.add('drag');e.preventDefault();
+    });
+    tr.addEventListener('pointermove',function(e){
+      if(!down||api.locked)return;
+      if(!moved&&Math.abs(e.clientY-sy)>5)moved=true;
+      if(moved)emit(fromY(e.clientY));
+    });
+    function up(e,cancel){
+      if(!down)return;down=false;tr.classList.remove('drag');
+      if(cancel||moved||api.locked)return;
+      if(tgt==='tk'){emit(tkv)}
+      else if(tgt==='flag'){emit(api.cur!=null?api.cur:fromY(e.clientY))}
+    }
+    tr.addEventListener('pointerup',function(e){up(e,false)});
+    tr.addEventListener('pointercancel',function(e){up(e,true)});
+    tr.addEventListener('keydown',function(e){
+      if(api.locked)return;var v=api.cur==null?50:api.cur;
+      if(e.key==='ArrowUp'||e.key==='ArrowRight'){emit(Math.min(100,v+5));e.preventDefault()}
+      else if(e.key==='ArrowDown'||e.key==='ArrowLeft'){emit(Math.max(0,v-5));e.preventDefault()}
+      else if(e.key==='Home'){emit(100);e.preventDefault()}else if(e.key==='End'){emit(0);e.preventDefault()}
+      else if(e.key==='Enter'||e.key===' '){emit(v);e.preventDefault()}
+    });
+  }
+  return api;
+}
+
+/* ---------- basket scene with the reaching hand ---------- */
+function sceneSVG(){
+  var s='<svg class="scene" viewBox="'+(window.innerWidth<560?'10 0 300 290':'-110 0 540 290')+'" role="img" aria-label="蓋著布的竹簍，手會伸進布底下摸出一隻螃蟹">';
+  s+='<rect x="-110" width="540" height="120" fill="#E3EFF4"/><circle cx="-60" cy="40" r="20" fill="#F3D27A"/><rect x="-110" y="96" width="540" height="44" fill="#9CC3E0"/><path d="M-80 116q12-5 24 0M24 116q12-5 24 0M210 126q12-5 24 0M262 108q12-5 24 0M360 120q12-5 24 0" stroke="#FBFCF9" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  s+='<rect x="-110" y="140" width="540" height="150" fill="#D9B98A"/><path d="M-110 140h540" stroke="#8C6A3E" stroke-width="4"/><path d="M-40 144v146M60 144v146M260 144v146M360 144v146" stroke="#BC9C73" stroke-width="3"/>';
+  s+='<g id="bkg" style="transform-box:fill-box;transform-origin:50% 100%">';
+  s+='<ellipse cx="160" cy="160" rx="96" ry="22" fill="#6E5332"/>';
+  // arm (goes behind the cloth)
+  s+='<g id="arm" style="transform:translate(0px,-300px)">';
+  s+='<rect x="168" y="-200" width="40" height="250" rx="14" fill="#205E86" stroke="#1F2A2E" stroke-width="3"/>';
+  s+='<rect x="172" y="46" width="32" height="70" rx="13" fill="#EBC29E" stroke="#1F2A2E" stroke-width="3"/>';
+  s+='<path d="M170 112c-2 16 4 28 18 30 14 2 22-8 20-30z" fill="#EBC29E" stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round"/>';
+  s+='<g id="held" opacity="0"></g>';
+  s+='</g>';
+  // basket front body
+  s+='<path d="M62 160 Q160 192 258 160 L240 270 Q160 290 80 270 Z" fill="#E6CF9E" stroke="#8C6A3E" stroke-width="3.5" stroke-linejoin="round"/>';
+  s+='<path d="M68 196Q160 222 252 196M72 232Q160 256 246 232M118 178l6 100M202 178l-6 100M160 186v100" stroke="#B89363" stroke-width="3" fill="none"/>';
+  // cloth
+  s+='<path d="M54 160 Q64 104 160 100 Q256 104 266 160 Q248 176 228 166 Q206 182 186 170 Q160 186 134 170 Q114 182 92 166 Q72 176 54 160Z" fill="#DCE8F0" stroke="#56605C" stroke-width="3.5" stroke-linejoin="round"/>';
+  s+='<path d="M108 128q14 14 12 34M196 120q14 16 8 40M150 112q-6 12 -4 26" stroke="#9FB4C4" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  s+='</g>';
+  return s+'</svg>';
+}
+function heldCrab(c){return '<svg x="152" y="122" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#1F2A2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[c==='R'?'basket_red':'basket_flower']+'</svg>'}
+
+/* ---------- play ---------- */
+function slotsHTML(n,hl){
+  var h='';for(var i=0;i<12;i++){
+    if(i<n){var c=SEQ[i];h+='<div class="slot '+(c==='R'?'cr':'cf')+(hl===i?' hl':'')+'" data-i="'+i+'"><span class="no">'+(i+1)+'</span>'+crabIc(c)+'<em>'+crabName(c)+'</em></div>'}
+    else h+='<div class="slot" data-i="'+i+'"><span class="no">'+(i+1)+'</span></div>';
+  }return h;
+}
+function counts(n){var r=0;for(var i=0;i<n;i++)if(SEQ[i]==='R')r++;return {r:r,f:n-r}}
+function playPage(){
+  var cs=el('p','case');var h=el('h2');
+  app.append(cs,h);
+  var play=el('div','play');var l=el('div','lcol');var r=el('div','rcol');
+  var sb=el('div','sbox');sb.innerHTML=sceneSVG();var pop=el('div','pop');sb.append(pop);
+  var svg=sb.querySelector('svg'),arm=svg.querySelector('#arm'),held=svg.querySelector('#held'),bkg=svg.querySelector('#bkg');
+  var status=el('p','note status');
+  var drawB=button(ic('basket_bamboo')+'<span>伸手摸一隻</span>','btn',draw);
+  var doneB=button('旗子升好了，看看算出來的旗子','btn',function(){if(st.n===12&&st.s[12]!=null)go('reveal')});
+  l.append(sb,status,drawB,doneB);
+  var pole=makePole({interactive:true});
+  var ro=el('p','readout');
+  var keep=button('旗子不動<br>留在這裡','btn soft keep',function(){var k=st.n;if(k>0&&st.s[k]==null&&st.s[k-1]!=null)setFlag(st.s[k-1])});
+  r.append(pole.el,ro,keep);
+  play.append(l,r);app.append(play);
+  var tray=el('div','card tray');var th=el('h3');var slots=el('div','slots');tray.append(th,slots);app.append(tray);
+  var busy=false;
+  pole.onSet=setFlag;
+  function setFlag(v){if(busy)return;st.s[st.n]=v;save(st);upd()}
+  function upd(newSlot){
+    var k=st.n,cur=st.s[k],prev=k>0?st.s[k-1]:null,pend=cur==null;
+    pole.cur=cur!=null?cur:prev;
+    pole.setMy(cur!=null?cur:prev,pend&&prev!=null);
+    pole.lock(busy);
+    cs.innerHTML=ic('basket_bamboo')+'已經摸了 <span class="cnt">'+k+'</span> 隻（一共 12 隻）';
+    if(k===0)h.textContent=pend?'還沒摸之前，先升一次旗：你覺得是哪一簍？':'旗子升好了。按「伸手摸一隻」。';
+    else if(k<12)h.textContent=pend?'摸到第 '+k+' 隻了。請重新升一次旗。':'旗子升好了，可以再摸下一隻。';
+    else h.textContent=pend?'12 隻都摸完了！最後再升一次旗。':'最後的旗子升好了。';
+    var c=counts(k);
+    if(busy)status.innerHTML='伸手進去摸摸看……';
+    else if(k===0)status.innerHTML=pend?'還沒摸到任何一隻。把右邊的旗子拖到你覺得的高度，也可以直接點刻度。':'準備好了就伸手進去摸一隻。';
+    else{
+      var last=SEQ[k-1];
+      status.innerHTML='第 '+k+' 隻是<b class="'+(last==='R'?'L':'R')+'">'+crabName(last)+'</b>。看完已經放回去、搖一搖了。'+(pend?'<br>不想移，就點一下旗子，或按「旗子不動」。':'');
+    }
+    drawB.style.display=k<12?'':'none';drawB.disabled=busy||pend;
+    doneB.style.display=k===12?'':'none';doneB.disabled=busy||pend;
+    keep.style.display=(!busy&&pend&&prev!=null)?'':'none';
+    ro.innerHTML='你的旗子<b>'+(cur!=null?posH(cur):(prev!=null?'等你重新升旗':'還沒升旗'))+'</b>';
+    th.innerHTML='摸到的螃蟹 <small>紅蟳 '+c.r+' 隻、花蟹 '+c.f+' 隻</small>';
+    slots.innerHTML=slotsHTML(k);
+    if(newSlot!=null){var sl=slots.querySelector('[data-i="'+newSlot+'"]');if(sl)sl.classList.add('new')}
+  }
+  function A(elm,frames,ms){return new Promise(function(res){if(RM||!elm.animate){var f=frames[frames.length-1];for(var p in f)elm.style[p]=f[p];res();return}var a=elm.animate(frames,{duration:ms,easing:'ease-in-out',fill:'forwards'});a.onfinish=function(){var f=frames[frames.length-1];for(var p in f)elm.style[p]=f[p];try{a.cancel()}catch(_){}res()}})}
+  function wait(ms){return new Promise(function(r){setTimeout(r,RM?0:ms)})}
+  function shake(){return A(bkg,[{transform:'rotate(0deg)'},{transform:'rotate(-3deg)'},{transform:'rotate(3deg)'},{transform:'rotate(-2deg)'},{transform:'rotate(0deg)'}],420)}
+  function draw(){
+    if(busy||st.n>=12||st.s[st.n]==null)return;
+    var k=st.n,c=SEQ[k];
+    st.n=k+1;save(st);
+    busy=true;upd();
+    held.innerHTML=heldCrab(c);held.setAttribute('opacity','0');
+    A(arm,[{transform:'translate(0px,-300px)'},{transform:'translate(0px,0px)'}],650)
+    .then(shake)
+    .then(function(){held.setAttribute('opacity','1');return A(arm,[{transform:'translate(0px,0px)'},{transform:'translate(0px,-118px)'}],550)})
+    .then(function(){pop.innerHTML=crabIc(c)+'<span class="'+(c==='R'?'L':'R')+'">'+crabName(c)+'！</span>';pop.classList.add('on');busy=false;upd(k);return wait(900)})
+    .then(function(){pop.classList.remove('on');setTimeout(function(){if(!pop.classList.contains('on'))pop.innerHTML=''},RM?0:300);return A(arm,[{transform:'translate(0px,-118px)'},{transform:'translate(0px,0px)'}],380)})
+    .then(function(){held.setAttribute('opacity','0');return Promise.all([shake(),A(arm,[{transform:'translate(0px,0px)'},{transform:'translate(0px,-300px)'}],460)])});
+  }
+  upd();
+}
+
+/* ---------- reveal ---------- */
+function revealPage(){
+  var my=st.s[12];
+  app.append(el('p','case','揭曉'));
+  app.append(el('h2',null,'算出來的旗子，會升到哪裡？'));
+  var rev=el('div','rev');var l=el('div','lcol');var r=el('div','rcol');
+  var pole=makePole({interactive:false,comp:true,h:420});pole.setMy(my,false);
+  r.append(pole.el);
+  var cmp=el('div','cmp2');
+  var cv=el('b');
+  cmp.append(el('div','m','<small>你最後的旗子</small><b>'+posH(my)+'</b>'));
+  var cd=el('div','c');cd.append(el('small',null,'算出來的旗子'),cv);cmp.append(cd);
+  var tray=el('div','card tray');tray.append(el('h3',null,'算出來的旗子，也是一隻一隻跟著螃蟹走 <small>紅蟳 8 隻、花蟹 4 隻</small>'));
+  var slots=el('div','slots six');tray.append(slots);
+  var more=el('div');
+  l.append(cmp,tray,more);
+  rev.append(l,r);app.append(rev);
+  var nx=button(ic('trend')+'看看你的旗子是怎麼走的','btn',function(){go('track')});
+  var again=button('再看一次算出來的旗子','btn soft',function(){run()});
+  app.append(nx);
+  function setC(k){pole.setComp(COMP[k]);cv.innerHTML=posH(COMP[k]);slots.innerHTML=slotsHTML(12,k>0?k-1:null)}
+  var timer=null;
+  function run(){
+    if(timer)clearTimeout(timer);more.innerHTML='';nx.disabled=true;again.disabled=true;
+    var k=0;setC(0);
+    (function step(){k++;if(k>12){finish();return}setC(k);timer=setTimeout(step,RM?0:520)})();
+  }
+  function finish(){st.rev=true;save(st);setC(12);slots.innerHTML=slotsHTML(12);explain();nx.disabled=false;again.disabled=false}
+  function explain(){
+    more.innerHTML='';
+    var c=el('div','card fade');
+    c.append(el('h3',null,'為什麼算出來這麼有把握？'));
+    c.append(el('p','note','左簍紅蟳多，右簍花蟹多。所以每摸到一隻<b class="L">紅蟳</b>，是左簍的機會就<b>變大一點</b>；每摸到一隻<b class="R">花蟹</b>，是右簍的機會就變大一點。'));
+    c.append(el('p','note','一隻紅蟳和一隻花蟹，剛好互相抵消。你摸到 8 隻紅蟳、4 隻花蟹，抵消掉 4 對以後，<b>還多出 4 隻紅蟳</b>。'));
+    var s4=el('div','steps4');
+    var lab=['2 倍多','5 倍多','12 倍多','30 倍'];
+    for(var i=1;i<=4;i++){var rr='';for(var j=0;j<i;j++)rr+=ic('basket_red');s4.append(el('div',null,'<span class="rr">'+rr+'</span>多 '+i+' 隻紅蟳<span>左簍的機會大約是右簍的</span><b>'+lab[i-1]+'</b>'))}
+    c.append(s4);
+    var dots='';for(var d=0;d<31;d++)dots+='<i'+(d===30?' class="r"':'')+'></i>';
+    c.append(el('p','note warm','30 倍是什麼意思？想像有 <b>31 個小朋友</b>，每個人都拿到一簍，也都剛好摸到 8 隻紅蟳、4 隻花蟹。大約 <b>30 個人</b>手上的是<b class="L">左簍</b>，只有 <b>1 個人</b>是<b class="R">右簍</b>。'));
+    c.append(el('div','dots',dots));
+    c.append(el('div','dkey','<span><i></i>拿到左簍的人</span><span><i class="r"></i>拿到右簍的人</span>'));
+    c.append(el('p','note','所以，算出來的旗子升到<b>接近十成的「九成七」</b>。一條一條的小線索加起來，可以讓人變得非常有把握。'));
+    var d=my-FINAL,cmpTxt;
+    if(Math.abs(d)<2.5)cmpTxt='你的旗子和算出來的<b>幾乎一樣高</b>。';
+    else if(d<0)cmpTxt='你的旗子比算出來的<b>低了大約'+diffTxt(my)+'</b>。';
+    else cmpTxt='你的旗子比算出來的<b>高了大約'+diffTxt(my)+'</b>：你放在十成，算出來還留著一點點「可能是右簍」的空間。';
+    c.append(el('p','note warm',cmpTxt));
+    var say=el('div','say');say.innerHTML=av('grandpa');say.append(el('p','bub','阿伯把布掀開：「這一簍，是左簍喔！」'));
+    c.append(say);
+    more.append(c,again);
+  }
+  if(st.rev){finish()}else{setC(0);setTimeout(run,RM?0:600)}
+}
+
+/* ---------- track ---------- */
+function spark(v,w,hgt,color,dash,dots){
+  var pts=v.map(function(x,i){return [(i/12*(w-16)+8).toFixed(1),(8+(100-x)/100*(hgt-16)).toFixed(1)]});
+  var s='<polyline points="'+pts.map(function(p){return p.join(',')}).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="'+(dots?4:3.5)+'" stroke-linejoin="round" stroke-linecap="round"'+(dash?' stroke-dasharray="9 7"':'')+'/>';
+  if(dots)pts.forEach(function(p){s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="6" fill="#F3D27A" stroke="#1F2A2E" stroke-width="2.5"/>'});
+  return s;
+}
+function trackPage(){
+  var s=st.s,k=kindOf(s);
+  app.append(el('p','case',ic('trend')+'你的 13 次升旗'));
+  app.append(el('h2',null,'你的旗子一路是怎麼走的？'));
+  var c=el('div','card');
+  var W=window.innerWidth<560?300:420,H=240;
+  var g='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="你 13 次升旗的高度折線圖">';
+  g+='<rect x="0" y="0" width="'+W+'" height="'+(H/2)+'" fill="#FCF1EC"/><rect x="0" y="'+(H/2)+'" width="'+W+'" height="'+(H/2)+'" fill="#F0F5FA"/>';
+  for(var i=0;i<=12;i++){var x=(i/12*(W-16)+8).toFixed(1);g+='<path d="M'+x+' 4V'+(H-4)+'" stroke="#E3E6E0" stroke-width="1.5"/>'}
+  g+='<path d="M0 '+(H/2)+'H'+W+'" stroke="#8E968C" stroke-width="2.5"/>';
+  g+=spark(COMP,W,H,'#2F7D4F',true,false);
+  g+=spark(s,W,H,'#B7862B',false,true);
+  g+='</svg>';
+  var ch=el('div','chart');
+  ch.append(el('div','ylab','<span class="t">左簍<br>十成</span><span class="m">一半<br>一半</span><span class="b">右簍<br>十成</span>'));
+  ch.append(el('div',null,g));
+  ch.append(el('div','xlab','<span>摸之前</span><span>第 6 隻</span><span>第 12 隻</span>'));
+  c.append(ch);
+  c.append(el('div','lgd','<span><svg viewBox="0 0 36 12"><path d="M2 6H34" stroke="#B7862B" stroke-width="4"/><circle cx="18" cy="6" r="4.5" fill="#F3D27A" stroke="#1F2A2E" stroke-width="2"/></svg>你的旗子</span><span><svg viewBox="0 0 36 12"><path d="M2 6H34" stroke="#2F7D4F" stroke-width="3.5" stroke-dasharray="7 5"/></svg>參考線：算出來的旗子</span><span><svg viewBox="0 0 36 12"><path d="M2 6H34" stroke="#8E968C" stroke-width="2.5"/></svg>一半一半</span>'));
+  var hi=Math.max.apply(null,s),lo=Math.min.apply(null,s),drops=0;for(var j=1;j<=12;j++)if(s[j]<s[j-1])drops++;
+  c.append(el('p','note','你的旗子：摸之前在<b>'+pos(s[0])+'</b>，最高到<b>'+pos(hi)+'</b>，最低到<b>'+pos(lo)+'</b>，最後停在<b>'+pos(s[12])+'</b>。12 次裡面，有 <b>'+drops+'</b> 次往下拉。'));
+  app.append(c);
+  app.append(el('h3',null,'旗子的走法，大致有這幾種：'));
+  var ks=el('div','kinds');var list=['still','jump','up'];if(k==='down')list.push('down');
+  list.forEach(function(key){
+    var K=KIND[key],me=key===k;
+    var sv='<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="8" fill="#FDFDFB" stroke="#D4D9D2" stroke-width="2"/><path d="M0 32H120" stroke="#AEB5AC" stroke-width="2"/>'+spark(K.ex,120,64,me?'#B7862B':'#56605C',false,false)+'</svg>';
+    var d=el('div','kind'+(me?' me':''));
+    d.innerHTML=sv+'<div>'+(me?'<span class="tag">你比較像這一種</span>':'')+'<h3>'+K.n+'</h3><p>'+K.d+'</p></div>';
+    ks.append(d);
+  });
+  app.append(ks);
+  app.append(el('p','note warm','每一種走法都很常見，沒有誰對誰錯。等一下老師會問大家：你的旗子比較像哪一種？為什麼你會這樣移？'));
+  app.append(button(ic('think')+'最後一題','btn',function(){go('reflect')}));
+}
+
+/* ---------- reflection (no forced answer) ---------- */
+var RF={
+  A:{n:'旗子不動',e:'你把「6 隻紅蟳、6 隻花蟹」看成兩邊一樣多、互相抵消。前面 12 隻留下來的線索，你都還算進去。'},
+  B:{n:'往中間調一點',e:'你把這 12 隻當成一個提醒：「好像沒有那麼確定。」旗子降下來一點，留一點空間，等更多線索再決定。'},
+  C:{n:'直接改成右簍',e:'你讓最新的這一次決定一切。前面摸到的 8 隻紅蟳、4 隻花蟹，就先不算了。'}
+};
+function reflectPage(){
+  app.append(el('p','case',ic('think')+'最後一題'));
+  app.append(el('h2',null,'如果再摸 12 次，結果是 6 隻紅蟳、6 隻花蟹，你會怎麼調旗子？'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。選好以後，會看到這個選擇的作用，等一下全班一起討論。'));
+  var o=el('div','opts');var bs={};var fb=el('div');
+  ['A','B','C'].forEach(function(k){var b=button('<span class="lt">'+k+'</span><span>'+RF[k].n+'</span>','btn alt'+(st.r===k?' pick':''),function(){st.r=k;save(st);upd()});bs[k]=b;o.append(b)});
+  var nx=button('完成','btn',function(){if(st.r)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    Object.keys(bs).forEach(function(k){bs[k].classList.toggle('pick',st.r===k);bs[k].setAttribute('aria-pressed',st.r===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.r;
+    if(st.r){var m=RF[st.r];var c=el('div','card');c.append(el('h3',null,st.r+'　'+m.n));c.append(el('dl','ec','<dt>作用</dt><dd>'+m.e+'</dd>'));fb.append(c)}
+  }
+  upd();
+}
+
+/* ---------- end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var my=st.s[12],k=kindOf(st.s);
+  var dir=Math.abs(my-FINAL)<2.5?'（幾乎一樣）':(my<FINAL?'（比算出來的低）':'（比算出來的高）');
+  var rows=[
+    ['摸完 12 次，你的旗子',posH(my)],
+    ['算出來的旗子','<span class="L">左簍</span> 九成七（接近十成）'],
+    ['差了幾成',diffTxt(my)==='不到半成'?'不到半成（幾乎一樣）':'大約'+diffTxt(my)+dir],
+    ['你的軌跡',KIND[k].n],
+    ['再摸 6 紅 6 花，你會',st.r+'　'+RF[st.r].n]
+  ];
+  var c=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);app.append(c);
+  app.append(el('p','note warm','老師等一下會請大家舉手：最後的旗子在九成以上的有幾個人？七、八成的呢？一半附近的呢？'));
+}
+
+function render(){
+  app.innerHTML='';
+  var s=st.step,done=st.n===12&&st.s[12]!=null;
+  if(s==='intro')intro();
+  else if(s==='play')playPage();
+  else if(s==='reveal'&&done)revealPage();
+  else if(s==='track'&&done)trackPage();
+  else if(s==='reflect'&&done)reflectPage();
+  else if(s==='end'&&done&&st.r)endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

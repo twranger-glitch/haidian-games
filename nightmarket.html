@@ -1,0 +1,195 @@
+<title>夜市試吃攤</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: 10 pretend night-market coins, 4 stalls in a fixed order (cookie stall is 3rd). At each stall the owner says one line; tap your coins to move them onto the money tray (0-4), tap tray coins to take them back. Secret groups (crypto): only the cookie stall differs (green = free sample first, orange = no sample). Then two no-right-answer questions and a summary page. Single light classroom look on purpose. */
+:root{
+  --bg:#F1F0EA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --note:#EAF1F5; --warm:#FBF1DC;
+  --coin:#E9B949; --coinEdge:#B7862B;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+svg.sign{width:100%;height:auto;display:block}
+.say{display:flex;gap:12px;align-items:flex-start}
+.say .face{font-size:clamp(40px,7vw,56px);line-height:1;flex:none}
+.bubble{background:var(--warm);border-radius:18px;padding:12px 16px;font-size:clamp(21px,3.2vw,28px);font-weight:700;line-height:1.5;margin:0;flex:1;min-width:0}
+.btn{font:inherit;font-size:clamp(21px,3.2vw,29px);font-weight:900;border:0;border-radius:16px;padding:16px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opts .btn.alt{text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.eat{background:var(--rust)}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.coinrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:64px;align-items:center}
+.coin{width:clamp(52px,9vw,64px);height:clamp(52px,9vw,64px);border-radius:50%;border:4px solid var(--coinEdge);background:radial-gradient(circle at 35% 30%,#F8DC8A,var(--coin) 60%);color:#7A5410;font:inherit;font-weight:900;font-size:clamp(19px,3vw,24px);cursor:pointer;padding:0;flex:none}
+.coin:focus-visible{outline:4px solid var(--sea);outline-offset:3px}
+.tray{background:#EADFC8;border:4px dashed var(--coinEdge);border-radius:999px;padding:14px 18px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tray .lbl{font-size:clamp(19px,2.6vw,23px);font-weight:900;color:#7A5410;margin:0}
+.slot{width:clamp(52px,9vw,64px);height:clamp(52px,9vw,64px);border-radius:50%;border:3px dotted #C9B892;flex:none}
+.hint{font-size:clamp(19px,2.4vw,22px);color:var(--muted);margin:0;text-align:center}
+.wallet{font-size:clamp(19px,2.6vw,24px);font-weight:900;margin:0;text-align:center}
+.wallet b{color:var(--rust);font-size:1.3em}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.cookie{display:flex;flex-direction:column;align-items:center;gap:10px}
+.cookie svg{width:min(220px,60vw);height:auto}
+.big{font-size:clamp(32px,7vw,72px);font-weight:900;line-height:1.2;margin:0;text-align:center}
+.big.g{color:#2F7D4F} .big.o{color:#C4621B}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap} td.n{text-align:right;font-weight:900}
+tr.hi td{background:var(--warm)}
+.end{font-size:clamp(20px,2.9vw,26px);font-weight:700;line-height:1.7;margin:0}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.say .face svg.av{width:clamp(48px,8vw,64px);height:clamp(48px,8vw,64px);display:block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"sausage": "<g transform=\"rotate(-25 12 12)\"><rect x=\"2.5\" y=\"8.6\" width=\"16\" height=\"6.8\" rx=\"3.4\" fill=\"#EDB09B\"/><path d=\"M7 10.6l1.6 2.8M10.6 10.6l1.6 2.8M14.2 10.6l1.6 2.8\"/><path d=\"M18.5 12h3.5\"/></g>", "balls": "<circle cx=\"7.8\" cy=\"15.2\" r=\"3.7\" fill=\"#F2C38B\"/><circle cx=\"16.2\" cy=\"15.2\" r=\"3.7\" fill=\"#F2C38B\"/><circle cx=\"12\" cy=\"8.3\" r=\"3.7\" fill=\"#F2C38B\"/>", "cookie": "<path d=\"M20.4 11.2A8.5 8.5 0 1 1 12.8 3.6a3 3 0 0 0 3.6 3.6 3 3 0 0 0 4 4z\" fill=\"#E8C795\"/><circle cx=\"9\" cy=\"10\" r=\".9\" fill=\"currentColor\"/><circle cx=\"13.5\" cy=\"14.5\" r=\".9\" fill=\"currentColor\"/><circle cx=\"8.8\" cy=\"15.4\" r=\".9\" fill=\"currentColor\"/>", "cup": "<path d=\"M6 8h12l-1.5 12.2a1.6 1.6 0 0 1-1.6 1.3H9.1a1.6 1.6 0 0 1-1.6-1.3z\" fill=\"#CFE3C4\"/><path d=\"M5 8h14\"/><path d=\"M12.5 8l2-5.5H18\"/><path d=\"M7.2 13h9.6\"/>", "lantern": "<path d=\"M12 1.8v2.4M12 19.8v2.4\"/><rect x=\"9\" y=\"4.2\" width=\"6\" height=\"2\" rx=\".8\" fill=\"#F3E3BE\"/><ellipse cx=\"12\" cy=\"12.6\" rx=\"7.3\" ry=\"6.1\" fill=\"#F2B8A0\"/><path d=\"M12 6.5v12.2M8 7.7c-1.6 2.9-1.6 6.9 0 9.8M16 7.7c1.6 2.9 1.6 6.9 0 9.8\"/><rect x=\"9\" y=\"18.4\" width=\"6\" height=\"2\" rx=\".8\" fill=\"#F3E3BE\"/>", "purse": "<path d=\"M4.5 10h15l-1.1 9.6a1.8 1.8 0 0 1-1.8 1.6H7.4a1.8 1.8 0 0 1-1.8-1.6z\" fill=\"#F3E3BE\"/><path d=\"M8.3 10a3.7 3.7 0 0 1 7.4 0\"/><circle cx=\"9.8\" cy=\"5.6\" r=\"1.2\" fill=\"#FBF4E2\"/><circle cx=\"14.2\" cy=\"5.6\" r=\"1.2\" fill=\"#FBF4E2\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"grandma": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#A8441A\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><circle cx=\"32\" cy=\"12.5\" r=\"5\" fill=\"#C9CCD1\"/><path d=\"M19 27 Q19 13 32 14 Q45 13 45 27 Q41 19 32 19.5 Q23 19 19 27 Z\" fill=\"#C9CCD1\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"27.5\" cy=\"28\" r=\"3.6\" fill=\"none\" stroke=\"#56605C\" stroke-width=\"1.5\"/><circle cx=\"36.5\" cy=\"28\" r=\"3.6\" fill=\"none\" stroke=\"#56605C\" stroke-width=\"1.5\"/><path d=\"M31.1 28h1.8\" stroke=\"#56605C\" stroke-width=\"1.5\"/>", "man": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#205E86\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#E9BE96\"/><path d=\"M19 25 Q19 12 32 13 Q45 12 45 25 Q40 18 32 18.5 Q24 18 19 25 Z\" fill=\"#2B2118\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "woman": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#2F7D4F\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M18 34 Q16 12 32 12.5 Q48 12 46 34 Q44 22 40 19 Q32 22 22 19.5 Q19 24 18 34 Z\" fill=\"#5A3A22\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "person": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#B7862B\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#E3B48C\"/><path d=\"M19.5 24 Q20 12.5 32 13 Q44 12.5 44.5 24 Q38 17 26 19 Q22 20 19.5 24 Z\" fill=\"#3A2A1C\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='nightmarket-sample-v1';
+var TOTAL=10,MAXT=4;
+var S=[
+ {name:'香腸攤',ico:'sausage',bg:'#B8432F',line:'烤香腸喔！剛烤好的，香噴噴，要不要來一根？'},
+ {name:'地瓜球攤',ico:'balls',bg:'#C9781F',line:'地瓜球現炸的喔！一袋一袋，外酥內軟。'},
+ {name:'手工餅乾攤',ico:'cookie',bg:'#8A5A2B',line:null},
+ {name:'甘蔗汁攤',ico:'cup',bg:'#3E7A45',line:'甘蔗汁冰冰涼涼，逛累了要不要來一杯？'}
+];
+var Q1=[['A','看起來好吃'],['B','老闆對我很好，不買不好意思'],['C','剛好想吃甜的'],['D','我沒有放錢']];
+var Q1F={A:'你是看「東西本身」決定的。等一下老師會問：大家是不是都只看東西本身呢？',
+ B:'你很在意老闆的心意，這是很體貼的感覺。不過也想一想：如果老闆沒有對你那麼好，你還會放這麼多嗎？',
+ C:'你是看「自己當下想要什麼」決定的。肚子和心情，常常會影響我們買不買。',
+ D:'你把錢留了下來，留給別的攤子或以後再用。決定不買，也是一種決定。'};
+var Q2=['會','有一點','不會'];
+var Q2F={'會':'很多人都會有這種感覺，這代表你很在意別人對你的好。',
+ '有一點':'心裡有一點點拉扯，很多人都是這樣。',
+ '不會':'你比較能把「人家送我」和「我要不要買」分開來想。'};
+function rnd(){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]}catch(e){return Math.floor(Math.random()*4294967296)}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(!st||!st.put){st={g:(rnd()%2===0?'g':'o'),step:0,put:[0,0,0,0],ate:false,q1:null,q2:null};save(st)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function sum(a,upto){var s=0;for(var i=0;i<a.length;i++){if(upto==null||i<=upto)s+=a[i]}return s}
+function left(){return TOTAL-sum(st.put)}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function lantern(x){return '<g transform="translate('+x+',0)"><line x1="0" y1="0" x2="0" y2="14" stroke="#56605C" stroke-width="2"/><rect x="-9" y="13" width="18" height="4" fill="#7A5410"/><ellipse cx="0" cy="34" rx="16" ry="18" fill="#D9412B"/><path d="M-16 34 H16 M-13 24 H13 M-13 44 H13" stroke="#F2C94C" stroke-width="1.5" opacity=".8"/><rect x="-9" y="51" width="18" height="4" fill="#7A5410"/><line x1="0" y1="55" x2="0" y2="66" stroke="#F2C94C" stroke-width="2"/></g>'}
+function signSVG(s){
+  return '<svg class="sign" viewBox="0 0 600 170" role="img" aria-label="'+s.name+'的招牌">'+
+  '<rect x="0" y="0" width="600" height="6" fill="#56605C"/>'+lantern(40)+lantern(560)+
+  '<rect x="90" y="22" width="420" height="100" rx="18" fill="'+s.bg+'"/><rect x="100" y="32" width="400" height="80" rx="12" fill="none" stroke="#F8DC8A" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/>'+
+  (function(){var W=56+14+s.name.length*46,x0=300-W/2;return '<g transform="translate('+x0+',40) scale(2.333)" fill="none" stroke="#FFF8E6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[s.ico]+'</g><text x="'+(x0+70)+'" y="88" font-size="46" font-weight="900" fill="#FFF8E6" font-family="Noto Sans TC,sans-serif">'+s.name+'</text>'})()+
+  '<path d="M90 130 H510 L490 158 H110 Z" fill="#F2E3C2"/><path d="M110 130 v28 M160 130 v28 M210 130 v28 M260 130 v28 M310 130 v28 M360 130 v28 M410 130 v28 M460 130 v28" stroke="'+s.bg+'" stroke-width="18" opacity=".55"/></svg>'}
+function cookieSVG(bite){
+  return '<svg viewBox="0 0 220 160" aria-hidden="true"><ellipse cx="110" cy="140" rx="90" ry="12" fill="#D5D2C6"/><circle cx="110" cy="78" r="62" fill="#D9A55B"/>'+
+  (bite?'<circle cx="170" cy="40" r="26" fill="var(--card)"/><circle cx="150" cy="22" r="16" fill="var(--card)"/>':'')+
+  '<circle cx="85" cy="60" r="8" fill="#5A3416"/><circle cx="125" cy="95" r="9" fill="#5A3416"/><circle cx="90" cy="105" r="7" fill="#5A3416"/><circle cx="135" cy="55" r="6" fill="#5A3416"/><circle cx="68" cy="88" r="5" fill="#5A3416"/></svg>'}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.innerHTML=signSVG({name:'星星夜市',ico:'lantern',bg:'#205E86'});
+  c.append(el('p','lead','今天晚上，你來到安南區一個熱鬧的夜市（這是故事裡的夜市，不是真的店）。你的口袋裡有 <b>10 枚「夜市幣」</b>，這是遊戲用的錢。'),
+    el('p','lead','你會依序逛 4 個攤位。每一攤，老闆會跟你說一句話。想買的話，就點你的硬幣，把它放進「錢盤」，每攤 0～4 枚都可以；放錯了，點錢盤上的硬幣就能拿回來。'),
+    el('p','lead','沒用完的錢就留在口袋。怎麼花都可以，沒有對錯。'));
+  app.append(el('h1',null,'夜市試吃攤'),c,btn('開始逛夜市','',function(){st.step=1;save(st);render()}));
+}
+function stall(i){
+  var s=S[i];app.innerHTML='';
+  var cs=el('p','case','第 '+(i+1)+' 攤，共 4 攤');
+  var card=el('div','card');card.innerHTML=signSVG(s);
+  app.append(cs,card);
+  var cookie=(i===2),green=(st.g==='g');
+  if(cookie&&green&&!st.ate){
+    var say0=el('div','say');say0.append(el('span','face',av('grandma')),el('p','bubble','老闆笑咪咪地遞給你一小塊餅乾：「這個送你吃吃看，不用錢喔！」'));
+    var ck=el('div','cookie');ck.innerHTML=cookieSVG(false);
+    card.append(say0,ck);
+    app.append(btn('吃吃看','eat',function(){st.ate=true;save(st);render()}));
+    return;
+  }
+  var lineTxt=cookie?(green?'「要不要帶一點回去？」':'「要不要帶一點回去？手工做的喔。」'):'「'+s.line+'」';
+  if(cookie&&green){
+    var ck2=el('div','cookie');ck2.innerHTML=cookieSVG(true);
+    card.append(ck2,el('p','hint','（你吃了一口，香香脆脆的！）'));
+  }
+  var say=el('div','say');say.append(el('span','face',av(cookie?'grandma':(i===0?'man':(i===1?'woman':'person')))),el('p','bubble',lineTxt));
+  card.appendChild(say);
+  var trayBox=el('div','tray');var trayRow=el('div','coinrow');
+  var walBox=el('div','card');var walRow=el('div','coinrow');
+  var info=el('p','wallet');
+  function draw(){
+    var n=st.put[i];trayRow.innerHTML='';walRow.innerHTML='';
+    for(var k=0;k<MAXT;k++){
+      if(k<n){var c=el('button','coin','幣');c.type='button';c.setAttribute('aria-label','把錢盤上的一枚硬幣拿回來');c.addEventListener('click',function(){st.put[i]--;save(st);draw()});trayRow.appendChild(c)}
+      else trayRow.appendChild(el('span','slot'));
+    }
+    var L=left();
+    for(var m=0;m<L;m++){var w=el('button','coin','幣');w.type='button';w.setAttribute('aria-label','放一枚硬幣到錢盤');
+      w.addEventListener('click',function(){if(st.put[i]<MAXT&&left()>0){st.put[i]++;save(st);draw()}});walRow.appendChild(w)}
+    if(L===0)walRow.appendChild(el('p','hint','口袋空空了'));
+    info.innerHTML='錢盤上 <b>'+n+'</b> 枚　口袋裡還有 <b>'+L+'</b> 枚'+(n>=MAXT?'<br><span style="color:var(--muted)">一攤最多放 4 枚</span>':'');
+  }
+  trayBox.append(el('p','lbl','錢盤（點硬幣可以拿回來）'),trayRow);
+  walBox.append(el('p','lbl',''+ic('purse')+' 你的口袋（點硬幣放進錢盤）'),walRow);
+  walBox.firstChild.style.cssText='margin:0;font-weight:900;font-size:clamp(19px,2.6vw,23px)';
+  draw();
+  app.append(trayBox,info,walBox,btn(i<3?'下一攤':'逛完了','',function(){st.step=i+2;save(st);render();window.scrollTo(0,0)}));
+}
+function q1(){
+  app.innerHTML='';var n=st.put[2];
+  app.append(el('p','case','逛完了！想一想'),el('h2',null,'你在手工餅乾攤放了 '+n+' 枚，主要是因為？'));
+  var g=el('div','opts');var fb=el('div','opts');
+  Q1.forEach(function(o){var b=btn(o[0]+'　'+o[1],'alt',function(){st.q1=o[0];save(st);paint()});b.dataset.k=o[0];g.appendChild(b)});
+  function paint(){Array.prototype.forEach.call(g.children,function(x){x.classList.toggle('pick',x.dataset.k===st.q1)});fb.innerHTML='';
+    if(!st.q1)return;fb.append(el('p','note',Q1F[st.q1]+'<br><span style="color:var(--muted)">每個答案都可以選，想換也可以直接點別的。</span>'),btn('下一題','',function(){st.step=6;save(st);render();window.scrollTo(0,0)}))}
+  app.append(g,fb);paint();
+}
+function q2(){
+  app.innerHTML='';
+  app.append(el('p','case','最後一題'),el('h2',null,'如果老闆先送你東西，你不買，會不會有點不好意思？'));
+  var g=el('div','opts');var fb=el('div','opts');
+  Q2.forEach(function(o){var b=btn(o,'alt',function(){st.q2=o;save(st);paint()});b.dataset.k=o;g.appendChild(b)});
+  function paint(){Array.prototype.forEach.call(g.children,function(x){x.classList.toggle('pick',x.dataset.k===st.q2)});fb.innerHTML='';
+    if(!st.q2)return;fb.append(el('p','note',Q2F[st.q2]+'<br><span style="color:var(--muted)">沒有對錯，等一下全班一起聊。</span>'),btn('看看我的夜市紀錄','',function(){st.step=7;save(st);render();window.scrollTo(0,0)}))}
+  app.append(g,fb);paint();
+}
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.appendChild(el('p','big '+st.g,'你是「'+(st.g==='g'?'綠色':'橘色')+'夜市」'));
+  var t=el('table');
+  function row(k,v,hi){var tr=el('tr',hi?'hi':null);tr.append(el('td','k',k),el('td','n',v));t.appendChild(tr)}
+  row(''+ic('cookie')+' 手工餅乾攤',st.put[2]+' 枚',true);
+  row(''+ic('sausage')+' 香腸攤',st.put[0]+' 枚');row(''+ic('balls')+' 地瓜球攤',st.put[1]+' 枚');row(''+ic('cup')+' 甘蔗汁攤',st.put[3]+' 枚');
+  row(''+ic('purse')+' 口袋還剩',left()+' 枚');
+  var q=Q1.filter(function(o){return o[0]===st.q1})[0];
+  row('放錢的原因',q?q[0]+'　'+q[1]:'—');
+  row('不買會不好意思嗎？',st.q2||'—');
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,
+    el('p','note warm end','別人先送你東西，就算你沒有要，也會覺得欠了一點人情。心理學家把這叫做「互惠原則」。'));
+}
+function render(){
+  if(st.step===0)intro();else if(st.step<=4)stall(st.step-1);else if(st.step===5)q1();else if(st.step===6)q2();else end();
+}
+render();
+})();
+</script>

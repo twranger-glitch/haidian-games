@@ -1,0 +1,545 @@
+<title>清港跑不停</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story, then 10 months of a harbour cross-section (side view). Each month the creek's silt flows in and the bed rises; the student drags the wooden bucket from the bamboo raft onto the silt (or taps the silt) - the bucket scoops, is hauled back and dumped on the bank, the bed drops one unit. Fixed bucket quota per month; a dot on the depth chart and a bar on the "how tired" chart at each month end. Month 7: choose A more hands / B move the port south / C trees and silt dam upstream (effect + cost shown, any choice allowed), then months 7-10. Result page, then final question (effect + cost only), then summary. Fixed script, no randomness. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --mA:#7A5A16; --mB:#A8441A; --mC:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:960px;margin:0 auto;padding-inline:20px;padding-block:20px 36px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.4vw,32px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.6vw,24px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,2.6vw,22px);display:flex;flex-direction:column;gap:10px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn.small{font-size:19px;padding:10px 14px;font-weight:700}
+.btn:focus-visible,.scene:focus-visible,.copt:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.5vw,23px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:flex-start;gap:8px}
+.hint svg.i{margin-top:.2em}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.7em;height:1.7em}
+.lt{display:inline-flex;align-items:center;justify-content:center;min-width:1.7em;height:1.7em;border-radius:50%;color:#fff;font-weight:900;font-size:.9em;flex:none;line-height:1}
+.lt.A{background:var(--mA)}.lt.B{background:var(--mB)}.lt.C{background:var(--mC)}.lt.N{background:var(--sea)}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:0 12px 0 4px;color:var(--ink);letter-spacing:0;font-size:19px}
+/* stage */
+.stage{display:flex;gap:12px;align-items:flex-start}
+.colL{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px}
+.colR{flex:0 0 300px;display:flex;flex-direction:column;gap:12px}
+.sbox{position:relative;background:#E3EFF4;border:3px solid var(--line);border-radius:20px;overflow:hidden}
+.act{display:flex;flex-direction:column;gap:10px}
+.scene{width:100%;height:auto;display:block;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.scene #silt{transition:transform .25s ease}
+.scene #bk{cursor:grab}
+.sbox.aim #siltTop{stroke:#F3D27A;stroke-width:6}
+.scene .flow path{opacity:0}
+.sbox.flowing .scene .flow path{animation:flow 1.5s ease-in-out infinite}
+.sbox.flowing .scene .flow path:nth-child(2){animation-delay:.35s}
+.sbox.flowing .scene .flow path:nth-child(3){animation-delay:.7s}
+@keyframes flow{0%{transform:translateX(-60px);opacity:0}25%{opacity:.95}100%{transform:translateX(420px);opacity:0}}
+.ov{position:absolute;pointer-events:none;background:rgba(251,252,249,.94);border:2px solid var(--line);border-radius:12px;padding:0 10px;font-weight:900;font-size:19px;line-height:1.5;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.ov.dl{left:1.2%;top:60.9%;transform:translateY(-50%);border-color:var(--sea);color:var(--sea)}
+.ov.dl.bad{border-color:var(--rust);color:var(--rust)}
+.ov.up{left:1.2%;top:2.5%}
+.ov.bank{right:1.2%;top:50%}
+.ov.port{right:1.2%;top:13%;border-color:var(--rust);color:var(--rust)}
+.ov.ban{left:50%;top:40%;transform:translate(-50%,-50%) scale(.9);font-size:clamp(19px,2.8vw,26px);padding:6px 14px;border:3px solid var(--rust);opacity:0;transition:opacity .3s,transform .3s}
+.ov.ban.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.ov svg.i{width:1.3em;height:1.3em}
+@media (prefers-reduced-motion:reduce){.scene #silt,.ov.ban{transition:none!important}.sbox.flowing .scene .flow path{animation:none;opacity:.8}}
+/* hud */
+.hud{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.bks{display:flex;flex-wrap:wrap;gap:2px 4px}
+.bks svg.i{width:29px;height:29px;color:var(--ink);transition:opacity .25s}
+.bks svg.i.used{opacity:.22}
+.bks svg.i.rest{opacity:.22;color:var(--muted)}
+.left{margin:0;font-size:19px;font-weight:700}
+.left b{font-size:1.25em;color:var(--sea)}
+.stat{margin:0;font-weight:900;font-size:clamp(19px,2.3vw,21px);line-height:1.45;border-radius:12px;padding:6px 10px}
+.stat.ok{background:#E4F0DE;color:var(--good)}.stat.sh{background:#FBE9DD;color:var(--rust)}
+.stat span{display:block;font-weight:700;color:var(--ink)}
+/* chart */
+.chart{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.ch-t{margin:0;font-weight:900;font-size:19px;line-height:1.4;display:flex;align-items:center;gap:6px}
+.ch-t svg.i{width:1.5em;height:1.5em}
+.plot{position:relative;height:140px;border-radius:8px;overflow:hidden;margin-top:2px}
+.plot .z{position:absolute;left:0;right:0}
+.plot .z.sh{top:0;height:55.6%;background:#FBE9DD}
+.plot .z.ok{top:55.6%;bottom:0;background:#E4F0DE;border-top:3px dashed var(--sea)}
+.plot svg{position:absolute;inset:0;width:100%;height:100%}
+.dot{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2.5px solid var(--card);box-shadow:0 0 0 1px rgba(31,42,46,.25)}
+.dot.ok{background:var(--good)}.dot.sh{background:var(--rust)}
+.dot.new{animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.5)}100%{transform:scale(1)}}
+.lgd{margin:0;font-size:19px;color:var(--muted);display:flex;flex-wrap:wrap;gap:0 12px;line-height:1.5}
+.lgd span{display:inline-flex;align-items:center;gap:5px}
+.lgd i{display:inline-block;width:18px;height:14px;border-radius:4px}
+.lgd i.sh{background:#FBE9DD;border:2px solid #E8C2AC}.lgd i.ok{background:#E4F0DE;border:2px solid #B9D3AE}
+.lgd i.dl{height:0;border-top:3px dashed var(--sea);border-radius:0}
+.bars{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));height:92px;align-items:end;border-bottom:2px solid var(--line);margin-top:2px}
+.bc{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bc b{font-size:19px;line-height:1.2;font-variant-numeric:tabular-nums}
+.bc i{display:block;width:62%;max-width:26px;border-radius:5px 5px 0 0;background:var(--gold)}
+.bc i.hi{background:var(--rust)}
+.bc.new i{animation:grow .5s ease-out;transform-origin:50% 100%}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.mos{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));text-align:center;font-size:19px;font-weight:700;color:var(--muted);line-height:1.4;font-variant-numeric:tabular-nums}
+.mos span.on{color:var(--ink)}
+.mos-x{margin:0;font-size:19px;color:var(--muted);text-align:center;line-height:1.3}
+@media (prefers-reduced-motion:reduce){.dot.new,.bc.new i{animation:none}}
+/* month end */
+.fl{margin:0;display:flex;gap:10px;align-items:flex-start;font-size:clamp(19px,2.4vw,22px);line-height:1.55}
+.fl svg.i{width:1.6em;height:1.6em;margin-top:0;flex:none}
+.fl b{font-weight:900}
+.fl.ok b{color:var(--good)}.fl.sh b{color:var(--rust)}
+/* choice */
+.copt{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.copt.pick{border-color:var(--gold);background:var(--warm);box-shadow:0 0 0 4px #F3E3BE}
+.copt .top{display:flex;align-items:center;gap:10px;font-size:clamp(21px,2.8vw,25px);font-weight:900;line-height:1.35}
+.copt .top svg.i{width:46px;height:46px}
+.copt .top .sel{margin-left:auto;font-size:19px;color:var(--gold);display:none;align-items:center;gap:4px;white-space:nowrap}
+.copt.pick .top .sel{display:inline-flex}
+.copt.A{border-left:10px solid var(--mA)}.copt.B{border-left:10px solid var(--mB)}.copt.C{border-left:10px solid var(--mC)}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.e{color:var(--good)}.ec dt.c{color:var(--rust)}
+/* result */
+.res{display:flex;flex-direction:column;gap:10px}
+.rc{border:3px solid var(--line);border-radius:16px;padding:10px 14px;background:var(--card)}
+.rc.me{border-color:var(--gold);background:var(--warm)}
+.rc h3 .me{font-size:19px;color:var(--gold);font-weight:900}
+.rc p{margin:2px 0 0;font-size:clamp(19px,2.4vw,22px);line-height:1.55}
+.rc p b{font-weight:900}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+.sum td:first-child{color:var(--muted);font-weight:700;width:46%}
+.sum td b{font-size:1.1em}
+@media (max-width:760px){
+  .stage{flex-direction:column;align-items:stretch}
+  .colL,.colR{display:contents}
+  .stage .hud{order:1}.stage .sbox{order:2}.stage .act{order:3}.stage .chart{order:4}
+  .hud{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px}
+  .bks{width:100%}
+  .bks svg.i{width:30px;height:30px}
+  .stat{flex:1 1 200px}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .plot{height:120px}
+  .bars{height:84px}
+  .bc i{width:70%}
+  .ov{padding:0 6px;border-radius:10px}
+  .ov.port{top:16%}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0;width:auto!important}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .copt .top svg.i{width:40px;height:40px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"raise_bucket": "<path d=\"M6.1 12.4h11.8l-.9 7a1.8 1.8 0 0 1-1.8 1.6H8.8A1.8 1.8 0 0 1 7 19.4z\" fill=\"#BFD8EA\" stroke=\"none\"/><path d=\"M4.8 8.2h14.4l-1.6 11.2a1.8 1.8 0 0 1-1.8 1.6H8.2a1.8 1.8 0 0 1-1.8-1.6z\"/><path d=\"M6.2 8.2C6.2 4.8 8.8 3 12 3s5.8 1.8 5.8 5.2\"/><path d=\"M8.6 12.4q1.7 1 3.4 0t3.4 0\"/>", "people": "<circle cx=\"9\" cy=\"7.6\" r=\"3.4\" fill=\"#F6E3D6\"/><path d=\"M2.6 20.5c.4-4 2.8-6.3 6.4-6.3s6 2.3 6.4 6.3z\" fill=\"#F6E3D6\"/><path d=\"M15.4 4.6a3 3 0 0 1 0 6\"/><path d=\"M17.2 14.4c2.6.6 4 2.6 4.3 6.1h-2.8\"/>", "dredge_south": "<path d=\"M9 2.8v9\"/><path d=\"M5.6 8.4L9 11.8l3.4-3.4\"/><path d=\"M18.5 15.6V7.4\"/><path d=\"M18.5 7.6h3l-1 1.5 1 1.5h-3\" fill=\"#F2B8A0\"/><path d=\"M2.8 15.6h18.4v2.6H2.8z\" fill=\"#F3E3BE\"/><path d=\"M6 18.2v3.2M12 18.2v3.2M18 18.2v3.2\"/>", "dredge_tree": "<circle cx=\"8\" cy=\"8.4\" r=\"4.8\" fill=\"#CFE3C4\"/><path d=\"M8 13.2v6.6M8 16.2l-2.2-1.8\"/><path d=\"M13.2 19.8v-5.6l3.6-1.6 3.6 1.6v5.6z\" fill=\"#E6CF9E\"/><path d=\"M13.2 16.8h7.2\"/><path d=\"M2.5 19.8h19\"/>", "dredge_tired": "<circle cx=\"11\" cy=\"12.5\" r=\"8.4\" fill=\"#F6E3D6\"/><path d=\"M7.2 11.4h2.6M12.4 11.4h2.6\"/><path d=\"M8.4 16.6q2.6-1.6 5.2 0\"/><path d=\"M19.6 2.8c1.3 1.7 2 2.8 2 3.6a2 2 0 0 1-4 0c0-.8.7-1.9 2-3.6z\" fill=\"#BFD8EA\"/>", "dredge_silt": "<path d=\"M2.5 7.5q2.4-1.8 4.8 0t4.8 0 4.8 0 4.8 0\"/><path d=\"M2.5 12.6q2.4-1.8 4.8 0t4.8 0 4.8 0 4.8 0\"/><path d=\"M3 21h18v-2.4c-3-1.6-6-1.6-9 0s-6 1.6-9 0z\" fill=\"#D9B98C\"/><circle cx=\"8\" cy=\"16.2\" r=\".9\" fill=\"currentColor\"/><circle cx=\"15.5\" cy=\"15.6\" r=\".9\" fill=\"currentColor\"/>", "trend": "<path d=\"M7 7.4l4 4.4 3-2.2 5 6.2v4H7z\" fill=\"#CFE3C4\" stroke=\"none\"/><path d=\"M3.6 3.4v16.8h17\"/><path d=\"M7 7.4l4 4.4 3-2.2 5 6.2\"/><path d=\"M19.4 11.6v4.4H15\"/>", "hand": "<path d=\"M8.4 21.5v-3.8L5.3 14.3a1.45 1.45 0 0 1 2.1-2l1.3 1.2V6a1.35 1.35 0 0 1 2.7 0v5.2V4.6a1.35 1.35 0 0 1 2.7 0v6.6V5.6a1.35 1.35 0 0 1 2.7 0v6.2-3.4a1.35 1.35 0 0 1 2.7 0v6.8c0 2.8-.9 4.6-2.3 6.3z\" fill=\"#F6E3D6\"/>", "split": "<circle cx=\"6.5\" cy=\"6.8\" r=\"2.6\" fill=\"#F6E3D6\"/><path d=\"M2.5 15c.3-2.9 1.8-4.5 4-4.5s3.7 1.6 4 4.5z\" fill=\"#F6E3D6\"/><circle cx=\"17.5\" cy=\"6.8\" r=\"2.6\" fill=\"#CFE3C4\"/><path d=\"M13.5 15c.3-2.9 1.8-4.5 4-4.5s3.7 1.6 4 4.5z\" fill=\"#CFE3C4\"/><path d=\"M12 3v18\" stroke-dasharray=\"2 2.6\"/><path d=\"M3.5 19.4h6M14.5 19.4h6\"/>", "cal": "<rect x=\"3.4\" y=\"4.6\" width=\"17.2\" height=\"16\" rx=\"2.2\" fill=\"#FBFCF9\"/><path d=\"M3.4 9.4h17.2V6.8a2.2 2.2 0 0 0-2.2-2.2H5.6a2.2 2.2 0 0 0-2.2 2.2z\" fill=\"#F2B8A0\"/><path d=\"M8 2.8v3.4M16 2.8v3.4\"/><path d=\"M7.4 13.2h1.6M11.2 13.2h1.6M15 13.2h1.6M7.4 16.8h1.6M11.2 16.8h1.6\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "boat": "<path d=\"M1.8 14.2h20.4l-2.5 4.1a2 2 0 0 1-1.7 1H6a2 2 0 0 1-1.7-1z\" fill=\"#F3E3BE\"/><path d=\"M6.4 14.2V9.8Q12 5.6 17.6 9.8v4.4z\" fill=\"#DCE8F0\"/><rect x=\"9.6\" y=\"9.6\" width=\"4.8\" height=\"3.2\" rx=\".7\" fill=\"#FBFCF9\"/><path d=\"M1.5 22q2.6-1.5 5.2 0t5.2 0 5.2 0 5.2 0\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='dredge-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function lt(k,t){return '<span class="lt '+k+'">'+(t||k)+'</span>'}
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+var SP=RM?0.3:1;
+
+/* ---------- the model (fixed script) ----------
+   depth d = how far the harbour bed is below the water surface, in "份" (one bucket = 1 份).
+   Ships need d >= L. Silt S flows in at the start of each month; each bucket gives +1. */
+var L=20,D0=24,DMAX=36,SURF=120,K=8;
+function yOf(d){return SURF+d*K}
+var SB=[0,6,7,7,9,11,12];
+var STORY=['',
+  '第 1 個月：溪水清清的，只帶來一點點泥沙。',
+  '第 2 個月：天氣很好，溪水帶來的泥沙還是不多。',
+  '第 3 個月：下了幾場小雨，泥沙多了一點點。',
+  '第 4 個月：上游有人把樹砍掉開墾，土變得鬆鬆的，一下雨就被沖進溪裡。',
+  '第 5 個月：連下了好幾天大雨，溪水變得黃黃濁濁的。',
+  '第 6 個月：上游開墾的地越來越多，流進港裡的泥沙又變多了。'];
+var CH={
+  A:{n:'加派人手',sub:'每個月撈 12 桶',icon:'people',S:[10,11,12,13],q:[12,12,12,12],o:[0,0,0,0],
+     e:'每個月多來 4 個人，一個月可以撈 12 桶，港道比較撐得住。',
+     c:'每個月都要多出 4 個人的力氣，大家更累，而且要一直這樣做下去。',
+     st:['第 7 個月：多了 4 個幫手，這個月可以撈 12 桶。','第 8 個月：雨還是一直下，上游又開了新的田。','第 9 個月：大家的手臂都好痠，可是泥沙還是一個月比一個月多。','第 10 個月：上游還在開墾，溪水又更濁了。']},
+  B:{n:'搬到南邊，另開新港',sub:'新港一開始很深',icon:'dredge_south',S:[3,6,9,12],q:[4,8,8,8],o:[4,0,0,0],
+     e:'新港離溪口比較遠，一開始很深，船馬上就好開進來。',
+     c:'第 7 個月有一半的人要搬家、蓋新碼頭，只能撈 4 桶；舊港的碼頭和房子都要放下。',
+     st:['第 7 個月：大家搬到南邊蓋新碼頭。新港好深，可是一半的人在忙搬家，只能撈 4 桶。','第 8 個月：新港離溪口比較遠，流進來的泥沙還不多。','第 9 個月：仔細看，港外的泥沙一點一點往南邊堆過來了。','第 10 個月：溪水帶來的泥沙，已經追到新港的門口。']},
+  C:{n:'去上游種樹、蓋擋沙的堤',sub:'從源頭讓泥沙變少',icon:'dredge_tree',S:[10,11,3,2],q:[6,6,8,8],o:[2,2,0,0],
+     e:'樹和堤把泥沙擋在上游以後，流進港裡的泥沙會變少。',
+     c:'樹要慢慢長，前兩個月沒有效果；這兩個月要派 2 個人去上游，港裡每個月只能撈 6 桶。',
+     st:['第 7 個月：2 個人去上游種樹、堆擋沙的堤。樹苗還很小，泥沙一樣多，港裡少了人手。','第 8 個月：樹還沒長大，堤也還沒蓋完，港道變得好淺。','第 9 個月：樹長起來了，擋沙的堤也蓋好了，去上游的 2 個人回來一起挖港。','第 10 個月：溪水沒那麼濁了，流進港裡的泥沙少了很多。']}
+};
+var CK=['A','B','C'];
+function info(m){
+  if(m<=6)return {S:SB[m],q:8,o:0};
+  var c=CH[st.choice],i=m-7;return {S:c.S[i],q:c.q[i],o:c.o[i]};
+}
+function story(m){return m<=6?STORY[m]:CH[st.choice].st[m-7]}
+function deep(d){return d>=L}
+function rel(d){
+  var r=d-L;
+  if(r>0)return {ok:true,t:'港底在深度線下面 '+r+' 份',s:'船進得來'};
+  if(r===0)return {ok:true,t:'港底剛好碰到深度線',s:'船勉強進得來'};
+  return {ok:false,t:'港底比深度線高 '+(-r)+' 份',s:'船進不來'};
+}
+function mix(a,b,t){t=Math.max(0,Math.min(1,t));var p=function(c,i){return parseInt(c.substr(1+i*2,2),16)};var r='#';for(var i=0;i<3;i++){var v=Math.round(p(a,i)+(p(b,i)-p(a,i))*t);r+=(v<16?'0':'')+v.toString(16)}return r}
+
+/* ---------- SVG scene (viewBox 800×460): channel x 0-640, bank 590-800, water surface y=120, hard bottom y=408 ---------- */
+var PT=[452,40],REST=[452,94];
+function person(x,y,shirt){return '<g transform="translate('+x+' '+y+')"><path d="M-9 0L-6.5 -25Q0 -29 6.5 -25L9 0Z" fill="'+shirt+'" stroke="#1F2A2E" stroke-width="2" stroke-linejoin="round"/><circle cy="-34" r="8.5" fill="#F2CFAE" stroke="#1F2A2E" stroke-width="2"/><path d="M-16 -37L0 -50L16 -37Z" fill="#E6CF9E" stroke="#8C6A3E" stroke-width="2" stroke-linejoin="round"/></g>'}
+function tree(x,y,s,id){return '<g data-t="'+id+'" transform="translate('+x+' '+y+') scale('+s+')"><path d="M0 0V-16" stroke="#6B4A26" stroke-width="4"/><circle cy="-24" r="12" fill="#7FB565" stroke="#4F7A3A" stroke-width="2.5"/></g>'}
+function sceneSVG(v){
+  // v: {m, choice, d (visual), pile, S}
+  var m=v.m,ch=v.choice,s='<svg class="scene" viewBox="0 0 800 460" role="img" tabindex="0" aria-label="港道的側面圖：上面是水，下面是港底的泥沙，虛線是船可以進來的深度，竹筏上有一個木桶">';
+  s+='<rect width="800" height="125" fill="#E3EFF4"/><circle cx="560" cy="44" r="22" fill="#F3D27A"/>';
+  var rain=v.S>=10&&m>=1;
+  // upstream hill
+  s+='<path d="M0 122C30 60 90 34 150 46S250 92 300 122Z" fill="#A9C27D" stroke="#7E9A55" stroke-width="2.5"/>';
+  var cleared=m<4?0:m===4?1:m===5?2:3;
+  var P=[[96,58],[160,62],[216,82]];
+  for(var i=0;i<cleared;i++)s+='<g><path d="M'+(P[i][0]-22)+' '+(P[i][1]+4)+'l44 -6 6 18 -46 6z" fill="#D9B98C" stroke="#9C7A52" stroke-width="2"/><path d="M'+(P[i][0]-14)+' '+(P[i][1]+9)+'l30 -4M'+(P[i][0]-12)+' '+(P[i][1]+15)+'l30 -4" stroke="#9C7A52" stroke-width="2"/></g>';
+  var T=[[60,92],[120,54],[190,60],[250,98],[150,96]];
+  var keep=[5,5,5,5,4,3,3,3,3,3,3][m]||5;
+  for(var t=0;t<keep;t++)s+=tree(T[t][0],T[t][1],0.8,t);
+  if(ch==='C'&&m>=7){
+    var sc=m>=9?0.85:0.4;
+    P.forEach(function(p,j){s+=tree(p[0]-10,p[1]+10,sc,'c'+j);s+=tree(p[0]+14,p[1]+6,sc,'d'+j)});
+    if(m>=8)s+='<path d="M240 122V'+(m>=9?100:110)+'h46V122Z" fill="#D9C7A6" stroke="#8C6A3E" stroke-width="2.5"/>'+(m>=9?'<path d="M240 111h46M263 100v11" stroke="#8C6A3E" stroke-width="2"/>':'');
+  }
+  if(rain){s+='<g fill="#FBFCF9" stroke="#AEB8BC" stroke-width="2.5"><ellipse cx="200" cy="24" rx="54" ry="16"/><ellipse cx="240" cy="16" rx="34" ry="13"/><ellipse cx="164" cy="18" rx="30" ry="11"/></g><path d="M160 46l-6 14M190 46l-6 14M220 46l-6 14M250 46l-6 14M175 66l-5 12M235 66l-5 12" stroke="#7FA6C2" stroke-width="3" stroke-linecap="round"/>'}
+  // water
+  s+='<rect id="water" x="0" y="'+SURF+'" width="660" height="340" fill="'+mix('#BFD8EA','#CDB88C',(v.S||0)/14*0.5)+'"/>';
+  s+='<path d="M0 '+SURF+'H660" stroke="#7FA6C2" stroke-width="3"/>';
+  s+='<g class="flow" stroke="#9C7A4A" stroke-width="5" fill="none" stroke-linecap="round"><path d="M0 136q20-8 40 0t40 0 40 0"/><path d="M0 156q20-8 40 0t40 0"/><path d="M0 176q20-8 40 0t40 0 40 0"/></g>';
+  // silt group (moves with the bed)
+  s+='<g id="silt" style="transform:translate(0px,'+yOf(v.d)+'px)">';
+  s+='<rect x="-10" y="0" width="660" height="420" fill="#B8955F"/>';
+  s+='<path d="M-10 70Q160 60 320 72T650 66M-10 150Q170 140 330 152T650 146M-10 230Q150 222 320 232T650 226" stroke="#A3824F" stroke-width="3" fill="none"/>';
+  [[40,26],[120,44],[210,22],[300,52],[380,30],[470,46],[540,24],[80,110],[260,100],[430,120],[560,96],[170,180],[350,190],[500,170]].forEach(function(p){s+='<ellipse cx="'+p[0]+'" cy="'+p[1]+'" rx="6" ry="3.6" fill="#9C7A4A"/>'});
+  if(ch==='B'&&m>=7){
+    var W=[[120,30],[200,70],[290,110],[380,150]][m-7];
+    var h=Math.min(W[1],yOf(v.d)-SURF-8);
+    s+='<path d="M-10 0V'+(-h)+'Q'+(W[0]*0.45)+' '+(-h*0.9)+' '+W[0]+' 0Z" fill="#C6A26C" stroke="#8C6A3E" stroke-width="2.5"/>';
+  }
+  s+='<path id="siltTop" d="M-10 0Q40 -5 80 0T160 0T240 0T320 0T400 0T480 0T560 0T650 0" stroke="#8C6A3E" stroke-width="3.5" fill="none"/>';
+  s+='</g>';
+  // depth line (on top of the silt so it is always visible)
+  s+='<path d="M0 '+yOf(L)+'H600" stroke="#205E86" stroke-width="3.5" stroke-dasharray="14 10" id="dline"/>';
+  // hard bottom
+  s+='<rect x="0" y="408" width="660" height="60" fill="#8A8170"/><path d="M0 408H660" stroke="#5E574A" stroke-width="3"/>';
+  // bank
+  s+='<path d="M590 470V404L628 250L650 112L662 104H800V470Z" fill="#CFB28A" stroke="#8C6A3E" stroke-width="3" stroke-linejoin="round"/>';
+  s+='<path d="M662 104H800" stroke="#A9C27D" stroke-width="8"/>';
+  s+='<path d="M640 200Q700 196 800 204M620 320Q700 316 800 324" stroke="#BC9C73" stroke-width="3" fill="none"/>';
+  s+='<path id="pile" d="'+pileD(v.pile)+'" fill="#B8955F" stroke="#8C6A3E" stroke-width="2.5" stroke-linejoin="round"/>';
+  if(ch==='A'&&m>=7)s+=person(682,104,'#A8441A')+person(704,104,'#7A5A16');
+  // raft
+  s+='<path d="M400 116L452 '+PT[1]+'L504 116" stroke="#8C6A3E" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  s+='<line id="rope" x1="'+PT[0]+'" y1="'+PT[1]+'" x2="'+REST[0]+'" y2="'+(REST[1]-26)+'" stroke="#5E4A2C" stroke-width="2.5"/>';
+  s+=person(386,114,'#205E86')+person(520,114,'#2F7D4F');
+  s+='<rect x="366" y="112" width="172" height="16" rx="8" fill="#D9B98A" stroke="#8C6A3E" stroke-width="3"/><path d="M400 112v16M434 112v16M468 112v16M502 112v16" stroke="#8C6A3E" stroke-width="2"/>';
+  // bucket
+  s+='<g id="bk" transform="translate('+REST[0]+' '+REST[1]+')"><path d="M-17 -12Q0 -40 17 -12" stroke="#5E4A2C" stroke-width="3" fill="none"/>';
+  s+='<path d="M-17 -12H17L13 16H-13Z" fill="#C99A5B" stroke="#6B4A26" stroke-width="3" stroke-linejoin="round"/><path d="M-16 -3H16M-14 8H14" stroke="#6B4A26" stroke-width="2.5"/>';
+  s+='<g id="mud" opacity="0"><path d="M-15 -12Q-8 -22 0 -16Q8 -24 15 -12Z" fill="#9C7A4A" stroke="#6B4A26" stroke-width="2"/></g></g>';
+  s+='<rect id="hit" x="0" y="'+(SURF+6)+'" width="600" height="340" fill="transparent"/>';
+  return s+'</svg>';
+}
+function pileD(n){var h=Math.min(70,6+n*0.9),w=Math.min(56,22+n*0.5),cx=748;return 'M'+(cx-w)+' 104Q'+(cx-w*0.5)+' '+(104-h)+' '+cx+' '+(104-h)+'Q'+(cx+w*0.5)+' '+(104-h)+' '+(cx+w)+' 104Z'}
+function pileTop(n){return 104-Math.min(70,6+n*0.9)}
+function overlays(sb,m,ch){
+  sb.appendChild(el('span','ov up','上游'));
+  sb.appendChild(el('span','ov bank','岸邊倒泥'));
+  sb.appendChild(el('span','ov dl','深度線'));
+  if(ch==='B'&&m>=7)sb.appendChild(el('span','ov port','南邊的新港'));
+  var ban=el('span','ov ban');sb.appendChild(ban);return ban;
+}
+
+/* ---------- tween ---------- */
+var tok=0;
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+function tween(dur,fn,done,own){var my=own?own():tok,t0=null;dur=Math.max(1,dur*SP);
+  function f(ts){if((own?own():tok)!==my)return;if(t0==null)t0=ts;var t=Math.min(1,(ts-t0)/dur);fn(ease(t),t);if(t<1)requestAnimationFrame(f);else if(done)done()}
+  requestAnimationFrame(f)}
+function wait(ms,fn){var my=tok;setTimeout(function(){if(my===tok)fn()},ms*SP)}
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',m:0,ph:'dig',d:D0,d0:D0,S:0,used:0,total:0,pile:0,hist:[],choice:null,pick:null,final:null,flow:false}}
+var st=load();if(!st||!st.step)st=fresh();
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function setBusy(b){busy=b;document.body.setAttribute('data-busy',b?'1':'0')}
+var busy=false;
+
+function startMonth(m){
+  st.m=m;
+  if(m===7&&st.choice==='B'){st.d=30;st.pile=0}
+  var f=info(m);st.S=f.S;st.d0=st.d;st.d=Math.max(0,st.d-f.S);st.used=0;st.ph='dig';st.flow=true;st.newDot=false;
+  go('month');
+}
+function endMonth(){
+  var f=info(st.m);
+  st.hist.push({m:st.m,S:st.S,dug:st.used,q:f.q,o:f.o,d:st.d,d0:st.d0});
+  st.ph='end';st.newDot=true;
+}
+
+/* ---------- pages ---------- */
+function intro(){
+  var c=el('div','card');var sb=el('div','sbox');sb.innerHTML=sceneSVG({m:0,choice:null,d:D0,pile:0,S:0});overlays(sb,0,null);
+  c.append(sb,
+    el('p','lead','你負責臺江邊的一個小港口。船要開進港裡，港道一定要<b>夠深</b>。'),
+    el('p','lead','圖上的藍色虛線叫做<b>「深度線」</b>：港底要在這條線<b>下面</b>，船才不會卡住。'),
+    el('p','lead','可是每個月，溪水都會把泥沙帶進港裡，港底就會變高、港道就會變淺。'),
+    el('p','lead','你的工作：把竹筏上的<b>木桶</b>拖到港底的泥沙上，撈起泥沙倒到岸邊。一桶可以撈起 1 份泥沙，每個月大家只有 <b>8 桶</b>的力氣。'));
+  app.append(el('h1',null,'清港跑不停'),c,button('開始第 1 個月','btn',function(){startMonth(1)}));
+}
+
+function chartEl(){
+  var c=el('div','chart');var H=st.hist;
+  var h='<p class="ch-t">'+ic('trend')+'港道深度（每個月月底）</p><div class="plot"><div class="z sh"></div><div class="z ok"></div><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">';
+  if(st.choice&&H.length>=6)h+='<path d="M60 0V100" stroke="#56605C" stroke-width="1.5" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>';
+  var segs=[[]];H.forEach(function(r){if(r.m===7&&st.choice==='B')segs.push([]);segs[segs.length-1].push(((r.m-0.5)*10)+','+(r.d/DMAX*100).toFixed(2))});
+  segs.forEach(function(sg){if(sg.length>1)h+='<polyline points="'+sg.join(' ')+'" fill="none" stroke="#1F2A2E" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'});
+  h+='</svg>';
+  H.forEach(function(r,i){h+='<span class="dot '+(deep(r.d)?'ok':'sh')+(st.newDot&&i===H.length-1?' new':'')+'" style="left:'+((r.m-0.5)*10)+'%;top:'+(r.d/DMAX*100).toFixed(2)+'%"></span>'});
+  h+='</div><p class="lgd"><span><i class="sh"></i>太淺</span><span><i class="ok"></i>夠深</span><span><i class="dl"></i>深度線</span></p>';
+  h+='<p class="ch-t">'+ic('dredge_tired')+'大家多累：這個月出工幾次</p><div class="bars">';
+  for(var m=1;m<=10;m++){var r=null;H.forEach(function(x){if(x.m===m)r=x});
+    if(r){var w=r.dug+r.o;h+='<div class="bc'+(st.newDot&&r===H[H.length-1]?' new':'')+'"><b>'+w+'</b><i class="'+(w>=10?'hi':'')+'" style="height:'+Math.round(w/12*60)+'px"></i></div>'}
+    else h+='<div class="bc"></div>'}
+  h+='</div><div class="mos">';for(m=1;m<=10;m++)h+='<span class="'+(m<=H.length?'on':'')+'">'+m+'</span>';
+  h+='</div><p class="mos-x">（月）撈一桶算出工 1 次，搬家、種樹也算。</p>';
+  c.innerHTML=h;return c;
+}
+
+function monthPage(){
+  var m=st.m,f=info(m),ch=st.choice;
+  var cs=el('p','case',ic('cal')+'第 '+m+' 個月（一共 10 個月）');
+  if(m>=7&&ch)cs.appendChild(el('span','badge',lt(ch)+CH[ch].n));
+  app.append(cs,el('h2',null,story(m)));
+  var stage=el('div','stage');
+  var hud=el('div','hud');var bks=el('div','bks');var left=el('p','left');var stat=el('p','stat');hud.append(bks,left,stat);
+  var sb=el('div','sbox');var showD=st.flow?st.d0:st.d;
+  sb.innerHTML=sceneSVG({m:m,choice:ch,d:showD,pile:st.pile,S:st.S});
+  var ban=overlays(sb,m,ch);
+  var act=el('div','act');
+  var cl=el('div','colL'),cr=el('div','colR');cl.append(sb,act);cr.append(hud,chartEl());stage.append(cl,cr);app.append(stage);
+  var svg=sb.querySelector('svg'),silt=svg.querySelector('#silt'),bk=svg.querySelector('#bk'),rope=svg.querySelector('#rope'),mud=svg.querySelector('#mud'),pile=svg.querySelector('#pile'),dl=sb.querySelector('.ov.dl'),dline=svg.querySelector('#dline');
+  var bx=REST[0],by=REST[1],rot=0,bTok=0;
+  function setBk(){bk.setAttribute('transform','translate('+bx.toFixed(1)+' '+by.toFixed(1)+') rotate('+rot.toFixed(1)+')');rope.setAttribute('x2',bx.toFixed(1));rope.setAttribute('y2',(by-26).toFixed(1))}
+  function setBed(d,ms){silt.style.transition=ms?'transform '+Math.round(ms*SP)+'ms ease':'none';silt.style.transform='translate(0px,'+yOf(d)+'px)';var bad=!deep(d);dl.classList.toggle('bad',bad);dline.setAttribute('stroke',bad?'#A8441A':'#205E86')}
+  function hudUpd(dShow){
+    var h='';for(var i=0;i<f.q;i++){var cls=i<st.used?'used':(st.ph==='end'?'rest':'');h+=ic('raise_bucket',cls)}bks.innerHTML=h;
+    var rem=f.q-st.used;
+    left.innerHTML=st.ph==='end'?'這個月結束了':'這個月還可以撈 <b>'+rem+'</b> 桶';
+    var r=rel(dShow);stat.className='stat '+(r.ok?'ok':'sh');stat.innerHTML=r.t+'<span>'+r.s+'</span>';
+  }
+  setBed(showD,0);
+  // action area
+  if(st.ph==='end')endCard(act);
+  else{
+    act.append(el('p','hint',ic('hand')+'<span>把竹筏上的木桶拖到港底的泥沙上，也可以直接點港底的泥沙。</span>'));
+    act.append(button('剩下的不撈了，這個月先休息','btn soft small',function(){if(busy)return;endMonth();save(st);render()}));
+  }
+  hudUpd(showD);
+  // inflow animation
+  if(st.flow){
+    setBusy(true);
+    ban.innerHTML=ic('dredge_silt')+'這個月，溪水帶進來 '+st.S+' 份泥沙';
+    wait(350,function(){ban.classList.add('on');sb.classList.add('flowing');setBed(st.d,1500);
+      wait(1700,function(){ban.classList.remove('on');wait(320,function(){ban.innerHTML=''});sb.classList.remove('flowing');st.flow=false;save(st);hudUpd(st.d);setBusy(false)})});
+  }else setBusy(false);
+  if(st.ph==='end')return;
+  // interaction
+  function pt(e){var p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;var q=p.matrixTransform(svg.getScreenCTM().inverse());return [q.x,q.y]}
+  function inWater(p){return p[1]>SURF+16&&p[0]<600}
+  var drag=false,down=null,returning=false;
+  svg.addEventListener('pointerdown',function(e){
+    if(e.button>0||busy||st.ph!=='dig')return;
+    var p=pt(e);down=p;
+    if(Math.hypot(p[0]-bx,p[1]-by)<46||Math.hypot(p[0]-REST[0],p[1]-REST[1])<50){drag=true;bTok++;returning=false;try{svg.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()}
+  });
+  svg.addEventListener('pointermove',function(e){
+    if(!drag)return;var p=pt(e);bx=Math.max(24,Math.min(780,p[0]));by=Math.max(30,Math.min(440,p[1]));setBk();
+    sb.classList.toggle('aim',inWater(p));e.preventDefault();
+  });
+  function up(e,cancel){
+    if(!down)return;var p=pt(e),wasDrag=drag;drag=false;sb.classList.remove('aim');var d0=down;down=null;
+    if(busy||st.ph!=='dig')return;
+    if(wasDrag){if(!cancel&&inWater(p))dig(p[0]);else goHome()}
+    else if(!cancel&&Math.hypot(p[0]-d0[0],p[1]-d0[1])<20&&inWater(p))dig(p[0]);
+  }
+  svg.addEventListener('pointerup',function(e){up(e,false)});
+  svg.addEventListener('pointercancel',function(e){up(e,true)});
+  svg.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();dig(300)}});
+  function goHome(){var sx=bx,sy=by,sr=rot,my=++bTok;returning=true;tween(220,function(t){bx=sx+(REST[0]-sx)*t;by=sy+(REST[1]-sy)*t;rot=sr*(1-t);setBk()},function(){returning=false},function(){return bTok===my?tok:-1})}
+  function dig(x){
+    if(busy||st.ph!=='dig'||st.used>=f.q)return;
+    x=Math.max(30,Math.min(580,x));
+    var oldD=st.d;st.used++;st.total++;st.pile++;st.d=Math.min(DMAX,st.d+1);
+    var ended=st.used>=f.q;if(ended)endMonth();save(st);
+    setBusy(true);var my=++bTok;var own=function(){return bTok===my?tok:-1};
+    var sx=bx,sy=by,sr=rot,ty=yOf(oldD)-14;
+    tween(250,function(t){bx=sx+(x-sx)*t;by=sy+(ty-sy)*t;rot=sr*(1-t);setBk()},function(){
+      mud.setAttribute('opacity','1');setBed(st.d,240);hudUpd(st.d);
+      wait(110,function(){
+        var x1=bx,y1=by;
+        tween(230,function(t){bx=x1+(REST[0]-x1)*t;by=y1+(REST[1]-y1)*t;setBk()},function(){
+          var tx=736,tY=pileTop(st.pile)-26;
+          tween(230,function(t){bx=REST[0]+(tx-REST[0])*t;by=REST[1]+(tY-REST[1])*t-Math.sin(t*Math.PI)*40;rot=-55*t;setBk()},function(){
+            mud.setAttribute('opacity','0');pile.setAttribute('d',pileD(st.pile));
+            if(ended){wait(260,function(){render()});return}
+            setBusy(false);
+            var x2=bx,y2=by;
+            tween(200,function(t){bx=x2+(REST[0]-x2)*t;by=y2+(REST[1]-y2)*t;rot=-55*(1-t);setBk()},null,own);
+          },own);
+        },own);
+      });
+    },own);
+  }
+}
+function endCard(act){
+  var r=st.hist[st.hist.length-1],m=st.m,c=el('div','card');
+  c.append(el('h3',null,ic('check')+'第 '+m+' 個月結束了'));
+  c.append(el('p','fl',ic('dredge_silt')+'<span>這個月，溪水帶進來 <b>'+r.S+' 份</b>泥沙。</span>'));
+  var rest=r.q-r.dug;
+  c.append(el('p','fl',ic('raise_bucket')+'<span>大家撈起了 <b>'+r.dug+' 桶</b>'+(rest>0?'，剩下 '+rest+' 桶沒有撈，休息了。':'。')+'</span>'));
+  if(r.o)c.append(el('p','fl',ic(st.choice==='B'?'dredge_south':'dredge_tree')+'<span>另外有 <b>'+r.o+' 個人</b>'+(st.choice==='B'?'去搬家、蓋新碼頭。':'去上游種樹、蓋擋沙的堤。')+'</span>'));
+  var x=rel(r.d),diff=r.d-r.d0;
+  c.append(el('p','fl '+(x.ok?'ok':'sh'),ic('boat')+'<span>月底，<b>'+x.t+'</b>，'+x.s+'。</span>'));
+  var cmp=diff>1?'和這個月月初比，港道深了 '+diff+' 份。':diff===1?'和這個月月初比，港道只深了 1 份。':diff===0?'拚命撈完，港底只是回到和月初一樣的地方。':'撈完以後，港道還是比這個月月初淺了 '+(-diff)+' 份。';
+  if(m===7&&st.choice==='B')cmp=diff>=0?'新港一開始就很深，這個月還多深了 '+diff+' 份。':'新港這個月淺了 '+(-diff)+' 份。';
+  c.append(el('p','note warm',cmp));
+  act.append(c);
+  var lab=m<6||(m>=7&&m<10)?'開始第 '+(m+1)+' 個月':m===6?'第 7 個月：要不要換個做法？':'看看 10 個月的結果';
+  act.append(button(lab,'btn',function(){if(m===6)go('choice');else if(m===10)go('result');else startMonth(m+1)}));
+}
+
+function choicePage(){
+  app.append(el('p','case',ic('cal')+'第 7 個月開始以前'));
+  app.append(el('h2',null,'泥沙一個月比一個月多。接下來 4 個月，你要怎麼做？'));
+  var last=st.hist[st.hist.length-1],x=rel(last.d);
+  app.append(el('p','lead','第 6 個月月底，<b>'+x.t+'</b>，'+x.s+'。上游還在開墾，雨季也還沒過。'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。每個做法都有作用，也都有代價，選一個試試看。'));
+  var o=el('div','opts');var bs={};
+  CK.forEach(function(k){var c=CH[k];
+    var b=el('button','copt '+k,'<span class="top">'+ic(c.icon)+lt(k)+'<span>'+c.n+'</span><span class="sel">'+ic('check')+'你選的</span></span><dl class="ec"><dt class="e">作用</dt><dd>'+c.e+'</dd><dt class="c">代價</dt><dd>'+c.c+'</dd></dl>');
+    b.type='button';b.setAttribute('data-k',k);b.addEventListener('click',function(){st.pick=k;save(st);upd()});bs[k]=b;o.appendChild(b)});
+  app.append(o);
+  var nx=button('就這樣做，開始第 7 個月','btn',function(){if(!st.pick)return;st.choice=st.pick;startMonth(7)});app.append(nx);
+  app.append(chartEl());
+  function upd(){CK.forEach(function(k){bs[k].classList.toggle('pick',st.pick===k);bs[k].setAttribute('aria-pressed',st.pick===k?'true':'false')});nx.disabled=!st.pick}
+  upd();
+}
+
+var FUT={
+  A:{s:'13 份，還在變多',w:'每個月 12 次',f:'泥沙每個月都比上個月多。12 桶很快就不夠了，到時候要再加人，大家會更累。'},
+  B:{s:'12 份，追上來了',w:'每個月 8 次',f:'新港也會慢慢變淺，變得和舊港一樣。到時候又要拚命挖，或是再搬一次。'},
+  C:{s:'2 份，變少了',w:'每個月 8 次，之後可以少一點',f:'每個月撈幾桶就夠了，大家可以少出一點力；可是上游的樹和堤，要一直有人照顧。'}
+};
+function resultPage(){
+  app.append(el('p','case','10 個月過去了'));
+  app.append(el('h2',null,'這 10 個月，港道怎麼了？大家有多累？'));
+  var H=st.hist,ok=H.filter(function(r){return deep(r.d)}).length;
+  var c=el('div','card');
+  c.append(el('p','fl',ic('raise_bucket')+'<span>10 個月一共撈了 <b>'+st.total+' 桶</b>泥沙。</span>'));
+  c.append(el('p','fl',ic('boat')+'<span>港道夠深、船進得來的月份：<b>'+ok+' 個月</b>（一共 10 個月）。</span>'));
+  c.append(el('p','fl',ic(CH[st.choice].icon)+'<span>第 7 個月起，你選了 <b>'+st.choice+' '+CH[st.choice].n+'</b>。</span>'));
+  app.append(c,chartEl());
+  app.append(el('h3',null,'如果再這樣過幾個月，會怎樣？'));
+  var res=el('div','res');
+  CK.forEach(function(k){var u=FUT[k],me=k===st.choice;
+    var d=el('div','rc'+(me?' me':''));d.append(el('h3',null,lt(k)+CH[k].n+(me?'<span class="me">（你選的）</span>':'')));
+    d.append(el('p',null,'第 10 個月流進港的泥沙：<b>'+u.s+'</b>'),el('p',null,'大家出工：<b>'+u.w+'</b>'),el('p',null,u.f));res.append(d)});
+  app.append(res);
+  app.append(el('p','note warm','想一想：每個月拚命挖，是讓港口<b>變好</b>，還是只是讓它<b>不要變壞</b>？要一直挖下去，還是換一個做法？'));
+  app.append(button('最後一題','btn',function(){go('final')}));
+}
+
+var FQ={
+  1:{n:'全部的人都去挖港',icon:'raise_bucket',e:'港道每個月都馬上變深，船這個月就進得來。',c:'泥沙越來越多，就要一直加人、一直挖，大家越來越累；只要一停下來，港道就變淺。'},
+  2:{n:'一半挖港，一半去上游',icon:'split',e:'一邊顧著港口，一邊從源頭讓泥沙變少，過一陣子就不用那麼拚。',c:'頭幾個月挖港的人變少，港道會變淺、船比較難進來；上游的效果要等很久，也要上游的人願意一起配合。'},
+  3:{n:'搬到新的港口',icon:'dredge_south',e:'新港一開始很深，船馬上進得來，暫時不用天天拚命挖。',c:'搬家、蓋碼頭很辛苦，舊港要放下；溪水的泥沙還是會慢慢追過來，過一陣子可能又要再搬。'}
+};
+function finalPage(){
+  app.append(el('p','case','最後一題'));
+  app.append(el('h2',null,'如果你是港口負責人，你會怎麼分配人手？'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。選好以後，會看到這個做法的作用和代價，等一下全班一起討論。'));
+  var o=el('div','opts');var bs={};var fb=el('div');
+  [1,2,3].forEach(function(k){var b=button(ic(FQ[k].icon)+lt('N',k)+'<span>'+FQ[k].n+'</span>','btn alt'+(st.final===k?' pick':''),function(){st.final=k;save(st);upd()});b.setAttribute('data-k',k);bs[k]=b;o.appendChild(b)});
+  var nx=button('下一步','btn',function(){if(st.final)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    [1,2,3].forEach(function(k){bs[k].classList.toggle('pick',st.final===k);bs[k].setAttribute('aria-pressed',st.final===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.final;
+    if(st.final){var q=FQ[st.final];var c=el('div','card');c.append(el('h3',null,lt('N',st.final)+q.n));c.append(el('dl','ec','<dt class="e">作用</dt><dd>'+q.e+'</dd><dt class="c">代價</dt><dd>'+q.c+'</dd>'));fb.appendChild(c)}
+  }
+  upd();
+}
+
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var H=st.hist,ok=H.filter(function(r){return deep(r.d)}).length,rest=H.filter(function(r){return r.dug<r.q}).length;
+  var rows=[
+    ['10 個月一共撈了幾桶',st.total+' 桶'],
+    ['港道夠深（船進得來）的月份',ok+' 個月（一共 10 個月）'],
+    ['第 7 個月選的做法',lt(st.choice)+' '+CH[st.choice].n],
+    ['最後一題：怎麼分配人手',lt('N',st.final)+' '+FQ[st.final].n]
+  ];
+  if(rest)rows.push(['有幾個月沒撈滿、先休息',rest+' 個月']);
+  var c=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);app.append(c);
+  app.append(el('p','note warm','老師等一下會請大家舉手：第 7 個月選 A、B、C 的各有幾個人？最後一題選 1、2、3 的又各有幾個人？'));
+}
+
+function render(){
+  tok++;app.innerHTML='';
+  var s=st.step;
+  if(s==='intro')intro();
+  else if(s==='month'&&st.m>=1&&st.m<=10&&(st.m<=6||st.choice))monthPage();
+  else if(s==='choice'&&st.hist.length>=6)choicePage();
+  else if(s==='result'&&st.hist.length>=10)resultPage();
+  else if(s==='final'&&st.hist.length>=10)finalPage();
+  else if(s==='end'&&st.final&&st.choice)endPage();
+  else{st=fresh();save(st);intro()}
+  if(s!=='month')setBusy(false);
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

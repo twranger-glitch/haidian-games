@@ -1,0 +1,241 @@
+<title>查證實驗室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: three claims (library & grades, dogs & walking, instant noodles & typhoons). For each: send an investigator with one way of checking → a small bar/dot chart of made-up results + what it can and cannot show → optionally send a second one to compare → choose a conclusion (no right answer). Single light classroom look on purpose. */
+:root{
+  --bg:#EEF1EE; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D2D8D1;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(20px,2.9vw,26px);font-weight:900;margin:0;line-height:1.45}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.small{font-size:clamp(19px,2.2vw,20px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.claim{font-size:clamp(23px,3.4vw,31px);font-weight:900;line-height:1.5;margin:0}
+.claim.sm{font-size:clamp(20px,2.8vw,25px)}
+.tag{display:inline-block;font-size:clamp(16px,2.1vw,19px);font-weight:900;border-radius:999px;padding:2px 12px;background:#E3EEF5;color:var(--sea);margin-right:6px;vertical-align:middle}
+.tag.one{background:#F6E4DC;color:var(--rust)} .tag.raw{background:#FBF1DC;color:#7A5A16} .tag.before,.tag.match{background:#E3F1E8;color:var(--good)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.alt:disabled{color:var(--muted);background:#F1F3EF;cursor:default}
+.btn.alt small{display:block;font-size:.75em;color:var(--muted);font-weight:700}
+.btn.ghost{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.who{display:flex;align-items:center;gap:12px}
+.who svg{width:56px;height:56px;flex:none}
+.bars{display:flex;flex-direction:column;gap:12px;margin:4px 0}
+.bl{font-size:clamp(18px,2.5vw,23px);font-weight:700;margin:0 0 4px}
+.track{display:flex;align-items:center;gap:10px}
+.fill{height:34px;border-radius:8px;background:var(--sea);flex:none}
+.fill.b2{background:var(--rust)}
+.val{font-size:clamp(19px,2.6vw,24px);font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dots{display:flex;flex-wrap:wrap;gap:6px}
+.dot{width:clamp(22px,4vw,30px);height:clamp(22px,4vw,30px);border-radius:50%;border:3px solid var(--sea);background:transparent}
+.dot.on{background:var(--sea)}
+.dot.r{border-color:var(--rust)} .dot.r.on{background:var(--rust)}
+.time{list-style:none;margin:0;padding:0 0 0 6px;display:flex;flex-direction:column;gap:0}
+.time li{position:relative;padding:0 0 14px 34px;font-size:clamp(18px,2.5vw,23px);border-left:4px solid var(--line);margin-left:10px}
+.time li:last-child{border-left-color:transparent}
+.time li::before{content:"";position:absolute;left:-14px;top:4px;width:24px;height:24px;border-radius:50%;background:var(--sea)}
+.time li.hl::before{background:var(--rust)}
+.time b{color:var(--muted);margin-right:8px}
+.can{border-radius:16px;padding:12px 16px;font-size:clamp(18px,2.6vw,23px);line-height:1.7;margin:0}
+.can b{display:block;font-size:.9em}
+.can.y{background:#E3F1E8} .can.y b{color:var(--good)}
+.can.n{background:#F6E4DC} .can.n b{color:var(--rust)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.big{font-size:clamp(56px,11vw,100px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:clamp(17px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='check-lab-v1';
+var TAG={one:'只問一群',raw:'直接比兩群',before:'前後比',match:'找差不多的兩群比',other:'問專家排順序'};
+// 結果都是課堂自編的示意資料，不是真實統計
+var C=[
+ {name:'A 圖書館與國語',claim:'「常去圖書館的同學，國語成績比較好。所以，去圖書館會讓國語成績變好！」',
+  m:[
+   {t:'one',d:'只去問常去圖書館的同學：「你的國語成績好不好？」',
+    r:{k:'dots',g:[{l:'常去圖書館的 10 位同學',on:8,n:10,key:'說自己國語不錯',c:'其中 8 位說自己國語不錯'}]},
+    y:'常去圖書館的同學裡，很多人覺得自己的國語不錯。',
+    n:'調查員只問了一群人，沒有別人可以比。說不定不常去的同學，也有 8 個人覺得自己國語不錯，那就什麼都比不出來。而且「自己覺得」也不一定等於真的分數。'},
+   {t:'raw',d:'把常去和不常去圖書館的同學，國語考試的平均分數拿來比一比',
+    r:{k:'bars',max:100,u:' 分',g:[['常去圖書館的同學',85],['不常去圖書館的同學',75]]},
+    y:'兩群同學的分數真的不一樣，常去圖書館的同學平均高了 10 分。兩件事確實常常一起出現。',
+    n:'這兩群同學本來就不一樣。常去圖書館的同學，可能本來就比較喜歡讀書，國語本來就比較好。這 10 分裡，有多少是圖書館的功勞，還看不出來。'},
+   {t:'before',d:'找同一批同學，比一比他們開始常去圖書館「之前」和「之後」的國語分數',
+    r:{k:'bars',max:100,u:' 分',g:[['開始常去圖書館之前',78],['常去圖書館一學期之後',82]]},
+    y:'比的是同一群人，所以「本來就是不一樣的人」這個原因被排除了。這群同學開始常去圖書館以後，平均多了 4 分。',
+    n:'這一學期大家都長大了一點，老師也一直在教，本來就可能進步。最好再找一群沒有開始去圖書館的同學，看看他們同一段時間進步了多少。'},
+   {t:'match',d:'找「愛讀書的程度」差不多的兩群同學，一群常去圖書館、一群不常去，再比國語分數',
+    r:{k:'bars',max:100,u:' 分',g:[['愛讀書程度一樣，常去圖書館',82],['愛讀書程度一樣，不常去圖書館',79]]},
+    y:'先把「愛讀書」放得一樣，兩群的差距就從 10 分變成 3 分。原本的差距，很多是「愛讀書」造成的；剩下的一點點，才可能是圖書館的幫助。',
+    n:'兩群同學還可能有別的地方不一樣，例如家裡有沒有人陪著讀書，這位調查員沒有比到。'}
+  ]},
+ {name:'B 養狗與散步',claim:'「家裡有養狗的人，比較常出門散步。所以，養狗會讓人變得愛運動！」',
+  m:[
+   {t:'raw',d:'把有養狗和沒養狗的人，一個星期散步幾次拿來比一比',
+    r:{k:'bars',max:7,u:' 次',g:[['有養狗的人',6],['沒養狗的人',3]]},
+    y:'有養狗的人，一個星期散步的次數真的比較多。兩件事確實常常一起出現。',
+    n:'箭頭可能是反過來的：本來就愛出門的人，才比較想養狗。只看這兩根長條，分不出是誰造成誰。'},
+   {t:'match',d:'找「一樣愛出門」的兩群人，一群有養狗、一群沒養狗，比一比散步的次數',
+    r:{k:'bars',max:7,u:' 次',g:[['一樣愛出門，有養狗',6],['一樣愛出門，沒養狗',5]]},
+    y:'先把「愛出門」放得一樣，兩群的差距就變得很小，只差 1 次。原本的差距有很大一部分，是因為養狗的人本來就愛出門；剩下的 1 次，可能才是狗狗的功勞。',
+    n:'兩群人一樣愛出門，可是還可能有別的不同，例如家裡附近有沒有公園，這位調查員沒有比到。'},
+   {t:'one',d:'只去問養狗的人：「你常常出門散步嗎？」',
+    r:{k:'dots',g:[{l:'有養狗的 10 個人',on:9,n:10,key:'說自己常常散步',c:'其中 9 個人說自己常常散步'}]},
+    y:'養狗的人裡，大多數說自己常常出門散步。',
+    n:'調查員沒有問沒養狗的人。如果沒養狗的人也有 9 個說自己常散步，那就看不出養狗有什麼差別。只問一群人，什麼都比不出來。'},
+   {t:'before',d:'問同一群養狗的人：還沒養狗的時候、養狗以後，一個星期各散步幾次',
+    r:{k:'bars',max:7,u:' 次',g:[['同一群人，還沒養狗的時候',4],['同一群人，養狗以後',6]]},
+    y:'比的是同一群人。養狗以後，他們一個星期多散步了 2 次，看起來養狗真的會讓人多出門。',
+    n:'還要注意：他們還沒養狗的時候，一個星期就散步 4 次，本來就算是愛出門的人。所以「愛出門的人比較會養狗」這個反方向的箭頭，可能也同時存在。'}
+  ]},
+ {name:'C 泡麵與颱風',claim:'「超市泡麵賣得特別多的第二天，颱風就來了。所以，泡麵賣太多會把颱風叫來！」',
+  m:[
+   {t:'one',d:'只看最近 5 次颱風來的前一天，超市的泡麵賣得多不多',
+    r:{k:'dots',g:[{l:'最近 5 次颱風來的前一天',on:5,n:5,key:'泡麵大賣',c:'5 次都是泡麵大賣'}]},
+    y:'每一次颱風來的前一天，泡麵都賣得很多。',
+    n:'調查員只看了颱風來的日子，沒有看「泡麵大賣、颱風卻沒來」的日子，也沒有問大家為什麼在那一天去買泡麵。只看一群日子，什麼都比不出來。'},
+   {t:'before',d:'看同一次颱風：氣象局發布颱風警報「之前」和「之後」，超市一天賣出幾箱泡麵',
+    r:{k:'bars',max:35,u:' 箱',g:[['發布警報之前的那一天',10],['發布警報之後的那一天',30]]},
+    y:'警報一發布，泡麵就賣到平常的三倍。是「颱風要來的消息」讓大家去買泡麵，不是泡麵讓颱風來。',
+    n:'這只是一次颱風、一家超市。要多看幾次颱風、幾家超市，才更有把握。'},
+   {t:'other',d:'請教氣象局的專家，把「颱風形成、發布警報、泡麵大賣、颱風來了」排出先後順序',
+    r:{k:'time',g:[['第 1 天','颱風在很遠的海上形成了'],['第 3 天','氣象局發布颱風警報'],['第 4 天','超市的泡麵大賣',1],['第 5 天','颱風來了']]},
+    y:'颱風在泡麵大賣的好幾天以前，就已經在海上形成了。泡麵不可能把一個早就存在的颱風叫來。',
+    n:'專家說清楚了先後順序，可是調查員沒有拿數字來比，例如沒有颱風警報的時候，泡麵賣得怎麼樣。'},
+   {t:'match',d:'找泡麵一樣賣很多的日子，分成「有颱風警報」和「沒有警報（像是特價、過年前）」兩種，看第二天颱風有沒有來',
+    r:{k:'dots',g:[{l:'有颱風警報、泡麵大賣的 5 天',on:5,n:5,key:'第二天颱風來了',c:'5 天之後，第二天颱風都來了'},{l:'沒有警報、泡麵也大賣的 6 天',on:0,n:6,key:'第二天颱風來了',c:'6 天之後，第二天颱風都沒有來',r:1}]},
+    y:'泡麵一樣賣很多，有警報的日子，第二天颱風來了；沒有警報的日子，颱風一次也沒來。跟颱風有關的是「警報」，不是泡麵。',
+    n:'這樣比，還看不出事情的先後：是先有警報，大家才去買泡麵嗎？還要再查一查。'}
+  ]}
+];
+var V=[
+ ['是真的：前面那件事，真的會造成後面那件事','你相信這個說法。這個選擇的作用是：可以馬上照著做。代價是：如果背後其實還有別的原因，照著做可能沒有想像中有效。等一下可以說說看，是哪一位調查員的結果讓你相信。'],
+ ['有一部分是真的，但還有別的原因','你覺得有一部分是真的。這個選擇把兩種可能都留著，比較不容易被騙；代價是要多花一點力氣，才說得清楚每一個原因各占多少。'],
+ ['不太對：背後是別的原因，或是箭頭反過來了','你覺得這個說法不太對。這個選擇的作用是：不會被表面上的「一起發生」騙走；代價是：如果兩件事其實真的有一點關係，就可能錯過一個好方法。'],
+ ['還不能確定，要再查一查','你覺得還要再查。這個選擇很小心，不會太快下結論；代價是：有時候事情得先做決定，不能一直等下去。你會想再派哪一種調查員？']
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load();
+if(!st||!st.sent){st={go:0,i:0,stage:'pick',sent:[[],[],[]],v:[]}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(cls,html,fn){var b=el('button',cls,html);b.type='button';b.addEventListener('click',fn);return b}
+var GLASS='<svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="23" cy="23" r="15" fill="#EAF1F5" stroke="#205E86" stroke-width="5"/><line x1="34" y1="34" x2="50" y2="50" stroke="#205E86" stroke-width="7" stroke-linecap="round"/></svg>';
+function chart(r){
+  var box=el('div');
+  if(r.k==='bars'){
+    var w=el('div','bars');
+    r.g.forEach(function(x,k){var row=el('div');row.appendChild(el('p','bl',x[0]));
+      var tr=el('div','track');var f=el('div','fill'+(k?' b2':''));f.style.width=Math.round(x[1]/r.max*78)+'%';
+      tr.append(f,el('span','val',x[1]+r.u));row.appendChild(tr);w.appendChild(row)});
+    box.appendChild(w);
+  }else if(r.k==='dots'){
+    var w2=el('div','bars');
+    r.g.forEach(function(x){var row=el('div');row.appendChild(el('p','bl',x.l+'：'+x.c));
+      var d=el('div','dots');for(var j=0;j<x.n;j++)d.appendChild(el('span','dot'+(x.r?' r':'')+(j<x.on?' on':'')));
+      row.appendChild(d);w2.appendChild(row)});
+    box.appendChild(w2);
+    box.appendChild(el('p','small','實心圓：'+r.g[0].key+'　空心圓：沒有'));
+  }else{
+    var ul=el('ul','time');r.g.forEach(function(x){ul.appendChild(el('li',x[2]?'hl':null,'<b>'+x[0]+'</b>'+x[1]))});box.appendChild(ul);
+  }
+  return box;
+}
+function report(ci,mi,n){
+  var m=C[ci].m[mi];var c=el('div','card');
+  var wh=el('div','who');wh.innerHTML=GLASS;wh.appendChild(el('h3',null,'調查員 '+n+' 號回來了<br><span class="tag '+m.t+'">'+TAG[m.t]+'</span>'));
+  c.append(wh,el('p','small','查法：'+m.d),chart(m.r),el('p','can y','<b>這個結果能說明</b>'+m.y),el('p','can n','<b>這個結果還不能說明</b>'+m.n));
+  return c;
+}
+function head(){
+  var q=C[st.i];
+  app.append(el('p','case','<span>第 <b>'+(st.i+1)+'</b> 個說法，共 3 個</span><span>'+q.name+'</span>'));
+  var c=el('div','card');c.appendChild(el('p','claim'+(st.stage==='pick'&&!st.sent[st.i].length?'':' sm'),q.claim));app.appendChild(c);
+}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','一共有 3 個說法。每個說法裡，兩件事常常一起出現，有人就說「是前面那件事造成的」。'),
+           el('p','lead','你是查證實驗室的主任，每個說法可以派出調查員，選一種查法去查。看完結果，還可以再派一位、換一種查法比比看（最多兩位）。最後，由你決定這個說法可不可信。'),
+           el('p','small','調查員帶回來的數字，都是課堂自編的示意資料，不是真實統計。'));
+  app.append(el('h1',null,'查證實驗室'),c,btn('btn','開始查證',function(){st.go=1;save(st);render()}));
+}
+function render(){
+  if(!st.go){intro();return}
+  if(st.i>=C.length){end();return}
+  app.innerHTML='';window.scrollTo(0,0);
+  var q=C[st.i],sent=st.sent[st.i];
+  head();
+  if(st.stage==='pick'){
+    sent.forEach(function(mi,k){app.appendChild(report(st.i,mi,k+1))});
+    app.appendChild(el('h2',null,sent.length?'要派第 2 位調查員，換哪一種查法？':'你要派調查員，用哪一種方法去查？'));
+    var g=el('div','opts');
+    q.m.forEach(function(m,mi){var used=sent.indexOf(mi)>=0;
+      var b=btn('btn alt',m.d+(used?'<small>已經派過了</small>':''),function(){sent.push(mi);st.stage='res';save(st);render()});
+      b.disabled=used;g.appendChild(b)});
+    app.appendChild(g);
+    if(sent.length)app.appendChild(btn('btn ghost','不派了，直接下結論',function(){st.stage='ver';save(st);render()}));
+  }else if(st.stage==='res'){
+    sent.forEach(function(mi,k){app.appendChild(report(st.i,mi,k+1))});
+    var row=el('div',sent.length<2?'row2':'opts');
+    if(sent.length<2)row.appendChild(btn('btn ghost','再派一位，換一種查法',function(){st.stage='pick';save(st);render()}));
+    row.appendChild(btn('btn','查好了，下結論',function(){st.stage='ver';save(st);render()}));
+    app.appendChild(row);
+    if(sent.length===2)app.lastChild.previousSibling.scrollIntoView({block:'start'});
+  }else{
+    var used=el('p','note','你派出的調查員：'+sent.map(function(mi){return '<span class="tag '+q.m[mi].t+'">'+TAG[q.m[mi].t]+'</span>'}).join(' '));
+    app.append(used,el('h2',null,'查完以後，你覺得這個說法？'));
+    var g2=el('div','opts');var fb=el('div','opts');
+    V.forEach(function(v,k){var b=btn('btn alt'+(st.v[st.i]===k?' pick':''),v[0],function(){st.v[st.i]=k;save(st);mark(k)});g2.appendChild(b)});
+    app.append(g2,fb);
+    function mark(k){
+      Array.prototype.forEach.call(g2.children,function(x,j){x.classList.toggle('pick',j===k)});
+      fb.innerHTML='';
+      var nx=btn('btn',st.i<C.length-1?'下一個說法':'看看我的查證紀錄',function(){st.i++;st.stage='pick';save(st);render()});
+      fb.append(el('p','note',V[k][1]+'<br><span class="small">想換也可以，直接點別的答案。</span>'),nx);
+      nx.scrollIntoView({behavior:'smooth',block:'end'});
+    }
+    if(st.v[st.i]!=null)mark(st.v[st.i]);
+  }
+}
+function end(){
+  app.innerHTML='';window.scrollTo(0,0);
+  var fair=0,one=0;
+  var t=el('table');
+  C.forEach(function(q,ci){var s=st.sent[ci]||[];
+    if(s.some(function(mi){var x=q.m[mi].t;return x==='before'||x==='match'}))fair++;
+    s.forEach(function(mi){if(q.m[mi].t==='one')one++});
+    var tr=el('tr');
+    tr.append(el('td','k',q.name),el('td',null,'派出：'+(s.map(function(mi){return '<span class="tag '+q.m[mi].t+'">'+TAG[q.m[mi].t]+'</span>'}).join(' ')||'—')+'<br>結論：<b>'+(st.v[ci]!=null?V[st.v[ci]][0]:'—')+'</b>'));
+    t.appendChild(tr)});
+  var c=el('div','card');
+  c.append(el('p','lead','有用到「前後比」或「找差不多的兩群比」的說法'),el('p','big',fair+' / 3 個'),
+           el('p','lead','派出「只問一群」調查員的次數：<b>'+one+' 次</b>'),t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+render();
+})();
+</script>

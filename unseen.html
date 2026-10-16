@@ -1,0 +1,198 @@
+<title>看不見的那一群</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: four claims. For each: see only the visible evidence → "is this enough to believe?" → open one hidden group → believe again → which kind of problem (missing people / unfair comparison) with explanation. Summary at the end for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --ghost:#C3C8C1;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(19px,2.6vw,24px);font-weight:900;margin:0;color:var(--muted);letter-spacing:1px}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.claim{font-size:clamp(21px,3.1vw,28px);font-weight:700;line-height:1.6;margin:0}
+.seen{border-color:var(--gold)}
+.ev{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.evi{background:#FBF1DC;border-radius:16px;padding:12px 14px;font-size:clamp(19px,2.4vw,22px);line-height:1.55}
+.evi b{display:block;font-size:19px;color:var(--gold)}
+.row{display:grid;grid-template-columns:7.5em 1fr 4em;align-items:center;gap:10px;font-size:clamp(19px,2.4vw,22px);font-weight:700}
+.bar{height:30px;border-radius:8px;background:var(--gold)} .bar.g{background:var(--sea)}
+.row span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.hid{border-style:dashed;border-color:var(--ghost);background:#F4F5F2}
+.hid.open{border-style:solid;border-color:var(--sea);background:var(--card)}
+.people{display:flex;flex-wrap:wrap;gap:5px}
+.people i{width:16px;height:28px;border-radius:8px 8px 4px 4px;background:var(--gold)}
+.people i.h{background:var(--ghost)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;margin:0}
+.legend i{display:inline-block;width:14px;height:22px;border-radius:7px 7px 3px 3px;vertical-align:-4px;margin-right:6px;background:var(--gold)}
+.legend i.h{background:var(--ghost)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{font:inherit;font-size:clamp(20px,2.9vw,26px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.who{background:#F4F5F2;border:3px dashed var(--ghost);color:var(--ink);text-align:left;font-weight:700}
+.btn.who::before{content:"打開";padding-right:1.15em;margin-right:.45em;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23205E86%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9.5%206l6%206-6%206%22/%3E%3C/svg%3E") right center/1em 1em no-repeat;color:var(--sea);font-weight:900}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.small{font-size:max(19px,.85em);color:var(--muted)}
+.big{font-size:clamp(56px,11vw,96px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea);font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat{text-align:center;display:flex;flex-direction:column;gap:6px}
+.stat p:not(.big){margin:0;font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--muted);line-height:1.45}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+@media (max-width:620px){.ev,.stats{grid-template-columns:1fr}.two{grid-template-columns:1fr}.row{grid-template-columns:6em 1fr 3em}td{display:block}td.k{border-bottom:0;padding-bottom:0}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='unseen-group-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function people(gold,grey){var s='';for(var k=0;k<gold;k++)s+='<i></i>';for(k=0;k<grey;k++)s+='<i class="h"></i>';return '<div class="people" aria-hidden="true">'+s+'</div>'}
+function quotes(a){return '<div class="ev">'+a.map(function(x){return '<div class="evi"><b>'+x[0]+'</b>'+x[1]+'</div>'}).join('')+'</div>'}
+function bars(a){return a.map(function(x){return '<div class="row"><span>'+x[0]+'</span><div><div class="bar'+(x[2]?' g':'')+'" style="width:'+x[1]+'%"></div></div><span>'+x[3]+'</span></div>'}).join('')}
+
+var BELIEF=[['yes','夠了，我相信這個說法。'],['some','有一點相信，但還想再看看。'],['no','不夠，我還不相信。']];
+var BNAME={yes:'夠了，相信',some:'有一點相信',no:'還不相信'};
+var KIND={miss:'少看了誰',unfair:'比得不公平'};
+
+var C=[
+ {t:'作文班的海報',
+  claim:'安南區有一間作文班，門口貼了一張大海報：「今年全市作文比賽，得獎的 3 位同學都在我們這裡上課！想得獎，就來我們作文班。」',
+  seen:'<h3>海報上看得到的：3 位得獎同學的訪問</h3>'+quotes([['小妍','我每個星期六都來上課，老師教我怎麼寫開頭。'],['阿凱','上了半年，我就得獎了！'],['佳蓉','作文班練習的題目，跟比賽的好像喔。']])+people(3,0),
+  who:[
+   {b:'也在這裡上課、卻沒得獎的同學',key:true,r:'原來這間作文班一共有 40 位同學去參加比賽。得獎的是 3 位，另外 37 位沒有得獎。沒得獎的同學，當然不會被貼在海報上。',pic:people(3,37)+'<p class="legend"><span><i></i>得獎，上了海報</span><span><i class="h"></i>也上課，沒得獎</span></p>'},
+   {b:'沒上作文班、也得獎的同學',r:'同一場比賽，還有幾位得獎的同學從來沒有上過作文班。他們平常很愛看書、天天寫日記。海報當然不會提到他們。'},
+   {b:'作文班的老師',r:'老師說：「我們的課很棒！」可是老師本來就希望大家來上課，這句話沒有告訴我們新的事情。真正被藏起來的那一群，還沒有出現。'}],
+  kind:'miss',
+  ex:'這張海報主要的毛病是「少看了誰」：它只把得獎的 3 個人貼出來，同樣在這裡上課、卻沒得獎的人都不見了。要知道作文班有沒有用，要先問「上課的人裡面，有幾個得獎？」，再和沒上作文班的同學比一比。'},
+ {t:'阿翔的新球鞋',
+  claim:'阿翔買了一雙新球鞋。星期三體育課，他在海佃國小的操場跑 200 公尺，比上星期三快了 2 秒。他開心地說：「新球鞋真的有用！」',
+  seen:'<h3>看得到的：阿翔的碼表紀錄</h3>'+bars([['上星期三・舊鞋',100,true,'40 秒'],['這星期三・新鞋',95,false,'38 秒']]),
+  who:[
+   {b:'班上沒有換新鞋的同學',key:true,r:'老師翻開全班的紀錄：這星期沒有換鞋的同學，大部分也比上星期快了 1 到 3 秒。上星期是這學期第一次跑，這星期大家已經練過一次了，而且今天比較涼、沒有風。'},
+   {b:'上星期跑步那天的阿翔',r:'上星期三，阿翔前一節剛上完游泳課，累得腳都軟了；那天又很熱，跑步時一路逆風。兩次跑步的條件根本不一樣。'},
+   {b:'也穿新鞋、卻跑得比較慢的同學',r:'班上的小美也買了新鞋，這星期反而慢了 1 秒。她說鞋子太新，有一點磨腳。'}],
+  kind:'unfair',
+  ex:'這個說法主要的毛病是「比得不公平」：上星期和這星期的天氣、體力、練習次數都不一樣，快 2 秒不一定是鞋子的功勞；而且沒換鞋的同學也變快了。公平的比法是：同一天、同一個跑道，穿新鞋和舊鞋各跑一次，中間休息夠，順序也輪流換。'},
+ {t:'釣魚達人的祕密魚餌',
+  claim:'一位釣魚達人在網路上分享：「在七股的海堤釣魚，用我自己調的祕密魚餌，一定大豐收！」影片底下有好多人留言。',
+  seen:'<h3>看得到的：影片底下的留言</h3>'+quotes([['阿伯釣客','照著做，真的釣到半桶！'],['小琪爸爸','第一次帶孩子釣魚就成功，感謝達人！'],['海堤常客','這個餌超神，週末還要再去！']]),
+  who:[
+   {b:'用了祕密魚餌、卻沒釣到魚的人',key:true,r:'其實有很多人照著做，結果一整天都沒釣到。他們覺得有一點丟臉，或只覺得自己運氣不好，就沒有上網留言。你看得到的留言，幾乎都是釣到魚的人寫的。',pic:people(3,27)+'<p class="legend"><span><i></i>釣到了，有留言</span><span><i class="h"></i>沒釣到，沒留言（示意）</span></p>'},
+   {b:'同一天在旁邊用普通魚餌的人',r:'那個週末剛好漲潮，海堤邊的魚特別多。旁邊用普通魚餌的阿伯，也釣了大半桶。'},
+   {b:'釣魚達人自己',r:'達人說他每次都大豐收。可是達人每個星期都去釣魚，也很會挑地點和時間，釣得多不一定是魚餌的功勞。'}],
+  kind:'miss',
+  ex:'這個說法主要的毛病是「少看了誰」：沒釣到魚的人通常不會留言，所以留言看起來全是好消息。它也有一點「比得不公平」：那天旁邊用普通魚餌的人也釣很多。兩種毛病都說得出來，非常好。要怎麼查：問問所有用過這個魚餌的人，有幾個釣到、幾個沒釣到，再和同一天用普通魚餌的人比一比。'},
+ {t:'晨讀社的海報',
+  claim:'晨讀社的海報上寫著：「參加晨讀社的同學，閱讀測驗的平均分數比沒參加的同學高 10 分！每天早上來讀書，閱讀就會變好。」',
+  seen:'<h3>看得到的：海報上的長條圖</h3>'+bars([['參加晨讀社',90,false,'88 分'],['沒參加',80,true,'78 分']]),
+  who:[
+   {b:'這些同學參加晨讀社以前的成績',key:true,r:'翻開去年的紀錄才發現：會報名晨讀社的同學，本來就很愛看書。他們還沒參加以前，閱讀測驗就已經比別人高了將近 10 分。兩組同學的起點本來就不一樣。'},
+   {b:'沒參加晨讀社的同學',r:'很多沒參加的同學不是不想讀書，而是早上要先幫忙家裡的魚塭餵魚，或是搭的公車比較晚到學校。他們的情況和參加的同學不一樣。'},
+   {b:'參加一陣子就退出的同學',r:'有幾位同學參加一個月就退出了。他們的成績沒有算在「參加晨讀社」那一組裡面。'}],
+  kind:'unfair',
+  ex:'這個說法主要的毛病是「比得不公平」：會參加晨讀社的同學，本來就比較愛看書，兩組的起點不一樣，高 10 分不一定是晨讀社的功勞。公平的比法：比同一批同學參加前和參加後進步了多少，或找起點差不多的同學來比。中途退出的同學沒有被算進去，這一點也有「少看了誰」的味道。'}
+];
+
+var st=load()||{i:0,stage:0,b1:[],open:[],b2:[],kind:[]};
+['b1','open','b2','kind'].forEach(function(k){if(!st[k])st[k]=[]});
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','有人說「這個方法有效」的時候，常常只讓你看到一部分的人。接下來有 4 個說法，每一個你都要做四件事：'),
+   el('p','lead','① 先看「看得到的證據」，想想夠不夠相信。<br>② 選一群「被藏起來的人」，把他們打開來看。<br>③ 看完以後，再想一次夠不夠相信。<br>④ 想一想：這個說法的毛病，比較像「少看了誰」，還是「比得不公平」？'));
+  var b=el('button','btn','開始');b.type='button';b.addEventListener('click',function(){st.started=true;save(st);step()});
+  app.append(el('h1',null,'看不見的那一群'),c,b);
+}
+function head(q){
+  app.append(el('p','case','第 '+(st.i+1)+' 個說法，共 4 個：'+q.t));
+  var c=el('div','card');c.appendChild(el('p','claim',q.claim));app.appendChild(c);
+}
+function beliefButtons(field,next){
+  var g=el('div','opts');
+  BELIEF.forEach(function(x){var b=el('button','btn alt',x[1]);b.type='button';b.addEventListener('click',function(){st[field][st.i]=x[0];st.stage=next;save(st);step();window.scrollTo(0,0)});g.appendChild(b)});
+  return g;
+}
+function reveal(w,label){
+  var c=el('div','card hid open');
+  c.appendChild(el('h3',null,label+'：'+w.b));
+  if(w.pic){var d=el('div');d.innerHTML=w.pic;c.appendChild(d)}
+  c.appendChild(el('p','claim',w.r));
+  return c;
+}
+function step(){
+  if(st.i>=C.length){end();return}
+  var q=C[st.i];app.innerHTML='';
+  head(q);
+  var sc=el('div','card seen');sc.innerHTML=q.seen;app.appendChild(sc);
+  if(st.stage===0){
+    app.append(el('h2',null,'只看這些，你覺得這個說法夠不夠讓人相信？'),el('p','lead','沒有標準答案，選你現在心裡的想法。'),beliefButtons('b1',1));
+  }else if(st.stage===1){
+    app.appendChild(el('p','lead','你一開始選的是：「'+BNAME[st.b1[st.i]]+'」。'));
+    app.appendChild(el('h2',null,'還要看誰？選一群被藏起來的人，打開來看看。'));
+    var g=el('div','opts');
+    q.who.forEach(function(w,k){var b=el('button','btn who',w.b);b.type='button';b.addEventListener('click',function(){st.open[st.i]=k;st.stage=2;save(st);step();window.scrollTo(0,0)});g.appendChild(b)});
+    app.appendChild(g);
+  }else if(st.stage===2){
+    var k=st.open[st.i],w=q.who[k];
+    app.appendChild(reveal(w,'你打開了'));
+    if(!w.key){
+      var kk=q.who.filter(function(x){return x.key})[0];
+      app.appendChild(reveal(kk,'還有一群也被藏起來了'));
+    }else{
+      app.appendChild(el('p','note','你打開的這一群，正是這個說法最想藏起來的人。'));
+    }
+    app.append(el('h2',null,'看完被藏起來的那一群，你現在覺得這個說法夠不夠讓人相信？'),el('p','lead','你一開始選的是：「'+BNAME[st.b1[st.i]]+'」。想法一樣或改變都可以。'),beliefButtons('b2',3));
+  }else{
+    app.appendChild(el('p','lead','你一開始選「'+BNAME[st.b1[st.i]]+'」，看完以後選「'+BNAME[st.b2[st.i]]+'」。'));
+    app.appendChild(el('h2',null,'這個說法的毛病，比較像哪一種？'));
+    var g2=el('div','two');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+    function show(kd){
+      Array.prototype.forEach.call(g2.children,function(x){x.classList.toggle('pick',x.dataset.k===kd)});
+      fb.innerHTML='';
+      var same=kd===q.kind;
+      fb.appendChild(el('p','note'+(same?'':' warm'),(same?'你選的「'+KIND[kd]+'」和說明一樣。':'你選的是「'+KIND[kd]+'」，說明裡把它放在「'+KIND[q.kind]+'」。也可以想想看，你為什麼這樣選。')+'<br>'+q.ex));
+      var nx=el('button','btn',st.i<C.length-1?'下一個說法':'看看我的結果');nx.type='button';
+      nx.addEventListener('click',function(){st.i++;st.stage=0;save(st);step();window.scrollTo(0,0)});
+      fb.appendChild(nx);
+    }
+    ['miss','unfair'].forEach(function(kd){var b=el('button','btn alt',kd==='miss'?'少看了誰<br><span class="small">有一群人沒被算進來</span>':'比得不公平<br><span class="small">比的兩邊條件不一樣</span>');b.type='button';b.dataset.k=kd;
+      b.addEventListener('click',function(){st.kind[st.i]=kd;save(st);show(kd);fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})});g2.appendChild(b)});
+    app.append(g2,fb);
+    if(st.kind[st.i])show(st.kind[st.i]);
+  }
+}
+function end(){
+  app.innerHTML='';
+  var n1=0,nc=0,nk=0;
+  C.forEach(function(q,k){if(st.b1[k]==='yes')n1++;if(st.b1[k]&&st.b2[k]&&st.b1[k]!==st.b2[k])nc++;if(st.kind[k]===q.kind)nk++});
+  var s=el('div','stats');
+  [[n1,'一開始覺得「夠了，我相信」的說法'],[nc,'看完被藏起來的那一群，改變想法的說法'],[nk,'毛病的種類和說明一樣的說法']].forEach(function(x){var d=el('div','card stat');d.append(el('p','big',x[0]+'<span style="font-size:.45em"> / 4</span>'),el('p',null,x[1]));s.appendChild(d)});
+  var t=el('table');
+  C.forEach(function(q,k){var tr=el('tr');tr.append(el('td','k',q.t),el('td',null,(BNAME[st.b1[k]]||'—')+' → '+(BNAME[st.b2[k]]||'—')+'<br><span class="small">打開：'+(q.who[st.open[k]]?q.who[st.open[k]].b:'—')+'；毛病：'+(KIND[st.kind[k]]||'—')+'</span>'));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),s,c,el('p','note','聽到「這個方法有效」，先問兩個問題：我們沒看到的是誰？跟誰比、比得公平嗎？'));
+}
+if(st.started||st.i>0||st.stage>0)step();else intro();
+})();
+</script>

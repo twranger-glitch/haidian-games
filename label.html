@@ -1,0 +1,104 @@
+<title>小小評審團</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one tablet screen per step — read the same short essay, score it, predict the writer's next contest. The writer's one-line introduction differs by hidden group (甲/乙), shown only at the end. Single light classroom look on purpose. */
+:root{
+  --bg:#F0F1EC; --card:#FCFCF8; --ink:#1F2A2E; --muted:#56605C; --line:#D3D6CB;
+  --sea:#205E86; --rust:#A8441A; --paper:#FFFEF8;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:26px 36px;display:flex;flex-direction:column;gap:20px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(26px,4.2vw,38px);font-weight:900;margin:0;line-height:1.4;text-wrap:balance}
+.lead{font-size:clamp(20px,2.8vw,26px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(18px,3.4vw,30px);display:flex;flex-direction:column;gap:14px}
+.who{font-size:clamp(20px,2.8vw,26px);font-weight:700;margin:0;color:var(--sea)}
+.essay{background:var(--paper);border:3px solid var(--line);border-radius:14px;padding:clamp(16px,3vw,28px);font-size:clamp(21px,2.9vw,27px);line-height:1.9;margin:0}
+.essay b{display:block;text-align:center;margin-bottom:.3em}
+.btn{font:inherit;font-size:clamp(24px,3.6vw,32px);font-weight:900;border:0;border-radius:18px;padding:16px 24px;background:var(--sea);color:#fff;cursor:pointer}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.btn:focus-visible,.num:focus-visible{outline:4px solid var(--rust);outline-offset:3px}
+.nums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.num{font:inherit;font-size:clamp(28px,4.4vw,40px);font-weight:900;border:3px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:10px 0;cursor:pointer}
+.num[aria-pressed="true"]{background:var(--sea);border-color:var(--sea);color:#fff}
+.scale{display:flex;justify-content:space-between;font-size:clamp(16px,2.2vw,20px);color:var(--muted);margin:0}
+.col{display:flex;flex-direction:column;gap:12px}
+.group{font-size:clamp(64px,13vw,120px);font-weight:900;line-height:1.1;margin:0;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(20px,2.8vw,26px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line)}
+td.n{text-align:right;font-weight:900;white-space:nowrap}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='label-rate-v1';
+var INTRO={'甲':'作者小安：常常在學校的作文比賽得獎。','乙':'作者小安：常常忘記交作業。'};
+var ESSAY=['寒假的時候，爸爸帶我去七股看黑面琵鷺。我們很早就出發，到的時候天還有點暗。','黑面琵鷺站在水裡，用扁扁的嘴巴在水裡左右掃來掃去找魚吃。爸爸說牠們是從很遠的地方飛來的，每年冬天都會來。','我覺得牠們很厲害，可是有一隻一直在睡覺，我等了很久牠都沒有醒來。回家的路上，我一直在想，明年冬天牠們還會不會再來。'];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load();
+if(!st||!st.g){st={g:Math.random()<0.5?'甲':'乙'};save(st)}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+
+function intro(){
+  app.innerHTML='';
+  var h=el('h1',null,'小小評審團');
+  var c=el('div','card');
+  c.append(el('p','lead','今天你是作文評審。等一下會看到一位同學寫的短文，請你認真讀完，再打分數。'),el('p','lead','自己判斷就好，不要跟旁邊的同學討論。'));
+  var b=el('button','btn','開始讀短文');b.type='button';b.addEventListener('click',read);
+  app.append(h,c,b);
+}
+function essayCard(){
+  var c=el('div','card');
+  c.appendChild(el('p','who',INTRO[st.g]));
+  var e=el('div','essay');var t=el('b',null,'〈去七股看黑面琵鷺〉');e.appendChild(t);
+  ESSAY.forEach(function(s){var p=el('p',null,s);p.style.margin='0 0 .6em';p.style.textIndent='2em';e.appendChild(p)});
+  c.appendChild(e);return c;
+}
+function read(){
+  app.innerHTML='';
+  var h=el('h2',null,'請認真讀完這篇短文。');
+  var b=el('button','btn','讀完了，開始打分數');b.type='button';b.addEventListener('click',score);
+  app.append(h,essayCard(),b);window.scrollTo(0,0);
+}
+function score(){
+  app.innerHTML='';
+  var h=el('h2',null,'你給這篇短文幾分？');
+  var col=el('div','col');
+  var g=el('div','nums');var go=el('button','btn','確定');go.type='button';go.disabled=true;var chosen=null;
+  for(var i=1;i<=10;i++)(function(n){var b=el('button','num',String(n));b.type='button';b.setAttribute('aria-pressed','false');b.setAttribute('aria-label',n+' 分');
+    b.addEventListener('click',function(){chosen=n;Array.prototype.forEach.call(g.children,function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');go.disabled=false;go.textContent='我給 '+n+' 分'});g.appendChild(b)})(i);
+  var sc=el('p','scale');sc.append(el('span',null,'1 分：寫得很不好'),el('span',null,'10 分：寫得非常好'));
+  col.append(g,sc);
+  go.addEventListener('click',function(){if(chosen==null)return;st.s=chosen;save(st);predict()});
+  app.append(h,essayCard(),col,go);
+}
+function predict(){
+  app.innerHTML='';
+  var h=el('h2',null,'你覺得小安下一次作文比賽，會得獎嗎？');
+  var c=el('div','col');
+  ['會得獎','不會得獎','不一定'].forEach(function(t){var b=el('button','btn alt',t);b.type='button';b.addEventListener('click',function(){st.p=t;save(st);done()});c.appendChild(b)});
+  app.append(h,c);
+}
+function done(){
+  app.innerHTML='';
+  var h=el('h2',null,'評分完成！請停在這一頁，等其他同學。');
+  var c=el('div','card');c.append(el('p','lead','你是'),el('p','group',st.g+'組'));
+  var t=el('table');
+  [['你給的分數',st.s+' 分'],['小安下次會得獎嗎？',st.p]].forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  app.append(h,c,t,el('p','lead','先不要給別的同學看。'));
+}
+if(st.s!=null&&st.p)done();else intro();
+})();
+</script>

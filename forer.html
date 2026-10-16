@@ -1,0 +1,99 @@
+<title>台江動物心理測驗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one tablet screen at a time — choose, a short "analysing" pause, then the personal-looking card. Single light look on purpose (classroom tablets). */
+:root{
+  --bg:#EEF4F1; --card:#FBFCFA; --ink:#1F2A2E; --muted:#4F5F5C; --line:#C9D8D2;
+  --sea:#205E86; --mud:#8A6A44; --accent:#B4532A;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:980px;margin:0 auto;padding-inline:20px;padding-block:28px 40px;display:flex;flex-direction:column;gap:24px}
+h1{font-size:clamp(30px,5vw,48px);font-weight:900;margin:0;text-wrap:balance}
+.lead{font-size:clamp(20px,2.6vw,26px);color:var(--muted);margin:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.pick{display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 14px 20px;background:var(--card);border:3px solid var(--line);border-radius:22px;cursor:pointer;font:inherit;color:var(--ink);transition:transform .15s,border-color .15s}
+.pick:hover{border-color:var(--sea)}
+.pick:active{transform:scale(.98)}
+.pick:focus-visible{outline:4px solid var(--accent);outline-offset:3px}
+.pick svg{width:min(100%,220px);height:auto}
+.pick span{font-size:clamp(24px,3.4vw,34px);font-weight:900}
+.wait{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;padding-block:60px}
+.wait p{font-size:clamp(24px,3.6vw,34px);font-weight:700;margin:0}
+.bar{width:min(100%,520px);height:16px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--sea);transition:width 2.6s ease-in-out}
+.result{background:var(--card);border:3px solid var(--sea);border-radius:26px;padding:clamp(22px,4vw,44px);display:flex;flex-direction:column;gap:22px}
+.result .top{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.result .top svg{width:120px;height:auto;flex:none}
+.result h2{font-size:clamp(28px,4.4vw,44px);font-weight:900;margin:0}
+.result .tag{font-size:18px;font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.result ol{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:14px}
+.result li{font-size:clamp(22px,3vw,30px);font-weight:500;line-height:1.55}
+.note{font-size:clamp(18px,2.4vw,22px);color:var(--muted);margin:0;text-align:center}
+@media (max-width:420px){.grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}.pick{transition:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var A={
+  crab:{name:"招潮蟹",svg:'<svg viewBox="0 0 220 160" role="img" aria-label="招潮蟹"><ellipse cx="110" cy="122" rx="96" ry="14" fill="#D9CBB3"/><line x1="92" y1="70" x2="86" y2="38" stroke="#1F2A2E" stroke-width="6" stroke-linecap="round"/><line x1="118" y1="70" x2="124" y2="38" stroke="#1F2A2E" stroke-width="6" stroke-linecap="round"/><circle cx="86" cy="34" r="8" fill="#1F2A2E"/><circle cx="124" cy="34" r="8" fill="#1F2A2E"/><ellipse cx="104" cy="92" rx="52" ry="30" fill="#C4422B"/><path d="M150 86 Q190 60 196 92 Q190 118 156 104 Z" fill="#E8603F"/><circle cx="62" cy="80" r="10" fill="#C4422B"/><g stroke="#C4422B" stroke-width="7" stroke-linecap="round"><line x1="70" y1="104" x2="44" y2="124"/><line x1="82" y1="112" x2="64" y2="132"/><line x1="128" y1="112" x2="146" y2="132"/><line x1="138" y1="104" x2="164" y2="122"/></g></svg>'},
+  mudskipper:{name:"彈塗魚",svg:'<svg viewBox="0 0 220 160" role="img" aria-label="彈塗魚"><ellipse cx="110" cy="126" rx="100" ry="14" fill="#B7A68A"/><path d="M30 104 Q60 66 120 70 Q170 74 186 98 Q170 118 120 116 Q66 118 30 104 Z" fill="#8A6A44"/><path d="M186 98 L214 78 L210 118 Z" fill="#8A6A44"/><circle cx="58" cy="66" r="13" fill="#E9E2D3"/><circle cx="80" cy="62" r="13" fill="#E9E2D3"/><circle cx="60" cy="66" r="6" fill="#1F2A2E"/><circle cx="82" cy="62" r="6" fill="#1F2A2E"/><path d="M84 112 Q96 136 118 128" fill="none" stroke="#6E5233" stroke-width="7" stroke-linecap="round"/><g fill="#5E7A8E"><circle cx="112" cy="88" r="3"/><circle cx="132" cy="94" r="3"/><circle cx="150" cy="86" r="3"/><circle cx="124" cy="104" r="3"/></g></svg>'},
+  spoonbill:{name:"黑面琵鷺",svg:'<svg viewBox="0 0 220 160" role="img" aria-label="黑面琵鷺"><ellipse cx="120" cy="150" rx="70" ry="6" fill="#BFD3DC"/><g stroke="#2B2B2B" stroke-width="5" stroke-linecap="round"><line x1="118" y1="104" x2="112" y2="150"/><line x1="138" y1="104" x2="146" y2="150"/></g><ellipse cx="132" cy="86" rx="46" ry="26" fill="#FFFFFF" stroke="#D3D9D6" stroke-width="2"/><path d="M96 78 Q86 44 76 34" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/><circle cx="74" cy="32" r="14" fill="#FFFFFF" stroke="#D3D9D6" stroke-width="2"/><path d="M66 30 Q40 34 22 46 Q14 56 26 58 Q42 56 66 40 Z" fill="#1F2A2E"/><circle cx="72" cy="28" r="3.5" fill="#F2F2F2"/></svg>'},
+  milkfish:{name:"虱目魚",svg:'<svg viewBox="0 0 220 160" role="img" aria-label="虱目魚"><path d="M24 80 Q70 44 140 54 Q172 60 182 80 Q172 100 140 106 Q70 116 24 80 Z" fill="#9FB4C2"/><path d="M40 84 Q90 96 170 86" fill="none" stroke="#D9E4EA" stroke-width="6" stroke-linecap="round"/><path d="M178 80 L212 46 L200 80 L212 114 Z" fill="#8299A8"/><circle cx="48" cy="74" r="7" fill="#1F2A2E"/><path d="M112 56 L126 36 L136 58 Z" fill="#8299A8"/></svg>'}
+};
+var TEXT=["你很希望別人懂你，但有時候不太想把心事說出來。","你有時候很有自信，有時候又會懷疑自己。","你喜歡和朋友在一起，但偶爾也需要安靜一下。","你有一些優點，還沒有被大家發現。"];
+var app=document.getElementById('app');
+var KEY='taijiang-quiz-choice';
+function get(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+function set(v){try{v?localStorage.setItem(KEY,v):localStorage.removeItem(KEY)}catch(e){}}
+if(location.hash==='#reset'){set(null)}
+
+function pickScreen(){
+  app.innerHTML='';
+  var h=document.createElement('h1');h.textContent='台江動物心理測驗';
+  var p=document.createElement('p');p.className='lead';p.textContent='你最喜歡哪一種台江動物？點一下，看看牠透露了你什麼樣的個性。';
+  var g=document.createElement('div');g.className='grid';
+  Object.keys(A).forEach(function(k){
+    var b=document.createElement('button');b.className='pick';b.type='button';
+    b.innerHTML=A[k].svg;var s=document.createElement('span');s.textContent=A[k].name;b.appendChild(s);
+    b.addEventListener('click',function(){set(k);waitScreen(k)});
+    g.appendChild(b);
+  });
+  app.append(h,p,g);
+}
+function waitScreen(k){
+  app.innerHTML='';
+  var w=document.createElement('div');w.className='wait';
+  w.innerHTML=A[k].svg.replace('<svg ','<svg style="width:180px;height:auto" ');
+  var p=document.createElement('p');p.textContent='正在分析你的個性……';
+  var bar=document.createElement('div');bar.className='bar';var i=document.createElement('i');bar.appendChild(i);
+  w.append(p,bar);app.appendChild(w);
+  requestAnimationFrame(function(){requestAnimationFrame(function(){i.style.width='100%'})});
+  setTimeout(function(){resultScreen(k)},2800);
+}
+function resultScreen(k){
+  app.innerHTML='';
+  var c=document.createElement('section');c.className='result';
+  var top=document.createElement('div');top.className='top';top.innerHTML=A[k].svg;
+  var t=document.createElement('div');
+  var tag=document.createElement('p');tag.className='tag';tag.textContent='你的專屬分析';
+  var h=document.createElement('h2');h.textContent='喜歡'+A[k].name+'的你';
+  t.append(tag,h);top.appendChild(t);
+  var ol=document.createElement('ol');
+  TEXT.forEach(function(x){var li=document.createElement('li');li.textContent=x;ol.appendChild(li)});
+  c.append(top,ol);
+  var n=document.createElement('p');n.className='note';n.textContent='請安靜讀完，先不要給別人看。';
+  app.append(c,n);
+}
+var saved=get();
+if(saved&&A[saved])resultScreen(saved);else pickScreen();
+})();
+</script>

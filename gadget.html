@@ -1,0 +1,434 @@
+<title>智慧鉛筆盒試用週</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Flow: story → design a smart pencil case (tap feature cards, buttons grow on the case) → trial week: 5 tasks on a remote-style button panel (positions shuffled with crypto, tiny labels, more features = more crowded; timer per task; wrong press says 不是這個; music task skipped if no music; 6+ features → dead battery, charge 1 day) → trial result → re-choose (3 options, each shows its effect and cost) → summary for a show of hands. Same light classroom look as shift/dimmer. Panel button labels are deliberately tiny to imitate real gadgets. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --case:#CFE3C4; --caseline:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance;display:flex;align-items:center;gap:12px}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.go{background:var(--rust)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.fcard:focus-visible,.pbtn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.letter{display:inline-block;min-width:1.6em;font-weight:900;color:var(--sea)}
+.btn.alt small{display:block;font-size:clamp(19px,2.3vw,21px);font-weight:500;color:var(--muted);padding-left:1.6em}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note.ok{background:#E2F0DF}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+h1 svg.i{width:1.3em;height:1.3em}
+/* pencil case illustration */
+.pcase{position:relative;background:var(--case);border:3px solid var(--caseline);border-radius:34px;padding:34px 14px 16px}
+.pcase::before{content:"";position:absolute;top:15px;left:28px;right:40px;border-top:3px dashed var(--caseline)}
+.pcase::after{content:"";position:absolute;top:9px;right:22px;width:12px;height:16px;border-radius:5px;background:#FBFCF9;border:3px solid var(--caseline)}
+.chips{display:flex;flex-wrap:wrap;gap:8px 6px;justify-content:center;align-content:center;min-height:70px}
+.chip{width:56px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.chip .dot{width:46px;height:46px;border-radius:50%;background:#FBFCF9;border:2px solid #7FA88A;display:grid;place-items:center;color:var(--ink)}
+.chip .dot svg{width:26px;height:26px}
+.chip.base .dot{border-color:var(--caseline);border-width:3px}
+.chip span{font-size:13px;color:#2C4A36;font-weight:700;line-height:1.2;white-space:nowrap}
+.chip.new{animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.2);opacity:0}70%{transform:scale(1.15);opacity:1}100%{transform:scale(1)}}
+.count{font-size:clamp(19px,2.6vw,23px);font-weight:900;text-align:center;margin:8px 0 0;color:#24563A}
+/* design layout */
+.design{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
+.design .side{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px}
+.feats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.fcard{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 12px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.fcard .fi{grid-row:span 2;width:44px;height:44px;border-radius:12px;background:#F1F3EE;display:grid;place-items:center}
+.fcard .fi svg{width:30px;height:30px}
+.fcard b{font-size:clamp(19px,2.5vw,23px);line-height:1.3;padding-right:26px}
+.fcard .d{font-size:19px;color:var(--muted);line-height:1.35;grid-column:1/-1}
+.fcard .mark{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:var(--muted)}
+.fcard .mark svg{width:18px;height:18px}
+.fcard.on{border-color:var(--good);background:#EEF6EB}
+.fcard.on .mark{background:var(--good);border-color:var(--good);color:#fff}
+/* trial panel */
+.taskbox{display:flex;flex-direction:column;gap:6px}
+.task{font-size:clamp(23px,3.6vw,31px);font-weight:900;line-height:1.5;margin:0}
+.bar2{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.timer{display:flex;align-items:center;gap:8px;font-size:clamp(26px,4vw,36px);font-weight:900;font-variant-numeric:tabular-nums;color:var(--sea);margin:0}
+.timer svg{width:1.1em;height:1.1em}
+.msg{min-height:1.7em;font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--rust);margin:0;display:flex;align-items:center;gap:6px}
+.pwrap{width:100%;max-width:440px;margin:0 auto;padding:32px 12px 12px}
+.panel{display:grid;gap:5px;aspect-ratio:4/3;background:#BFD6B4;border-radius:18px;padding:8px}
+.pbtn{font:inherit;color:var(--ink);border:2px solid #9DB5A2;background:#F7F9F4;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px;cursor:pointer;min-width:0;min-height:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.pbtn svg{width:19px;height:19px;flex:none}
+.pbtn span{font-size:10.5px;line-height:1.1;color:#66706A;font-weight:500;white-space:nowrap}
+.pbtn.bad{border-color:var(--rust);background:#F7E3DA;animation:shake .32s}
+.pbtn.ok{border-color:var(--good);background:#CDE8C6}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.pcap{text-align:center;font-size:19px;color:var(--muted);margin:0}
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:700}
+td.n,th.n{text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.n{font-weight:900}
+td.skip{color:var(--muted);font-weight:500}
+tr.tot td{border-bottom:0;font-weight:900}
+@media (min-width:621px){.sum td:first-child{white-space:nowrap;padding-right:18px}}
+/* battery */
+.batt{display:flex;justify-content:center;color:var(--ink)}
+.batt svg{width:120px;height:120px}
+.cbar{height:30px;border-radius:15px;background:#E3E7E0;overflow:hidden;border:2px solid var(--line)}
+.cbar i{display:block;height:100%;width:0;background:var(--good);transition:width .1s linear}
+.big{font-size:clamp(40px,8vw,70px);font-weight:900;text-align:center;color:var(--sea);margin:0;line-height:1.2;font-variant-numeric:tabular-nums}
+@media (max-width:760px){
+  .design{grid-template-columns:1fr}
+  .design .side{position:sticky;top:0;z-index:2;background:var(--bg);padding:8px 0 6px;margin-inline:-4px;padding-inline:4px}
+  .design .side .pcase{padding:28px 8px 8px;border-radius:26px}
+  .design .side .pcase::before{top:12px}
+  .design .side .pcase::after{top:6px}
+  .design .side .chips{min-height:52px;gap:4px}
+  .design .side .chip{width:44px}
+  .design .side .chip .dot{width:38px;height:38px}
+  .design .side .chip .dot svg{width:22px;height:22px}
+  .design .side .chip span{font-size:12px}
+  .design .side .count{margin-top:2px}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  th,td{padding:8px 4px}
+  .pwrap{padding:28px 8px 8px}
+}
+@media (max-width:440px){.feats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.fcard{padding:8px 8px;gap:2px 7px}.fcard .fi{width:32px;height:32px;border-radius:9px}.fcard .fi svg{width:24px;height:24px}.fcard b{font-size:19px;padding-right:18px}.fcard .mark{width:21px;height:21px;top:5px;right:5px}.fcard .mark svg{width:14px;height:14px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={
+open:'<path d="M16.4 12V7.4l1.3-2.2 1.3 2.2V12" fill="#F3D27A"/><rect x="3" y="12" width="18" height="8" rx="2" fill="#F3E3BE"/><rect x="3.4" y="8.4" width="15" height="3" rx="1.3" fill="#DCE8F0" transform="rotate(-36 3.6 11.6)"/><path d="M10.5 15.8h3"/>',
+light:'<path d="M12 2.8a6 6 0 0 0-3.7 10.7c.7.6 1.1 1.3 1.1 2.1v1.1h5.2v-1.1c0-.8.4-1.5 1.1-2.1A6 6 0 0 0 12 2.8z" fill="#F3D27A"/><path d="M9.6 19.6h4.8M10.6 22h2.8"/>',
+music:'<path d="M9 18V6l11-2.6V15.5"/><path d="M9 9.6l11-2.6"/><circle cx="6.4" cy="18" r="2.6" fill="#DCE3F2"/><circle cx="17.4" cy="15.5" r="2.6" fill="#DCE3F2"/>',
+weather:'<circle cx="9" cy="8.6" r="3.4" fill="#F3D27A"/><path d="M9 2.4v1.2M2.8 8.6H4M4.6 4.2l.8.8M13.4 4.2l-.8.8"/><path d="M8.2 20h9.3a3.4 3.4 0 0 0 .5-6.8 4.9 4.9 0 0 0-9.4 1.3A2.8 2.8 0 0 0 8.2 20z" fill="#EEF2F6"/>',
+water:'<rect x="9" y="2.4" width="6" height="2.6" rx="1" fill="#FBFCF9"/><path d="M9.6 5h4.8l1.6 2.6v12a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-12z" fill="#CFE6F2"/><path d="M8 12.2h8"/>',
+count:'<path d="M4.5 20.5V8.5L6 5.5l1.5 3v12z" fill="#F3D27A"/><path d="M10.5 20.5V8.5L12 5.5l1.5 3v12z" fill="#F3D27A"/><path d="M16.5 20.5V8.5L18 5.5l1.5 3v12z" fill="#F3D27A"/>',
+calc:'<rect x="5" y="2.5" width="14" height="19" rx="2.2" fill="#E6ECE4"/><rect x="8" y="5.4" width="8" height="3.6" rx=".8" fill="#FBFCF9"/><path d="M8.6 13h.01M12 13h.01M15.4 13h.01M8.6 17h.01M12 17h.01M15.4 17h.01" stroke-width="2.4"/>',
+alarm:'<circle cx="12" cy="13" r="7.4" fill="#F2B8A0"/><path d="M12 9.2v4l2.6 1.6"/><path d="M3.6 6.2l3-2.6M20.4 6.2l-3-2.6M7.2 19.4l-1.4 2M16.8 19.4l1.4 2"/>',
+mirror:'<circle cx="12" cy="9" r="6.4" fill="#DCE8F0"/><path d="M12 15.4v5.8M9.6 21.4h4.8"/><path d="M9 7.6a3.2 3.2 0 0 1 2.4-2.2"/>',
+lock:'<rect x="5" y="10.5" width="14" height="10.5" rx="2.2" fill="#F3E3BE"/><path d="M8.5 10.5V7.6a3.5 3.5 0 0 1 7 0v2.9"/><path d="M12 14.6v2.6"/>',
+thermo:'<path d="M10 4.6a2 2 0 0 1 4 0v9.2a4.2 4.2 0 1 1-4 0z" fill="#FBFCF9"/><circle cx="12" cy="17.3" r="1.9" fill="#F2B8A0"/><path d="M12 15.2V9"/>',
+bat0:'<rect x="2.5" y="7" width="17" height="10" rx="2.2" fill="#FBFCF9"/><path d="M21.6 10.6v2.8"/><rect x="5" y="9.6" width="2.4" height="4.8" rx=".6" fill="#EDB09B"/>',
+batc:'<rect x="2.5" y="7" width="17" height="10" rx="2.2" fill="#CFE3C4"/><path d="M21.6 10.6v2.8"/><path d="M11.8 8.8l-2.6 3.6h3.6l-2.6 3.6"/>',
+timer:'<circle cx="12" cy="13.6" r="7.4" fill="#DCE8F0"/><path d="M12 13.6V9.6M9.8 2.6h4.4M12 2.6v3.6M18.4 6.6l1.4-1.4"/>',
+pcase:'<rect x="2.5" y="7" width="19" height="11" rx="5.5" fill="#CFE3C4"/><path d="M6 10.4h12" stroke-dasharray="1.6 2.2"/><path d="M17 10.4v3.4"/><circle cx="17" cy="15" r="1.2" fill="#FBFCF9"/>',
+check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+x:'<path d="M7 7l10 10M17 7L7 17"/>',
+plus:'<path d="M12 5v14M5 12h14"/>'
+};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+function icb(k){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='gadget-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){return {step:0,feats:[],plan:null,battery:false,ti:0,times:[],wrongs:[],t0:[],orders:[],charged:false,chg0:null,choice:null}}
+var st=load()||fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var tick=null;function stopTick(){if(tick){clearInterval(tick);tick=null}}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function rnd(n){try{var a=new Uint32Array(1);window.crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
+
+var FEATS=[
+ {id:'light',name:'小夜燈',short:'夜燈',desc:'晚上也找得到鉛筆盒',task:'白天的教室已經很亮了，鉛筆盒的小夜燈卻一直亮著。按「小夜燈」把它關掉！'},
+ {id:'music',name:'播音樂',short:'音樂',desc:'下課可以聽歌',task:'下課時你開了音樂，現在上課鐘響了。老師說：「請安靜。」快按「播音樂」把音樂關掉！'},
+ {id:'weather',name:'顯示天氣',short:'天氣',desc:'看看會不會下雨',task:'快放學了，外面的天空黑黑的。按「顯示天氣」，看看等一下會不會下雨！'},
+ {id:'water',name:'喝水提醒',short:'喝水',desc:'時間到會嗶嗶叫',task:'國語課上到一半，喝水提醒突然「嗶嗶嗶」叫，全班都轉過來看你。快按「喝水提醒」把它關掉！'},
+ {id:'count',name:'數鉛筆',short:'數筆',desc:'告訴你鉛筆有沒有少',task:'美勞課結束了，你擔心鉛筆少了一枝。按「數鉛筆」數數看！'},
+ {id:'calc',name:'計算機',short:'計算',desc:'隨時可以算數字',task:'班會要算園遊會每個人出多少錢，老師請你幫忙。按「計算機」打開來算！'},
+ {id:'alarm',name:'鬧鐘',short:'鬧鐘',desc:'時間到會叫你',task:'午休時大家都在睡覺，鉛筆盒的鬧鐘突然響了！快按「鬧鐘」把它關掉！'},
+ {id:'mirror',name:'自拍鏡',short:'鏡子',desc:'照照看頭髮亂不亂',task:'等一下要拍五年13班的團體照。按「自拍鏡」看看頭髮亂不亂！'},
+ {id:'lock',name:'密碼鎖',short:'密碼',desc:'別人打不開你的鉛筆盒',task:'下課要去操場打球，按「密碼鎖」把鉛筆盒鎖起來！'},
+ {id:'thermo',name:'溫度計',short:'溫度',desc:'量量看現在幾度',task:'自然課要記錄教室裡的溫度。按「溫度計」量量看！'}
+];
+var FM={};FEATS.forEach(function(f){FM[f.id]=f});
+var OPEN={id:'open',name:'開蓋',short:'開蓋'};
+function F(id){return id==='open'?OPEN:FM[id]}
+var BASIC=[
+ '上課鐘響了，老師要大家把錯字擦掉重寫。快打開鉛筆盒拿橡皮擦！',
+ '數學課要畫三角形，老師說：「請拿出尺。」快打開鉛筆盒拿尺！',
+ '小考的考卷發下來了，要先寫名字。快打開鉛筆盒拿鉛筆！'
+];
+function sortFeats(){st.feats.sort(function(a,b){return FEATS.indexOf(FM[a])-FEATS.indexOf(FM[b])})}
+
+function makePlan(){
+  var has=st.feats,others=has.filter(function(x){return x!=='music'});
+  var t4=others.length?others[rnd(others.length)]:FEATS.filter(function(f){return f.id!=='music'})[rnd(9)].id;
+  st.plan=[{k:'open',b:0},{k:'music',skip:has.indexOf('music')<0},{k:'open',b:1},{k:t4,skip:has.indexOf(t4)<0},{k:'open',b:2}];
+  st.battery=has.length>=6;
+  st.ti=0;st.times=[];st.wrongs=[];st.t0=[];st.orders=[];st.charged=false;st.chg0=null;st.choice=null;
+}
+function taskText(t){return t.k==='open'?BASIC[t.b]:FM[t.k].task}
+
+/* pencil case illustration */
+function caseEl(feats,newId){
+  var c=el('div','pcase');var ch=el('div','chips');ch.setAttribute('role','img');
+  ch.setAttribute('aria-label','鉛筆盒上的按鈕：'+['開蓋'].concat(feats.map(function(id){return FM[id].name})).join('、'));
+  ['open'].concat(feats).forEach(function(id){
+    var f=F(id);var x=el('div','chip'+(id==='open'?' base':'')+(id===newId?' new':''),'<div class="dot">'+icb(id)+'</div><span>'+f.short+'</span>');
+    ch.appendChild(x);
+  });
+  c.appendChild(ch);return c;
+}
+
+/* ---------- step 0 ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','五年13班的同學最近在聊一件事：如果可以自己設計一個「智慧鉛筆盒」，你會想要它有什麼功能？這個鉛筆盒是想像出來的，店裡買不到。'),
+    el('p','lead','最基本的款式只有一個按鈕：<b>「開蓋」</b>。按一下，蓋子就會打開，可以拿鉛筆、橡皮擦和尺。'));
+  var pc=caseEl([]);
+  var c2=el('div','card');
+  c2.append(el('p','lead','另外還有 <b>10 個功能</b>可以加上去，例如小夜燈、播音樂、鬧鐘。想加幾個都可以，而且<b>不用多花錢</b>。'),
+    el('p','lead','設計好以後，你要帶著自己設計的鉛筆盒，<b>試用一個星期</b>。'));
+  app.append(el('h1',null,ic('pcase')+'智慧鉛筆盒試用週'),c,pc,el('p','pcap','基本款：只有「開蓋」一個按鈕'),c2,button('開始設計','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: design ---------- */
+function design(newId){
+  app.innerHTML='';
+  var lay=el('div','design');
+  var side=el('div','side');
+  var pc=caseEl(st.feats,newId);
+  pc.appendChild(el('p','count',st.feats.length?'開蓋＋已經加了 '+st.feats.length+' 個功能':'現在是基本款：只有開蓋'));
+  side.appendChild(pc);
+  var right=el('div','opts');
+  var fs=el('div','feats');fs.setAttribute('role','group');fs.setAttribute('aria-label','可以加的功能');
+  FEATS.forEach(function(f){
+    var on=st.feats.indexOf(f.id)>=0;
+    var b=el('button','fcard'+(on?' on':''),'<span class="fi">'+icb(f.id)+'</span><b>'+f.name+'</b><span class="d">'+f.desc+'</span><span class="mark">'+icb(on?'check':'plus')+'</span>');
+    b.type='button';b.setAttribute('aria-pressed',on?'true':'false');
+    b.addEventListener('click',function(){
+      var y=window.scrollY;
+      var i=st.feats.indexOf(f.id);
+      if(i>=0)st.feats.splice(i,1);else{st.feats.push(f.id);sortFeats()}
+      save(st);design(i>=0?null:f.id);try{window.scrollTo(0,y)}catch(e){}
+      var nb=app.querySelector('.fcard[data-id="'+f.id+'"]');if(nb)try{nb.focus({preventScroll:true})}catch(e){}
+    });
+    b.setAttribute('data-id',f.id);
+    fs.appendChild(b);
+  });
+  right.appendChild(fs);
+  lay.append(side,right);
+  var done=button('就決定是它','btn go',function(){makePlan();go(2)});
+  app.append(el('p','case','設計你的鉛筆盒'),el('h2',null,'你最想買哪一種智慧鉛筆盒？'),
+    el('p','lead','點一下功能卡，鉛筆盒上就會長出那個按鈕；再點一下可以拿掉。沒有上限，想加幾個都可以，也不用多花錢。'),lay,done);
+}
+
+/* ---------- step 2: trial intro ---------- */
+function trialIntro(){
+  app.innerHTML='';
+  var n=st.feats.length;
+  app.append(el('p','case','試用一週'),el('h2',null,'你的鉛筆盒做好了，開始試用一個星期！'),caseEl(st.feats),
+    el('p','pcap',n?'你的鉛筆盒：開蓋＋'+n+' 個功能，一共 '+(n+1)+' 個按鈕':'你的鉛筆盒：基本款，只有開蓋 1 個按鈕'),
+    el('p','lead','這個星期會遇到 <b>5 件事</b>。每一件事，你都要在鉛筆盒的按鈕面板上，找到對的按鈕按下去。'),
+    el('p','note','每一件事都會計時。按錯了，畫面會告訴你「不是這個」，再找別的按鈕就好。<br>按鈕上的圖案和字都很小，跟真的產品一樣；每次拿起鉛筆盒，面板的方向不一樣，按鈕的位置也會跟著變。'),
+    button('開始第 1 件事','btn',function(){st.ti=0;go(3)}));
+}
+
+/* ---------- step 3: tasks ---------- */
+function gridSize(m){return m<=1?[1,1]:m===2?[2,1]:m<=4?[2,2]:m<=6?[3,2]:m<=9?[3,3]:[4,3]}
+function fmt(s){return s.toFixed(1)}
+function task(){
+  var ti=st.ti;
+  if(ti===3&&st.battery&&!st.charged)return battery();
+  var t=st.plan[ti];
+  app.innerHTML='';
+  var head=el('p','case','第 '+(ti+1)+' 件事／共 5 件');
+  if(t.skip){
+    var f=FM[t.k];
+    app.append(head,el('h2',null,'這件事不會發生，跳過！'),
+      el('div','card','<p class="lead">如果鉛筆盒有「'+f.name+'」，這時候可能會發生這件事：</p><p class="lead"><b>'+f.task+'</b></p>'),
+      el('p','note','你的鉛筆盒沒有「'+f.name+'」，所以這件事不會發生，也不用找按鈕。'),
+      button(ti<4?'下一件事':'看試用結果','btn',function(){st.times[ti]=-1;st.wrongs[ti]=0;next()}));
+    return;
+  }
+  var btns=['open'].concat(st.feats),m=btns.length,g=gridSize(m),cols=g[0],rows=g[1];
+  if(!st.orders[ti]||st.orders[ti].length!==m){var all=[];for(var i=0;i<cols*rows;i++)all.push(i);st.orders[ti]=shuffle(all).slice(0,m)}
+  if(st.t0[ti]==null)st.t0[ti]=Date.now();
+  if(st.wrongs[ti]==null)st.wrongs[ti]=0;
+  save(st);
+  var done=typeof st.times[ti]==='number'&&st.times[ti]>=0;
+  var tb=el('div','taskbox');tb.appendChild(el('p','task',taskText(t)));
+  var bar=el('div','bar2');var tm=el('p','timer');var msg=el('p','msg');msg.setAttribute('role','status');
+  bar.append(tm,msg);
+  function showT(){var s=done?st.times[ti]:(Date.now()-st.t0[ti])/1000;tm.innerHTML=icb('timer')+'<span>'+fmt(Math.max(0,s))+' 秒</span>'}
+  showT();
+  var pw=el('div','pcase pwrap');
+  var pn=el('div','panel');pn.setAttribute('role','group');pn.setAttribute('aria-label','鉛筆盒的按鈕面板');
+  pn.style.gridTemplateColumns='repeat('+cols+',minmax(0,1fr))';pn.style.gridTemplateRows='repeat('+rows+',minmax(0,1fr))';
+  var after=el('div','opts');
+  btns.forEach(function(id,j){
+    var f=F(id),pos=st.orders[ti][j];
+    var b=el('button','pbtn'+(done&&id===t.k?' ok':''),icb(id)+'<span>'+f.short+'</span>');b.type='button';
+    b.setAttribute('aria-label',f.name);b.setAttribute('data-k',id);
+    b.style.gridRow=(Math.floor(pos/cols)+1);b.style.gridColumn=(pos%cols+1);
+    b.addEventListener('click',function(){
+      if(done)return;
+      if(id===t.k){
+        done=true;st.times[ti]=Math.round((Date.now()-st.t0[ti])/100)/10;save(st);stopTick();
+        b.className='pbtn ok';msg.innerHTML='';showT();finish();
+      }else{
+        st.wrongs[ti]++;save(st);
+        b.classList.remove('bad');void b.offsetWidth;b.classList.add('bad');
+        setTimeout(function(){b.classList.remove('bad')},900);
+        msg.innerHTML=ic('x')+'不是這個，再找找看。';
+      }
+    });
+    pn.appendChild(b);
+  });
+  pw.appendChild(pn);
+  function finish(){
+    after.innerHTML='';
+    var w=st.wrongs[ti];
+    after.append(el('p','note ok',ic('check')+' 找到了！這件事花了 <b>'+fmt(st.times[ti])+' 秒</b>'+(w?'，中間按錯 '+w+' 次。':'。')),
+      button(ti<4?'下一件事':'看試用結果','btn',next));
+  }
+  app.append(head,tb,bar,pw,el('p','pcap',m===1?'面板上只有 1 個按鈕':'面板上有 '+m+' 個按鈕'),after);
+  if(done)finish();else tick=setInterval(showT,100);
+}
+function next(){stopTick();if(st.ti<4){st.ti++;save(st);render();try{window.scrollTo(0,0)}catch(e){}}else go(4)}
+
+var CHG=6000;
+function battery(){
+  app.innerHTML='';
+  var n=st.feats.length;
+  var ico=el('div','batt',icb(st.charged?'batc':'bat0'));
+  var c=el('div','card');
+  c.append(el('p','lead','隔天早上，你按了好幾次「開蓋」，鉛筆盒都沒有反應。你的鉛筆盒有 <b>'+n+' 個功能</b>，每一個都要用電，才用了幾天，電就用完了。'),
+    el('p','lead','充電要 <b>1 天</b>。這一整天，鉛筆、橡皮擦和尺都關在盒子裡，你只好跟隔壁的同學借。'));
+  var area=el('div','opts');
+  function charging(){
+    area.innerHTML='';
+    var cb=el('div','cbar');var fill=el('i');cb.appendChild(fill);var tx=el('p','lead');
+    area.append(cb,tx);
+    function upd(){
+      var p=Math.min(1,(Date.now()-st.chg0)/CHG);
+      fill.style.width=(p*100)+'%';
+      tx.innerHTML='充電中……已經過了 <b>'+Math.floor(p*24)+' 小時</b>';
+      if(p>=1){stopTick();area.innerHTML='';ico.innerHTML=icb('batc');
+        area.append(el('p','note ok',ic('check')+' 過了一整天，電終於充飽了。'),button('繼續試用','btn',function(){st.charged=true;save(st);render();try{window.scrollTo(0,0)}catch(e){}}));}
+    }
+    upd();if(Date.now()-st.chg0<CHG)tick=setInterval(upd,100);
+  }
+  if(st.chg0==null)area.appendChild(button(ic('batc')+' 插上充電線','btn',function(){st.chg0=Date.now();save(st);charging()}));
+  else charging();
+  app.append(el('p','case','糟糕！'),el('h2',null,'鉛筆盒沒電了，要充電 1 天才能用。'),ico,c,area);
+}
+
+/* ---------- step 4: trial result ---------- */
+function sums(){
+  var tot=0,skip=0,w=0;
+  for(var i=0;i<5;i++){var x=st.times[i];if(x===-1)skip++;else if(typeof x==='number')tot+=x;w+=st.wrongs[i]||0}
+  return {tot:Math.round(tot*10)/10,skip:skip,w:w};
+}
+function result(){
+  app.innerHTML='';
+  var s=sums(),n=st.feats.length;
+  var t=el('table');
+  var h='<thead><tr><th>這一週的事</th><th class="n">要按</th><th class="n">花了</th><th class="n">按錯</th></tr></thead><tbody>';
+  st.plan.forEach(function(p,i){
+    var f=F(p.k),x=st.times[i];
+    if(x===-1)h+='<tr><td>第 '+(i+1)+' 件</td><td class="n">'+f.short+'</td><td class="n skip" colspan="2">沒有這個功能，跳過</td></tr>';
+    else h+='<tr><td>第 '+(i+1)+' 件</td><td class="n">'+f.short+'</td><td class="n">'+fmt(x)+' 秒</td><td class="n">'+(st.wrongs[i]||0)+' 次</td></tr>';
+  });
+  h+='<tr class="tot"><td>合計</td><td></td><td class="n">'+fmt(s.tot)+' 秒</td><td class="n">'+s.w+' 次</td></tr></tbody>';
+  t.innerHTML=h;
+  var c=el('div','card');c.appendChild(t);
+  var notes=[];
+  notes.push('你的鉛筆盒面板上有 <b>'+(n+1)+' 個按鈕</b>。');
+  if(st.battery)notes.push('這一週，鉛筆盒<b>沒電了一次</b>，充電花了 1 天。');
+  else notes.push('這一週，鉛筆盒<b>沒有沒電</b>。');
+  app.append(el('p','case','試用一週結束'),el('h2',null,'這一個星期，你用鉛筆盒的情形'),c,el('p','note',notes.join('<br>')),
+    el('p','note warm','想一想：這一個星期，你真的用到了哪幾個按鈕？'),
+    button('下一步','btn',function(){go(5)}));
+}
+
+/* ---------- step 5: re-choose ---------- */
+function choices(){
+  var n=st.feats.length;
+  return [
+   ['A','剛剛那一款',n?'開蓋＋'+n+' 個功能，一共 '+(n+1)+' 個按鈕':'只有開蓋 1 個按鈕',
+    '你挑的功能全部都在，想用的時候，不會後悔當初沒有加。',
+    (n>=1?'按鈕一樣多，每次都要先看清楚才按得對；功能越多，也越耗電。':'沒有其他功能，想做別的事，要用別的東西。')+(st.battery?'這一週你就遇到一次沒電。':'')],
+   ['B','只留最常用的 2～3 個功能','開蓋＋2～3 個功能',
+    '按鈕變少，比較好找，也比較省電；你最想要的幾個功能還留著。',
+    '要決定放棄哪些功能。哪一天突然想用被拿掉的功能，就沒有了。'],
+   ['C','基本款','只有開蓋 1 個按鈕',
+    '只有一個按鈕，一定找得到，也最不容易沒電。',
+    '其他功能全部沒有了。想看天氣、想照鏡子，就要用別的東西。']
+  ];
+}
+function rechoose(){
+  app.innerHTML='';
+  var C=choices();
+  var g=el('div','opts');var info=el('div','opts');
+  var nx=button('就選這個','btn',function(){if(st.choice==null)return;go(6)});nx.disabled=st.choice==null;
+  function showInfo(){
+    info.innerHTML='';if(st.choice==null)return;var o=C[st.choice];
+    info.appendChild(el('p','note warm','<b>選 '+o[0]+' 的作用：</b>'+o[3]+'<br><b>選 '+o[0]+' 的代價：</b>'+o[4]));
+  }
+  C.forEach(function(o,k){
+    var b=button('<span class="letter">'+o[0]+'</span>'+o[1]+'<small>'+o[2]+'</small>','btn alt'+(st.choice===k?' pick':''),function(){
+      st.choice=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;showInfo();
+    });
+    g.appendChild(b);
+  });
+  showInfo();
+  app.append(el('p','case','重新選一次'),el('h2',null,'一週後，如果可以重新選，你會選哪一款？'),
+    el('p','lead','每一個都可以選，沒有標準答案。選了以後，下面會告訴你這個選擇的作用和代價。'),g,info,nx);
+}
+
+/* ---------- step 6: end ---------- */
+function end(){
+  app.innerHTML='';
+  var s=sums(),n=st.feats.length,C=choices(),o=st.choice!=null?C[st.choice]:null;
+  var t=el('table','sum');
+  [['一開始加了幾個功能','<b>'+n+'</b> 個'+(n?'（'+st.feats.map(function(id){return FM[id].name}).join('、')+'）':'（基本款）')],
+   ['5 件事一共花了','<b>'+fmt(s.tot)+'</b> 秒'+(s.skip?'（其中 '+s.skip+' 件跳過）':'')],
+   ['按錯的次數','<b>'+s.w+'</b> 次'],
+   ['有沒有遇到沒電',st.battery?'<b>有</b>，充電 1 天':'<b>沒有</b>'],
+   ['一週後重新選',o?'<b>'+o[0]+'</b>　'+o[1]:'—']].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  stopTick();
+  if(st.step>=2&&!st.plan)st.step=1;
+  if(st.step>=4){for(var i=0;i<5;i++)if(st.times[i]==null){st.step=3;st.ti=i;break}}
+  if(st.step>=6&&st.choice==null)st.step=5;
+  var S=[intro,function(){design()},trialIntro,task,result,rechoose,end];
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

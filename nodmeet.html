@@ -1,0 +1,583 @@
+<title>點頭會議</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro with a secret colour (red/blue) → the two plans + "my thought card" (乙 prefers B, worried about rain) → group meeting: five seats, speech bubbles play (red: leader states A first and 丁 agrees; blue: everyone writes on paper first, leader speaks last) → "your turn" panel at the bottom with the speaking microphone (pick a sentence, press and hold the mic until the ring fills) or nod / stay quiet → rest of the meeting plays → meeting record (silent: "五人一致支持 A") → flip the anonymous thought cards (A 2, B 3) → after-meeting voices → why did you (not) speak, all options open → summary for a show of hands. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --red:#B8372B; --redBg:#F8E2DE; --blue:#2369A8; --blueBg:#E3EEF8;
+  --planA:#8A6216; --planABg:#FBF1DC; --planB:#2F7D4F; --planBBg:#E4F1E7;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,3vw,27px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible,.opt:focus-visible,.say:focus-visible,.mic:focus-visible,.alt:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.hero{display:flex;gap:14px;align-items:center}
+.hero svg.i{width:64px;height:64px}
+/* colour chip */
+.chip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:4px 16px 4px 6px;font-weight:900;font-size:clamp(19px,2.6vw,24px);color:#fff;white-space:nowrap;letter-spacing:0}
+.chip .dot{width:26px;height:26px;border-radius:50%;background:#fff;opacity:.9;border:5px solid rgba(0,0,0,.12)}
+.chip.c0{background:var(--red)} .chip.c1{background:var(--blue)}
+.mine{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;font-size:clamp(19px,2.7vw,25px);font-weight:700}
+/* plans */
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plan{border-width:4px;gap:8px}
+.plan.A{border-color:#E2C98F} .plan.B{border-color:#A9CDB3}
+.plan .ph{display:flex;align-items:center;gap:10px}
+.plan .ph svg.i{width:48px;height:48px}
+.plan .lt{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;font-weight:900;font-size:28px;flex:none}
+.plan.A .lt{background:var(--planABg);color:var(--planA);border:3px solid #E2C98F}
+.plan.B .lt{background:var(--planBBg);color:var(--planB);border:3px solid #A9CDB3}
+.plan p{margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.tg{display:inline-block;font-size:clamp(19px,2.2vw,20px);font-weight:900;border-radius:8px;padding:0 8px;margin-right:6px}
+.tg.good{background:#E4F1E7;color:#235F3B} .tg.cost{background:#FBE9DA;color:#8A4514}
+/* my thought card */
+.mycard{position:relative;background:#FFFDF6;border:3px solid #E2C98F;border-radius:18px;padding:22px clamp(16px,3vw,26px) 18px;display:flex;gap:16px;align-items:flex-start;transform:rotate(-.6deg);box-shadow:0 6px 0 rgba(31,42,46,.08)}
+.mycard::before{content:"";position:absolute;top:-12px;left:50%;width:110px;height:24px;margin-left:-55px;background:rgba(183,134,43,.28);border-radius:4px;transform:rotate(2deg)}
+.mycard svg.av{width:76px;height:76px;flex:none}
+.mycard .k{font-size:clamp(19px,2.3vw,21px);font-weight:900;color:var(--gold);margin:0}
+.mycard .big{font-size:clamp(24px,3.6vw,32px);font-weight:900;margin:0;line-height:1.4}
+.mycard .big em{font-style:normal;color:var(--planB)}
+.mycard p{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.65}
+/* meeting scene */
+.scene{padding:14px 12px 12px;gap:10px}
+.seats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;align-items:end}
+.seat{display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.seat svg.av{width:clamp(52px,9vw,78px);height:clamp(52px,9vw,78px);border-radius:50%;transition:box-shadow .2s,opacity .2s}
+.seat .nm{font-weight:900;font-size:clamp(19px,2.6vw,24px);line-height:1.2}
+.seat .rl{font-size:clamp(14px,1.9vw,17px);font-weight:900;border-radius:999px;padding:0 8px;line-height:1.6;white-space:nowrap}
+.seat .rl.boss{background:#F3E3BE;color:#7A5A16}
+.seat .rl.me{background:var(--sea);color:#fff}
+.seat .rl.none{visibility:hidden}
+.seat.talk svg.av{box-shadow:0 0 0 4px var(--gold)}
+.seat.nod svg.av{animation:nod .5s ease-in-out 2}
+@keyframes nod{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+.seat .pad{position:absolute;top:-6px;right:calc(50% - clamp(36px,6vw,50px));width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.4);transition:opacity .25s,transform .25s}
+.seat .pad svg.i{width:20px;height:20px}
+.seat .pad.on{opacity:1;transform:scale(1)}
+.table{display:flex;align-items:center;justify-content:center;gap:8px;background:#E8DCC2;border:3px solid #CDB98E;border-radius:999px;padding:6px 14px;font-weight:700;font-size:clamp(19px,2.3vw,21px);color:#5E4612;text-align:center;line-height:1.4}
+.table svg.i{width:30px;height:30px}
+/* transcript */
+.talks{display:flex;flex-direction:column;gap:10px}
+.ln{display:flex;gap:10px;align-items:flex-start;animation:pop .28s ease-out}
+.ln svg.av{width:46px;height:46px;flex:none;background:#fff;border-radius:50%}
+.ln .bub{background:var(--card);border:3px solid var(--line);border-radius:6px 18px 18px 18px;padding:8px 14px;font-size:clamp(19px,2.6vw,24px);line-height:1.55;max-width:calc(100% - 56px)}
+.ln .bub .who{display:block;font-size:clamp(15px,2vw,18px);font-weight:900;color:var(--muted);line-height:1.3}
+.ln .bub .act{color:var(--muted)}
+.ln.boss .bub{border-color:#E2C98F}
+.ln.me{flex-direction:row-reverse}
+.ln.me .bub{border-radius:18px 6px 18px 18px;background:var(--note);border-color:#A8C3D6}
+.ln.me .bub .who{text-align:right}
+.ln.sys{justify-content:center}
+.ln.sys .pill{background:var(--sea);color:#fff;border-radius:999px;padding:6px 18px;font-weight:900;font-size:clamp(19px,2.4vw,22px);display:inline-flex;align-items:center;gap:8px;text-align:center}
+.ln.actl{justify-content:center}
+.ln.actl .pill{background:#EEF1EC;color:var(--muted);border-radius:14px;padding:6px 16px;font-weight:700;font-size:clamp(19px,2.4vw,22px);display:inline-flex;align-items:center;gap:8px;text-align:center}
+.dots{display:inline-flex;gap:5px;padding:6px 0}
+.dots i{width:9px;height:9px;border-radius:50%;background:var(--muted);opacity:.35;animation:dot 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,100%{opacity:.25}40%{opacity:.9}}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* your-turn panel with the microphone */
+.turn{border-color:var(--sea);border-width:4px;animation:pop .35s ease-out}
+.turn .th{display:flex;align-items:center;gap:10px}
+.turn .th svg.i{width:40px;height:40px;color:var(--sea)}
+.says{display:flex;flex-direction:column;gap:10px}
+.say{font:inherit;font-size:clamp(19px,2.6vw,24px);font-weight:700;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:16px;padding:10px 14px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:10px;line-height:1.5}
+.say .rd{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);flex:none;position:relative}
+.say.on{border-color:var(--sea);background:var(--note)}
+.say.on .rd{border-color:var(--sea)}
+.say.on .rd::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--sea)}
+.microw{display:flex;align-items:center;gap:18px;padding:6px 0}
+.mic{position:relative;flex:none;width:118px;height:118px;border-radius:50%;border:0;background:var(--sea);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .2s}
+.mic.off{background:#9FB3C2}
+.mic svg.i{width:56px;height:56px;position:relative;z-index:2}
+.mic .ring{position:absolute;inset:-9px;width:136px;height:136px;transform:rotate(-90deg);z-index:1;pointer-events:none}
+.mic .ring circle{fill:none;stroke-width:8}
+.mic .ring .trk{stroke:#D4DEE6}
+.mic .ring .prg{stroke:var(--gold);stroke-linecap:round}
+.mic.hold{transform:scale(.95);background:#174A6B}
+.mic.hold::after{content:"";position:absolute;inset:-22px;border-radius:50%;border:3px solid rgba(32,94,134,.35);animation:wave 1s ease-out infinite}
+@keyframes wave{from{transform:scale(.85);opacity:1}to{transform:scale(1.15);opacity:0}}
+.micside{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.prev{background:var(--note);border:3px dashed #A8C3D6;border-radius:18px 6px 18px 18px;padding:8px 14px;font-size:clamp(19px,2.6vw,24px);font-weight:700;line-height:1.5;margin:0;min-height:2.2em}
+.prev .rest{color:#9AAAB4}
+.prev.empty{color:var(--muted);font-weight:500;border-style:dashed}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700}
+.hint.warn{color:var(--rust)}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-weight:700;font-size:clamp(19px,2.3vw,21px)}
+.or::before,.or::after{content:"";flex:1;height:2px;background:var(--line)}
+.alts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.alt{font:inherit;font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--ink);background:#EEF1EC;border:3px solid var(--line);border-radius:16px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;line-height:1.4;text-align:left}
+.alt svg.i{width:34px;height:34px}
+/* record */
+.paper{background:#FFFEF8;border:3px solid #D9CFB4;border-radius:10px;padding:clamp(16px,3.4vw,28px);display:flex;flex-direction:column;gap:10px;position:relative;box-shadow:0 6px 0 rgba(31,42,46,.07)}
+.paper .top{display:flex;align-items:center;gap:10px;border-bottom:3px double #D9CFB4;padding-bottom:8px}
+.paper .top svg.i{width:40px;height:40px}
+.paper .top h3{font-size:clamp(21px,3vw,27px)}
+.nw{white-space:nowrap}
+.paper p{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.7}
+.paper .res{font-size:clamp(28px,5vw,42px);font-weight:900;line-height:1.35;margin:4px 0}
+.paper .res.A{color:var(--planA)}
+.rows{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:clamp(19px,2.6vw,24px);line-height:1.6}
+.rows .k{font-weight:900;color:var(--muted);white-space:nowrap}
+.resrow{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}
+.stamp{flex:none;border:4px solid var(--red);color:var(--red);border-radius:12px;padding:2px 12px;font-weight:900;font-size:clamp(22px,3.4vw,30px);transform:rotate(-9deg);opacity:.85;background:rgba(255,254,248,.7);letter-spacing:4px}
+.stamp.ok{border-color:var(--good);color:var(--good)}
+/* thought cards flip */
+.flips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.fc{width:clamp(104px,15vw,140px);height:clamp(158px,22vw,190px);perspective:700px}
+.fc .in{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+.fc.on .in{transform:rotateY(180deg)}
+.fc .fa{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:3px solid var(--line);padding:6px}
+.fc .bk{background:repeating-linear-gradient(45deg,#E3E8E2 0 10px,#EEF1EC 10px 20px);color:var(--muted);font-weight:900;font-size:clamp(19px,2.3vw,21px)}
+.fc .fr{transform:rotateY(180deg);background:var(--card)}
+.fc .fr svg.av{width:44px;height:44px}
+.fc .fr .nm{font-weight:900;font-size:clamp(19px,2.4vw,22px);line-height:1.2}
+.fc .fr .lt{font-weight:900;font-size:clamp(36px,5.6vw,48px);line-height:1.1}
+.fc .fr .sm{font-size:clamp(14px,1.8vw,16px);font-weight:700;color:var(--muted);line-height:1.2}
+.fc.A .fr{border-color:#E2C98F;background:var(--planABg)} .fc.A .fr .lt{color:var(--planA)}
+.fc.B .fr{border-color:#A9CDB3;background:var(--planBBg)} .fc.B .fr .lt{color:var(--planB)}
+.fc.me .fr{box-shadow:0 0 0 4px var(--sea)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cmp .bx{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.cmp .bx .k{margin:0;font-weight:900;color:var(--muted);font-size:clamp(19px,2.3vw,21px);display:flex;align-items:center;gap:6px}
+.cmp .bx .v{margin:0;font-weight:900;font-size:clamp(21px,3.2vw,30px);line-height:1.4}
+.cmp .bx .v .a{color:var(--planA)} .cmp .bx .v .b{color:var(--planB)}
+/* voices */
+.voice{display:flex;gap:12px;align-items:flex-start;animation:pop .35s ease-out both}
+.voice svg.av{width:60px;height:60px;flex:none;background:#fff;border-radius:50%}
+.voice .bub{background:var(--card);border:3px solid var(--line);border-radius:6px 20px 20px 20px;padding:10px 16px;font-size:clamp(19px,2.7vw,25px);line-height:1.6;flex:1;min-width:0}
+.voice .bub .who{display:block;font-size:clamp(16px,2.1vw,19px);font-weight:900;color:var(--muted);line-height:1.3}
+.voice.boss .bub{border-color:#E2C98F}
+/* options */
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;font-size:clamp(19px,2.7vw,25px);font-weight:700;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:16px;padding:12px 16px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;line-height:1.5}
+.opt .ico svg.i{width:40px;height:40px}
+.opt.on{border-color:var(--gold);background:var(--warm)}
+.detail{background:var(--warm);border-radius:16px;padding:12px 16px;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:start;margin-top:-4px}
+.detail p{margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.6}
+.detail .tg{margin-top:4px}
+/* end table */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;white-space:nowrap}
+@media (max-width:640px){
+  .wrap{padding-inline:16px}
+  .plans,.cmp{grid-template-columns:1fr}
+  .alts{grid-template-columns:1fr}
+  .microw{gap:14px}
+  .mic{width:100px;height:100px}
+  .mic .ring{width:118px;height:118px}
+  .mic svg.i{width:48px;height:48px}
+  .mycard svg.av{width:60px;height:60px}
+  td:first-child{white-space:normal;width:7.5em}
+  .scene{padding:10px 6px}
+  .seats{gap:2px}
+  .ln svg.av{width:40px;height:40px}
+  .seat .pad{width:24px;height:24px;right:calc(50% - 36px)}
+  .seat .pad svg.i{width:16px;height:16px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"mic": "<rect x=\"8.6\" y=\"2.6\" width=\"6.8\" height=\"11.4\" rx=\"3.4\" fill=\"#DCE8F0\"/><path d=\"M10.6 6.4h2.8M10.6 9.2h2.8\"/><path d=\"M5.4 11.2a6.6 6.6 0 0 0 13.2 0\"/><path d=\"M12 17.8v3.6M8.6 21.4h6.8\"/>", "nod": "<circle cx=\"12\" cy=\"14\" r=\"7.4\" fill=\"#F6E3D6\"/><path d=\"M8.4 13.2q1.1 1.1 2.2 0M13.4 13.2q1.1 1.1 2.2 0\"/><path d=\"M10 16.8q2 1.4 4 0\"/><path d=\"M12 1.8v3.6M10.3 3.8L12 5.5l1.7-1.7\"/>", "quiet": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"11.4\" rx=\"5.7\" fill=\"#EEE6F3\"/><circle cx=\"8\" cy=\"8.7\" r=\".9\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"8.7\" r=\".9\" fill=\"currentColor\"/><circle cx=\"16\" cy=\"8.7\" r=\".9\" fill=\"currentColor\"/><circle cx=\"7.4\" cy=\"17.6\" r=\"1.7\" fill=\"#EEE6F3\"/><circle cx=\"4.6\" cy=\"20.8\" r=\"1\" fill=\"#EEE6F3\"/>", "raft": "<path d=\"M6 8.8v5.4M18 8.8v5.4\"/><path d=\"M4.2 9L12 4.4 19.8 9z\" fill=\"#CFE3C4\"/><path d=\"M2.6 14.2h18.8l-1.6 2.8H4.2z\" fill=\"#F3E3BE\"/><path d=\"M8 14.2V17M12 14.2V17M16 14.2V17\"/><path d=\"M2 20.6q2.5-1.6 5 0t5 0 5 0 5 0\"/>", "rain": "<path d=\"M7.2 14.6a4.2 4.2 0 0 1-.4-8.4 5.4 5.4 0 0 1 10.4 1.6 3.4 3.4 0 0 1-.2 6.8z\" fill=\"#DCE8F0\"/><path d=\"M8.6 17.6l-1 2.6M12.4 17.6l-1 2.6M16.2 17.6l-1 2.6\"/>", "umbrella": "<path d=\"M2.8 12.4a9.2 8.4 0 0 1 18.4 0z\" fill=\"#F3E3BE\"/><path d=\"M12 2.6v1.4\"/><path d=\"M12 12.4v6.4a2 2 0 0 1-4 0\"/><path d=\"M7.4 12.4q.6-4.4 4.6-8.4 4 4 4.6 8.4\"/>", "split": "<circle cx=\"6.5\" cy=\"6.8\" r=\"2.6\" fill=\"#F6E3D6\"/><path d=\"M2.5 15c.3-2.9 1.8-4.5 4-4.5s3.7 1.6 4 4.5z\" fill=\"#F6E3D6\"/><circle cx=\"17.5\" cy=\"6.8\" r=\"2.6\" fill=\"#CFE3C4\"/><path d=\"M13.5 15c.3-2.9 1.8-4.5 4-4.5s3.7 1.6 4 4.5z\" fill=\"#CFE3C4\"/><path d=\"M12 3v18\" stroke-dasharray=\"2 2.6\"/><path d=\"M3.5 19.4h6M14.5 19.4h6\"/>", "crowd": "<circle cx=\"12\" cy=\"6.6\" r=\"2.6\" fill=\"#F6E3D6\"/><circle cx=\"5.4\" cy=\"9.2\" r=\"2.2\" fill=\"#F6E3D6\"/><circle cx=\"18.6\" cy=\"9.2\" r=\"2.2\" fill=\"#F6E3D6\"/><path d=\"M7.6 19.6c.3-3.6 2-5.6 4.4-5.6s4.1 2 4.4 5.6z\" fill=\"#F3E3BE\"/><path d=\"M1.8 19.6c.2-3 1.6-4.6 3.6-4.6 1 0 1.8.3 2.4.9M22.2 19.6c-.2-3-1.6-4.6-3.6-4.6-1 0-1.8.3-2.4.9\"/>", "mute": "<path d=\"M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-8.5L6.5 20.5v-4H4A1.5 1.5 0 0 1 2.5 15V6A1.5 1.5 0 0 1 4 4.5z\" fill=\"#EEF1EC\"/><path d=\"M8.6 7.4l6.8 6.2\"/>", "worry": "<circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"#F6E3A1\"/><path d=\"M7.6 9.8l2.4-1.2M16.4 9.8l-2.4-1.2\"/><circle cx=\"9.2\" cy=\"12.2\" r=\".9\" fill=\"currentColor\"/><circle cx=\"14.8\" cy=\"12.2\" r=\".9\" fill=\"currentColor\"/><path d=\"M8.6 16.6q1.1-1.2 2.3 0t2.3 0 2.3 0\"/>", "crown": "<path d=\"M3.5 8.2l4.4 4 4.1-6.6 4.1 6.6 4.4-4-1.7 10.3H5.2z\" fill=\"#F3D27A\"/><path d=\"M5.4 21h13.2\"/>", "mega": "<path d=\"M3.5 9.5h3l8-4.5v14l-8-4.5h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z\" fill=\"#DCE8F0\"/><path d=\"M6.5 14.5l1.6 5h2.6l-1.4-4.2\"/><path d=\"M18 9.2a4 4 0 0 1 0 5.6M20.5 6.8a7.4 7.4 0 0 1 0 10.4\"/>", "clipboard": "<rect x=\"4.2\" y=\"4\" width=\"15.6\" height=\"17.6\" rx=\"2\" fill=\"#F3E3BE\"/><rect x=\"8.4\" y=\"2.4\" width=\"7.2\" height=\"3.6\" rx=\"1.1\" fill=\"#FBFCF9\"/><path d=\"M7.8 10.4h1.4M11.6 10.4h4.6M7.8 14h1.4M11.6 14h4.6M7.8 17.6h1.4M11.6 17.6h3\"/>", "card": "<rect x=\"3\" y=\"3.5\" width=\"14.4\" height=\"17\" rx=\"2\" fill=\"#DCEBD5\"/><path d=\"M10.2 13.6s-3.5-2-3.5-4.5a1.75 1.75 0 0 1 3.5-.6 1.75 1.75 0 0 1 3.5.6c0 2.5-3.5 4.5-3.5 4.5z\" fill=\"#FBFCF9\"/><path d=\"M6.6 17h4.6\"/><path d=\"M14.6 21l.6-2.8 5-5a1.4 1.4 0 0 1 2 2l-5 5z\" fill=\"#F3E3BE\"/>", "talk": "<path d=\"M2.8 5.6a2.2 2.2 0 0 1 2.2-2.2h8.6a2.2 2.2 0 0 1 2.2 2.2v4.6a2.2 2.2 0 0 1-2.2 2.2H8.4L4.8 15.2v-2.9a2.2 2.2 0 0 1-2-2.1z\" fill=\"#DCE8F0\"/><path d=\"M18.6 8.6h.4a2.2 2.2 0 0 1 2.2 2.2v4.4a2.2 2.2 0 0 1-2 2.2v2.8l-3.6-2.8h-4.2a2.2 2.2 0 0 1-2.2-2.2\" fill=\"#F6DCCF\"/>", "people": "<circle cx=\"9\" cy=\"7.6\" r=\"3.4\" fill=\"#F6E3D6\"/><path d=\"M2.6 20.5c.4-4 2.8-6.3 6.4-6.3s6 2.3 6.4 6.3z\" fill=\"#F6E3D6\"/><path d=\"M15.4 4.6a3 3 0 0 1 0 6\"/><path d=\"M17.2 14.4c2.6.6 4 2.6 4.3 6.1h-2.8\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"kidA": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#B7862B\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M19 25 Q19 12 32 13 Q45 12 45 25 Q41 17.5 33 18.5 Q30 15.5 26 18.5 Q22 20 19 25 Z\" fill=\"#2B2118\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidB": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#2F7D4F\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19.5 24 Q20 12.5 32 13 Q44 12.5 44.5 24 Q38 17 26 19 Q22 20 19.5 24 Z\" fill=\"#3A2A1C\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidC": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#A8441A\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M18.5 30 Q17 12 32 12.5 Q47 12 45.5 30 Q44 20 32 19.5 Q20 20 18.5 30 Z\" fill=\"#5A3A22\"/><circle cx=\"47\" cy=\"22\" r=\"4.5\" fill=\"#5A3A22\"/><circle cx=\"44.2\" cy=\"19.6\" r=\"1.6\" fill=\"#E8A0A8\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidD": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#7A6A9E\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#E3B48C\"/><path d=\"M19 24 Q18.5 11 32 12 Q45.5 11 45 24 L42 19 L38.5 22 L35 18 L31 21.5 L27 18 L23.5 21.5 Z\" fill=\"#1F1A16\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidE": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#3E7C83\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M18 33 Q16 12 32 12.5 Q48 12 46 33 Q45 24 42 20 Q34 17 27 20 Q21 22 20 26 Q19 29 18 33 Z\" fill=\"#2B2118\"/><path d=\"M27 20 Q30 22 34 21\" fill=\"none\" stroke=\"#1F1A16\" stroke-width=\"1.2\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='nodmeet-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+/* g=0 紅組: the leader says "I support A" first and 丁 agrees at once. g=1 藍組: everyone writes on paper first, the leader speaks last. */
+var st=load();
+if(!st||(st.g!==0&&st.g!==1)){st={g:rnd(),step:0,op:0,pick:null,ch:null,ct:0,fl:0,why:null}}
+save(st);
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var run=0;
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+
+var COL=[{name:'紅色'},{name:'藍色'}];
+function chip(){return '<span class="chip c'+st.g+'"><span class="dot"></span>'+COL[st.g].name+'</span>'}
+var P={'甲':{av:'kidA',role:'組長',cls:'boss'},'乙':{av:'kidB',role:'你',cls:'me'},'丙':{av:'kidC'},'丁':{av:'kidD'},'戊':{av:'kidE'}};
+var ORDER=['甲','乙','丙','丁','戊'];
+var CARD={'甲':'A','乙':'B','丙':'B','丁':'A','戊':'B'};
+var SAY={s1:'我比較支持 B，因為 A 沒有雨天備案。',s2:'A 沒有雨天備案，要不要再想想？'};
+
+/* meeting scripts. w: speaker, t: words, a: action text (in parentheses), fx: 'nod' | 'write' */
+var OPEN=[
+ [{w:'甲',t:'我支持 A，比較簡單，大家應該都同意吧？'},
+  {w:'丁',t:'贊成！'},
+  {w:'sys',t:'輪到你了，大家都看著你。'}],
+ [{w:'甲',t:'我們先每個人在紙上寫下自己的想法，再一起看，組長最後才說。'},
+  {w:'act',t:'大家低頭，在紙上寫下自己的想法……',fx:'write'},
+  {w:'甲',t:'都寫好了嗎？從乙開始，一個一個說說你寫了什麼。我最後才說。'},
+  {w:'sys',t:'輪到你了。大家都寫好了，還沒有人說出自己的想法。'}]
+];
+function cont(g,ch){
+  var me=ch==='s1'||ch==='s2'?{w:'乙',t:SAY[ch]}:ch==='nod'?(g===0?{w:'乙',a:'點點頭',fx:'nod'}:{w:'乙',a:'點點頭',t:'我……都可以。',fx:'nod'}):(g===0?{w:'乙',a:'低下頭，沒有說話'}:{w:'乙',a:'把紙蓋起來，沒有說話'});
+  var spoke=ch==='s1'||ch==='s2';
+  if(g===0){
+    if(spoke)return [me,
+      {w:'丙',t:'其實……我也擔心下雨，我也比較支持 B。'},
+      {w:'戊',t:'我也是。B 有雨天備案，比較安心。'},
+      {w:'甲',t:ch==='s1'?'原來有三個人擔心下雨。我剛剛太快說了，那我們改用 B 吧。':'原來大家都擔心下雨。好，我們先把雨天備案查清楚，下次再決定。'}];
+    return [me,
+      {w:'丙',a:'看看大家，也點點頭',fx:'nod'},
+      {w:'戊',t:'嗯……好啊。'},
+      {w:'甲',t:ch==='nod'?'太好了，大家都同意！那就決定 A。':'沒有人反對，那就決定 A 囉！'}];
+  }
+  if(spoke)return [me,
+    {w:'丙',t:'我寫的也是 B，我也擔心下雨。'},
+    {w:'丁',t:'我寫 A，因為比較簡單。'},
+    {w:'戊',t:'我寫 B，有雨天備案比較安心。'},
+    {w:'甲',t:ch==='s1'?'我寫的是 A。這樣 A 兩個人、B 三個人，那我們改用 B。':'我寫的是 A。大家都擔心下雨，我們先把雨天備案查清楚，下次再決定。'}];
+  if(ch==='nod')return [me,
+    {w:'丙',a:'看了乙一眼',t:'那……我也都可以。'},
+    {w:'丁',t:'我寫 A，因為比較簡單。'},
+    {w:'戊',t:'嗯……我也都可以。'},
+    {w:'甲',t:'我寫的是 A。大家都可以，那就決定 A 吧！紙先收起來。'}];
+  return [me,
+    {w:'丙',a:'看了乙一眼，也把紙蓋起來',t:'我……先不說好了。'},
+    {w:'丁',t:'我寫 A，因為比較簡單。'},
+    {w:'戊',t:'我也先不說好了。'},
+    {w:'甲',t:'我寫的是 A。沒有人反對，那就決定 A 吧！紙先收起來。'}];
+}
+var CHOICE={s1:'有，說了「我比較支持 B，因為 A 沒有雨天備案。」',s2:'有，問了「A 沒有雨天備案，要不要再想想？」',nod:'沒有，點頭不說了',quiet:'沒有，沉默（我再想想）'};
+var REC={s1:'A 2 人、B 3 人，改用 B',s2:'A 2 人、B 2 人，乙提出的問題也記下來，下次再決定',nod:'五人一致支持 A',quiet:'五人一致支持 A'};
+function spoke(){return st.ch==='s1'||st.ch==='s2'}
+var WHY=[
+ ['worry','怕被說掃興','很多人都有這種擔心。不說，可以讓當下的氣氛保持輕鬆。','小組可能少聽到一個重要的問題，事情決定以後才發現有問題。'],
+ ['crown','覺得組長已經決定了','組長先說了想法，跟著他走，會議很快就能結束。','組長可能以為大家真的都同意，也就不會再想一想別的方案。'],
+ ['mute','覺得說了也沒用','如果以前說了沒人理，會這樣想很正常，也省下力氣。','你沒說出來的想法，在紀錄上就被算成了「同意」。'],
+ ['mega','覺得很重要，所以一定要說','大家多了一個資訊可以考慮，心裡有疑問的人也比較敢開口。','當下可能有一點尷尬，也需要一點勇氣。']
+];
+
+function avs(k,size){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var hero=el('div','hero',ic('raft')+ic('mic'));
+  var c=el('div','card');
+  c.append(el('p','lead','下個月，五年13班要去四草的綠色隧道搭竹筏。出發前，老師請每一組先開會，討論全班要怎麼分組上竹筏。'),
+           el('p','lead','第三組有五個人：甲、乙、丙、丁、戊，甲是組長。今天，<b>你要扮演組員「乙」</b>，參加這場小組會議。'));
+  var m=el('p','mine');m.innerHTML='你今天的顏色是：'+chip();
+  app.append(hero,el('h1',null,'點頭會議'),c,m,el('p','note','顏色是平板偷偷分的，等一下老師會問。每個人自己做，不用看旁邊同學的畫面。'),button('看看要討論的兩個方案','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: two plans + my thought card ---------- */
+function plans(){
+  app.innerHTML='';
+  var w=el('div','plans');
+  var a=el('div','card plan A');
+  a.append(el('div','ph','<span class="lt">A</span>'+ic('crowd')+'<h3>全班一起搭<br>同一個時段</h3>'),
+    el('p',null,'<span class="tg good">好處</span>安排最簡單，全班一起出發、一起回來。'),
+    el('p',null,'<span class="tg cost">要注意</span>還沒有雨天備案。那天如果下大雨，不知道要怎麼辦。'));
+  var b=el('div','card plan B');
+  b.append(el('div','ph','<span class="lt">B</span>'+ic('split')+'<h3>分成兩梯次<br>輪流搭</h3>'),
+    el('p',null,'<span class="tg good">好處</span>一梯搭竹筏時，另一梯在岸邊聽解說員介紹紅樹林，再交換。每艘竹筏坐的人比較少，比較安全；下雨的話，也想好了到室內看影片的備案。'),
+    el('p',null,'<span class="tg cost">要注意</span>比較花時間，兩梯要輪流等。'));
+  w.append(a,b);
+  var my=el('div','mycard');
+  var t=el('div');t.style.display='flex';t.style.flexDirection='column';t.style.gap='6px';
+  t.append(el('p','k','乙（你）的想法卡'),el('p','big','我比較支持 <em>B</em>。'),
+    el('p',null,ic('rain')+' 我擔心：A 沒有雨天備案。綠色隧道在水上，那天如果下大雨，全班又都排在同一個時段，就沒辦法調整了。'));
+  my.innerHTML=avs('kidB');my.appendChild(t);
+  app.append(el('p','case',ic('raft')+'要討論的事'),el('h2',null,'去四草綠色隧道搭竹筏，全班要怎麼分組？'),w,
+    el('p','lead','開會前，先看清楚你自己的想法：'),my,
+    button('記住了，開會！','btn',function(){go(2)}));
+}
+
+/* ---------- step 2: meeting ---------- */
+function meeting(){
+  var tok=++run;
+  app.innerHTML='';
+  var head=el('p','case',ic('people')+'第三組的小組會議');head.insertAdjacentHTML('beforeend',' '+chip());
+  var sc=el('div','card scene');
+  var seats=el('div','seats');var seatEl={};
+  ORDER.forEach(function(n){
+    var p=P[n];
+    var s=el('div','seat',avs(p.av)+'<span class="nm">'+n+'</span><span class="rl '+(p.cls||'none')+'">'+(p.role||'　')+'</span><span class="pad">'+ic('card')+'</span>');
+    seats.appendChild(s);seatEl[n]=s;
+  });
+  sc.append(seats,el('div','table',ic('raft')+'<span>搭竹筏：選 A 還是 B？</span>'));
+  var talks=el('div','talks');talks.setAttribute('aria-live','polite');
+  var turnBox=el('div');turnBox.style.display='contents';
+  var nextBox=el('div');nextBox.style.display='contents';
+  app.append(head,el('h2',null,'會議開始了'),sc,talks,turnBox,nextBox);
+
+  function pads(on){ORDER.forEach(function(n){seatEl[n].querySelector('.pad').classList.toggle('on',on)})}
+  function lineEl(L){
+    if(L.w==='sys')return el('div','ln sys','<span class="pill">'+ic('mic')+L.t+'</span>');
+    if(L.w==='act')return el('div','ln actl','<span class="pill">'+ic('card')+L.t+'</span>');
+    var p=P[L.w];
+    var txt=(L.a?'<span class="act">（'+L.a+'）</span>':'')+(L.t||'');
+    return el('div','ln '+(p.cls||''),avs(p.av)+'<div class="bub"><span class="who">'+L.w+(p.role?'（'+p.role+'）':'')+'</span>'+txt+'</div>');
+  }
+  function instant(lines){lines.forEach(function(L){if(L.fx==='write')pads(true);talks.appendChild(lineEl(L))})}
+  function play(lines,done){
+    var i=0,T=RM?120:620,G=RM?80:430;
+    function step(){
+      if(tok!==run)return;
+      if(i>=lines.length){done();return}
+      var L=lines[i++];
+      ORDER.forEach(function(n){seatEl[n].classList.remove('talk','nod')});
+      var sp=(L.w!=='sys'&&L.w!=='act')?L.w:null;
+      var typing=null;
+      if(sp){
+        seatEl[sp].classList.add('talk');
+        var p=P[sp];
+        typing=el('div','ln '+(p.cls||''),avs(p.av)+'<div class="bub"><span class="who">'+sp+(p.role?'（'+p.role+'）':'')+'</span><span class="dots"><i></i><i></i><i></i></span></div>');
+        talks.appendChild(typing);scrollNear(typing);
+      }
+      if(L.fx==='write'){
+        ORDER.forEach(function(n,k){setTimeout(function(){if(tok===run)seatEl[n].querySelector('.pad').classList.add('on')},k*(RM?20:140))});
+      }
+      setTimeout(function(){
+        if(tok!==run)return;
+        var e=lineEl(L);
+        if(typing)talks.replaceChild(e,typing);else talks.appendChild(e);
+        if(L.fx==='nod'&&sp){seatEl[sp].classList.remove('talk');void seatEl[sp].offsetWidth;seatEl[sp].classList.add('nod')}
+        scrollNear(e);
+        setTimeout(step,G);
+      },sp?T:(RM?60:L.fx==='write'?900:250));
+    }
+    step();
+  }
+  function scrollNear(e){try{e.scrollIntoView({block:'nearest',behavior:RM?'auto':'smooth'})}catch(x){}}
+  function finish(){
+    ORDER.forEach(function(n){seatEl[n].classList.remove('talk')});
+    nextBox.innerHTML='';
+    var b=button('看會議紀錄','btn',function(){go(3)});
+    nextBox.appendChild(b);scrollNear(b);
+  }
+  var O=OPEN[st.g];
+  if(!st.op){
+    play(O,function(){st.op=1;save(st);ORDER.forEach(function(n){seatEl[n].classList.remove('talk')});showTurn()});
+  }else{
+    instant(O);
+    if(!st.ch)showTurn();
+    else{
+      var C=cont(st.g,st.ch);
+      if(!st.ct)play(C,function(){st.ct=1;save(st);finish()});
+      else{instant(C);finish()}
+    }
+  }
+
+  function showTurn(){
+    turnBox.innerHTML='';
+    var c=el('div','card turn');
+    c.append(el('div','th',ic('mic')+'<h3>輪到你了，你要怎麼做？</h3>'),
+      el('p','lead','想說出來的話，先選一句，再<b>按住麥克風</b>，等圈圈填滿；也可以選擇不說。每一種都可以選。'));
+    var says=el('div','says');says.setAttribute('role','radiogroup');says.setAttribute('aria-label','要說的話');
+    var sb={};
+    ['s1','s2'].forEach(function(k){
+      var b=el('button','say'+(st.pick===k?' on':''),'<span class="rd"></span><span>'+ic('talk')+' 「'+SAY[k]+'」</span>');
+      b.type='button';b.setAttribute('role','radio');b.setAttribute('aria-checked',st.pick===k?'true':'false');
+      b.addEventListener('click',function(){st.pick=k;save(st);Object.keys(sb).forEach(function(x){sb[x].classList.toggle('on',x===k);sb[x].setAttribute('aria-checked',x===k?'true':'false')});upd();hint.className='hint';hint.textContent='按住麥克風，等圈圈填滿，就會說出這句話。'});
+      sb[k]=b;says.appendChild(b);
+    });
+    var row=el('div','microw');
+    var mic=el('button','mic','<svg class="ring" viewBox="0 0 136 136" aria-hidden="true"><circle class="trk" cx="68" cy="68" r="60"/><circle class="prg" cx="68" cy="68" r="60" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg>'+ic('mic'));
+    mic.type='button';mic.setAttribute('aria-label','按住麥克風說話（鍵盤：按住空白鍵）');
+    var side=el('div','micside');var prev=el('p','prev');var hint=el('p','hint');
+    side.append(prev,hint);row.append(mic,side);
+    var prg=mic.querySelector('.prg');
+    var HOLD=RM?500:1300,t0=0,raf=0,holding=false,doneHold=false;
+    function upd(p){
+      p=p||0;
+      mic.classList.toggle('off',!st.pick);
+      if(!st.pick){prev.className='prev empty';prev.textContent='（還沒選要說哪一句）';if(!hint.classList.contains('warn'))hint.textContent='先選上面的一句話。';return}
+      var s=SAY[st.pick],n=Math.ceil(p*s.length);
+      prev.className='prev';prev.innerHTML='<span>'+s.slice(0,n)+'</span><span class="rest">'+s.slice(n)+'</span>';
+      prg.setAttribute('stroke-dashoffset',String(100-100*p));
+    }
+    function start(){
+      if(doneHold)return;
+      if(!st.pick){hint.className='hint warn';hint.textContent='先選上面的一句話，再按住麥克風。';return}
+      holding=true;t0=performance.now();mic.classList.add('hold');hint.className='hint';hint.textContent='說話中……繼續按著。';
+      cancelAnimationFrame(raf);
+      (function tick(now){
+        if(!holding)return;
+        var p=Math.min(1,((now||performance.now())-t0)/HOLD);upd(p);
+        if(p>=1){holding=false;doneHold=true;mic.classList.remove('hold');commit(st.pick);return}
+        raf=requestAnimationFrame(tick);
+      })(t0);
+    }
+    function stop(){
+      if(!holding)return;
+      holding=false;cancelAnimationFrame(raf);mic.classList.remove('hold');upd(0);
+      hint.className='hint warn';hint.textContent='要一直按著，等圈圈填滿才會說出來喔。';
+    }
+    mic.addEventListener('pointerdown',function(e){e.preventDefault();try{mic.setPointerCapture(e.pointerId)}catch(x){}start()});
+    mic.addEventListener('pointerup',stop);
+    mic.addEventListener('pointercancel',stop);
+    mic.addEventListener('lostpointercapture',stop);
+    mic.addEventListener('contextmenu',function(e){e.preventDefault()});
+    mic.addEventListener('keydown',function(e){if((e.key===' '||e.key==='Enter')){e.preventDefault();if(!e.repeat)start()}});
+    mic.addEventListener('keyup',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();stop()}});
+    upd(0);if(st.pick)hint.textContent='按住麥克風，等圈圈填滿，就會說出這句話。';
+    var alts=el('div','alts');
+    alts.append(button(ic('nod')+'<span>點頭，不說了</span>','alt',function(){commit('nod')}),
+                button(ic('quiet')+'<span>我再想想（沉默）</span>','alt',function(){commit('quiet')}));
+    c.append(says,row,el('div','or','或是不說'),alts);
+    turnBox.appendChild(c);
+    if(st.op)scrollNear(c);
+  }
+  function commit(ch){
+    if(st.ch)return;
+    st.ch=ch;st.ct=0;save(st);
+    meeting();
+  }
+}
+
+/* ---------- step 3: meeting record ---------- */
+function record(){
+  app.innerHTML='';
+  var pp=el('div','paper');
+  pp.appendChild(el('div','top',ic('clipboard')+'<h3><span class="nw">五年13班　第三組</span>　<span class="nw">會議紀錄</span></h3>'));
+  pp.appendChild(el('p',null,'<b>討論的事：</b>去四草綠色隧道搭竹筏，全班要怎麼分組？'));
+  pp.appendChild(el('p',null,'<b>出席：</b>甲（組長）、乙、丙、丁（記錄）、戊'));
+  var r=el('div','rows');
+  if(!spoke()){
+    var rr=el('div','resrow');rr.append(el('p','res A','五人一致支持 A'),el('span','stamp','全體同意'));pp.appendChild(rr);
+    [['反對','0 人'],['決定','用方案 A，全班一起搭同一個時段。']].forEach(function(x){r.append(el('span','k',x[0]),el('span',null,x[1]))});
+    pp.appendChild(r);
+  }else{
+    var rows=st.ch==='s1'?[['支持 A','甲、丁（2 人）'],['支持 B','乙、丙、戊（3 人）'],['提出的擔心','A 沒有雨天備案。'],['決定','改用方案 B，分成兩梯次。']]
+                         :[['支持 A','甲、丁（2 人）'],['支持 B','丙、戊（2 人）'],['提出的問題','乙問：「A 沒有雨天備案，要不要再想想？」'],['決定','先把雨天備案查清楚，下次再決定。']];
+    rows.forEach(function(x){r.append(el('span','k',x[0]),el('span',null,x[1]))});
+    pp.appendChild(r);
+  }
+  var msg={nod:'你只有點點頭，紀錄上卻寫著：乙也支持 A。',quiet:'你一句話都沒有說，紀錄上還是把你算成「支持 A」。',
+           s1:'你說出了自己的想法。紀錄上寫的，和大家在會議上說的一樣。',s2:'你提出了一個問題，紀錄把這個問題也記下來了。'}[st.ch];
+  app.append(el('p','case',ic('clipboard')+'會議紀錄'),el('h2',null,'會議結束了。負責記錄的丁，寫下了這份紀錄。'),pp,
+    el('p','note warm',msg),button('翻開大家會前的想法卡','btn',function(){go(4)}));
+}
+
+/* ---------- step 4: flip the anonymous thought cards ---------- */
+function cards(){
+  var tok=++run;
+  app.innerHTML='';
+  var f=el('div','flips');var fcs=[];
+  ORDER.forEach(function(n){
+    var c=CARD[n];
+    var d=el('div','fc '+c+(n==='乙'?' me':'')+(st.fl?' on':''),'<div class="in"><div class="fa bk">想法卡</div><div class="fa fr">'+avs(P[n].av)+'<span class="nm">'+n+(n==='乙'?'（你）':'')+'</span><span class="lt">'+c+'</span><span class="sm">'+(c==='A'?'全班一起':'分兩梯次')+'</span></div></div>');
+    d.setAttribute('role','img');d.setAttribute('aria-label',n+'的想法卡：支持 '+c);
+    f.appendChild(d);fcs.push(d);
+  });
+  var after=el('div');after.style.display='contents';
+  app.append(el('p','case',ic('card')+'會前的匿名想法卡'),el('h2',null,'開會前，大家心裡其實是怎麼想的？'),
+    el('p','lead','開會前，老師請每個人在卡片上寫下自己比較支持哪個方案，不用寫名字。在這個遊戲裡，我們可以偷偷看到每一張是誰寫的。'),f,after);
+  function showAfter(){
+    var cmp=el('div','cmp');
+    cmp.append(el('div','bx','<p class="k">'+ic('card')+'會前的想法卡</p><p class="v"><span class="a">A 2 人</span>　<span class="b">B 3 人</span></p>'),
+               el('div','bx','<p class="k">'+ic('clipboard')+'會議紀錄</p><p class="v">'+(spoke()?(st.ch==='s1'?'<span class="a">A 2 人</span>　<span class="b">B 3 人</span>':'<span class="a">A 2 人</span>　<span class="b">B 2 人</span><br><span style="font-size:.75em">＋乙提出的問題</span>'):'<span class="a">五人一致支持 A</span>')+'</p>'));
+    var n=spoke()?(st.ch==='s1'?'會前的想法卡和會議紀錄，對得起來。':'會議紀錄和會前的想法卡很接近，大家擔心下雨的事也被記下來了。')
+                 :'其實支持 B 的有三個人，比支持 A 的還多。可是會議紀錄上，支持 B 的一個人都沒有。';
+    after.append(cmp,el('p','note warm',n),button('聽聽大家會後的心聲','btn',function(){go(5)}));
+  }
+  if(st.fl){showAfter();return}
+  fcs.forEach(function(d,k){setTimeout(function(){if(tok===run)d.classList.add('on')},(RM?50:500)+k*(RM?40:420))});
+  setTimeout(function(){if(tok!==run)return;st.fl=1;save(st);showAfter();try{after.lastChild.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}},(RM?300:500+5*420+500));
+}
+
+/* ---------- step 5: after-meeting voices ---------- */
+function voices(){
+  app.innerHTML='';
+  var V;
+  if(st.g===0){
+    V=spoke()?[['丙','還好乙先說了。我本來也擔心下雨，可是不敢第一個開口。'],['戊','聽到有人跟我想的一樣，我就敢說了。'],['甲','我一開始就先說我支持 A，可能讓大家比較不敢說不一樣的想法。']]
+             :[['丙','我也擔心下雨，可是大家都點頭，我就不好意思說。'],['戊','組長一開始就說他支持 A，我想，說了應該也沒用吧。'],['甲','大家都說好，我真的以為每個人都同意 A。']];
+  }else{
+    V=spoke()?[['丙','乙先說了下雨的事，我就比較敢把紙上寫的說出來。'],['戊','原來不只我一個人擔心下雨。'],['甲','我最後才說，所以先聽到了大家真正的想法。']]
+             :[['丙',st.ch==='nod'?'我也擔心下雨，可是乙說都可以，我就不好意思說不一樣的。':'我也擔心下雨，可是乙沒有說，我就不好意思第一個說。'],['戊','我以為只有我想要 B，怕說了會被說掃興。'],['甲','我故意最後才說，可是前面的人都沒說自己寫了什麼，我就以為大家沒意見。']];
+  }
+  var box=el('div','card');
+  V.forEach(function(v,k){
+    var p=P[v[0]];
+    var d=el('div','voice'+(p.cls==='boss'?' boss':''),avs(p.av)+'<div class="bub"><span class="who">'+v[0]+(p.role?'（'+p.role+'）':'')+'</span>'+v[1]+'</div>');
+    d.style.animationDelay=(RM?0:k*0.35)+'s';box.appendChild(d);
+  });
+  app.append(el('p','case',ic('talk')+'會後的心聲'),el('h2',null,'會議結束後，丙、戊和組長甲說了心裡話。'),box,button('下一步','btn',function(){go(6)}));
+}
+
+/* ---------- step 6: why ---------- */
+function why(){
+  app.innerHTML='';
+  var opts=el('div','opts');opts.setAttribute('role','group');
+  var nx=button('選好了，下一步','btn',function(){if(st.why!=null)go(7)});nx.disabled=st.why==null;
+  function draw(){
+    opts.innerHTML='';
+    WHY.forEach(function(o,k){
+      var on=st.why===k;
+      var b=el('button','opt'+(on?' on':''),'<span class="ico">'+ic(o[0])+'</span><span>'+o[1]+'</span>');
+      b.type='button';b.setAttribute('aria-pressed',on?'true':'false');
+      b.addEventListener('click',function(){st.why=k;save(st);draw();nx.disabled=false;try{opts.querySelector('.detail').scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}});
+      opts.appendChild(b);
+      if(on){
+        var d=el('div','detail');
+        d.append(el('span','tg good','作用'),el('p',null,o[2]),el('span','tg cost','代價'),el('p',null,o[3]));
+        opts.appendChild(d);
+      }
+    });
+  }
+  draw();
+  var did=spoke()?'剛剛你說出來了，主要是因為？':'剛剛你沒有說出來，主要是因為？';
+  var re='你剛剛的選擇：'+CHOICE[st.ch]+'。';
+  app.append(el('p','case',ic('worry')+'想一想'),el('h2',null,did),el('p','note',re),
+    el('p','lead','選最接近你心裡想法的一個。每一個都可以選，沒有標準答案；選了以後會看到它的作用和代價，想改也可以再點別的。'),opts,nx);
+}
+
+/* ---------- step 7: end ---------- */
+function end(){
+  app.innerHTML='';
+  var t=el('table');
+  [['我的顏色',chip()],
+   ['我有沒有說出來','<b>'+(CHOICE[st.ch]||'—')+'</b>'],
+   ['會議紀錄寫了','<b>'+(REC[st.ch]||'—')+'</b>'],
+   ['我的理由',st.why!=null?ic(WHY[st.why][0])+' <b>'+WHY[st.why][1]+'</b>':'—']].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  run++;
+  var S=[intro,plans,meeting,record,cards,voices,why,end];
+  if(st.step>=3&&(!st.ch||!st.ct))st.step=2;
+  if(st.step>=7&&st.why==null)st.step=6;
+  (S[st.step]||intro)();
+}
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);location.replace(location.pathname+location.search);location.reload()}});
+render();
+})();
+</script>

@@ -1,0 +1,161 @@
+<title>紙球投籃挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one tablet screen at a time — rules → predict → throw 10 balls → compare. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF3EF; --card:#FBFCFA; --ink:#1F2A2E; --muted:#4F5F5C; --line:#C9D8D2;
+  --sea:#205E86; --rust:#A8441A; --hit:#2F7D4F; --zone:#BFE3CB; --track:#DCE5E1;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:22px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(26px,4.4vw,40px);font-weight:900;margin:0;text-wrap:balance}
+.lead{font-size:clamp(20px,2.8vw,26px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(18px,3.4vw,32px);display:flex;flex-direction:column;gap:14px}
+.rules{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:10px}
+.rules li{font-size:clamp(20px,2.8vw,26px);font-weight:500}
+.btn{font:inherit;font-size:clamp(22px,3.2vw,30px);font-weight:900;border:0;border-radius:18px;padding:16px 28px;background:var(--sea);color:#fff;cursor:pointer;align-self:flex-start}
+.btn:disabled{background:#9AAAB0;cursor:default}
+.btn:focus-visible,.num:focus-visible{outline:4px solid var(--rust);outline-offset:3px}
+.btn.big{align-self:stretch;font-size:clamp(30px,5vw,44px);padding:20px}
+.nums{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.num{font:inherit;font-size:clamp(26px,4vw,38px);font-weight:900;border:3px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink);padding:10px 0;cursor:pointer}
+.num[aria-pressed="true"]{background:var(--sea);border-color:var(--sea);color:#fff}
+.status{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;font-size:clamp(20px,3vw,28px);font-weight:700}
+.status b{color:var(--sea);font-variant-numeric:tabular-nums}
+.court{position:relative;background:var(--card);border:3px solid var(--line);border-radius:22px;height:clamp(240px,42vw,340px);overflow:hidden}
+.court svg{position:absolute;left:50%;top:14px;transform:translateX(-50%);width:clamp(110px,22vw,160px);height:auto}
+.ball{position:absolute;left:50%;bottom:18px;width:44px;height:44px;margin-left:-22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFFFFF,#D9D4C7 70%,#B9B2A2);box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.msg{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:clamp(30px,5.4vw,48px);font-weight:900;opacity:0;transition:opacity .2s}
+.msg.show{opacity:1}
+.msg.hit{color:var(--hit)} .msg.miss{color:var(--rust)}
+.meter{position:relative;height:56px;border-radius:14px;background:var(--track);overflow:hidden;border:3px solid var(--line)}
+.zone{position:absolute;top:0;bottom:0;background:var(--zone);border-left:3px solid var(--hit);border-right:3px solid var(--hit)}
+.needle{position:absolute;top:-4px;bottom:-4px;width:8px;margin-left:-4px;border-radius:4px;background:var(--ink)}
+.hint{margin:0;font-size:clamp(18px,2.4vw,22px);color:var(--muted);text-align:center}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.box{background:var(--card);border:3px solid var(--line);border-radius:20px;padding:18px;text-align:center}
+.box p{margin:0;font-size:clamp(20px,2.8vw,26px);font-weight:700;color:var(--muted)}
+.box strong{display:block;font-size:clamp(64px,12vw,110px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.box.pred strong{color:var(--sea)} .box.real strong{color:var(--rust)}
+.verdict{font-size:clamp(24px,3.6vw,34px);font-weight:900;margin:0;text-align:center}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px);font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:2px solid var(--line);text-align:center}
+th{color:var(--muted);font-weight:700}
+.tablewrap{overflow-x:auto}
+@media (max-width:480px){.nums{grid-template-columns:repeat(4,minmax(0,1fr))}.compare{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.msg{transition:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='paper-ball-rounds';
+var TOTAL=10, ZONE=16, PERIOD=1300;
+function load(){try{var v=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save([])}
+var rounds=load();
+var BIN='<svg viewBox="0 0 160 150" aria-label="回收桶"><path d="M18 30 L142 30 L128 146 L32 146 Z" fill="#2F6E8E"/><rect x="10" y="18" width="140" height="18" rx="8" fill="#205E86"/><g stroke="#8DB4C9" stroke-width="5"><line x1="56" y1="50" x2="60" y2="130"/><line x1="80" y1="50" x2="80" y2="130"/><line x1="104" y1="50" x2="100" y2="130"/></g></svg>';
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+
+function intro(){
+  app.innerHTML='';
+  var h=el('h1',null,'紙球投籃挑戰');
+  var c=el('div','card');
+  var ol=el('ol','rules');
+  ['一共要投 10 顆紙球。','下方的黑色指針會左右跑來跑去。','指針跑到綠色區域時按「投！」，紙球就會進。','開始之前，要先預測自己會投進幾顆。'].forEach(function(t){ol.appendChild(el('li',null,t))});
+  c.appendChild(ol);
+  var b=el('button','btn','我看懂了，開始預測');b.type='button';b.addEventListener('click',predict);
+  app.append(h,c,b);
+  if(rounds.length) app.appendChild(history());
+}
+
+function predict(){
+  app.innerHTML='';
+  var h=el('h2',null,'你覺得 10 顆裡面，你會投進幾顆？');
+  var p=el('p','lead','選好就不能改了，想清楚再按。');
+  var g=el('div','nums');var chosen=null;
+  var go=el('button','btn big','確定，開始投球');go.type='button';go.disabled=true;
+  for(var i=0;i<=10;i++)(function(n){
+    var b=el('button','num',String(n));b.type='button';b.setAttribute('aria-pressed','false');b.setAttribute('aria-label','預測進 '+n+' 顆');
+    b.addEventListener('click',function(){chosen=n;Array.prototype.forEach.call(g.children,function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');go.disabled=false;go.textContent='我預測 '+n+' 顆，開始投球'});
+    g.appendChild(b);
+  })(i);
+  go.addEventListener('click',function(){if(chosen!=null)play(chosen)});
+  app.append(h,p,g,go);
+}
+
+function play(pred){
+  app.innerHTML='';
+  var shot=0,hits=0,busy=false,raf=0,t0=performance.now(),zoneAt=0;
+  var st=el('div','status');
+  var s1=el('span');var s2=el('span');st.append(s1,s2);
+  var court=el('div','court');court.innerHTML=BIN;
+  var ball=el('div','ball');var msg=el('div','msg');court.append(ball,msg);
+  var meter=el('div','meter');var zone=el('div','zone');var needle=el('div','needle');meter.append(zone,needle);
+  var btn=el('button','btn big','投！');btn.type='button';
+  var hint=el('p','hint','也可以按空白鍵投球。　你的預測：'+pred+' 顆');
+  app.append(st,court,meter,btn,hint);
+  function upd(){s1.innerHTML='第 <b>'+Math.min(shot+1,TOTAL)+'</b> / 10 顆';s2.innerHTML='已經投進 <b>'+hits+'</b> 顆'}
+  function newZone(){zoneAt=8+Math.random()*(84-ZONE);zone.style.left=zoneAt+'%';zone.style.width=ZONE+'%'}
+  function pos(now){var ph=((now-t0)%(PERIOD*2))/PERIOD;var x=ph<1?ph:2-ph;return 2+x*96}
+  function tick(now){needle.style.left=pos(now)+'%';raf=requestAnimationFrame(tick)}
+  function throwBall(){
+    if(busy||shot>=TOTAL)return;busy=true;btn.disabled=true;
+    var x=pos(performance.now());cancelAnimationFrame(raf);needle.style.left=x+'%';
+    var hit=x>=zoneAt&&x<=zoneAt+ZONE;
+    var dx=hit?0:(x<zoneAt+ZONE/2?-1:1)*(90+Math.random()*60);
+    var courtH=court.clientHeight;
+    var anim=ball.animate([{transform:'translate(0,0) scale(1)'},{transform:'translate('+dx/2+'px,'+(-courtH*0.75)+'px) scale(.8)',offset:.55},{transform:'translate('+dx+'px,'+(hit?-courtH*0.62:-courtH*0.45)+'px) scale(.62)'}],{duration:650,easing:'ease-out',fill:'forwards'});
+    anim.onfinish=function(){
+      shot++;if(hit)hits++;
+      msg.textContent=hit?'進了！':'沒進';msg.className='msg show '+(hit?'hit':'miss');
+      upd();
+      setTimeout(function(){
+        msg.className='msg';anim.cancel();
+        if(shot>=TOTAL){finish(pred,hits);return}
+        newZone();t0=performance.now();busy=false;btn.disabled=false;raf=requestAnimationFrame(tick);
+      },850);
+    };
+  }
+  btn.addEventListener('click',throwBall);
+  function key(e){if(e.code==='Space'&&document.body.contains(btn)){e.preventDefault();throwBall()}}
+  document.addEventListener('keydown',key);
+  upd();newZone();raf=requestAnimationFrame(tick);
+}
+
+function finish(pred,real){
+  rounds.push({p:pred,r:real});save(rounds);
+  app.innerHTML='';
+  var h=el('h2',null,'第 '+rounds.length+' 回的結果');
+  var cmp=el('div','compare');
+  var a=el('div','box pred');a.append(el('p',null,'你預測'),el('strong',null,String(pred)));
+  var b=el('div','box real');b.append(el('p',null,'實際投進'),el('strong',null,String(real)));
+  cmp.append(a,b);
+  var d=pred-real;
+  var v=el('p','verdict',d>0?'你預測得比實際多了 '+d+' 顆。':d<0?'你預測得比實際少了 '+(-d)+' 顆。':'你預測得剛剛好！');
+  var ask=el('p','lead','請舉手告訴老師：你是預測太多、太少，還是剛好？');ask.style.textAlign='center';
+  var again=el('button','btn','再挑戰一次（重新預測）');again.type='button';again.addEventListener('click',predict);
+  app.append(h,cmp,v,ask,again,history());
+}
+
+function history(){
+  var c=el('div','card');c.appendChild(el('h2',null,'我的紀錄'));
+  var w=el('div','tablewrap');var t=el('table');
+  var head=el('tr');['回合','預測','實際','差多少'].forEach(function(x){head.appendChild(el('th',null,x))});t.appendChild(head);
+  rounds.forEach(function(r,i){var tr=el('tr');var d=r.p-r.r;[('第 '+(i+1)+' 回'),r.p,r.r,(d>0?'多猜 '+d:d<0?'少猜 '+(-d):'剛好')].forEach(function(x){tr.appendChild(el('td',null,String(x)))});t.appendChild(tr)});
+  w.appendChild(t);c.appendChild(w);return c;
+}
+
+intro();
+})();
+</script>

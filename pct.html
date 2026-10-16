@@ -1,0 +1,89 @@
+<title>百分比偵探</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one tablet screen per case — question, four choices, then the explanation with the real numbers worked out. Score kept on the device. Single light classroom look on purpose. */
+:root{
+  --bg:#F0EFE9; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D6D2C4;
+  --sea:#205E86; --rust:#A8441A; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(25px,4.2vw,38px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(20px,2.8vw,26px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.case b{font-variant-numeric:tabular-nums}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(16px,3vw,28px);display:flex;flex-direction:column;gap:14px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{font:inherit;font-size:clamp(22px,3.3vw,30px);font-weight:900;border:0;border-radius:16px;padding:16px 18px;background:var(--sea);color:#fff;cursor:pointer}
+.opt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:center}
+.opt.right{border-color:var(--good);background:#E3F1E8}
+.opt.wrong{border-color:var(--rust);background:#F6E4DC}
+.opt:disabled{cursor:default}
+.btn:focus-visible{outline:4px solid var(--rust);outline-offset:3px}
+.verdict{margin:0;font-size:clamp(24px,3.6vw,34px);font-weight:900}
+.verdict.ok{color:var(--good)} .verdict.no{color:var(--rust)}
+.explain{background:var(--note);border-radius:16px;padding:16px 20px;font-size:clamp(20px,2.8vw,26px);line-height:1.7;margin:0}
+.big{font-size:clamp(70px,14vw,130px);font-weight:900;line-height:1.1;margin:0;color:var(--sea);font-variant-numeric:tabular-nums}
+@media (max-width:440px){.opts{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='pct-detective-v1';
+var Q=[
+ {q:'去年有 1 人參加，今年有 3 人參加。<br>人數增加了百分之幾？',o:['2%','50%','200%','300%'],a:2,e:'多了 3 − 1 ＝ 2 人。<br>拿「原本的 1 人」當分母：2 ÷ 1 ＝ 200%。<br>200% 聽起來很多，其實只多了 2 個人。'},
+ {q:'全班 25 人，有 5 人戴眼鏡。<br>戴眼鏡的人是全班的百分之幾？',o:['5%','20%','25%','50%'],a:1,e:'部分 ÷ 整體：5 ÷ 25 ＝ 0.2 ＝ 20%。'},
+ {q:'參加率從 20% 變成 30%。<br>增加了幾個「百分點」？',o:['10 個百分點','30 個百分點','50 個百分點','1 個百分點'],a:0,e:'百分點直接相減：30% − 20% ＝ 10 個百分點。'},
+ {q:'同一題：參加率從 20% 變成 30%。<br>跟原本比起來，增加了百分之幾？',o:['10%','30%','50%','150%'],a:2,e:'相對原本：10 ÷ 20 ＝ 50%。<br>所以要說「增加 10 個百分點」，或「增加了一半」，不能說「增加 10%」。'},
+ {q:'甲活動：20 人中有 8 人參加。<br>乙活動：50 人中有 15 人參加。<br>哪一個參加的「比例」比較高？',o:['甲活動','乙活動','一樣高','看不出來'],a:0,e:'甲：8 ÷ 20 ＝ 40%。乙：15 ÷ 50 ＝ 30%。<br>甲的比例比較高，可是乙實際來的人比較多（15 人）。'},
+ {q:'一斤虱目魚 100 元。<br>先漲價 50%，過幾天又降價 50%。<br>最後是多少元？',o:['100 元','75 元','50 元','125 元'],a:1,e:'漲 50%：100 ＋ 50 ＝ 150 元。<br>降 50%：分母變成 150，150 的一半是 75，所以 150 − 75 ＝ 75 元。<br>漲和降的分母不一樣，所以回不到 100 元。'},
+ {q:'便當從 80 元漲到 100 元。<br>漲了百分之幾？',o:['20%','25%','80%','100%'],a:1,e:'多了 20 元，分母是原本的 80 元：20 ÷ 80 ＝ 25%。'},
+ {q:'廣告寫：「九成的人都推薦！」<br>你最想先問哪一題？',o:['一共問了幾個人？','推薦的人叫什麼名字？','廣告是什麼顏色？','這句話好不好聽？'],a:0,e:'先問分母！如果只問了 10 個人，9 個人推薦也是「九成」。'}
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{i:0,s:0,wrong:[]};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','一共 8 個案子。每一個案子都藏著一個百分比的陷阱。'),el('p','lead','選出答案以後，會告訴你真正的數字是怎麼算的。'));
+  var b=el('button','btn','開始辦案');b.type='button';b.addEventListener('click',ask);
+  app.append(el('h1',null,'百分比偵探'),c,b);
+}
+function ask(){
+  var n=st.i,q=Q[n];app.innerHTML='';
+  var cs=el('p','case','<span>第 <b>'+(n+1)+'</b> 案，共 8 案</span><span>破案 <b>'+st.s+'</b> 件</span>');
+  var c=el('div','card');c.appendChild(el('h2',null,q.q));
+  var g=el('div','opts');var bs=[];
+  q.o.forEach(function(t,k){var b=el('button','btn opt',t);b.type='button';b.addEventListener('click',function(){pick(k)});bs.push(b);g.appendChild(b)});
+  c.appendChild(g);app.append(cs,c);
+  function pick(k){
+    bs.forEach(function(b){b.disabled=true});
+    var ok=k===q.a;if(ok)st.s++;else st.wrong.push(n+1);
+    bs[q.a].classList.add('right');if(!ok)bs[k].classList.add('wrong');
+    st.i++;save(st);
+    c.append(el('p','verdict '+(ok?'ok':'no'),ok?'破案了！':'差一點！正確答案是：'+q.o[q.a]),el('p','explain',q.e));
+    var nx=el('button','btn',st.i>=Q.length?'看結果':'下一案');nx.type='button';nx.addEventListener('click',function(){st.i>=Q.length?end():ask()});
+    app.appendChild(nx);nx.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+}
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','你一共破了'),el('p','big',st.s+' / 8 案'));
+  if(st.wrong.length)c.appendChild(el('p','lead','沒破的案子：第 '+st.wrong.join('、')+' 案'));
+  app.append(el('h2',null,'辦案結束！請停在這一頁，等其他同學。'),c);
+}
+if(st.i>=Q.length)end();else if(st.i>0)ask();else intro();
+})();
+</script>

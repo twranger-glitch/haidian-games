@@ -1,0 +1,378 @@
+<title>怎麼決定才好</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro with the six method stamps → five situation cards, one per page: tap one of six small stamps under the card, it thumps onto the card in red ink and opens a note on what that method does here and what it costs (restamp freely, no right answer) → summary board of the five stamped cards (tap a card to go back) → "which one was hardest?" (any choice, neutral note) → final page for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --ink-red:#B33A22;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.btn.small{font-size:clamp(19px,2.4vw,21px);padding:10px 14px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn:focus-visible,.stamp:focus-visible,.sumcard:focus-visible,.opt:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1 1 200px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.badge{width:clamp(52px,8vw,64px);height:clamp(52px,8vw,64px);border-radius:50%;background:var(--note);display:flex;align-items:center;justify-content:center;flex:none}
+.badge svg.i{width:62%;height:62%}
+
+/* progress */
+.dots{display:inline-flex;gap:6px}
+.dot{width:16px;height:16px;border-radius:50%;border:3px solid var(--sea);background:transparent}
+.dot.on{background:var(--sea)}
+.dot.now{border-color:var(--rust);background:var(--warm)}
+
+/* intro: method list */
+.mlist{display:flex;flex-direction:column;gap:10px}
+.mrow{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 14px}
+.mrow h3{margin:0;font-size:clamp(20px,2.8vw,25px);font-weight:900;line-height:1.35}
+.mrow p{margin:0;font-size:clamp(19px,2.4vw,22px);color:var(--muted);line-height:1.55}
+
+/* situation card */
+.scene{position:relative;overflow:hidden}
+.scene .top{display:flex;align-items:center;gap:14px}
+.scene .top h2{flex:1}
+.scene .ctx{margin:0;font-size:clamp(19px,2.6vw,23px);line-height:1.7}
+.zone{display:flex;align-items:center;gap:16px;min-height:150px;border:3px dashed var(--line);border-radius:18px;padding:10px 14px;background:#FFFEFA}
+.zone.empty{justify-content:center;color:var(--muted);font-weight:700;font-size:clamp(19px,2.4vw,22px);text-align:center}
+.zone.empty svg.i{width:1.6em;height:1.6em;margin-right:6px}
+.zone .what{flex:1;min-width:0}
+.zone .what small{display:block;color:var(--muted);font-size:clamp(19px,2.2vw,20px);font-weight:700}
+.zone .what small.how{font-weight:500;margin-top:2px;line-height:1.5}
+.zone .what b{font-size:clamp(21px,3vw,27px);font-weight:900;color:var(--ink-red);line-height:1.35}
+.scene.jolt{animation:jolt .32s ease-out .2s}
+@keyframes jolt{0%,100%{transform:none}35%{transform:translateY(4px)}70%{transform:translateY(-1px)}}
+
+/* red-ink seal */
+.seal{--sz:128px;width:var(--sz);height:var(--sz);flex:none;border-radius:50%;border:4px solid var(--ink-red);box-shadow:inset 0 0 0 4px #FFFEFA,inset 0 0 0 6px var(--ink-red);color:var(--ink-red);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transform:rotate(-9deg);background:rgba(179,58,34,.05);position:relative}
+.seal svg.i{width:44%;height:44%}
+.seal svg.i [fill]:not([fill="none"]):not([fill="currentColor"]){fill:rgba(179,58,34,.16)}
+.seal b{font-size:19px;font-weight:900;line-height:1.1;letter-spacing:1px;white-space:nowrap}
+.seal.sm{--sz:92px;border-width:3px;box-shadow:inset 0 0 0 3px #FFFEFA,inset 0 0 0 5px var(--ink-red)}
+.seal.sm b{font-size:15px}
+.seal.land{animation:thump .5s cubic-bezier(.3,.7,.4,1.2) both}
+.seal.land::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--ink-red);opacity:0;animation:ring .6s ease-out .22s}
+@keyframes thump{0%{transform:translateY(-70px) scale(1.6) rotate(-2deg);opacity:0}45%{opacity:1}60%{transform:translateY(0) scale(.9) rotate(-9deg);opacity:1}80%{transform:scale(1.04) rotate(-9deg)}100%{transform:scale(1) rotate(-9deg);opacity:1}}
+@keyframes ring{0%{opacity:.55;transform:scale(.9)}100%{opacity:0;transform:scale(1.35)}}
+
+/* stamp pad */
+.padlabel{margin:0;font-weight:700;color:var(--muted);font-size:clamp(19px,2.4vw,22px)}
+.pad{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.stamp{font:inherit;color:var(--ink);background:transparent;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.stamp .knob{width:34px;height:20px;border-radius:12px 12px 4px 4px;background:#E7D3B0;border:3px solid var(--ink);border-bottom:0;margin-bottom:-3px}
+.stamp .face{width:100%;max-width:120px;aspect-ratio:1;border-radius:20px;background:var(--card);border:3px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:0 5px 0 var(--line);transition:border-color .12s,background .12s}
+.stamp .face svg.i{width:56%;height:56%}
+.stamp .nm{font-size:clamp(19px,2.2vw,21px);font-weight:900;line-height:1.25;text-align:center}
+.stamp.pick .face{border-color:var(--ink-red);background:var(--warm);box-shadow:0 5px 0 var(--ink-red)}
+.stamp.pick .nm{color:var(--ink-red)}
+.stamp.press .face{animation:press .32s ease-out}
+@keyframes press{0%{transform:none}40%{transform:translateY(7px) scale(.94);box-shadow:0 0 0 var(--line)}100%{transform:none}}
+
+/* feedback */
+.fb{animation:fadein .35s ease-out}
+.fb h3{margin:0;font-size:clamp(21px,3vw,27px);font-weight:900;line-height:1.4}
+.fbrow{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start}
+.tag{display:inline-block;border-radius:12px;padding:2px 12px;font-weight:900;font-size:clamp(19px,2.4vw,22px);white-space:nowrap}
+.tag.g{background:#DDEEDD;color:#22603C}
+.tag.c{background:#F7E0D6;color:#8E3414}
+.fbrow p{margin:0;font-size:clamp(19px,2.6vw,23px);line-height:1.7}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* summary board */
+.board{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sumcard{font:inherit;color:var(--ink);text-align:left;cursor:pointer;background:var(--card);border:3px solid var(--line);border-radius:20px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.sumcard .q{display:flex;flex-direction:column;gap:4px}
+.sumcard .q small{color:var(--sea);font-weight:700;font-size:19px;display:flex;align-items:center;gap:6px}
+.sumcard .q b{font-size:clamp(19px,2.4vw,22px);font-weight:900;line-height:1.4}
+.sumcard .q span{color:var(--ink-red);font-weight:700;font-size:19px}
+.sumcard:last-child:nth-child(odd){grid-column:1/-1}
+
+/* options */
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;font-size:clamp(19px,2.6vw,24px);font-weight:700;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:16px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;line-height:1.45}
+.opt .badge{width:46px;height:46px}
+.opt.pick{border-color:var(--gold);background:var(--warm)}
+
+/* end table */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700}
+td b{color:var(--ink-red)}
+
+@media (max-width:760px){
+  .pad{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px}
+  .board{grid-template-columns:1fr}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .seal{--sz:112px}
+  .seal b{font-size:17px}
+  .zone{min-height:130px;gap:12px;padding:10px}
+  td{padding:8px 4px}
+  .endt tr{display:block;padding:10px 0;border-bottom:2px solid var(--line)}
+  .endt td{display:block;border:0;padding:0}
+  .stamp .face{max-width:96px}
+}
+@media (prefers-reduced-motion:reduce){
+  .seal.land,.seal.land::after,.scene.jolt,.stamp.press .face,.fb{animation:none}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"hand": "<path d=\"M8.2 21.8v-4.4L4.7 14a1.5 1.5 0 0 1 2.1-2.1l1.4 1.3V5.8a1.3 1.3 0 0 1 2.6 0V11V4.3a1.3 1.3 0 0 1 2.6 0V11V5.3a1.3 1.3 0 0 1 2.6 0v6.2V8a1.3 1.3 0 0 1 2.6 0v7c0 3-1 5-2.4 6.8\" fill=\"#F6E3D6\"/>", "podium": "<rect x=\"8.5\" y=\"7.5\" width=\"7\" height=\"13.5\" rx=\"1\" fill=\"#F3D27A\"/><rect x=\"2.5\" y=\"11.5\" width=\"6\" height=\"9.5\" rx=\"1\" fill=\"#DCE8F0\"/><rect x=\"15.5\" y=\"14.5\" width=\"6\" height=\"6.5\" rx=\"1\" fill=\"#F6E3D6\"/><path d=\"M11 11.2l1.3-1v5.4\"/><path d=\"M1.5 21h21\"/>", "roster": "<rect x=\"3\" y=\"3.5\" width=\"18\" height=\"17\" rx=\"2\" fill=\"#FBFCF9\"/><rect x=\"9\" y=\"8.4\" width=\"12\" height=\"4.1\" fill=\"#DCE8F0\"/><path d=\"M3 8.4h18M3 12.5h18M3 16.5h18M9 3.5v17\"/><circle cx=\"6\" cy=\"10.45\" r=\".5\" fill=\"currentColor\"/><circle cx=\"6\" cy=\"14.5\" r=\".5\" fill=\"currentColor\"/><circle cx=\"6\" cy=\"18.5\" r=\".5\" fill=\"currentColor\"/>", "sticks": "<path d=\"M8 9.5l-1.6-6.8M11 9.5l-.4-7.6M13.8 9.5l1-7.2M16.6 9.5l2-6.2\"/><path d=\"M5.5 9.8h13l-1.3 10.6a1.6 1.6 0 0 1-1.6 1.4H8.4a1.6 1.6 0 0 1-1.6-1.4z\" fill=\"#F3E3BE\"/><path d=\"M6.2 14.5h11.6\"/>", "jiao": "<path d=\"M10.2 2.6C2.2 5.8 2.2 16.6 10.2 19.8Z\" fill=\"#F2B8A0\"/><path d=\"M13.8 4.2C21.8 7.4 21.8 18.2 13.8 21.4Z\" fill=\"#F2B8A0\"/>", "roundtable": "<ellipse cx=\"12\" cy=\"13.4\" rx=\"6\" ry=\"3.8\" fill=\"#F3E3BE\"/><circle cx=\"12\" cy=\"5.6\" r=\"2\" fill=\"#DCE8F0\"/><circle cx=\"3.6\" cy=\"12\" r=\"2\" fill=\"#F6E3D6\"/><circle cx=\"20.4\" cy=\"12\" r=\"2\" fill=\"#CFE3C4\"/><circle cx=\"6.8\" cy=\"19.6\" r=\"2\" fill=\"#F3D27A\"/><circle cx=\"17.2\" cy=\"19.6\" r=\"2\" fill=\"#F7D6E0\"/>", "cap": "<path d=\"M2 9.4L12 4.6l10 4.8-10 4.8z\" fill=\"#DCE8F0\"/><path d=\"M6.2 11.6v4.6c0 1.5 2.6 2.8 5.8 2.8s5.8-1.3 5.8-2.8v-4.6\" fill=\"#F3E3BE\"/><path d=\"M19.8 10.4v5.4\"/><circle cx=\"19.8\" cy=\"17\" r=\"1.2\" fill=\"#F3D27A\"/>", "bus": "<rect x=\"3.5\" y=\"3.5\" width=\"17\" height=\"14.5\" rx=\"3\" fill=\"#F3D27A\"/><rect x=\"6\" y=\"6\" width=\"12\" height=\"5\" rx=\"1\" fill=\"#FBFCF9\"/><path d=\"M12 6v5\"/><path d=\"M6.5 14.5h1.5M16 14.5h1.5\"/><circle cx=\"7.5\" cy=\"19.5\" r=\"1.8\" fill=\"#FBFCF9\"/><circle cx=\"16.5\" cy=\"19.5\" r=\"1.8\" fill=\"#FBFCF9\"/>", "broom": "<path d=\"M12 2v8.4\"/><rect x=\"9\" y=\"10.4\" width=\"6\" height=\"2.6\" rx=\".8\" fill=\"#DCE8F0\"/><path d=\"M9.2 13L5 21.2h14L14.8 13z\" fill=\"#F3E3BE\"/><path d=\"M8.4 21.2l1.8-5M12 21.2v-5M15.6 21.2l-1.8-5\"/>", "mic": "<rect x=\"9\" y=\"2.8\" width=\"6\" height=\"11\" rx=\"3\" fill=\"#F7D6E0\"/><path d=\"M5.8 11a6.2 6.2 0 0 0 12.4 0\"/><path d=\"M12 17.2v4M8.6 21.2h6.8\"/>", "temple": "<path d=\"M2.5 10Q6.6 9.6 9 7l3-3.2 3 3.2q2.4 2.6 6.5 3z\" fill=\"#F2B8A0\"/><rect x=\"5\" y=\"10\" width=\"14\" height=\"10.5\" fill=\"#F3E3BE\"/><path d=\"M10 20.5v-4.8a2 2 0 0 1 4 0v4.8\"/><path d=\"M2.5 20.5h19\"/>", "tank": "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"15.5\" rx=\"2\" fill=\"#FBFCF9\"/><path d=\"M3 9q3-1.4 6 0t6 0 6 0V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" fill=\"#DCE8F0\"/><path d=\"M8.6 14.6q2.6-3 5.2 0-2.6 3-5.2 0z\" fill=\"#F3D27A\"/><path d=\"M13.8 14.6l2.2-1.6v3.2z\" fill=\"#F3D27A\"/><path d=\"M6 16.4v.01M17.6 11.6v.01\"/>", "stampic": "<circle cx=\"12\" cy=\"5\" r=\"2.8\" fill=\"#F2B8A0\"/><path d=\"M10.6 7.6v4h2.8v-4\"/><rect x=\"4.5\" y=\"11.6\" width=\"15\" height=\"5\" rx=\"1.4\" fill=\"#F3E3BE\"/><path d=\"M4 20.6h16\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>"};
+function ic(k){return '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='howdecide-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(!st||!Array.isArray(st.pick)||st.pick.length!==5)st={step:0,pick:[null,null,null,null,null],hard:null};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* six methods: id, icon, full name, short stamp name, how */
+var M=[
+ {ic:'hand',name:'多數決（舉手）',sh:'多數決',how:'大家舉手，票最多的那一個就贏。'},
+ {ic:'podium',name:'排序投票',sh:'排序投票',how:'每個人把選項排出第一、第二、第三，再合起來算分。'},
+ {ic:'roster',name:'輪流',sh:'輪流',how:'照順序來，這一次輪到誰，就由誰來。'},
+ {ic:'sticks',ic2:'jiao',name:'抽籤或擲筊',sh:'抽籤擲筊',how:'抽籤，或在廟裡擲筊請神明決定，誰也不能事先安排。'},
+ {ic:'roundtable',name:'討論到大家都能接受',sh:'大家討論',how:'坐下來慢慢談，一直改到沒有人強烈反對為止。'},
+ {ic:'cap',name:'交給最懂的人決定',sh:'最懂的人',how:'請最了解這件事的人，替大家做決定。'}
+];
+
+/* five matters; fx[m] = [作用, 代價] for method m */
+var S=[
+ {ic:'bus',q:'班遊要去哪裡？',short:'班遊去哪裡',
+  ctx:'老師說，今年班遊可以從四個地方選一個：四草綠色隧道、七股鹽山、台江國家公園遊客中心、市區的博物館。五年13班一共 30 個人，每個人想去的地方都不太一樣。',
+  hard:'想去的地方有四個，大家的喜好又不一樣，不管選哪裡，都會有人覺得可惜。',
+  fx:[
+   ['很快，舉一次手就知道哪個地方最多人想去。','票分散在四個地方時，可能只有 9 個人選的地方就贏了，另外 21 個人最想去的都不是這裡。'],
+   ['每個人的第二、第三志願也會算進去，比較容易選到「大部分人都覺得還不錯」的地方。','要花時間排、花時間算分；有人會想不通：「選我最想去的人明明最多，怎麼還是輸了？」'],
+   ['例如這次輪到第一組選地點，下次換第二組。每一組總有一次能作主，不用每次都吵。','班遊一年才一次，畢業前很多組根本輪不到；輪到的那一組選的地方，其他人不一定喜歡。'],
+   ['把四個地點寫成籤，抽到哪裡就去哪裡。又快，又沒有人能偷偷安排，大家比較不會怪誰。','可能抽到大部分人都不想去的地方；明明可以知道大家想去哪裡，卻完全沒用上。'],
+   ['大家說出理由，例如「鹽山中午太曬」「綠色隧道可以坐船」，可能找到大家都能接受的地點，還會冒出新點子。','30 個人要談到大家都點頭，可能要好幾節課；敢說話的人，聲音容易蓋過比較安靜的人。'],
+   ['交給最熟悉這些地點的導師決定，他知道哪裡安全、交通方不方便、能不能預約。','最懂路線的人，不一定知道同學最想玩什麼；同學對這趟班遊的期待，可能也會少一點。']
+  ]},
+ {ic:'broom',q:'下週誰負責掃廁所？',short:'誰掃廁所',
+  ctx:'掃廁所需要 4 個人，可是幾乎沒有人想掃。下週一早上就要開始，今天一定要決定好。',
+  hard:'這是大家都不想要的工作，不管用什麼方法，被排到的人多少都會不開心。',
+  fx:[
+   ['很快就能決定。','大家多半會投給「別人」。比較安靜或剛好請假的同學，容易一直被投中，變成多數人把工作推給少數人。'],
+   ['讓每個人把「掃廁所、擦窗戶、倒垃圾」這些工作排出志願。有人其實不介意掃廁所，就能先排給他。','要花時間整理；最不想做的工作，大家多半都排最後，最後還是得用別的方法決定。'],
+   ['照座號一週換一組，每個人都會輪到，也早就知道哪一週是自己，不用每個星期吵一次。','剛好那週要比賽或請假的人得想辦法換班；也有人覺得「我掃得很乾淨，和隨便掃的人一樣輪，不太公平」。'],
+   ['每週抽籤，誰抽到誰去，沒有人能故意陷害別人。','運氣不好的人可能連續兩週都抽到，運氣好的人整個學期都沒掃過，時間一長不一定平均。'],
+   ['大家說出自己的狀況，例如誰不怕味道、誰星期三要練球，排起來比較貼心。','沒有人想掃，談再久也可能談不出結果；不好意思拒絕的同學，可能就被說服去掃了。'],
+   ['交給最清楚打掃工作的衛生股長排班，他知道每一區要幾個人、誰上次做過什麼。','一個人排班，大家容易覺得他偏心；排到不喜歡的工作，就會去怪他。']
+  ]},
+ {ic:'mic',q:'全校說故事比賽，班上派誰去？',short:'派誰去說故事',
+  ctx:'每班只能派 1 個人參加。班上有 5 位同學都舉手說想去，大家說故事的功力也不太一樣。',
+  hard:'只能派一個人，選了一個，就有四個人落空；有人覺得要比實力，有人覺得要給機會。',
+  fx:[
+   ['很快，被派去的人也知道有很多同學支持他。','可能變成比人緣，人緣最好的人不一定最會說故事；沒選上的四個人，也可能覺得自己被比下去。'],
+   ['第二、第三名也會算分，比較能找到「大家普遍覺得說得不錯」的人。','還是可能變成比人緣；如果沒有先聽過每個人說故事，大家只能憑印象排。'],
+   ['這次派這一位，下次比賽換下一位，想參加的人都有機會上台練習。','輪到的人不一定準備好了；如果大家的目標是拿名次，輪流就不太管用。'],
+   ['五個人一起抽，誰抽到誰去。沒有人會覺得老師偏心，沒抽到的人也比較不傷心。','抽到的人不一定最適合；說故事需要練習和膽量，抽籤完全不看這些。'],
+   ['大家說說每個人的長處，或約好「這次你去，下次換我」，沒選上的人也比較能接受。','五個人都想去，可能談很久；比較不好意思爭取的同學，可能就默默讓出去了。'],
+   ['請老師聽五個人各試講一次，選說得最好的，比較有機會拿名次。','「說得最好」要看老師的標準；沒選上的同學，少了一次上台練習的機會。']
+  ]},
+ {ic:'temple',q:'三個庄頭要辦遶境，今年由哪一庄的廟主辦？',short:'哪一庄主辦遶境',
+  ctx:'溪頂庄、中洲庄、海尾庄要一起辦遶境，三個庄頭的廟都想當主辦，因為主辦又熱鬧、又有面子。溪頂庄的人最多，海尾庄的人最少。',
+  hard:'三個庄頭都很在乎，人數又差很多，怎麼決定都要讓沒選上的庄頭心服。',
+  fx:[
+   ['三庄的人一起舉手，很快就有結果。','大家多半投給自己的庄，人最多的溪頂庄幾乎每次都贏，人最少的海尾庄可能永遠輪不到，另外兩庄心裡會不舒服。'],
+   ['每個人可以把第二想要的庄頭也排進去，比只舉一次手多看到一點大家的想法。','大家還是會把自己的庄排第一，人多的庄一樣佔便宜；三庄還得先講好怎麼算分，不然會改成吵算法。'],
+   ['今年溪頂、下次中洲、再下次海尾，三庄都有機會主辦，也能早早準備。','第一次要從哪一庄開始，還是得用別的方法決定；輪到的庄頭那一年如果收成不好，辦起來會很辛苦。'],
+   ['公開抽籤，或在廟裡擲筊請神明決定。結果不是哪一個人、哪一庄說了算，沒選上的庄頭也比較願意接受。','結果不看哪一庄比較有能力辦；事先也不知道會是哪一庄，很難提早準備；而且要三庄都相信這個方法，結果才算數。'],
+   ['三庄的頭人坐下來談，可以把出錢、出人、遶境路線一起分配，辦起來比較和氣。','三庄都想主辦，可能談很久；說話比較大聲、比較有勢力的庄頭，容易佔上風。'],
+   ['交給最懂廟會的老前輩決定，他知道哪一庄的廟夠大、人手夠多、辦得起來。','老前輩也住在其中一庄，另外兩庄容易懷疑他偏心自己的庄頭。']
+  ]},
+ {ic:'tank',q:'班上要不要養一缸魚？',short:'要不要養魚',
+  ctx:'大部分同學都很想在教室後面養一缸魚。可是小晴對魚和魚飼料過敏，靠太近就會打噴嚏、皮膚發癢。',
+  hard:'很多人的「想要」和一個人的「身體不舒服」放在一起比，很難只看人數決定。',
+  fx:[
+   ['很快，大部分同學都想養，舉手一定會通過。','舉手只算人數，不算每個人受到的影響有多大：大家是「想不想養」，小晴卻是「會不會不舒服」。'],
+   ['可以把「養魚、種一排盆栽、都不養」排出順序，也許會找到大家都不錯、小晴也不會過敏的做法。','小晴還是只有一個人的分數，如果大家都把養魚排第一，她的困擾一樣會被蓋過去。'],
+   ['如果決定要養，可以輪流換水、輪流餵飼料，工作分得很平均。','輪流適合決定「誰來做」，不太能回答「要不要養」；輪到小晴照顧魚的時候怎麼辦，也得另外想。'],
+   ['抽籤決定養或不養，沒有人能說是誰害的。','這件事和小晴的身體有關，交給運氣好像不太妥當；就算抽到「養」，小晴的困擾也還在。'],
+   ['先聽小晴說她會怎樣，再一起想辦法，例如魚缸放在離她最遠的角落、由別人負責餵食，也許能找到兩邊都能接受的做法。','比較花時間；小晴可能不好意思一直說「我會不舒服」，最後只好說「沒關係」。'],
+   ['先問校護，小晴靠近魚缸會不會有危險，再請懂養魚的人說說要花多少力氣，決定起來比較有根據。','專家能回答「安不安全」，可是「大家願不願意為了養魚多做一些調整」，還是得全班自己決定。']
+  ]}
+];
+
+function dots(now){
+  var d=el('span','dots');
+  for(var i=0;i<5;i++){d.appendChild(el('span','dot'+(i===now?' now':(st.pick[i]!=null?' on':''))))}
+  return d;
+}
+function sealHtml(m,cls){return '<div class="seal'+(cls?' '+cls:'')+'" aria-hidden="true">'+ic(M[m].ic)+'<b>'+M[m].sh+'</b></div>'}
+function allDone(){return st.pick.every(function(x){return x!=null})}
+function firstEmpty(){for(var i=0;i<5;i++)if(st.pick[i]==null)return i;return -1}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','五年13班這學期有<b>五件事</b>要決定。決定的方法不只一種，這裡有<b>六個印章</b>，每一個印章代表一種決定方法：'));
+  var ml=el('div','mlist');
+  M.forEach(function(m){
+    var r=el('div','mrow');
+    r.append(el('div','badge',ic(m.ic)),el('div',null,'<h3>'+m.name+(m.ic2?' '+ic(m.ic2):'')+'</h3><p>'+m.how+'</p>'));
+    ml.appendChild(r);
+  });
+  var n=el('p','note warm',ic('stampic')+' 你的任務：替每一件事，蓋上你覺得最適合的那一個章。蓋下去，就會看到這個方法用在這件事上，有什麼<b>作用</b>、又有什麼<b>代價</b>。<br>這裡沒有標準答案，蓋了也可以換。');
+  app.append(el('h1',null,'怎麼決定才好'),c,ml,n,button('開始蓋章','btn',function(){go(1)}));
+}
+
+/* ---------- steps 1–5: one matter ---------- */
+function matter(i){
+  var s=S[i];
+  app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'第 '+(i+1)+' 件事（共 5 件）'),dots(i));
+  var scene=el('div','card scene');
+  var top=el('div','top');top.append(el('div','badge',ic(s.ic)),el('h2',null,s.q));
+  var zone=el('div','zone');
+  scene.append(top,el('p','ctx',s.ctx),zone);
+  var lab=el('p','padlabel','點一個章，蓋到上面的卡片上：');
+  var pad=el('div','pad');pad.setAttribute('role','group');pad.setAttribute('aria-label','六種決定方法的印章');
+  var fbBox=el('div');
+  var nav=el('div','row-btns');
+  var stamps=[];
+  M.forEach(function(m,k){
+    var b=el('button','stamp','<span class="knob"></span><span class="face">'+ic(m.ic)+'</span><span class="nm">'+m.sh+'</span>');
+    b.type='button';b.setAttribute('aria-label','蓋「'+m.name+'」');
+    b.addEventListener('click',function(){
+      st.pick[i]=k;save(st);
+      b.classList.remove('press');void b.offsetWidth;b.classList.add('press');
+      show(k,true);
+    });
+    stamps.push(b);pad.appendChild(b);
+  });
+  function show(k,anim){
+    stamps.forEach(function(b,j){b.classList.toggle('pick',j===k);b.setAttribute('aria-pressed',j===k?'true':'false')});
+    if(k==null){
+      zone.className='zone empty';zone.innerHTML=ic('stampic')+'還沒蓋章：從下面選一個章';
+      fbBox.innerHTML='';
+    }else{
+      zone.className='zone';
+      zone.innerHTML=sealHtml(k,anim?'land':'')+'<div class="what"><small>你蓋的章</small><b>'+M[k].name+'</b><small class="how">'+M[k].how+'</small></div>';
+      if(anim){scene.classList.remove('jolt');void scene.offsetWidth;scene.classList.add('jolt')}
+      var f=el('div','card fb');
+      f.append(el('h3',null,'用「'+M[k].name+'」來決定'),
+        el('div','fbrow','<span class="tag g">作用</span><p>'+s.fx[k][0]+'</p>'),
+        el('div','fbrow','<span class="tag c">代價</span><p>'+s.fx[k][1]+'</p>'),
+        el('p','note','沒有標準答案。想比較看看，可以換別的章再蓋一次。'));
+      fbBox.innerHTML='';fbBox.appendChild(f);
+      if(anim){setTimeout(function(){try{f.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){}},520)}
+    }
+    drawNav();
+  }
+  function drawNav(){
+    nav.innerHTML='';
+    if(i>0)nav.appendChild(button('上一件','btn alt',function(){go(i)}));
+    else nav.appendChild(button('回到說明','btn alt',function(){go(0)}));
+    var last=i===4||(allDone()&&st.fromBoard);
+    var nx=button(last?'看五件事的總表':'下一件事',  'btn',function(){
+      if(st.pick[i]==null)return;
+      if(last){st.fromBoard=false;go(6)}else go(i+2);
+    });
+    nx.disabled=st.pick[i]==null;
+    nav.appendChild(nx);
+  }
+  app.append(cs,scene,lab,pad,fbBox,nav);
+  show(st.pick[i],false);
+}
+
+/* ---------- step 6: summary board ---------- */
+function board(){
+  app.innerHTML='';
+  var bd=el('div','board');
+  S.forEach(function(s,i){
+    var k=st.pick[i];
+    var b=el('button','sumcard','<div class="q"><small>'+ic(s.ic)+'第 '+(i+1)+' 件事</small><b>'+s.q+'</b><span>'+M[k].name+'</span></div>'+sealHtml(k,'sm'));
+    b.type='button';b.setAttribute('aria-label','第 '+(i+1)+' 件事：'+s.q+'，你蓋了「'+M[k].name+'」。點一下可以回去換章');
+    b.addEventListener('click',function(){st.fromBoard=true;go(i+1)});
+    bd.appendChild(b);
+  });
+  var used={};st.pick.forEach(function(k){used[k]=1});var n=Object.keys(used).length;
+  app.append(el('p','case','五件事的總表'),el('h2',null,'五張卡都蓋好章了！'),bd,
+    el('p','note','五件事，你一共用了 <b>'+n+'</b> 種不同的方法。想換章的話，點那一張卡片就能回去改。'),
+    button('下一題','btn',function(){go(7)}));
+}
+
+/* ---------- step 7: hardest ---------- */
+function hardest(){
+  app.innerHTML='';
+  var opts=el('div','opts');
+  var box=el('div','opts');
+  function drawBox(){
+    box.innerHTML='';
+    if(st.hard==null)return;
+    box.append(el('p','note warm','有人覺得這件事難，是因為'+S[st.hard].hard),
+      el('p','note','你覺得難在哪裡？先在心裡想一句話，等一下老師可能會請你說說看。'),
+      button('看看我的結果','btn',function(){go(8)}));
+  }
+  S.forEach(function(s,i){
+    var b=el('button','opt'+(st.hard===i?' pick':''),'<span class="badge">'+ic(s.ic)+'</span><span>'+s.q+'</span>');
+    b.type='button';
+    b.addEventListener('click',function(){
+      st.hard=i;save(st);
+      Array.prototype.forEach.call(opts.children,function(x){x.classList.remove('pick')});b.classList.add('pick');
+      drawBox();try{box.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){}
+    });
+    opts.appendChild(b);
+  });
+  app.append(el('p','case','最後一題'),el('h2',null,'這五件事，你覺得哪一件最難決定？為什麼？'),el('p','lead','五件都可以選，沒有對錯。'),opts,box);
+  drawBox();
+}
+
+/* ---------- step 8: end ---------- */
+function end(){
+  app.innerHTML='';
+  var t=el('table','endt');
+  S.forEach(function(s,i){
+    var tr=el('tr');tr.append(el('td',null,'第 '+(i+1)+' 件：'+s.short),el('td',null,'<b>'+M[st.pick[i]].name+'</b>'));t.appendChild(tr);
+  });
+  var used={};st.pick.forEach(function(k){used[k]=1});
+  var tr2=el('tr');tr2.append(el('td',null,'最難決定的是'),el('td',null,'<b>第 '+(st.hard+1)+' 件：'+S[st.hard].short+'</b>'));t.appendChild(tr2);
+  var tr3=el('tr');tr3.append(el('td',null,'你一共用了'),el('td',null,'<b>'+Object.keys(used).length+' 種</b>不同的方法'));t.appendChild(tr3);
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  if(st.step>=6&&!allDone())st.step=firstEmpty()+1;
+  if(st.step>=8&&st.hard==null)st.step=7;
+  if(st.step>=1&&st.step<=5)return matter(st.step-1);
+  if(st.step===6)return board();
+  if(st.step===7)return hardest();
+  if(st.step===8)return end();
+  intro();
+}
+render();
+})();
+</script>

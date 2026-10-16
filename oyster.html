@@ -1,0 +1,115 @@
+<title>蚵仔收成大挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: round 1 — choose A (sure 100 baskets) or B (80%: 150, 20%: 0) for 10 seasons → 1,000-season simulation of each → round 2 — same choice, but every season must deliver at least 100 baskets to the restaurants that ordered. Single light classroom look on purpose. */
+:root{
+  --bg:#EDF1EF; --card:#FBFCFA; --ink:#1F2A2E; --muted:#56605C; --line:#CFD9D4;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plan{font:inherit;text-align:left;border:3px solid var(--line);border-radius:18px;background:var(--card);padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;color:var(--ink)}
+.plan .t{font-size:clamp(22px,3.2vw,30px);font-weight:900}
+.plan .d{font-size:clamp(17px,2.4vw,22px);color:var(--muted);line-height:1.5}
+.plan.a{border-color:var(--sea)} .plan.b{border-color:var(--rust)}
+.plan:disabled{opacity:.5;cursor:default}
+.plan:focus-visible,.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.log{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}
+.s{border-radius:10px;padding:6px 2px;text-align:center;border:2px solid var(--line);font-variant-numeric:tabular-nums}
+.s small{display:block;font-size:13px;color:var(--muted);font-weight:700}
+.s b{font-size:clamp(15px,2.2vw,20px)}
+.s.A{border-color:var(--sea)} .s.B{border-color:var(--rust)} .s.zero{background:#F6E4DC} .s.fail{background:#F6E4DC;border-color:var(--rust)}
+.top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 16px;font-size:clamp(18px,2.6vw,24px);font-weight:700;color:var(--muted);margin:0}
+.top b{color:var(--ink);font-variant-numeric:tabular-nums}
+.msg{margin:0;font-size:clamp(21px,3vw,28px);font-weight:900;min-height:1.4em}
+.msg.ok{color:var(--good)} .msg.no{color:var(--rust)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.7vw,25px);line-height:1.7;margin:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{border:3px solid var(--line);border-radius:18px;padding:10px;text-align:center}
+.stat p{margin:0;font-size:clamp(16px,2.2vw,20px);font-weight:700;color:var(--muted)}
+.stat strong{display:block;font-size:clamp(34px,6.5vw,56px);font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat.a strong{color:var(--sea)} .stat.b strong{color:var(--rust)}
+@media (max-width:520px){.plans,.stats{grid-template-columns:1fr}.log{grid-template-columns:repeat(5,minmax(0,1fr))}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='oyster-ev-v1';
+var NEED=100;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,r1:[],r2:[],sim:null};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function rnd(){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}catch(e){return Math.random()}}
+function harvest(p){return p==='A'?100:(rnd()<0.8?150:0)}
+function sum(a){return a.reduce(function(s,x){return s+x.v},0)}
+function planBtns(onPick){
+  var g=el('div','plans');
+  var a=el('button','plan a','<span class="t">A　用老方法穩穩養</span><span class="d">每一季，一定收成 100 籃。</span>');
+  var b=el('button','plan b','<span class="t">B　試試新方法</span><span class="d">10 季裡大約 8 季收成 150 籃；大約 2 季遇到大浪，收成 0 籃。</span>');
+  a.type=b.type='button';a.addEventListener('click',function(){onPick('A')});b.addEventListener('click',function(){onPick('B')});g.append(a,b);return {g:g,a:a,b:b};
+}
+function logView(arr,need){var l=el('div','log');for(var k=0;k<10;k++){var x=arr[k];var cls='s'+(x?' '+x.p:'')+(x&&x.v===0?' zero':'')+(x&&need&&x.v<need?' fail':'');l.appendChild(el('div',cls,x?'<small>第'+(k+1)+'季 '+x.p+'</small><b>'+x.v+'</b>':'<small>第'+(k+1)+'季</small><b>—</b>'))}return l}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','七股的阿伯在海上養蚵。每一季，他可以選一種養法：'),planBtns(function(){}).g,el('p','lead','請你幫阿伯決定 10 季。每一季都可以換方法，看看最後一共收成多少籃。'));
+  c.querySelectorAll('.plan').forEach(function(b){b.disabled=true;b.style.opacity='1'});
+  var go=el('button','btn','開始第一輪');go.type='button';go.addEventListener('click',function(){st.step=1;save(st);round(1)});
+  app.append(el('h1',null,'蚵仔收成大挑戰'),c,go);
+}
+function round(n){
+  app.innerHTML='';
+  var arr=n===1?st.r1:st.r2;
+  var h=el('h2',null,n===1?'第一輪：幫阿伯決定 10 季的養法':'第二輪：這一次，阿伯和 100 家餐廳約好了');
+  var rule=null;if(n===2)rule=(el('p','note','每一季，阿伯都要送 <b>至少 100 籃</b>蚵仔給訂好的餐廳。少於 100 籃的那一季，餐廳就沒有蚵仔可以用，阿伯也會失去他們的信任。'));
+  var top=el('p','top');var box=el('div');var msg=el('p','msg');
+  var pb=planBtns(pick);
+  function draw(){top.innerHTML='<span>第 <b>'+Math.min(arr.length+1,10)+'</b> / 10 季</span><span>一共收成 <b>'+sum(arr)+'</b> 籃</span>'+(n===2?'<span>沒送夠的季：<b>'+arr.filter(function(x){return x.v<NEED}).length+'</b></span>':'');box.innerHTML='';box.appendChild(logView(arr,n===2?NEED:0))}
+  function pick(p){if(arr.length>=10)return;var v=harvest(p);arr.push({p:p,v:v});save(st);
+    msg.textContent=p==='A'?'老方法：收成 100 籃。':(v?'新方法成功：收成 150 籃！':'遇到大浪，這一季收成 0 籃……');msg.className='msg '+(v>=NEED?'ok':'no');
+    draw();if(arr.length>=10){pb.a.disabled=pb.b.disabled=true;done()}}
+  function done(){
+    var nb=arr.filter(function(x){return x.p==='B'}).length;
+    var f=el('div','card');
+    if(n===1){f.append(el('p','note','10 季一共收成 <b>'+sum(arr)+'</b> 籃，平均每季 <b>'+(sum(arr)/10)+'</b> 籃。你選了 <b>'+nb+'</b> 次新方法。'));
+      var b=el('button','btn','請平板各試 1,000 季');b.type='button';b.addEventListener('click',function(){st.step=2;save(st);sim()});f.appendChild(b)}
+    else{var fail=arr.filter(function(x){return x.v<NEED}).length;
+      f.append(el('p','note','10 季一共收成 <b>'+sum(arr)+'</b> 籃。<br>沒送夠 100 籃的季：<b>'+fail+'</b> 季。'+(fail?'<br>收成的總數可能比較多，可是那幾季，餐廳一顆蚵仔都沒有拿到。':'<br>每一季都送夠了！')),el('h2',null,'做完了！請停在這一頁，等其他同學。'));
+      st.step=5;save(st)}
+    app.appendChild(f);f.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  app.append(h);if(rule)app.appendChild(rule);app.append(top,pb.g,msg,box);draw();
+  if(arr.length>=10){pb.a.disabled=pb.b.disabled=true;done()}
+}
+function sim(){
+  app.innerHTML='';
+  if(!st.sim){var a=0,b=0,z=0;for(var k=0;k<1000;k++){a+=100;var v=harvest('B');b+=v;if(!v)z++}st.sim={a:a/1000,b:b/1000,z:z};save(st)}
+  var s=st.sim;
+  var c=el('div','card');
+  var g=el('div','stats');g.append(el('div','stat a','<p>A 老方法，1,000 季平均</p><strong>'+s.a+' 籃</strong>'),el('div','stat b','<p>B 新方法，1,000 季平均</p><strong>'+s.b.toFixed(1)+' 籃</strong>'));
+  c.append(g,el('p','note','B 平均起來每季大約 120 籃，比 A 多。<br>因為 10 季裡，大約 8 季拿 150 籃，只有 2 季拿 0 籃。'),
+           el('p','note','可是，1,000 季裡面，B 有 <b>'+s.z+'</b> 季收成 0 籃。<br>平均比較多，不代表每一季都比較多。'));
+  var b=el('button','btn','進入第二輪');b.type='button';b.addEventListener('click',function(){st.step=3;save(st);round(2)});
+  app.append(el('h2',null,'平板幫你各試了 1,000 季'),c,b);
+}
+var S=[intro,function(){round(1)},sim,function(){round(2)},function(){round(2)},function(){round(2)}];(S[st.step]||intro)();
+})();
+</script>

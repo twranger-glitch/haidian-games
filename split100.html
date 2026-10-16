@@ -1,0 +1,381 @@
+<title>分 100 元</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro with a secret colour (red/blue) → rule card (red: the other person may refuse, then both get 0; blue: the other person cannot refuse) → "cut the bills": ten 10-dollar game bills, tap a bill to push it to the other side, live totals → switch roles: plant a flag on 0/10/…/50 = the least I will accept (both groups same) → why did I give that much (all options OK, only the effect is shown) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --red:#B8382E; --redBg:#F8E1DE; --blue:#2369A8; --blueBg:#E3EEF8;
+  --rej:#F6E0DA; --rejLine:#C98A80; --acc:#E2F0E5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.btn.small{font-size:clamp(19px,2.4vw,21px);padding:10px 14px}
+.btn.go{background:var(--rust)}
+.btn:focus-visible,.bill:focus-visible,.post:focus-visible,.opt:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1 1 200px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.hero{display:flex;gap:14px;align-items:center}
+.hero svg.i{width:64px;height:64px;color:var(--ink)}
+/* colour badge */
+.chip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:4px 16px 4px 6px;font-weight:900;font-size:clamp(19px,2.6vw,24px);color:#fff;white-space:nowrap}
+.chip .dot{width:26px;height:26px;border-radius:50%;background:#fff;opacity:.9;border:5px solid rgba(0,0,0,.12)}
+.chip.c0{background:var(--red)} .chip.c1{background:var(--blue)}
+.mine{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;font-size:clamp(19px,2.7vw,25px);font-weight:700}
+/* rule card */
+.rule{border-width:4px;padding:0;overflow:hidden;gap:0}
+.rule.c0{border-color:var(--red)} .rule.c1{border-color:var(--blue)}
+.rule .band{display:flex;align-items:center;gap:10px;padding:8px 16px;color:#fff;font-weight:900;font-size:clamp(19px,2.5vw,22px)}
+.rule.c0 .band{background:var(--red)} .rule.c1 .band{background:var(--blue)}
+.rule .txt{padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.rule .txt p{margin:0;font-size:clamp(20px,2.9vw,26px);line-height:1.75}
+.rule .turn{font-weight:700;color:var(--ink);padding-left:12px}
+.rule.c0 .turn{border-left:6px solid var(--red)} .rule.c1 .turn{border-left:6px solid var(--blue)}
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.path{border-radius:16px;padding:10px 14px;font-size:clamp(19px,2.5vw,23px);line-height:1.55;display:flex;gap:10px;align-items:flex-start}
+.path svg.i{width:30px;height:30px;flex:none;margin-top:2px}
+.path.ok{background:var(--acc)} .path.no{background:var(--rej)}
+.path.one{grid-column:1/-1}
+.mini{display:flex;align-items:center;gap:10px;border-radius:14px;padding:8px 14px;font-weight:700;font-size:clamp(19px,2.5vw,22px)}
+.mini.c0{background:var(--redBg);color:#7E241C} .mini.c1{background:var(--blueBg);color:#17497A}
+.mini .chip{font-size:clamp(19px,2.2vw,20px);padding:2px 12px 2px 4px}
+.mini .chip .dot{width:20px;height:20px;border-width:4px}
+/* bills */
+.hint{display:flex;align-items:center;gap:8px;margin:0;font-weight:700;color:var(--muted);font-size:clamp(19px,2.4vw,22px)}
+.table2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.zone{border:3px solid var(--line);border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.zone.me{background:#F2F6EF}
+.zone.you{background:var(--warm);border-color:#E3CF9F}
+.zone h3{display:flex;align-items:center;gap:8px;margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.3}
+.zone h3 svg.i{width:1.4em;height:1.4em}
+.amt{font-size:clamp(38px,7vw,62px);font-weight:900;line-height:1.05;margin:0;font-variant-numeric:tabular-nums}
+.amt small{font-size:.42em;margin-left:4px}
+.zone.me .amt{color:var(--good)} .zone.you .amt{color:#8A6216}
+.pile{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-content:start}
+.bill,.slot{display:block;width:100%;aspect-ratio:2.1/1;border-radius:9px}
+.bill{font:inherit;border:0;padding:0;background:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s}
+.bill:active{transform:scale(.94)}
+.bill svg{display:block;width:100%;height:100%;filter:drop-shadow(0 2px 1.5px rgba(31,42,46,.22))}
+.bill.inL{animation:inL .32s cubic-bezier(.2,.9,.3,1.2) both}
+.bill.inR{animation:inR .32s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes inR{0%{transform:translateX(-60%) rotate(-8deg);opacity:.2}100%{transform:none;opacity:1}}
+@keyframes inL{0%{transform:translateX(60%) rotate(8deg);opacity:.2}100%{transform:none;opacity:1}}
+.slot{border:2px dashed #C9CFC5}
+.zone.you .slot{border-color:#E0CC9C}
+.bar{display:flex;height:22px;border-radius:999px;overflow:hidden;border:3px solid var(--line);background:var(--card)}
+.bar span{display:block;height:100%;transition:width .2s}
+.bar .m{background:#9FCBA9} .bar .y{background:#E9C774}
+/* flags */
+.track{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.post{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:14px;padding:4px 2px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .15s,border-color .15s,transform .08s;min-width:0}
+.post:active{transform:scale(.95)}
+.post .pole{height:clamp(64px,10vw,92px);width:100%;display:flex;align-items:flex-end;justify-content:center}
+.post .pole svg{height:100%;width:auto}
+.post .hole{width:22px;height:8px;border-radius:50%;background:#D9DDD5;margin-bottom:4px}
+.post .num{white-space:nowrap;font-size:clamp(21px,4vw,36px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.post .num small{font-size:.5em}
+.post .tg{font-size:clamp(14px,1.9vw,18px);font-weight:900;line-height:1.3;min-height:1.3em}
+.post.rej{background:var(--rej);border-color:var(--rejLine)} .post.rej .tg{color:#8E2F22}
+.post.acc{background:var(--acc);border-color:#8DBB98} .post.acc .tg{color:var(--good)}
+.post.on{border-color:var(--gold);border-width:4px;background:#FFF6DF}
+.post.on .tg{color:#7A5A16}
+.post svg.fl.drop{animation:drop .38s cubic-bezier(.2,.9,.3,1.3) both;transform-origin:50% 100%}
+@keyframes drop{0%{transform:translateY(-40%) scaleY(.8);opacity:0}100%{transform:none;opacity:1}}
+.more{margin:0;color:var(--muted);font-size:clamp(19px,2.3vw,21px);font-weight:700;text-align:right}
+@media (prefers-reduced-motion:reduce){.bill.inL,.bill.inR,.post svg.fl.drop{animation:none}}
+/* reasons */
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 16px;cursor:pointer;text-align:left;display:flex;gap:14px;align-items:center;font-size:clamp(19px,2.8vw,25px);font-weight:700;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.opt .ico{flex:none;width:52px;height:52px;border-radius:14px;background:var(--note);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.opt .ico svg.i{width:34px;height:34px}
+.opt.on{border-color:var(--gold);background:var(--warm)}
+.opt.on .ico{background:#F6E2B8}
+.detail{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:baseline;background:var(--card);border:3px solid var(--gold);border-top:0;border-radius:0 0 18px 18px;margin:-16px 0 0;padding:20px 16px 14px}
+.detail .tg{font-weight:900;font-size:clamp(19px,2.4vw,21px);color:#fff;border-radius:10px;padding:2px 10px;white-space:nowrap;background:var(--good)}
+.detail p{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.6}
+/* end */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:12px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;width:36%}
+td b{color:var(--ink)}
+td+td{font-size:clamp(21px,3vw,27px);line-height:1.55}
+td .sub{display:block;font-size:clamp(19px,2.3vw,21px);color:var(--muted)}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .table2{gap:8px}
+  .zone{padding:8px;border-radius:16px}
+  .pile{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .track{gap:4px}
+  .post{border-radius:12px;padding-inline:0}
+  .opt{padding:10px 12px;gap:10px}
+  .opt .ico{width:44px;height:44px}
+  .opt .ico svg.i{width:30px;height:30px}
+  td:first-child{width:40%}
+  th,td{padding:10px 4px}
+  .paths{grid-template-columns:1fr}
+}
+@media (max-width:440px){
+  table,tbody,tr,td{display:block;width:100%!important}
+  tr{border-bottom:2px solid var(--line);padding:8px 0}
+  td{border:0;padding:2px 0}
+  .hero svg.i{width:52px;height:52px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={
+bill:'<rect x="2" y="6" width="20" height="12" rx="2" fill="#DCEBD5"/><circle cx="12" cy="12" r="3" fill="#FBFCF9"/><path d="M5.5 9.5v5M18.5 9.5v5"/>',
+mystery:'<circle cx="12" cy="7.6" r="4.2" fill="#DCE8F0"/><path d="M4.2 21.2c.5-4.6 3.6-7.2 7.8-7.2s7.3 2.6 7.8 7.2z" fill="#DCE8F0"/><path d="M10.5 6.3a1.6 1.6 0 1 1 2.1 1.5c-.4.2-.6.5-.6 1v.3"/><path d="M12 11h.01"/>',
+purse:'<path d="M4.5 10h15l-1.1 9.6a1.8 1.8 0 0 1-1.8 1.6H7.4a1.8 1.8 0 0 1-1.8-1.6z" fill="#F3E3BE"/><path d="M8.3 10a3.7 3.7 0 0 1 7.4 0"/><circle cx="9.8" cy="5.6" r="1.2" fill="#FBF4E2"/><circle cx="14.2" cy="5.6" r="1.2" fill="#FBF4E2"/>',
+flag:'<path d="M6 21.5V3"/><path d="M6 4h12.2l-2.6 4 2.6 4H6z" fill="#F3D27A"/><path d="M3.5 21.5h5"/>',
+swap:'<rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="#DCE8F0"/><path d="M6.5 9h10"/><path d="M14 6.2L16.8 9 14 11.8"/><path d="M17.5 15h-10"/><path d="M10 12.2L7.2 15l2.8 2.8"/>',
+check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+x:'<path d="M7 7l10 10M17 7L7 17"/>',
+worry:'<circle cx="12" cy="12" r="9" fill="#F6E3A1"/><path d="M7.6 9.8l2.4-1.2M16.4 9.8l-2.4-1.2"/><circle cx="9.2" cy="12.2" r=".9" fill="currentColor"/><circle cx="14.8" cy="12.2" r=".9" fill="currentColor"/><path d="M8.6 16.6q1.1-1.2 2.3 0t2.3 0 2.3 0"/>',
+scale:'<path d="M12 4.8v15.7M7.5 20.5h9"/><path d="M4.5 7h15"/><path d="M4.5 7L2.2 13M4.5 7l2.3 6M19.5 7l-2.3 6M19.5 7l2.3 6"/><path d="M1.6 13h5.8a2.9 2.9 0 0 1-5.8 0z" fill="#F3E3BE"/><path d="M16.6 13h5.8a2.9 2.9 0 0 1-5.8 0z" fill="#F3E3BE"/><circle cx="12" cy="4.2" r="1.5" fill="#FBF4E2"/>',
+heart:'<path d="M12 20.2s-7.8-4.7-7.8-10.4A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.8 2.5c0 5.7-7.8 10.4-7.8 10.4z" fill="#F2B8A0"/>',
+shuffle:'<rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="#EEE6F3"/><path d="M6 8.5h1.8c3.8 0 4.6 7 8.4 7H18"/><path d="M6 15.5h1.8c3.8 0 4.6-7 8.4-7H18"/><path d="M16.2 6.7L18 8.5l-1.8 1.8M16.2 13.7L18 15.5l-1.8 1.8"/>'
+};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='split100-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+/* g=0 紅組: the other person may refuse (both get 0). g=1 藍組: the other person cannot refuse. */
+var st=load();
+if(!st||(st.g!==0&&st.g!==1)){st={g:rnd(),step:0,give:0,gave:null,min:null,why:null}}
+if(typeof st.give!=='number'||st.give<0||st.give>10)st.give=0;
+save(st);
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+var COL=[{name:'紅色'},{name:'藍色'}];
+var SHORT=['對方可以拒絕；拒絕的話，兩個人都拿 0 元。','對方只能接受，不能拒絕。'];
+var WHY=[
+ ['worry','怕被拒絕','想到對方可能會說不，就多給一點，讓這筆錢比較穩，不會兩個人都落空。'],
+ ['scale','覺得這樣才公平','照自己心裡「怎樣才公平」的那把尺來分。就算沒有人規定，很多人還是會照這把尺做。'],
+ ['heart','希望對方也對我好','把對方當成以後還會相處的同學，給得好一點，也是在照顧彼此的關係。'],
+ ['shuffle','隨便分的','很快就決定，不用花力氣想。等一下聽聽別人的理由，看看自己會不會想換個分法。']
+];
+var MINS=[0,10,20,30,40,50];
+
+function chip(){return '<span class="chip c'+st.g+'"><span class="dot"></span>'+COL[st.g].name+'</span>'}
+function billSvg(){
+  return '<svg viewBox="0 0 126 60" aria-hidden="true"><rect x="2" y="2" width="122" height="56" rx="8" fill="#DCEBD5" stroke="#1F2A2E" stroke-width="3"/>'+
+   '<rect x="9" y="8" width="108" height="44" rx="5" fill="none" stroke="#7FA98A" stroke-width="2" stroke-dasharray="4 3"/>'+
+   '<circle cx="63" cy="30" r="15" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="2.5"/>'+
+   '<text x="63" y="36.5" text-anchor="middle" font-size="18" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,PingFang TC,sans-serif">10</text>'+
+   '<text x="27" y="35" text-anchor="middle" font-size="14" font-weight="900" fill="#2F5E3C" font-family="Noto Sans TC,PingFang TC,sans-serif">遊戲</text>'+
+   '<text x="99" y="35" text-anchor="middle" font-size="14" font-weight="900" fill="#2F5E3C" font-family="Noto Sans TC,PingFang TC,sans-serif">10元</text></svg>';
+}
+function flagSvg(drop){
+  return '<svg class="fl'+(drop?' drop':'')+'" viewBox="0 0 48 80" aria-hidden="true"><ellipse cx="18" cy="75" rx="13" ry="3.6" fill="#B9A57A"/>'+
+   '<path d="M18 75V8" stroke="#1F2A2E" stroke-width="3.4" stroke-linecap="round"/>'+
+   '<path d="M18 10h25l-6 10 6 10H18z" fill="#F3D27A" stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round"/>'+
+   '<circle cx="18" cy="7" r="3" fill="#FBF4E2" stroke="#1F2A2E" stroke-width="2.2"/></svg>';
+}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','老師手上有 100 元，要請你和班上另一位同學一起分。你會看到一張規則卡，然後決定要怎麼分。'),
+           el('p','lead','這裡的錢<b>全部都是假設的遊戲錢</b>，不是真的錢。怎麼分<b>沒有標準答案</b>，照你自己的想法做就好。'));
+  var m=el('p','mine');m.innerHTML='你拿到的規則卡是：'+chip();
+  app.append(el('div','hero',ic('bill')+ic('mystery')),el('h1',null,'分 100 元'),c,m,
+    el('p','note','每個人的平板自己做，不用看旁邊同學的畫面。'),button('打開規則卡','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: rule card ---------- */
+function rule(){
+  app.innerHTML='';
+  var r=el('div','card rule c'+st.g);
+  r.appendChild(el('div','band','<span>'+COL[st.g].name+'規則卡</span>'));
+  var t=el('div','txt');
+  t.append(el('p',null,'老師給你 <b>100 元</b>遊戲錢，要你和班上另一位同學分。這位同學是誰，你不知道；對方也不知道你是誰。'));
+  if(st.g===0){
+    t.append(el('p','turn','你先提一個分法。對方看了以後，可以「接受」，也可以「拒絕」。'));
+    var p=el('div','paths');
+    p.append(el('div','path ok',ic('check')+'<span>對方<b>接受</b>：兩個人就照你的分法拿錢。</span>'),
+             el('div','path no',ic('x')+'<span>對方<b>拒絕</b>：這 100 元收回去，<b>兩個人都拿 0 元</b>。</span>'));
+    t.append(p);
+  }else{
+    t.append(el('p','turn','你決定怎麼分。對方只能接受，不能拒絕。'));
+    var p2=el('div','paths');
+    p2.append(el('div','path ok one',ic('check')+'<span>你怎麼分，兩個人就照這樣拿錢。</span>'));
+    t.append(p2);
+  }
+  r.appendChild(t);
+  app.append(el('p','case',ic('bill')+'第 1 步　看規則'),el('h2',null,'你要和一位「不知道是誰」的同學分 100 元'),r,
+    el('p','note','真的會配到誰、對方怎麼想，等一下老師會用全班舉手來看。現在你只要決定自己的分法。'),
+    button('開始分錢','btn',function(){go(2)}));
+}
+
+/* ---------- step 2: cut the bills ---------- */
+function split(){
+  app.innerHTML='';
+  var mini=el('div','mini c'+st.g,chip()+'<span>'+SHORT[st.g]+'</span>');
+  var hint=el('p','hint',ic('bill')+'點一張鈔票，就會把它推到另一邊；再點一下可以推回來。');
+  var card=el('div','card');
+  var tbl=el('div','table2');
+  var me=el('div','zone me'),you=el('div','zone you');
+  var hm=el('h3',null,ic('purse')+'我留下'),hy=el('h3',null,ic('mystery')+'給對方');
+  var am=el('p','amt'),ay=el('p','amt');
+  var pm=el('div','pile'),py=el('div','pile');
+  pm.setAttribute('role','group');pm.setAttribute('aria-label','我留下的鈔票');
+  py.setAttribute('role','group');py.setAttribute('aria-label','給對方的鈔票');
+  me.append(hm,am,pm);you.append(hy,ay,py);tbl.append(me,you);
+  var bar=el('div','bar');bar.setAttribute('aria-hidden','true');
+  card.append(hint,tbl,bar);
+  function draw(moved){
+    var k=10-st.give,y=st.give;
+    am.innerHTML=(k*10)+'<small>元</small>';ay.innerHTML=(y*10)+'<small>元</small>';
+    pm.innerHTML='';py.innerHTML='';
+    for(var i=0;i<10;i++){
+      if(i<k){(function(last){
+        var b=el('button','bill'+(moved==='L'&&last?' inL':''),billSvg());b.type='button';
+        b.setAttribute('aria-label','我留下的 10 元鈔票，點一下推給對方');
+        b.addEventListener('click',function(){if(st.give<10){st.give++;save(st);draw('R')}});
+        pm.appendChild(b);
+      })(i===k-1)}else pm.appendChild(el('span','slot'));
+    }
+    for(var j=0;j<10;j++){
+      if(j<y){(function(last){
+        var b=el('button','bill'+(moved==='R'&&last?' inR':''),billSvg());b.type='button';
+        b.setAttribute('aria-label','給對方的 10 元鈔票，點一下推回來');
+        b.addEventListener('click',function(){if(st.give>0){st.give--;save(st);draw('L')}});
+        py.appendChild(b);
+      })(j===y-1)}else py.appendChild(el('span','slot'));
+    }
+    bar.innerHTML='<span class="m" style="width:'+(k*10)+'%"></span><span class="y" style="width:'+(y*10)+'%"></span>';
+  }
+  draw();
+  var btns=el('div','row-btns');
+  btns.append(button('全部拿回來','btn alt small',function(){st.give=0;save(st);draw()}),
+    button('就這樣分','btn go',function(){st.gave=st.give*10;go(3)}));
+  app.append(el('p','case',ic('bill')+'第 2 步　切鈔票'),el('h2',null,'這 100 元，你要怎麼分？'),mini,card,btns);
+}
+
+/* ---------- step 3: switch roles, plant the flag ---------- */
+function flag(){
+  app.innerHTML='';
+  var gave=st.gave||0;
+  var done=el('p','note','你剛剛的分法：自己留 <b>'+(100-gave)+' 元</b>，給對方 <b>'+gave+' 元</b>。'+(st.g===0?'對方會不會接受，等一下全班一起看。':'對方只能收下。'));
+  var c=el('div','card');
+  c.append(el('p','lead','這一次，換成另一位同學拿到 100 元，由他來分給你。你可以<b>接受</b>，也可以<b>拒絕</b>。'));
+  var p=el('div','paths');
+  p.append(el('div','path ok',ic('check')+'<span>你<b>接受</b>：照他的分法，你拿他給你的錢。</span>'),
+           el('div','path no',ic('x')+'<span>你<b>拒絕</b>：<b>你拿 0 元，他也拿 0 元</b>，100 元兩個人都拿不到。</span>'));
+  c.append(p,el('p','lead','點一格插上旗子，意思是：<b>「至少要這麼多，我才接受；比這少，我就拒絕。」</b>'));
+  var tr=el('div','track');tr.setAttribute('role','group');tr.setAttribute('aria-label','至少要收到幾元');
+  var posts=[];
+  MINS.forEach(function(v,k){
+    var b=el('button','post');b.type='button';
+    b.addEventListener('click',function(){var first=st.min!==v;st.min=v;save(st);draw(first?k:-1);nx.disabled=false});
+    tr.appendChild(b);posts.push(b);
+  });
+  var more=el('p','more','對方給 60 元以上，你也一定接受。');
+  var expl=el('p','note warm');
+  c.append(tr,more);
+  function draw(dropAt){
+    MINS.forEach(function(v,k){
+      var b=posts[k],cls='post',tg='';
+      if(st.min!=null){
+        if(v===st.min){cls+=' on';tg='接受'}
+        else if(v<st.min){cls+=' rej';tg='拒絕'}
+        else {cls+=' acc';tg='接受'}
+      }
+      b.className=cls;
+      b.innerHTML='<span class="pole">'+(v===st.min?flagSvg(dropAt===k):'<span class="hole"></span>')+'</span><span class="num">'+v+'<small>元</small></span><span class="tg">'+tg+'</span>';
+      b.setAttribute('aria-pressed',v===st.min?'true':'false');
+      b.setAttribute('aria-label','至少要 '+v+' 元才接受');
+    });
+    if(st.min==null){expl.style.display='none';return}
+    expl.style.display='';
+    var z=st.min,w=z-10;
+    if(z===0)expl.innerHTML=ic('flag')+' 你的旗子插在 <b>0 元</b>：不管對方給你多少，就算一塊錢都不給，你都接受。你一定不會讓兩個人都拿 0 元。';
+    else if(w===0)expl.innerHTML=ic('flag')+' 你的旗子插在 <b>10 元</b>：對方給你 10 元以上，你就接受。如果對方一塊錢都不給，你會拒絕；你本來就拿 0 元，可是對方原本要留下的 100 元也沒了。';
+    else expl.innerHTML=ic('flag')+' 你的旗子插在 <b>'+z+' 元</b>：對方給你 '+z+' 元以上，你就接受。如果對方只給你 '+w+' 元，你會拒絕；這樣你少拿了 '+w+' 元，對方原本要留下的 '+(100-w)+' 元也沒了，兩個人都拿 0 元。';
+  }
+  var nx=button('插好了','btn',function(){if(st.min==null)return;go(4)});
+  nx.disabled=st.min==null;
+  draw(-1);
+  app.append(el('p','case',ic('swap')+'第 3 步　換角色'),el('h2',null,'現在換你是收錢的人。對方給你多少，你才願意接受？'),done,c,expl,nx);
+}
+
+/* ---------- step 4: why ---------- */
+function why(){
+  app.innerHTML='';
+  var gave=st.gave||0;
+  var opts=el('div','opts');
+  var nx=button('下一步','btn',function(){if(st.why==null)return;go(5)});
+  nx.disabled=st.why==null;
+  function draw(){
+    opts.innerHTML='';
+    WHY.forEach(function(o,k){
+      var on=st.why===k;
+      var b=el('button','opt'+(on?' on':''),'<span class="ico">'+ic(o[0])+'</span><span>'+o[1]+'</span>');
+      b.type='button';b.setAttribute('aria-pressed',on?'true':'false');
+      b.addEventListener('click',function(){st.why=k;save(st);draw();nx.disabled=false;try{d2.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}});
+      opts.appendChild(b);
+      if(on){var d=el('div','detail');d.append(el('span','tg','作用'),el('p',null,o[2]));opts.appendChild(d);d2=d}
+    });
+  }
+  var d2=null;draw();
+  app.append(el('p','case',ic('heart')+'第 4 步　想一想'),el('h2',null,'你剛剛分給對方的錢，主要是因為？'),
+    el('p','lead','你剛剛給了對方 <b>'+gave+' 元</b>。每個選項都可以選，沒有對錯；選了以後，會看到這個想法帶來的作用。想改也可以再點別的。'),opts,nx);
+}
+
+/* ---------- step 5: end ---------- */
+function end(){
+  app.innerHTML='';
+  var gave=st.gave||0,w=st.why!=null?WHY[st.why]:null;
+  var t=el('table');
+  [['我的顏色',chip()],
+   ['我給對方','<b>'+gave+' 元</b><span class="sub">我自己留 '+(100-gave)+' 元</span>'],
+   ['換我收錢時','至少要收到 <b>'+(st.min!=null?st.min:0)+' 元</b>才接受'],
+   ['我分錢的理由',w?ic(w[0])+' <b>'+w[1]+'</b>':'—']].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var S=[intro,rule,split,flag,why,end];
+  if(st.step>=3&&st.gave==null)st.step=2;
+  if(st.step>=4&&st.min==null)st.step=3;
+  if(st.step>=5&&st.why==null)st.step=4;
+  (S[st.step]||intro)();
+}
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);location.replace(location.pathname+location.search);location.reload()}});
+render();
+})();
+</script>

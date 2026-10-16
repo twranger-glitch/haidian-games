@@ -1,0 +1,284 @@
+<title>和自己比</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: rate yourself on four fair-stall jobs by tapping a four-axis spider-web chart (or big 1–5 buttons) → your best job compared with yourself → senior A-Hsing appears on the same chart, better at everything → pick your job → a value question with no right answer → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.duo{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:center}
+.chart{width:100%;max-width:460px;margin:0 auto}
+.chart svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.chart .hit{cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;font-size:clamp(19px,2.4vw,22px);font-weight:700;margin:0}
+.legend i{display:inline-block;width:26px;height:14px;border-radius:4px;vertical-align:middle;margin-right:6px}
+.rate{display:flex;flex-direction:column;gap:12px}
+.nm{font-size:clamp(20px,2.6vw,24px);font-weight:900;margin:0 0 4px}
+.nm span{color:var(--sea);margin-left:8px}
+.nums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.num{font:inherit;font-size:clamp(22px,3vw,27px);font-weight:900;min-height:54px;border-radius:14px;border:3px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.num.lit{background:#DCE8F0;border-color:#B9CFDE}
+.num.on{background:var(--sea);border-color:var(--sea);color:#fff}
+.scale{display:flex;justify-content:space-between;font-size:clamp(19px,2.2vw,21px);color:var(--muted);font-weight:700;margin:0}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.alt small{display:block;font-size:.8em;color:var(--muted);font-weight:500}
+.btn:disabled{cursor:default;background:#9AA7AE}
+.btn:focus-visible,.num:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.big{font-size:clamp(44px,9vw,84px);font-weight:900;line-height:1.2;margin:0;text-align:center;color:var(--rust)}
+.say{font-size:clamp(24px,4vw,36px);font-weight:900;text-align:center;margin:0}
+.hint{font-size:clamp(19px,2.4vw,22px);color:var(--muted);margin:0}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td,th{padding:9px 8px;border-bottom:2px solid var(--line);vertical-align:top;text-align:left}
+th{color:var(--muted);font-size:.9em}
+td.n,th.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.k{color:var(--muted);font-weight:700}
+td.v{text-align:right;font-weight:900}
+@media (max-width:760px){.duo{grid-template-columns:1fr}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={p:'<rect x="3.5" y="3" width="13" height="17" rx="2" fill="#F3E3BE"/><path d="M6.5 8h7M6.5 11.5h4.5"/><path d="M13.6 20.4l.6-3 6.3-6.3a1.6 1.6 0 0 1 2.3 2.3l-6.3 6.3z" fill="#FBFCF9"/>',f:'<path d="M12 1.5v21"/><circle cx="12" cy="5.4" r="2.9" fill="#F6EBD2"/><circle cx="12" cy="11.4" r="2.9" fill="#F6EBD2"/><circle cx="12" cy="17.4" r="2.9" fill="#F6EBD2"/>',m:'<path d="M3.5 9.5h3l8-4.5v14l-8-4.5h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z" fill="#DCE8F0"/><path d="M6.5 14.5l1.6 5h2.6l-1.4-4.2"/><path d="M18 9.2a4 4 0 0 1 0 5.6M20.5 6.8a7.4 7.4 0 0 1 0 10.4"/>',c:'<path d="M3.5 6.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6V6.5" fill="#F3E3BE"/><ellipse cx="9.5" cy="6.5" rx="6" ry="2.6" fill="#FBF4E2"/><path d="M8.5 13.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-4.2" fill="#F3E3BE"/><ellipse cx="14.5" cy="13.5" rx="6" ry="2.6" fill="#FBF4E2"/>',s:'<path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="#F3D27A"/>'};
+function ic(k){return '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='radar-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,s:[0,0,0,0],best:null,job:null,val:null};
+if(!st.s||st.s.length!==4)st.s=[0,0,0,0];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(cls,html,fn){var b=el('button',cls,html);b.type='button';b.addEventListener('click',fn);return b}
+
+var J=[{k:'p',n:'畫海報'},{k:'m',n:'喊叫賣'},{k:'c',n:'收錢找錢'},{k:'f',n:'串魚丸'}];
+function jn(i){return ic(J[i].k)+' '+J[i].n}
+function jt(i){return J[i].n}
+var VAL=[
+ {k:'A',t:'每個人都做最拿手的',u:'每個人都做自己最順手的事，攤位賣得最多、也最快。',c:'一整天都做同一件事，可能會做到膩，也學不到新的本事。'},
+ {k:'B',t:'輪流做，每個人都學新的',u:'每個人都能學到新的本事，下次不管缺誰，都有人能接手。',c:'剛學的人做得比較慢，可能賣得比較少，客人也要等比較久。'},
+ {k:'C',t:'先做最拿手的，最後一小時再輪流',u:'前面賣得多，最後也能學一點新的，兩邊都顧到一點。',c:'要先說好什麼時候換、誰和誰換，不然換的時候會手忙腳亂。'},
+ {k:'D',t:'自己想做什麼就做什麼',u:'每個人做自己想做的事，大家比較開心，也比較有幹勁。',c:'可能很多人搶同一件事，有的工作卻沒有人做。'}
+];
+
+/* ---------- 阿星的分數：最拿手那一樣只多 1 格；其他三樣多 3 格，但最多到 6 ---------- */
+function ash(){return st.s.map(function(v,i){return i===st.best?v+1:Math.min(6,v+3)})}
+function gaps(){var a=ash();return a.map(function(v,i){return v-st.s[i]})}
+function minGap(){var g=gaps(),m=Math.min.apply(null,g),r=[];g.forEach(function(v,i){if(v===m)r.push(i)});return r}
+function tops(){var m=Math.max.apply(null,st.s),r=[];st.s.forEach(function(v,i){if(v===m)r.push(i)});return r}
+
+/* ---------- 蜘蛛網圖 ---------- */
+var CX=300,CY=272,R=212,U=R/6;
+var DIR=[[0,-1],[1,0],[0,1],[-1,0]];
+function pt(i,v){return [CX+DIR[i][0]*U*v,CY+DIR[i][1]*U*v]}
+function poly(vals){return vals.map(function(v,i){var p=pt(i,v);return p[0].toFixed(1)+','+p[1].toFixed(1)}).join(' ')}
+function radar(o){
+  /* o: {mine:true, ash:false, six:false, edit:false, star:null} */
+  var h='<svg viewBox="0 0 600 560" role="img" aria-label="'+label(o)+'">';
+  h+='<rect x="0" y="0" width="600" height="560" rx="18" fill="#F6F8F4"/>';
+  var maxRing=o.six?6:5;
+  for(var k=1;k<=maxRing;k++){
+    var ring=[k,k,k,k];
+    h+='<polygon points="'+poly(ring)+'" fill="'+(k===5?'#EEF3EA':'none')+'" fill-opacity="'+(k===5?'.6':'0')+'" stroke="'+(k===6?'#B7862B':'#C9D0C6')+'" stroke-width="'+(k===5||k===6?3:2)+'"'+(k===6?' stroke-dasharray="9 7"':'')+'/>';
+  }
+  for(var i=0;i<4;i++){var e=pt(i,maxRing);h+='<line x1="'+CX+'" y1="'+CY+'" x2="'+e[0]+'" y2="'+e[1]+'" stroke="#C9D0C6" stroke-width="2"/>'}
+  for(k=1;k<=maxRing;k++){h+='<text x="'+(CX+U*k/2+9)+'" y="'+(CY+U*k/2+9)+'" text-anchor="middle" font-size="17" font-weight="700" fill="#7A847F">'+k+'</text>'}
+  if(o.ash){var a=ash();h+='<polygon points="'+poly(a)+'" fill="#A8441A" fill-opacity=".14" stroke="#A8441A" stroke-width="4" stroke-dasharray="12 7" stroke-linejoin="round"/>';
+    a.forEach(function(v,i){var p=pt(i,v);h+='<rect x="'+(p[0]-8)+'" y="'+(p[1]-8)+'" width="16" height="16" fill="#A8441A" transform="rotate(45 '+p[0]+' '+p[1]+')"/>'})}
+  if(o.mine){
+    var anyRated=st.s.some(function(v){return v>0});
+    if(anyRated)h+='<polygon points="'+poly(st.s)+'" fill="#205E86" fill-opacity=".30" stroke="#205E86" stroke-width="5" stroke-linejoin="round"/>';
+  }
+  if(o.edit){
+    for(i=0;i<4;i++)for(k=1;k<=5;k++){var p=pt(i,k),on=st.s[i]===k;
+      if(!on)h+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="8" fill="#fff" stroke="#205E86" stroke-width="3"/>';}
+  }
+  if(o.mine)st.s.forEach(function(v,i){if(v>0){var p=pt(i,v);h+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="13" fill="#205E86" stroke="#fff" stroke-width="3"/>'}});
+  if(o.edit){for(i=0;i<4;i++)for(k=1;k<=5;k++){var pp=pt(i,k);h+='<circle class="hit" data-a="'+i+'" data-v="'+k+'" cx="'+pp[0]+'" cy="'+pp[1]+'" r="17" fill="#000" fill-opacity="0"/>'}}
+  /* labels */
+  var LP=[[CX,22],[560,CY-14],[CX,CY+R+30],[40,CY-14]];
+  for(i=0;i<4;i++){var star=(o.star!=null&&o.star===i);
+    var col=star?'#A8441A':'#1F2A2E',tx=LP[i][0];
+    var G=function(k,x,y,sz){return '<g transform="translate('+x+','+y+') scale('+(sz/24)+')" fill="none" stroke="#1F2A2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[k]+'</g>'};
+    var n=J[i].n.length;
+    if(i===0){var W=30+8+n*25+(star?32:0),x=tx-W/2;
+      if(star){x=Math.max(15,Math.min(585-W,x));h+='<rect x="'+(x-12)+'" y="'+(LP[i][1]-16)+'" width="'+(W+24)+'" height="42" rx="12" fill="#FBF1DC" stroke="#B7862B" stroke-width="3"/>'}
+      h+=G(J[i].k,x,LP[i][1]-10,30);
+      h+='<text x="'+(x+38)+'" y="'+(LP[i][1]+14)+'" font-size="25" font-weight="900" fill="'+col+'">'+J[i].n+'</text>';
+      if(star)h+=G('s',x+38+n*25+8,LP[i][1]-7,24);
+    }else{var TW=n*24+(star?30:0);
+      if(star){var w=Math.max(TW,36)+28,x0=Math.max(3,Math.min(597-w,tx-w/2));tx=x0+w/2;h+='<rect x="'+x0+'" y="'+(LP[i][1]-28)+'" width="'+w+'" height="78" rx="12" fill="#FBF1DC" stroke="#B7862B" stroke-width="3"/>'}
+      h+=G(J[i].k,tx-16,LP[i][1]-24,32);
+      h+='<text x="'+(tx-TW/2)+'" y="'+(LP[i][1]+36)+'" font-size="24" font-weight="900" fill="'+col+'">'+J[i].n+'</text>';
+      if(star)h+=G('s',tx-TW/2+n*24+6,LP[i][1]+16,24);
+    }
+  }
+  return h+'</svg>';
+}
+function label(o){var t='蜘蛛網圖。你的分數：'+J.map(function(j,i){return j.n+(st.s[i]||'還沒打')}).join('、');
+  if(o.ash){var a=ash();t+='。阿星的分數：'+J.map(function(j,i){return j.n+a[i]}).join('、')}return t}
+function legend(withAsh){var l=el('p','legend');l.innerHTML='<span><i style="background:#205E86;opacity:.75"></i>你</span>'+(withAsh?'<span><i style="background:repeating-linear-gradient(90deg,#A8441A 0 8px,transparent 8px 12px);height:6px"></i>阿星</span>':'');return l}
+
+/* ---------- 第 0 步：說明 ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','海佃國小校慶那天，五年13班要在操場擺一個「虱目魚丸串」攤位。攤位上有四種工作：'),
+    el('p','say',jn(0)+'　'+jn(1)+'<br>'+jn(2)+'　'+jn(3)),
+    el('p','lead','等一下，你要先替自己打分數：這四樣工作，你覺得自己做起來怎麼樣？'),
+    el('p','note','這不是考試，也不是和別人比賽。照你自己的感覺打就好，沒有人會說你打得對不對。'));
+  app.append(el('h1',null,'和自己比'),c,button('btn','開始打分數',function(){st.step=1;save(st);go()}));
+}
+
+/* ---------- 第 1 步：畫出自己的形狀 ---------- */
+function rate(){
+  app.innerHTML='';
+  app.append(el('p','case','第 1 步：畫出你的形狀'),el('h2',null,'每一樣工作，你覺得自己做起來幾格？'),
+    el('p','hint','直接點圖上的小圓點，或點右邊（手機在下面）的大按鈕都可以。1 格是「還不太會」，5 格是「很拿手」。'));
+  var duo=el('div','duo');var ch=el('div','chart');var side=el('div','rate');
+  duo.append(ch,side);
+  var nx=button('btn','',function(){if(st.s.every(function(v){return v>0})){st.best=null;st.job=null;st.step=2;save(st);go()}});
+  function paint(){
+    ch.innerHTML=radar({mine:true,edit:true});ch.appendChild(legend(false));
+    side.innerHTML='';
+    J.forEach(function(j,i){
+      var box=el('div');var nm=el('p','nm',jn(i)+'<span>'+(st.s[i]?st.s[i]+' 格':'')+'</span>');
+      var g=el('div','nums');
+      for(var k=1;k<=5;k++)(function(k){
+        var b=button('num'+(st.s[i]===k?' on':(st.s[i]>k?' lit':'')),String(k),function(){setv(i,k)});
+        b.setAttribute('aria-label',j.n+' '+k+' 格');b.setAttribute('aria-pressed',st.s[i]===k?'true':'false');g.appendChild(b);
+      })(k);
+      box.append(nm,g);side.appendChild(box);
+    });
+    var left=st.s.filter(function(v){return v===0}).length;
+    nx.disabled=left>0;nx.textContent=left>0?'還有 '+left+' 樣還沒打分數':'畫好了，下一步';
+  }
+  function setv(i,k){st.s[i]=k;save(st);paint()}
+  ch.addEventListener('click',function(ev){var t=ev.target;if(t&&t.getAttribute&&t.getAttribute('data-a')!=null){setv(+t.getAttribute('data-a'),+t.getAttribute('data-v'))}});
+  var sc=el('p','scale');sc.append(el('span',null,'1 格：還不太會'),el('span',null,'5 格：很拿手'));
+  paint();
+  app.append(duo,sc,nx);
+}
+
+/* ---------- 第 2 步：和自己比 ---------- */
+function self(){
+  app.innerHTML='';
+  var T=tops();
+  if(T.length===1)st.best=T[0];
+  if(st.best!=null&&T.indexOf(st.best)<0)st.best=null;
+  save(st);
+  app.append(el('p','case','第 2 步：和自己比'));
+  var duo=el('div','duo');var ch=el('div','chart');ch.innerHTML=radar({mine:true,star:st.best});ch.appendChild(legend(false));
+  var side=el('div','card');duo.append(ch,side);
+  side.appendChild(el('p','lead','先不要看別人，只看你自己的四樣工作。你的形狀往哪一邊伸得最遠？'));
+  if(T.length>1){
+    var hi=st.s[T[0]];
+    side.appendChild(el('p','note',(T.length===4?'你四樣工作都打了 '+hi+' 格，一樣多！':'你有 '+T.length+' 樣工作同樣是最高的 '+hi+' 格。')+'請從這幾樣裡面，點一個你「比較想做的」。'));
+    var g=el('div','opts');
+    T.forEach(function(i){g.appendChild(button('btn alt'+(st.best===i?' pick':''),jn(i),function(){st.best=i;st.job=null;save(st);self()}))});
+    side.appendChild(g);
+  }
+  app.append(duo);
+  if(st.best!=null){
+    var c=el('div','card');
+    c.append(el('p','say','和你自己比，你最拿手的是：'),el('p','big',jn(st.best)),
+      el('p','lead','和別人比，不一定每一樣都贏；可是和你自己比，你一定有一樣是最拿手的。'));
+    app.append(c,button('btn','下一步：有人來幫忙了',function(){st.step=3;save(st);go()}));
+    if(T.length>1)c.scrollIntoView&&setTimeout(function(){c.scrollIntoView({behavior:'smooth',block:'nearest'})},30);
+  }
+}
+
+/* ---------- 第 3 步：學長阿星出場 ---------- */
+function senior(){
+  app.innerHTML='';
+  var a=ash(),g=gaps();
+  app.append(el('p','case','第 3 步：學長阿星回來幫忙'),
+    el('p','lead','園遊會那天，畢業的學長阿星（故事裡虛構的人物）回來幫忙。他已經讀國中了，以前這四樣工作都做過很多次。橘色虛線就是阿星的形狀，最外面那一圈是 6 格。'));
+  var duo=el('div','duo');var ch=el('div','chart');ch.innerHTML=radar({mine:true,ash:true,six:true,star:null});ch.appendChild(legend(true));
+  var side=el('div','opts');duo.append(ch,side);
+  side.appendChild(el('h2',null,'阿星每一樣都比你強。只有你們兩個顧攤，你要負責哪一樣？'));
+  var fb=el('div','opts');
+  J.forEach(function(j,i){
+    side.appendChild(button('btn alt'+(st.job===i?' pick':''),jn(i)+'<small>你 '+st.s[i]+' 格，阿星 '+a[i]+' 格</small>',function(){st.job=i;save(st);senior();setTimeout(function(){var n=document.getElementById('fb');if(n&&n.scrollIntoView)n.scrollIntoView({behavior:'smooth',block:'start'})},30)}));
+  });
+  app.append(duo);
+  if(st.job!=null){
+    var M=minGap(),d=g[st.job],names=M.map(function(i){return '「'+jt(i)+'」'}).join('和');
+    var t;
+    if(M.length===4){
+      t='你選了「'+jt(st.job)+'」。這一次，你和阿星每一樣都只差 1 格，選哪一樣都差不多。重點是你們兩個分開做不同的事，不要兩個人擠在同一樣。';
+    }else if(M.indexOf(st.job)>=0){
+      t='你選了「'+jt(st.job)+'」。這一樣，阿星只比你多 '+d+' 格，是你們兩個差最少的'+(M.length>1?'（和'+M.filter(function(i){return i!==st.job}).map(function(i){return '「'+jt(i)+'」'}).join('、')+'一樣少）':'')+'。';
+    }else{
+      t='你選了「'+jt(st.job)+'」。這一樣，阿星比你多 '+d+' 格。你們兩個差最少的是'+names+'，只差 '+g[M[0]]+' 格。';
+    }
+    var tb=el('table');tb.innerHTML='<tr><th>工作</th><th class="n">你</th><th class="n">阿星</th><th class="n">阿星多幾格</th></tr>'+J.map(function(j,i){return '<tr'+(M.indexOf(i)>=0?' style="background:#FBF1DC"':'')+'><td>'+jn(i)+'</td><td class="n">'+st.s[i]+'</td><td class="n">'+a[i]+'</td><td class="n">'+g[i]+'</td></tr>'}).join('');
+    var box=el('div','card');box.id='fb';
+    box.append(el('p','note',t),tb,
+      el('p','note','一個好方法是：你去做「你和阿星差最少的那一樣」。因為阿星做那一樣時，比你多出來的最少；把阿星留給他「特別厲害」、比你多出很多的事，兩個人加起來，攤位能做的事最多。'),
+      el('p','note warm','就算有人每一樣都比你強，你還是能幫上大忙。'),
+      el('p','hint','想換也可以，直接點上面別的工作。'),
+      button('btn','下一步',function(){st.step=4;save(st);go()}));
+    app.append(box);
+  }
+}
+
+/* ---------- 第 4 步：價值題 ---------- */
+function value(){
+  app.innerHTML='';
+  app.append(el('p','case','第 4 步：你怎麼想？'),el('h2',null,'園遊會的工作，你覺得要怎麼分？'),
+    el('p','hint','這一題沒有標準答案，每一個都可以選。選了以後會告訴你這個選擇的好處和代價，等一下全班一起討論。'));
+  var g=el('div','opts');
+  VAL.forEach(function(v,i){g.appendChild(button('btn alt'+(st.val===i?' pick':''),v.k+'　'+v.t,function(){st.val=i;save(st);value();setTimeout(function(){var n=document.getElementById('vf');if(n&&n.scrollIntoView)n.scrollIntoView({behavior:'smooth',block:'nearest'})},30)}))});
+  app.append(g);
+  if(st.val!=null){var v=VAL[st.val];
+    var box=el('div','card');box.id='vf';
+    box.append(el('p','note','<b>作用：</b>'+v.u),el('p','note warm','<b>代價：</b>'+v.c),el('p','hint','想換也可以，直接點別的選項。'),
+      button('btn','選好了',function(){st.step=5;save(st);go()}));
+    app.append(box);
+  }
+}
+
+/* ---------- 第 5 步：最後一頁 ---------- */
+function end(){
+  app.innerHTML='';
+  var a=ash();
+  var c=el('div','card');
+  var ch=el('div','chart');ch.style.maxWidth='340px';ch.innerHTML=radar({mine:true,ash:true,six:true,star:st.best});ch.appendChild(legend(true));
+  var t=el('table');
+  var rows=J.map(function(j,i){return [jn(i),st.s[i]+' 格']});
+  rows.push(['和自己比，我最拿手的',st.best!=null?jn(st.best):'—']);
+  rows.push(['和阿星一起顧攤，我負責',st.job!=null?jn(st.job):'—']);
+  rows.push(['工作怎麼分，我選',st.val!=null?VAL[st.val].k+' '+VAL[st.val].t:'—']);
+  rows.forEach(function(r,k){var tr=el('tr');tr.append(el('td',k<4?null:'k',r[0]),el('td',k<4?'n':'v',r[1]));t.appendChild(tr)});
+  c.append(ch,el('p','lead','我替自己打的分數：'),t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+var S=[intro,rate,self,senior,value,end];
+function go(){window.scrollTo(0,0);(S[st.step]||intro)()}
+(S[st.step]||intro)();
+})();
+</script>

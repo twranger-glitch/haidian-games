@@ -1,0 +1,546 @@
+<title>老地圖偵探</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: case story (temple bell + hand-drawn coast map with four candidate places) / place 10 pebbles before any evidence / five rounds: tap a document folder, it opens and a different-looking document slides out (interview note / ledger / old photo / pile of 30 deeds / stone tablet) with a neutral detective note, then move pebbles with + / − so the four confidence bubbles on the map grow or shrink (total always 10) / change table (yours beside a reference split) / one open question with effect/cost only / summary for a show of hands. No scoring, no randomness. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --p0:#205E86; --p1:#8A6418; --p2:#2F7D4F; --p3:#A8441A;
+  --f0:#CFE0EC; --f1:#F3E3BE; --f2:#CFE3C4; --f3:#F2C9B5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:1000px;margin:0 auto;padding-inline:20px;padding-block:22px 36px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.8vw,25px);font-weight:900;margin:0;line-height:1.4;display:flex;align-items:center;gap:8px}
+.lead{font-size:clamp(19px,2.5vw,23px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.3vw,22px);font-weight:700;color:var(--sea);letter-spacing:1px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,2.6vw,22px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.7vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn:focus-visible,.pb:focus-visible,.env:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.4vw,22px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.2vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.7em;height:1.7em}
+.lt{display:inline-flex;align-items:center;justify-content:center;min-width:1.7em;height:1.7em;border-radius:50%;color:#fff;font-weight:900;font-size:.9em;flex:none;line-height:1;background:var(--sea)}
+.dot{display:inline-block;width:.8em;height:.8em;border-radius:50%;flex:none;border:3px solid}
+.c0{color:var(--p0)}.c1{color:var(--p1)}.c2{color:var(--p2)}.c3{color:var(--p3)}
+.dot.c0{background:var(--f0);border-color:var(--p0)}.dot.c1{background:var(--f1);border-color:var(--p1)}.dot.c2{background:var(--f2);border-color:var(--p2)}.dot.c3{background:var(--f3);border-color:var(--p3)}
+
+/* intro */
+.intro{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:center}
+.bellpic{width:150px;height:auto;display:block}
+@media (max-width:560px){.intro{grid-template-columns:96px minmax(0,1fr);gap:12px}.bellpic{width:96px}}
+
+/* progress */
+.prog{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.prog span{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:var(--card);border:3px solid var(--line);color:#9AA19C}
+.prog span svg.i{width:28px;height:28px}
+.prog span.done{color:var(--ink)}
+.prog span.now{border-color:var(--gold);background:var(--warm);color:var(--ink)}
+
+/* round layout */
+.round{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (min-width:900px){.round{grid-template-columns:minmax(0,360px) minmax(0,1fr);align-items:start}}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0}
+.right{display:flex;flex-direction:column;gap:10px;min-width:0}
+
+/* desk + envelope + documents */
+.desk{position:relative;min-height:300px;border-radius:20px;background:#E4D7BC;background-image:repeating-linear-gradient(100deg,rgba(140,106,62,.07) 0 3px,transparent 3px 26px);border:3px solid #CDBB98;display:flex;align-items:center;justify-content:center;padding:16px 12px;overflow:hidden}
+.env{position:absolute;left:50%;top:50%;width:250px;height:190px;margin:-95px 0 0 -125px;z-index:2;cursor:pointer;background:none;border:0;padding:0;-webkit-tap-highlight-color:transparent}
+.env svg{width:100%;height:100%;display:block;overflow:visible}
+.env .flap{transform-box:fill-box;transform-origin:50% 0;transition:transform .35s ease-in}
+.env .str{transition:opacity .2s}
+.desk.closed .doc{opacity:0}
+.desk.opening .env .flap{transform:scaleY(-1)}
+.desk.opening .env .str{opacity:0}
+.desk.opening .env{animation:drop .55s .5s both}
+.desk.opening .doc{animation:rise .95s .3s both}
+@keyframes drop{to{opacity:0;transform:translateY(90px) scale(.92)}}
+@keyframes rise{0%{opacity:0;transform:translateY(60px) scale(.55)}45%{opacity:1;transform:translateY(-36px) scale(.8)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.desk.opening .env,.desk.opening .doc{animation-duration:.01s;animation-delay:0s}.env .flap{transition:none}}
+.tap{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-weight:900;color:#6B5233;font-size:19px;z-index:3;pointer-events:none}
+.desk.opening .tap{opacity:0}
+.doc{width:100%;max-width:330px;position:relative;z-index:1}
+.doc .cap2{margin:8px 0 0;text-align:center;font-size:19px;font-weight:700;color:#6B5233;line-height:1.4}
+/* 1 interview paper */
+.d1 .pp{background:#FFFDF6;border-radius:6px;box-shadow:0 6px 14px rgba(60,40,10,.18);padding:14px 16px 16px 30px;position:relative;background-image:repeating-linear-gradient(transparent 0 35px,#C9DCE8 35px 37px);background-position:0 8px;transform:rotate(-1.5deg)}
+.d1 .pp::before{content:"";position:absolute;left:18px;top:0;bottom:0;width:2px;background:#E9A3A3}
+.d1 .dh{display:flex;gap:10px;align-items:center;line-height:1.35}
+.d1 .dh .av{width:58px;height:58px;flex:none}
+.d1 .dh b{display:block;font-size:21px}
+.d1 .dh span{font-size:19px;color:var(--muted)}
+.d1 .q1{margin:10px 0 0;font-size:clamp(21px,2.6vw,24px);font-weight:900;line-height:1.55}
+/* 2 ledger */
+.d2 .lg{margin:0 auto;width:260px;height:236px;background:#F1E4C4;border:3px solid #8C6A3E;border-radius:4px 10px 10px 4px;box-shadow:0 6px 14px rgba(60,40,10,.2);display:flex;flex-direction:row-reverse;justify-content:flex-start;padding:12px 16px 12px 12px;position:relative;transform:rotate(1deg)}
+.d2 .lg::after{content:"";position:absolute;right:-3px;top:-3px;bottom:-3px;width:16px;border-left:3px dashed #8C6A3E;background:#E6D3AB;border-radius:0 10px 10px 0}
+.vc{display:flex;flex-direction:column;align-items:center}.vc i{font-style:normal;display:block;line-height:1.12}
+.d2 .c{font-size:25px;font-weight:900;padding:2px 9px;border-left:2px solid #C0532C;color:#2E241A}
+.d2 .c.h{color:#A8441A;font-size:21px;margin-right:12px}
+/* 3 photo */
+.d3 .ph{background:#FBF8F0;padding:10px 10px 6px;box-shadow:0 6px 14px rgba(60,40,10,.22);transform:rotate(-2deg);position:relative}
+.d3 .ph svg{width:100%;height:auto;display:block;filter:sepia(.25)}
+.d3 .ph p{margin:6px 0 0;text-align:center;font-weight:900;font-size:20px;color:#5E4A2C;line-height:1.4}
+.d3 .ph::before,.d3 .ph::after{content:"";position:absolute;width:30px;height:30px;background:#3A3027;opacity:.75}
+.d3 .ph::before{left:-4px;top:-4px;clip-path:polygon(0 0,100% 0,0 100%)}
+.d3 .ph::after{right:-4px;bottom:-4px;clip-path:polygon(100% 0,100% 100%,0 100%)}
+/* 4 deeds */
+.d4 .stk{position:relative;width:180px;height:190px;margin:0 auto}
+.d4 .sh{position:absolute;width:150px;height:170px;background:#FBF4E2;border:2px solid #B9A27A;border-radius:4px}
+.d4 .dd{position:absolute;left:0;top:18px;width:150px;height:170px;background:#F6E7C6;border:3px solid #8C6A3E;border-radius:4px;display:flex;flex-direction:row-reverse;gap:10px;padding:12px;box-shadow:0 6px 12px rgba(60,40,10,.2)}
+.d4 .dd .vc{font-size:22px;font-weight:900;color:#2E241A}
+.d4 .seal{position:absolute;left:12px;bottom:12px;width:40px;height:40px;border:3px solid #C0532C;border-radius:6px;color:#C0532C;font-weight:900;font-size:19px;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);line-height:1}
+.d4 .cnt{margin-top:10px;background:#FBFCF9;border:3px solid #CDBB98;border-radius:14px;padding:8px 12px;font-size:20px;font-weight:700;line-height:1.5}
+.d4 .cnt b{font-size:26px;font-variant-numeric:tabular-nums}
+.d4 .cnt .zero{color:var(--rust)}
+/* 5 stele */
+.d5 .st{margin:0 auto;width:170px;height:220px;background:#C9CCC6;background-image:radial-gradient(circle at 30% 20%,rgba(255,255,255,.35) 0 10%,transparent 11%),radial-gradient(circle at 70% 75%,rgba(80,90,80,.12) 0 14%,transparent 15%);border:3px solid #6E7570;border-radius:80px 80px 6px 6px;display:flex;flex-direction:row-reverse;justify-content:center;gap:14px;padding-top:44px;position:relative}
+.d5 .st .vc{font-size:28px;font-weight:900;color:#4A514D;text-shadow:1px 1px 0 rgba(255,255,255,.6),-1px -1px 0 rgba(0,0,0,.25)}
+.d5 .st::after{content:"";position:absolute;left:16px;bottom:10px;width:34px;height:20px;border-radius:50%;background:#A9C27D;opacity:.7}
+.d5 .sb{margin:0 auto;width:220px;height:26px;background:#B5B9B2;border:3px solid #6E7570;border-radius:6px}
+
+/* detective note */
+.dn{background:var(--warm);border:3px solid #E6D3AB;border-radius:18px;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.dn h3 svg.i{width:34px;height:34px}
+.dn .wt{display:flex;align-items:center;gap:6px;font-weight:900;font-size:19px;color:var(--muted);flex-wrap:wrap}
+.dn .wt svg.i{width:26px;height:26px;color:var(--ink)}
+.dn .wt b{color:var(--ink);font-size:21px}
+.dn dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr);gap:0;font-size:clamp(19px,2.2vw,21px);line-height:1.65}
+.dn dt{font-weight:900;white-space:nowrap}
+.dn dd{margin:0 0 6px}
+
+/* map */
+.mapbox{background:#F4EBD6;border:3px solid #CDBB98;border-radius:20px;overflow:hidden}
+.map{width:100%;height:auto;display:block}
+.mapbox.small{width:100%;max-width:600px;margin:0 auto}
+.map .bub,.map .ring{transition:transform .3s ease}
+.map .lbl{transition:transform .3s ease}
+@media (prefers-reduced-motion:reduce){.map .bub,.map .ring,.map .lbl{transition:none}}
+.pool{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:900;font-size:clamp(19px,2.3vw,21px);background:var(--card);border:3px solid var(--line);border-radius:16px;padding:8px 12px;line-height:1.4}
+.pool svg.i{width:32px;height:32px}
+.pool.full{border-color:var(--gold);background:var(--warm)}
+.pool .pebs{display:inline-flex;gap:3px;flex-wrap:wrap}
+.peb{display:inline-block;width:14px;height:11px;border-radius:50%;background:#D3CCBF;border:2px solid #6E6658}
+.pcs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.pcs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pc{background:var(--card);border:3px solid var(--line);border-top-width:8px;border-radius:16px;padding:6px 8px 8px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.pc.c0{border-top-color:var(--p0)}.pc.c1{border-top-color:var(--p1)}.pc.c2{border-top-color:var(--p2)}.pc.c3{border-top-color:var(--p3)}
+.pc .pn{font-weight:900;font-size:clamp(21px,2.4vw,23px);line-height:1.3;color:var(--ink);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pc .pn small{font-size:19px;color:var(--muted);font-weight:700}
+.pc .pr{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.pb{font:inherit;width:46px;height:46px;border-radius:50%;border:3px solid var(--line);background:var(--card);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:none;-webkit-tap-highlight-color:transparent}
+.pb svg.i{width:26px;height:26px}
+.pb.pl{border-color:currentColor}
+.pb[disabled]{opacity:.35;cursor:default}
+.pb.dim{opacity:.45}
+.pc .pv{font-size:clamp(26px,3vw,30px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+.pc .pv{white-space:nowrap}
+.pc .pebs{display:flex;gap:2px;flex-wrap:wrap;min-height:13px}
+.pc .peb{width:12px;height:10px}
+.pcs.off .pb{pointer-events:none;opacity:.3}
+.msg{min-height:0;margin:0;font-size:19px;font-weight:700;color:var(--rust)}
+.msg:empty{display:none}
+
+/* tables */
+.tabs{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@media (min-width:760px){.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.3vw,22px)}
+th,td{padding:7px 4px;border-bottom:2px solid var(--line);text-align:center;vertical-align:middle;line-height:1.35}
+th{font-size:19px}
+th .dot{margin-right:3px;vertical-align:-1px}
+.ct td:first-child,.ct th:first-child{text-align:left;color:var(--muted);font-weight:700;white-space:nowrap}
+.ct td.n{font-weight:900;font-variant-numeric:tabular-nums;font-size:clamp(21px,2.5vw,24px)}
+.ct td.up{background:#DCEBD5}
+.ct td.down{background:#F6DCCF}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:19px;color:var(--muted);font-weight:700;margin:0}
+.legend i{display:inline-block;width:22px;height:16px;border-radius:4px;vertical-align:-2px;margin-right:4px}
+.sum td{text-align:left;vertical-align:top}
+.sum td:first-child{color:var(--muted);font-weight:700;width:48%}
+.sum td b{font-size:1.1em}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.3vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.e{color:var(--good)}.ec dt.c{color:var(--rust)}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0}
+  .sum td:first-child{width:auto}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .desk{min-height:280px}
+  th,td{padding:6px 2px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"mapdet_folder": "<rect x=\"3\" y=\"5.5\" width=\"18\" height=\"15\" rx=\"1.8\" fill=\"#E8D2B0\"/><path d=\"M3 7.3a1.8 1.8 0 0 1 1.8-1.8h14.4A1.8 1.8 0 0 1 21 7.3L12 13z\" fill=\"#F3E3BE\"/><circle cx=\"12\" cy=\"12.4\" r=\"1.6\" fill=\"#FBF4E2\"/><circle cx=\"12\" cy=\"17.2\" r=\"1.6\" fill=\"#FBF4E2\"/><path d=\"M12 14v1.6\"/>", "mapdet_bell": "<path d=\"M12 1.8v2.2\"/><path d=\"M9.6 4h4.8\"/><path d=\"M7 7.6Q7 4.6 12 4.4q5 .2 5 3.2v9.6H7z\" fill=\"#F3D27A\"/><path d=\"M5.4 17.2h13.2v1.6a1 1 0 0 1-1 1H6.4a1 1 0 0 1-1-1z\" fill=\"#FBF4E2\"/><path d=\"M10 8.4v5.6M12.6 8.4v3.6\"/><circle cx=\"12\" cy=\"21.4\" r=\".9\" fill=\"currentColor\"/>", "mapdet_stone": "<ellipse cx=\"7.6\" cy=\"16.4\" rx=\"4.6\" ry=\"3.4\" fill=\"#DCD6CB\"/><ellipse cx=\"16.6\" cy=\"17\" rx=\"4.4\" ry=\"3.1\" fill=\"#E6E1D7\"/><ellipse cx=\"12.2\" cy=\"9.4\" rx=\"4.2\" ry=\"3.2\" fill=\"#D3CCBF\"/><path d=\"M6 15.4q1.2-1 2.6-.8M15 16.2q1-.8 2.4-.6M10.8 8.6q1-.8 2.2-.6\"/>", "mapdet_ledger": "<rect x=\"4\" y=\"2.8\" width=\"15.6\" height=\"18.4\" rx=\"1.4\" fill=\"#F3E3BE\"/><path d=\"M16.8 2.8v18.4\"/><path d=\"M18.2 6v1.4M18.2 11.3v1.4M18.2 16.6V18\"/><path d=\"M13.2 5.6v12.8M9.8 5.6v12.8M6.6 5.6v8\" stroke=\"#C0532C\"/>", "mapdet_photo": "<rect x=\"2.8\" y=\"4.4\" width=\"18.4\" height=\"15.2\" rx=\"1.2\" fill=\"#FBF4E2\" transform=\"rotate(-4 12 12)\"/><path d=\"M5.6 15.4q3-2.6 6.4-1.2t6.4-.6\" transform=\"rotate(-4 12 12)\"/><ellipse cx=\"12\" cy=\"14.6\" rx=\"3\" ry=\"1\" fill=\"#E8D2B0\" transform=\"rotate(-4 12 12)\"/><circle cx=\"16.2\" cy=\"8.6\" r=\"1.4\" fill=\"#F3D27A\"/>", "mapdet_deeds": "<rect x=\"7.4\" y=\"2.4\" width=\"13\" height=\"16.2\" rx=\"1.2\" fill=\"#FBF4E2\"/><rect x=\"5.4\" y=\"4\" width=\"13\" height=\"16.2\" rx=\"1.2\" fill=\"#FBF4E2\"/><rect x=\"3.4\" y=\"5.6\" width=\"13\" height=\"16\" rx=\"1.2\" fill=\"#F3E3BE\"/><path d=\"M12.4 9v9M9.4 9v6\"/><circle cx=\"7\" cy=\"17.6\" r=\"1.7\" fill=\"#F2B8A0\"/>", "mapdet_stele": "<path d=\"M6.2 18.6V7.6a5.8 4.6 0 0 1 11.6 0v11z\" fill=\"#DCDEDA\"/><path d=\"M10.4 8.2v7.8M13.6 8.2v5.6\"/><rect x=\"3.8\" y=\"18.6\" width=\"16.4\" height=\"3\" rx=\".8\" fill=\"#C9CCC6\"/>", "mapdet_weight": "<path d=\"M9.8 7.6a2.2 2.2 0 1 1 4.4 0\"/><path d=\"M7.4 7.6h9.2l3 12.6H4.4z\" fill=\"#DCDEDA\"/>", "mapdet_bubble": "<circle cx=\"9\" cy=\"13.4\" r=\"6.4\" fill=\"#DCE8F0\"/><circle cx=\"18\" cy=\"7.4\" r=\"3.4\" fill=\"#F3E3BE\"/><circle cx=\"18.6\" cy=\"17.8\" r=\"2.2\" fill=\"#CFE3C4\"/>", "talk": "<path d=\"M2.8 5.6a2.2 2.2 0 0 1 2.2-2.2h8.6a2.2 2.2 0 0 1 2.2 2.2v4.6a2.2 2.2 0 0 1-2.2 2.2H8.4L4.8 15.2v-2.9a2.2 2.2 0 0 1-2-2.1z\" fill=\"#DCE8F0\"/><path d=\"M18.6 8.6h.4a2.2 2.2 0 0 1 2.2 2.2v4.4a2.2 2.2 0 0 1-2 2.2v2.8l-3.6-2.8h-4.2a2.2 2.2 0 0 1-2.2-2.2\" fill=\"#F6DCCF\"/>", "magnify": "<circle cx=\"10\" cy=\"10\" r=\"6.4\" fill=\"#DCE8F0\"/><path d=\"M7 9a3.2 3.2 0 0 1 2.6-2.6\"/><path d=\"M15.4 15.4l5.4 5.4\" stroke-width=\"3.4\"/>", "plus": "<path d=\"M12 5v14M5 12h14\"/>", "minus": "<path d=\"M5 12h14\"/>", "hand": "<path d=\"M8.4 21.5v-3.8L5.3 14.3a1.45 1.45 0 0 1 2.1-2l1.3 1.2V6a1.35 1.35 0 0 1 2.7 0v5.2V4.6a1.35 1.35 0 0 1 2.7 0v6.6V5.6a1.35 1.35 0 0 1 2.7 0v6.2-3.4a1.35 1.35 0 0 1 2.7 0v6.8c0 2.8-.9 4.6-2.3 6.3z\" fill=\"#F6E3D6\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"grandpa": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#56605C\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19 26 Q19 12.5 32 13 Q45 12.5 45 26 Q43 19.5 38 18.5 Q32 20.5 26 18.5 Q21 19.5 19 26 Z\" fill=\"#D5D8DC\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M28.5 31.2 Q32 30 35.5 31.2\" fill=\"none\" stroke=\"#B9BEC4\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+var app=document.getElementById('app');
+var KEY='mapdetect-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+
+/* ---------- places (order: 頂寮, 鹽埕, 中洲, 田寮) ---------- */
+var P=[
+  {n:'頂寮',s:'溪口',x:205,y:150,c:'#205E86',f:'#BBD3E4'},
+  {n:'鹽埕',s:'海邊',x:205,y:325,c:'#8A6418',f:'#EFD9A6'},
+  {n:'中洲',s:'河中間',x:365,y:238,c:'#2F7D4F',f:'#C2DDB5'},
+  {n:'田寮',s:'內陸',x:522,y:120,c:'#A8441A',f:'#F0BFA8'}
+];
+var TOTAL=10;
+/* reference split: start, then after each of the 5 documents */
+var REF=[[3,3,2,2],[2,4,2,2],[4,2,3,1],[6,2,1,1],[7,2,1,0],[9,1,0,0]];
+var RL=['開始','1 阿公說','2 帳本','3 老照片','4 契約','5 舊碑'];
+
+/* ---------- the five documents ---------- */
+var EV=[null,
+  {t:'庄裡阿公說的話',k:'talk',w:1,wl:'輕',
+   r:'這是阿公小時候「聽說」的，不是他親眼看到，也沒有寫下來。話傳來傳去，很容易被改掉，所以這份資料比較輕。',
+   e:'鹽埕在海邊，所以鹽埕變得可能一點點。可是只憑一句聽說，其他三個地方也都還有可能。'},
+  {t:'清代的渡船稅帳本',k:'mapdet_ledger',w:3,wl:'重',
+   r:'這是清代官府收稅用的帳本，是當時的人在當時寫下來的；收稅的帳寫錯了會被追究，所以比較可靠。',
+   e:'渡船是載人過河的。在溪口的頂寮、在河中間的中洲，都需要渡船，變得比較可能；在海邊的鹽埕和內陸的田寮，比較用不到過河的渡船，變得比較不可能。'},
+  {t:'一張中洲的老照片',k:'mapdet_photo',w:2,wl:'中等',
+   r:'照片是相機拍下來的，不會亂編，算是可靠；不過它只拍到某一天的樣子。',
+   e:'照片裡的中洲只是一片沙洲，連一間房子都沒有。一個庄要有人住，還要有三艘渡船，所以中洲變得比較不可能。'},
+  {t:'田寮的三十份土地契約',k:'mapdet_deeds',w:2,wl:'中等',
+   r:'契約是買賣土地時寫的，上面通常會寫這塊地在哪一個庄；而且這次找了三十份，不是只找一兩份。',
+   e:'如果田寮以前就叫渡口庄，三十份裡應該會有幾份寫到「渡口」。結果一份都沒有，所以田寮變得比較不可能。找不到「應該找得到」的東西，也是一種證據。'},
+  {t:'一塊舊碑',k:'mapdet_stele',w:3,wl:'很重',
+   r:'碑是以前的人刻在石頭上的，很難被改掉，而且直接寫出了舊名，所以這份資料很重。',
+   e:'頂寮變得非常可能。它也和前面的資料對得起來：頂寮在溪口，正好需要渡船。'}
+];
+
+/* ---------- document drawings ---------- */
+function photoSVG(){
+  return '<svg viewBox="0 0 300 170" role="img" aria-label="老照片：河的中間有一片長滿草的沙洲，上面沒有房子">'+
+  '<rect width="300" height="170" fill="#EADFC6"/>'+
+  '<path d="M0 62Q60 54 120 60T300 56V74H0Z" fill="#B9AA86"/>'+
+  '<path d="M0 74H300V170H0Z" fill="#CDBF9E"/>'+
+  '<path d="M20 96q14-5 28 0M200 140q14-5 28 0M240 92q12-4 24 0M60 150q12-4 24 0" stroke="#EFE6D0" stroke-width="3" fill="none" stroke-linecap="round"/>'+
+  '<path d="M70 120C90 100 200 98 236 116C220 132 100 136 70 120Z" fill="#DCCB9F" stroke="#8C7550" stroke-width="2.5"/>'+
+  '<path d="M104 114l-3-12M110 112l1-14M118 113l-4-10M190 112l2-12M197 113l-2-14M204 114l4-10M150 110l-2-10M156 110l2-11" stroke="#6E6040" stroke-width="2.5" stroke-linecap="round"/>'+
+  '<circle cx="250" cy="30" r="13" fill="#F4EBD6"/>'+
+  '<path d="M30 40q6-5 12 0q6-5 12 0" stroke="#5E5240" stroke-width="2.5" fill="none" stroke-linecap="round"/>'+
+  '</svg>';
+}
+function vc(t,c){return '<span class="vc'+(c?' '+c:'')+'">'+t.split('').map(function(ch){return '<i>'+ch+'</i>'}).join('')+'</span>'}
+function docHTML(i){
+  if(i===1)return '<div class="doc d1"><div class="pp"><div class="dh">'+av('grandpa')+'<div><b>訪談紀錄</b><span>說話的人：庄裡的阿公</span></div></div><p class="q1">「我小時候聽說，渡口庄就在海邊。」</p></div><p class="cap2">阿公是小時候聽大人說的</p></div>';
+  if(i===2)return '<div class="doc d2"><div class="lg">'+vc('渡船稅帳本','c h')+vc('渡口庄','c')+vc('渡船三艘','c')+vc('每年繳稅','c')+'</div><p class="cap2">清代官府收渡船稅的帳本，其中一頁</p></div>';
+  if(i===3)return '<div class="doc d3"><div class="ph">'+photoSVG()+'<p>中洲　很久以前拍的</p></div></div>';
+  if(i===4){var sh='';for(var k=4;k>=1;k--)sh+='<div class="sh" style="left:'+(k*7)+'px;top:'+(18-k*4)+'px"></div>';
+    return '<div class="doc d4"><div class="stk">'+sh+'<div class="dd">'+vc('田寮庄')+vc('土地契約')+'<i class="seal">印</i></div></div><div class="cnt"><div>翻過的契約：<b class="c4">30</b> 份</div><div>寫到「渡口」的：<b class="zero">0</b> 份</div></div></div>';}
+  return '<div class="doc d5"><div class="st">'+vc('頂寮')+vc('舊名渡口')+'</div><div class="sb"></div><p class="cap2">路邊的一塊舊碑</p></div>';
+}
+function envSVG(i){
+  return '<svg viewBox="0 0 250 190" aria-hidden="true">'+
+  '<rect x="4" y="34" width="242" height="152" rx="8" fill="#D9B98A" stroke="#8C6A3E" stroke-width="3"/>'+
+  '<rect x="20" y="138" width="104" height="36" rx="5" fill="#FBF4E2" stroke="#8C6A3E" stroke-width="2.5"/>'+
+  '<text x="72" y="164" text-anchor="middle" font-size="21" font-weight="900" fill="#5E4A2C" font-family="Noto Sans TC,sans-serif">資料 '+i+'</text>'+
+  '<circle cx="125" cy="156" r="9" fill="#FBF4E2" stroke="#8C6A3E" stroke-width="2.5"/>'+
+  '<g class="flap"><path d="M4 36Q4 34 8 34H242Q246 34 246 36L125 116Z" fill="#E6CC9E" stroke="#8C6A3E" stroke-width="3" stroke-linejoin="round"/>'+
+  '<circle cx="125" cy="100" r="9" fill="#FBF4E2" stroke="#8C6A3E" stroke-width="2.5"/></g>'+
+  '<path class="str" d="M125 100C140 112 110 126 125 136C140 146 112 150 125 156" stroke="#A8441A" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+  '</svg>';
+}
+
+/* ---------- map ---------- */
+function R(n){return n>0?12+17*Math.sqrt(n):14}
+function house(x,y){return '<path d="M'+(x-8)+' '+y+'v-9l8-7 8 7v9z" fill="#FBF4E2" stroke="#7A5C3A" stroke-width="2" stroke-linejoin="round"/>'}
+function tree(x,y){return '<circle cx="'+x+'" cy="'+y+'" r="9" fill="#C9DDB0" stroke="#7A5C3A" stroke-width="2"/><circle cx="'+(x+11)+'" cy="'+(y+4)+'" r="7" fill="#C9DDB0" stroke="#7A5C3A" stroke-width="2"/>'}
+var RIV='M640 270C590 262 560 300 500 292C455 286 430 238 365 238C300 238 280 214 240 214C200 214 175 218 140 216';
+function mapSVG(){
+  var ink='#7A5C3A',s='<svg class="map" viewBox="0 0 640 420" role="img" aria-label="虛構的臺江沿岸小地圖：左邊是海和沙洲，一條溪從右邊流到海裡。溪口有頂寮，海邊有鹽埕，溪的中間有中洲，內陸有田寮。">';
+  s+='<rect width="640" height="420" fill="#F4EBD6"/>';
+  // sea
+  s+='<path d="M0 0H128C112 60 140 100 132 150C126 185 150 200 146 216C142 240 120 270 136 310C150 350 128 390 140 420H0Z" fill="#CFE2E6" stroke="'+ink+'" stroke-width="3" stroke-linejoin="round"/>';
+  s+='<path d="M86 30q8-5 16 0M96 110q8-5 16 0M100 280q8-5 16 0M90 360q8-5 16 0M14 300q8-5 16 0M20 80q8-5 16 0" stroke="#8FB3C1" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+  // offshore sand bars
+  s+='<path d="M54 44C68 90 70 140 60 186C56 196 49 192 51 182C59 140 57 92 45 50C44 42 52 38 54 44Z" fill="#EADBB5" stroke="'+ink+'" stroke-width="2.4"/>';
+  s+='<path d="M66 246C80 292 78 340 66 384C62 393 55 390 57 380C68 340 69 296 57 252C55 244 64 240 66 246Z" fill="#EADBB5" stroke="'+ink+'" stroke-width="2.4"/>';
+  s+='<text x="18" y="230" font-size="21" font-weight="700" fill="#7A6A50" font-family="Noto Sans TC,sans-serif">沙洲</text>';
+  s+='<text x="80" y="160" font-size="30" font-weight="900" fill="#5D8597" font-family="Noto Sans TC,sans-serif">海</text>';
+  // fields (田寮)
+  [[452,64,58,40],[516,58,64,40],[584,64,46,42],[456,110,50,38],[566,112,62,40]].forEach(function(r){s+='<rect x="'+r[0]+'" y="'+r[1]+'" width="'+r[2]+'" height="'+r[3]+'" rx="3" fill="#DDE7C4" stroke="'+ink+'" stroke-width="2"/><path d="M'+(r[0]+8)+' '+(r[1]+r[3]/2)+'h'+(r[2]-16)+'" stroke="#A4B887" stroke-width="2" stroke-dasharray="3 5"/>'});
+  // salt pans (鹽埕)
+  for(var a=0;a<3;a++)for(var b=0;b<2;b++)s+='<rect x="'+(168+a*34)+'" y="'+(352+b*28)+'" width="30" height="24" rx="2" fill="#EEF3F4" stroke="'+ink+'" stroke-width="2"/>';
+  // river
+  s+='<path d="'+RIV+'" stroke="#7FA3B2" stroke-width="40" fill="none" stroke-linecap="round"/>';
+  s+='<ellipse cx="365" cy="238" rx="84" ry="44" fill="#7FA3B2"/>';
+  s+='<path d="'+RIV+'" stroke="#BFDCE4" stroke-width="33" fill="none" stroke-linecap="round"/>';
+  s+='<ellipse cx="365" cy="238" rx="80" ry="40" fill="#BFDCE4"/>';
+  s+='<path d="M560 284q8-4 16 0M470 274q8-4 16 0M262 220q8-4 16 0M300 262q8-4 16 0M430 256q8-4 16 0" stroke="#F4FAFB" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+  s+='<ellipse cx="365" cy="240" rx="46" ry="17" fill="#EADBB5" stroke="'+ink+'" stroke-width="2.4"/>';
+  s+='<text x="586" y="324" font-size="28" font-weight="900" fill="#5D8597" font-family="Noto Sans TC,sans-serif">溪</text>';
+  // houses
+  [[178,180],[198,188],[230,182],[248,190],[252,306],[272,312],[356,246],[378,248],[502,170],[526,176]].forEach(function(h){s+=house(h[0],h[1])});
+  s+=tree(310,86)+tree(400,360)+tree(600,200)+tree(440,150);
+  // frame + cartouche
+  s+='<rect x="5" y="5" width="630" height="410" rx="12" fill="none" stroke="'+ink+'" stroke-width="3"/>';
+  s+='<rect x="442" y="364" width="182" height="40" rx="8" fill="#FBF4E2" stroke="'+ink+'" stroke-width="2.4"/>';
+  s+='<text x="533" y="391" text-anchor="middle" font-size="20" font-weight="900" fill="#5E4A2C" font-family="Noto Sans TC,sans-serif">虛構的示意地圖</text>';
+  // bubbles
+  P.forEach(function(p,i){
+    s+='<g transform="translate('+p.x+' '+p.y+')">'+
+      '<circle class="ring" data-i="'+i+'" r="1" fill="none" stroke="#56605C" stroke-width="2.5" stroke-dasharray="6 6" vector-effect="non-scaling-stroke" opacity="0"/>'+
+      '<circle class="bub" data-i="'+i+'" r="1" fill="'+p.f+'" fill-opacity=".62" stroke="'+p.c+'" stroke-width="3.5" vector-effect="non-scaling-stroke"/>'+
+      '<text class="num" data-i="'+i+'" y="11" text-anchor="middle" font-size="32" font-weight="900" fill="'+p.c+'" stroke="#FBFCF9" stroke-width="5" paint-order="stroke" font-family="Noto Sans TC,sans-serif"></text>'+
+      '<g class="lbl" data-i="'+i+'"><text text-anchor="middle" font-size="31" font-weight="900" fill="#1F2A2E" stroke="#F4EBD6" stroke-width="6" paint-order="stroke" stroke-linejoin="round" font-family="Noto Sans TC,sans-serif">'+p.n+'</text></g>'+
+      '</g>';
+  });
+  return s+'</svg>';
+}
+function paintMap(svg,al,prev,blank){
+  P.forEach(function(p,i){
+    var n=al[i],r=R(n);
+    var b=svg.querySelector('.bub[data-i="'+i+'"]');
+    b.style.transform='scale('+r+')';
+    b.setAttribute('fill-opacity',blank||n===0?'0':'.62');
+    b.setAttribute('stroke-dasharray',blank||n===0?'5 6':'none');
+    var t=svg.querySelector('.num[data-i="'+i+'"]');t.textContent=blank?'':n;t.setAttribute('font-size',n>0?36:26);t.setAttribute('y',n>0?13:9);
+    var rg=svg.querySelector('.ring[data-i="'+i+'"]');
+    if(prev&&prev[i]!==n&&!blank){rg.style.transform='scale('+R(prev[i])+')';rg.setAttribute('opacity','1')}else{rg.setAttribute('opacity','0')}
+    svg.querySelector('.lbl[data-i="'+i+'"]').style.transform='translate(0px,'+(-(r+12))+'px)';
+  });
+}
+function pebs(n){var s='';for(var i=0;i<n;i++)s+='<i class="peb"></i>';return s}
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',al:[0,0,0,0],hist:[],opened:{},q:null}}
+var st=load();if(!st||!st.step||!st.al)st=fresh();
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function sum(a){return a.reduce(function(x,y){return x+y},0)}
+
+/* ---------- intro ---------- */
+function bellSVG(){
+  var t='渡口庄眾弟子敬獻',s='<svg class="bellpic" viewBox="0 0 150 230" role="img" aria-label="一口舊大鐘，鐘身刻著：渡口庄眾弟子敬獻">';
+  s+='<path d="M6 14H144" stroke="#7A5C3A" stroke-width="10" stroke-linecap="round"/>';
+  s+='<path d="M75 18V34" stroke="#7A5C3A" stroke-width="5"/><path d="M62 42Q62 30 75 30Q88 30 88 42" fill="none" stroke="#7A5C3A" stroke-width="6"/>';
+  s+='<path d="M28 74Q28 42 75 40Q122 42 122 74V196H28Z" fill="#C9A36A" stroke="#5E4A2C" stroke-width="4" stroke-linejoin="round"/>';
+  s+='<path d="M20 196H130V208Q130 214 124 214H26Q20 214 20 208Z" fill="#B48A50" stroke="#5E4A2C" stroke-width="4"/>';
+  s+='<path d="M28 98H122M28 172H122" stroke="#5E4A2C" stroke-width="3"/>';
+  s+='<rect x="60" y="54" width="30" height="138" rx="3" fill="#E6CF9E" stroke="#5E4A2C" stroke-width="2.5"/>';
+  for(var i=0;i<t.length;i++)s+='<text x="75" y="'+(72+i*16.5)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#3A2A1C" font-family="Noto Sans TC,sans-serif">'+t[i]+'</text>';
+  s+='<circle cx="44" cy="186" r="6" fill="#B48A50" stroke="#5E4A2C" stroke-width="2.5"/><circle cx="106" cy="186" r="6" fill="#B48A50" stroke="#5E4A2C" stroke-width="2.5"/>';
+  return s+'</svg>';
+}
+function intro(){
+  app.append(el('h1',null,'老地圖偵探'));
+  app.append(el('p','case',ic('mapdet_bell')+'一個虛構的案子：大鐘上的庄名'));
+  var c=el('div','card');var g=el('div','intro');g.innerHTML=bellSVG();
+  var tx=el('div');tx.style.display='flex';tx.style.flexDirection='column';tx.style.gap='10px';
+  tx.append(el('p','lead','我們庄裡的廟，掛著一口很舊的大鐘。鐘上只刻了一行字：<b>「渡口庄眾弟子敬獻」</b>，意思是「渡口庄的信徒一起送給廟的」。'),
+    el('p','lead','可是今天的地圖上，已經沒有一個叫「渡口庄」的地方了。<b>它到底是現在的哪一個地方呢？</b>'));
+  g.append(tx);c.append(g);app.append(c);
+  var mb=el('div','mapbox');mb.innerHTML=mapSVG();paintMap(mb.querySelector('svg'),[0,0,0,0],null,true);app.append(mb);
+  app.append(el('p','note','地圖上有四個可能的地方：溪口的<b>頂寮</b>、海邊的<b>鹽埕</b>、河中間的<b>中洲</b>、內陸的<b>田寮</b>。<br>你手上有 <b>10 顆小石子</b>，代表你的把握：你覺得哪裡越可能，就放越多顆，那裡的泡泡就越大。接下來會一份一份打開 <b>5 個文件袋</b>，每看完一份，就重新分一次石子。怎麼分都不會扣分。'));
+  app.append(button('開始分石子','btn',function(){go('r0')}));
+}
+
+/* ---------- a round: open one folder, then move pebbles ---------- */
+function progress(i){
+  var d=el('div','prog');
+  for(var k=1;k<=5;k++){var cls=k<i||(k===i&&st.opened[k])?'done':'';if(k===i)cls+=' now';
+    var sp=el('span',cls,ic(k<i||(k===i&&st.opened[k])?EV[k].k:'mapdet_folder'));sp.setAttribute('aria-label','第 '+k+' 份資料');d.appendChild(sp)}
+  return d;
+}
+function roundPage(i){
+  var opened=i===0||!!st.opened[i];
+  var prev=i>0?st.hist[i-1]:null;
+  if(i===0){
+    app.append(el('p','case',ic('mapdet_stone')+'開始：還沒看任何資料'));
+    app.append(el('h2',null,'先把 10 顆石子分給四個地方。'));
+  }else{
+    var top=el('div','prog-row');top.style.display='flex';top.style.flexDirection='column';top.style.gap='8px';
+    top.append(el('p','case','第 '+i+' 份資料（共 5 份）'),progress(i));app.append(top);
+    app.append(el('h2',null,opened?'第 '+i+' 份：'+EV[i].t:'打開第 '+i+' 個文件袋，看看裡面是什麼。'));
+  }
+  var rd=el('div','round');var L=el('div','left');var Rt=el('div','right');rd.append(L,Rt);app.append(rd);
+
+  if(i===0){
+    var c=el('div','card');
+    c.append(el('h3',null,ic('mapdet_bell')+'現在只知道鐘上的字'));
+    c.append(el('p','lead','一份資料都還沒看，四個地方都有可能。你可以差不多平均分，也可以照你的感覺分。'));
+    c.append(el('p','hint',ic('plus')+'按加號放一顆石子，按減號拿回一顆。'));
+    L.append(c);
+  }else{
+    var desk=el('div','desk'+(opened?'':' closed'));
+    desk.innerHTML=docHTML(i);
+    L.append(desk);
+    if(!opened){
+      var env=el('button','env',envSVG(i));env.type='button';env.setAttribute('aria-label','打開第 '+i+' 個文件袋');
+      desk.append(env,el('div','tap','點文件袋，把它打開'));
+      env.addEventListener('click',function(){
+        if(desk.classList.contains('opening'))return;
+        desk.classList.add('opening');desk.classList.remove('closed');
+        setTimeout(function(){st.opened[i]=true;save(st);render();if(i===4)countUp()},1150);
+      });
+    }else{
+      var dn=el('div','dn');
+      var w='';for(var k=0;k<EV[i].w;k++)w+=ic('mapdet_weight');
+      dn.append(el('h3',null,ic('magnify')+'偵探筆記'));
+      dn.append(el('div','wt','這份資料的份量：'+w+'<b>'+EV[i].wl+'</b>'));
+      dn.append(el('dl',null,'<dt>可靠嗎？</dt><dd>'+EV[i].r+'</dd><dt>哪裡變了？</dt><dd>'+EV[i].e+'</dd>'));
+      L.append(dn);
+    }
+  }
+
+  // map + controls
+  var mb=el('div','mapbox');mb.innerHTML=mapSVG();var svg=mb.querySelector('svg');Rt.append(mb);
+  var pool=el('div','pool');Rt.append(pool);
+  var pcs=el('div','pcs'+(opened?'':' off'));var refs=[];
+  P.forEach(function(p,k){
+    var d=el('div','pc c'+k);
+    d.append(el('div','pn','<span>'+p.n+'</span><small>'+p.s+'</small>'));
+    var row=el('div','pr');
+    var mi=el('button','pb mi',ic('minus'));mi.type='button';mi.setAttribute('aria-label',p.n+' 拿回一顆石子');
+    var v=el('span','pv c'+k);
+    var pl=el('button','pb pl c'+k,ic('plus'));pl.type='button';pl.setAttribute('aria-label',p.n+' 放一顆石子');
+    row.append(mi,v,pl);d.append(row);var pe=el('div','pebs');d.append(pe);
+    mi.addEventListener('click',function(){if(!opened)return;if(st.al[k]<=0){say(p.n+'已經是 0 顆了。');return}st.al[k]--;save(st);upd();say('')});
+    pl.addEventListener('click',function(){if(!opened)return;if(sum(st.al)>=TOTAL){say('10 顆石子都放完了。想讓'+p.n+'變大，先從別的地方按減號拿一顆回來。');return}st.al[k]++;save(st);upd();say('')});
+    refs.push({mi:mi,pl:pl,v:v,pe:pe});pcs.appendChild(d);
+  });
+  Rt.append(pcs);
+  var msg=el('p','msg');Rt.append(msg);
+  if(!opened)Rt.append(el('p','hint',ic('mapdet_folder')+'先打開文件袋，才能調石子。泡泡現在是你上一次的分法。'));
+  function say(t){msg.textContent=t}
+
+  var lab=i===0?'分好了，打開第 1 份資料':i<5?'調好了，打開第 '+(i+1)+' 份資料':'調好了，看看泡泡變化表';
+  var nx=button(lab,'btn',function(){
+    if(!opened||sum(st.al)!==TOTAL)return;
+    st.hist[i]=st.al.slice();st.hist.length=i+1;
+    go(i<5?'r'+(i+1):'table');
+  });
+  app.append(nx);
+  var nh=el('p','hint');app.append(nh);
+
+  function upd(){
+    var left=TOTAL-sum(st.al);
+    paintMap(svg,st.al,prev,false);
+    pool.className='pool'+(left===0?' full':'');
+    pool.innerHTML=ic('mapdet_stone')+(left>0?'<span>還沒放的石子：</span><span class="pebs">'+pebs(left)+'</span><span>'+left+' 顆</span>':'<span>10 顆石子都放好了。</span>');
+    refs.forEach(function(r,k){r.v.textContent=st.al[k];r.pe.innerHTML=pebs(st.al[k]);
+      r.mi.classList.toggle('dim',st.al[k]===0);r.pl.classList.toggle('dim',left===0)});
+    var ok=opened&&left===0;nx.disabled=!ok;
+    nh.style.display=ok||!opened?'none':'';
+    nh.innerHTML=ic('mapdet_stone')+'還有 '+left+' 顆石子沒放，10 顆都放好才能往下。';
+  }
+  upd();
+  if(i>0&&opened&&prev)Rt.insertBefore(el('p','hint',ic('mapdet_bubble')+'虛線圈是你上一次的泡泡大小。不想改也可以直接往下。'),msg);
+}
+function countUp(){
+  var b=app.querySelector('.d4 .c4');if(!b)return;
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var n=0;b.textContent='0';var t=setInterval(function(){n++;b.textContent=n;if(n>=30)clearInterval(t)},40);
+}
+
+/* ---------- change table ---------- */
+function changeTable(rows,cap){
+  var h='<table class="ct"><caption style="caption-side:top;text-align:left;font-weight:900;font-size:clamp(21px,2.6vw,24px);padding-bottom:6px">'+cap+'</caption><thead><tr><th>資料</th>';
+  P.forEach(function(p,k){h+='<th><span class="dot c'+k+'"></span>'+p.n+'</th>'});
+  h+='</tr></thead><tbody>';
+  rows.forEach(function(r,ri){
+    h+='<tr><td>'+RL[ri]+'</td>';
+    r.forEach(function(n,k){var cls='n';if(ri>0){if(n>rows[ri-1][k])cls+=' up';else if(n<rows[ri-1][k])cls+=' down'}h+='<td class="'+cls+'">'+n+'</td>'});
+    h+='</tr>';
+  });
+  return h+'</tbody></table>';
+}
+function tablePage(){
+  app.append(el('p','case',ic('mapdet_bubble')+'看完 5 份資料了'));
+  app.append(el('h2',null,'你的泡泡是怎麼變的？'));
+  var mb=el('div','mapbox small');mb.innerHTML=mapSVG();paintMap(mb.querySelector('svg'),st.hist[5],st.hist[0],false);
+  var tabs=el('div','tabs');
+  var a=el('div','card');a.innerHTML=changeTable(st.hist,'你的泡泡變化表');
+  var b=el('div','card');b.innerHTML=changeTable(REF,'一位偵探的參考分法');
+  tabs.append(a,b);app.append(tabs);
+  app.append(el('p','legend','<span><i style="background:#DCEBD5"></i>比上一次多</span><span><i style="background:#F6DCCF"></i>比上一次少</span><span>數字是石子的顆數，加起來都是 10。</span>'));
+  app.append(el('p','note','參考分法不是標準答案，只是一位偵探的想法。看看你和它：<b>在哪一份資料之後，調得最不一樣？</b>為什麼？<br>還有，參考分法最後還留了 1 顆給鹽埕，沒有全部給頂寮。你覺得為什麼？'));
+  var cap=el('p','hint',ic('mapdet_bubble')+'下面的地圖是你最後的泡泡；虛線圈是你一開始的泡泡。');
+  app.append(cap,mb);
+  app.append(button('下一步','btn',function(){go('q')}));
+}
+
+/* ---------- open question (no right answer) ---------- */
+var QO={
+  A:{n:'馬上全部改成鹽埕',e:'跟上最新的資料，反應很快；如果這份新資料真的很可靠，你一下子就改過來了。',c:'帳本、照片、契約、舊碑這些前面的證據，全部被一份新資料蓋掉；如果它只是聽說，或是寫錯了，你就整個跑錯方向。'},
+  B:{n:'先看這份資料可不可靠，再調一點',e:'新資料有被認真看，舊的證據也沒有丟掉；查清楚它很可靠以後，還可以再多調一些。',c:'要多花時間去查：是誰寫的、什麼時候寫的、為什麼這樣寫；查清楚以前，答案不能說得那麼肯定。'},
+  C:{n:'不理它，因為已經確定是頂寮',e:'不會被一份資料牽著走，想法很穩定，也不用再花時間查。',c:'如果這份資料其實很可靠（例如又找到另一塊碑），你就錯過了改正的機會；覺得「已經確定」，會讓人不再看新的證據。'}
+};
+function qPage(){
+  app.append(el('p','case','最後一題'));
+  app.append(el('h2',null,'如果明天又找到一份資料，說渡口庄在鹽埕，你會怎麼做？'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。選好以後，會看到這個做法的作用和代價，等一下全班一起討論。'));
+  var o=el('div','opts');var bs={};var fb=el('div');
+  ['A','B','C'].forEach(function(k){var b=button('<span class="lt '+k+'">'+k+'</span><span>'+QO[k].n+'</span>','btn alt',function(){st.q=k;save(st);upd()});bs[k]=b;o.appendChild(b)});
+  var nx=button('下一步','btn',function(){if(st.q)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    Object.keys(bs).forEach(function(k){bs[k].classList.toggle('pick',st.q===k);bs[k].setAttribute('aria-pressed',st.q===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.q;
+    if(st.q){var m=QO[st.q];var c=el('div','card');c.append(el('h3',null,'<span class="lt '+st.q+'">'+st.q+'</span>'+m.n));c.append(el('dl','ec','<dt class="e">作用</dt><dd>'+m.e+'</dd><dt class="c">代價</dt><dd>'+m.c+'</dd>'));fb.appendChild(c)}
+  }
+  upd();
+}
+
+/* ---------- end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var h=st.hist,a=h[3][3],b=h[4][3],tian;
+  if(a===0)tian='沒辦法再調小：看第 4 份以前，田寮就已經是 0 顆了';
+  else if(b<a)tian='有：從 '+a+' 顆調成 '+b+' 顆';
+  else if(b===a)tian='沒有：還是 '+a+' 顆';
+  else tian='沒有，反而從 '+a+' 顆調成 '+b+' 顆';
+  var rows=[
+    ['看完第 1 份（阿公說）以後，你給鹽埕幾顆？',h[1][1]+' 顆'],
+    ['最後，你給頂寮幾顆？',h[5][0]+' 顆'],
+    ['看到第 4 份（三十份契約都沒有「渡口」），你有沒有把田寮調小？',tian],
+    ['最後一題你選了',st.q+'　'+QO[st.q].n]
+  ];
+  var c=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);app.append(c);
+  var mb=el('div','mapbox small');mb.innerHTML=mapSVG();paintMap(mb.querySelector('svg'),h[5],null,false);app.append(mb);
+  app.append(el('p','note warm',ic('hand')+' 老師等一下會請大家舉手：看完阿公的話，鹽埕給 5 顆以上的有幾個人？最後頂寮給 10 顆的有幾個人？最後一題選 A、B、C 的各有幾個人？'));
+}
+
+function render(){
+  app.innerHTML='';
+  var s=st.step,m=/^r([0-5])$/.exec(s);
+  if(s==='intro')intro();
+  else if(m&&st.hist.length>=+m[1])roundPage(+m[1]);
+  else if(s==='table'&&st.hist.length===6)tablePage();
+  else if(s==='q'&&st.hist.length===6)qPage();
+  else if(s==='end'&&st.hist.length===6&&st.q)endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

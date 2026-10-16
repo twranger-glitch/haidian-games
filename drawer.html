@@ -1,0 +1,205 @@
+<title>心裡的三個抽屜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro of the three drawers (改做法／改想法／找理由) → 8 feeling sentences, one at a time, each dropped into a drawer with an explanation (some have two fair answers) → pick one sentence from the 找理由 drawer and rewrite it as 改做法 (3 options or type your own) → the rewrite shown big → summary for a show of hands. Wrong drawers never block. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.slip{background:#FFFDF4;border:3px dashed var(--gold);border-radius:18px;padding:clamp(16px,3vw,26px);font-size:clamp(23px,3.6vw,32px);font-weight:900;line-height:1.55;margin:0}
+.chest{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.drw{font:inherit;cursor:pointer;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink);min-width:0}
+.drw svg{width:100%;max-width:150px;height:auto}
+.drw .nm{font-size:clamp(21px,3.4vw,30px);font-weight:900;line-height:1.3}
+.drw .ds{font-size:clamp(15px,2vw,19px);color:var(--muted);line-height:1.4;text-align:center}
+.drw .ct{font-size:clamp(16px,2vw,19px);font-weight:700;color:var(--muted)}
+.drw.pick{border-color:var(--gold);background:#FBF1DC}
+.drw:focus-visible,.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.do .nm{color:var(--good)} .think .nm{color:var(--sea)} .excuse .nm{color:var(--rust)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{opacity:.45;cursor:default}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.note b.do{color:var(--good)} .note b.think{color:var(--sea)} .note b.excuse{color:var(--rust)}
+.legend{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.legend li{font-size:clamp(19px,2.6vw,24px);line-height:1.6}
+.legend b{font-size:1.1em}
+textarea{font:inherit;font-size:clamp(20px,2.8vw,25px);width:100%;border:3px solid var(--line);border-radius:16px;padding:12px 14px;background:#fff;color:var(--ink);resize:vertical;min-height:3.4em}
+textarea:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.old{font-size:clamp(19px,2.6vw,24px);color:var(--muted);text-decoration:line-through;text-decoration-color:var(--rust);margin:0}
+.big{font-size:clamp(34px,6.4vw,62px);font-weight:900;line-height:1.35;margin:0;color:var(--good);text-wrap:balance}
+.arrow{font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--good);margin:0}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.n{text-align:right;font-weight:900;white-space:nowrap}
+@media (max-width:520px){.drw .ds{display:none}.drw{padding:8px 4px 10px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='mind-drawers-v1';
+var D={do:{nm:'改做法',ds:'真的動手，下次做得不一樣',c:'#2F7D4F'},think:{nm:'改想法',ds:'把「我想要」收起來或改掉',c:'#205E86'},excuse:{nm:'找理由',ds:'找一個讓自己舒服的說法',c:'#A8441A'}};
+var ORDER=['do','think','excuse'];
+var S=[
+ {t:'大隊接力沒有被選上當選手，我跟自己說：「反正我本來就不喜歡跑步。」',a:['think'],
+  w:'沒被選上這件事沒有改變，改變的是「我想不想要」。就像狐狸說「我本來就不想吃」，把原本的想要收起來了。',
+  o:['下課找同學一起練習交棒，明年再試一次。','問體育老師：我可以怎麼練，才會跑得更快？','每天放學在操場跑兩圈，記下自己的秒數。']},
+ {t:'作文分數很低，我心想：「一定是老師不喜歡我。」',a:['excuse'],
+  w:'把原因推到別人身上，自己就不用難過了。不過也要公平：想知道真正的原因，可以先看看老師寫的評語，才知道是不是真的這樣。',
+  o:['我先把老師的評語看完，找出一個可以改的地方。','下次寫作文前，先列好三點大綱再開始寫。','下課拿作文去問老師：哪一段最需要加強？']},
+ {t:'數學小考考不好，我決定這個星期每天放學，先把錯的題目訂正兩題。',a:['do'],
+  w:'這句是真的動手去做，讓下一次的結果變好。三種方法裡它最花力氣，但也最能解決問題。',
+  o:['把錯的題目抄在小本子上，考前再做一次。','看不懂的題目，下課去問老師或同學。','每天放學先訂正兩題，再去玩。']},
+ {t:'沒有選上班長，我跟自己說：「當班長很累，沒選上剛好。」',a:['think','excuse'],
+  w:'說「沒選上剛好」，是把原本想當班長的心收起來，像改想法；說「當班長很累」，是幫自己找一個好聽的理由，像找理由。',
+  o:['這學期先從幫忙收作業開始，明年再選一次。','問問同學：大家希望班長做些什麼？','先當小組長，練習帶大家一起做事。']},
+ {t:'打電動打到忘了寫作業，我跟媽媽說：「大家都嘛有忘記的時候。」',a:['excuse'],
+  w:'「大家都會」是一個讓自己舒服的理由。說完心裡比較不難過，可是作業還是沒寫，下次也可能再忘記。',
+  o:['回家先寫作業，寫完再打電動。','請家人晚上七點提醒我：作業寫了沒？','在聯絡簿上把今天的作業寫完一項、勾一項。']},
+ {t:'跟好朋友吵架，我心想：「是他先不理我的。」可是第二天，我還是先去跟他說早安。',a:['do','excuse'],
+  w:'前半句在找理由，後半句真的動手去和好。最後做的是「先說早安」，所以比較像改做法；只看前半句，放進找理由也說得通。',
+  o:['明天一到學校，先去跟他說早安。','下課約他一起去打球，順便把話說開。','寫一張小紙條，跟他說我也有不對的地方。']},
+ {t:'想買的球鞋太貴，存了好久還是不夠，我跟自己說：「其實我現在這雙也還很好穿。」',a:['think'],
+  w:'球鞋的價錢沒有變，變的是「我有多想要它」。改想法不一定不好：如果舊鞋真的還能穿，這樣想也很合理。',
+  o:['每個星期多存一點零用錢，記在小本子上。','跟爸媽商量：多做一項家事，能不能換一點零用錢？','先把現在這雙鞋洗乾淨，等存夠了再買。']},
+ {t:'去台江國家公園戶外教學，我忘了帶水壺，熱得要命，我心想：「都是老師沒有提醒清楚。」',a:['excuse'],
+  w:'把忘記帶水壺的原因推給老師，自己就不用覺得是自己的錯。可是下次出門，還是有可能再忘記。',
+  o:['出門前照著清單檢查書包，水壺放第一個。','前一天晚上就把水壺裝好，放在門口。','跟同學約好，出門前互相提醒：水壺帶了沒？']}
+];
+var EXCUSE_FIRST=[1,4,7];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:'intro',i:0,place:[],rw:null,txt:'',own:false};
+if(!st.place)st.place=[];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,fn,cls){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(s){st.step=s;save(st);render()}
+function drawerSvg(k,open){
+  var c=D[k].c;var dy=open?14:0;
+  return '<svg viewBox="0 0 150 96" aria-hidden="true"><rect x="6" y="6" width="138" height="84" rx="10" fill="#E3E6E0" stroke="#B9BFB6" stroke-width="3"/>'+
+   (open?'<rect x="16" y="'+(70)+'" width="118" height="22" rx="4" fill="#CFD4CC"/>':'')+
+   '<rect x="16" y="'+(18+dy)+'" width="118" height="'+(56)+'" rx="8" fill="'+c+'" opacity=".9"/>'+
+   '<rect x="55" y="'+(40+dy)+'" width="40" height="11" rx="5.5" fill="#FBFCF9"/></svg>';
+}
+function count(k){return st.place.filter(function(x){return x===k}).length}
+function matches(){var n=0;st.place.forEach(function(x,k){if(x&&S[k].a.indexOf(x)>=0)n++});return n}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','心裡兩個想法打架的時候，我們會把它收進一個抽屜，讓它不打架。還記得狐狸和葡萄嗎？'));
+  var ul=el('ul','legend');
+  [['do','「我去拿梯子來摘。」'],['think','「我本來就不想吃。」'],['excuse','「那葡萄一定很酸。」']].forEach(function(x){
+    ul.appendChild(el('li',null,'<b style="color:'+D[x[0]].c+'">'+D[x[0]].nm+'</b>：'+D[x[0]].ds+'。<br>狐狸說：'+x[1]))});
+  c.appendChild(ul);
+  var c2=el('div','card');c2.append(el('p','lead','接下來有 8 句同學心裡的話，一次出現一句。請你把每一句放進你覺得最像的抽屜。'),el('p','lead','放完會告訴你網頁怎麼想；有的句子兩種放法都說得通。放得不一樣也沒關係，一樣可以繼續。'));
+  app.append(el('h1',null,'心裡的三個抽屜'),c,c2,btn('開始',function(){st.i=0;go('sort')}));
+}
+function sort(){
+  if(st.i>=S.length){go('choose');return}
+  var q=S[st.i];app.innerHTML='';
+  app.append(el('p','case','第 '+(st.i+1)+' 句，共 8 句'),el('p','slip',q.t),el('h2',null,'這句話，你要放進哪一個抽屜？'));
+  var ch=el('div','chest');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  ORDER.forEach(function(k){
+    var b=el('button','drw '+k);b.type='button';
+    var mine=st.place[st.i]===k;
+    b.innerHTML=drawerSvg(k,mine)+'<span class="nm">'+D[k].nm+'</span><span class="ds">'+D[k].ds+'</span><span class="ct">已放 '+count(k)+' 句</span>';
+    b.setAttribute('aria-label','放進「'+D[k].nm+'」抽屜');
+    if(mine)b.classList.add('pick');
+    b.addEventListener('click',function(){st.place[st.i]=k;save(st);sort()});
+    ch.appendChild(b);
+  });
+  app.append(ch,fb);
+  var mine=st.place[st.i];
+  if(mine){
+    var hit=q.a.indexOf(mine)>=0;var main=q.a[0];
+    var head;
+    if(q.a.length>1){
+      head=hit?'你放進<b class="'+mine+'">'+D[mine].nm+'</b>。這句兩種分法都說得通：<b class="'+q.a[0]+'">'+D[q.a[0]].nm+'</b>或<b class="'+q.a[1]+'">'+D[q.a[1]].nm+'</b>。'
+              :'你放進<b class="'+mine+'">'+D[mine].nm+'</b>。網頁覺得這句比較像<b class="'+q.a[0]+'">'+D[q.a[0]].nm+'</b>或<b class="'+q.a[1]+'">'+D[q.a[1]].nm+'</b>。';
+    }else{
+      head=hit?'你放進<b class="'+mine+'">'+D[mine].nm+'</b>，和網頁想的一樣。'
+              :'你放進<b class="'+mine+'">'+D[mine].nm+'</b>。網頁覺得這句比較像<b class="'+main+'">'+D[main].nm+'</b>。';
+    }
+    var extra=hit?'':'<br><span style="color:var(--muted)">你也可以想想自己為什麼這樣放，等一下可以說給全班聽。想換抽屜，直接點別的抽屜就好。</span>';
+    fb.append(el('p','note'+(hit?'':' warm'),head+'<br>'+q.w+extra));
+    var nx=btn(st.i<S.length-1?'下一句':'8 句都放好了，下一步',function(){st.i++;save(st);render()});
+    fb.appendChild(nx);
+    try{nx.scrollIntoView({behavior:'smooth',block:'end'})}catch(e){}
+  }
+}
+function candidates(){
+  var c=[];st.place.forEach(function(x,k){if(x==='excuse')c.push(k)});
+  return c;
+}
+function choose(){
+  app.innerHTML='';
+  var c=candidates();var mine=c.length>0;
+  if(!mine)c=EXCUSE_FIRST.slice();
+  if(c.length===1){if(st.rw!==c[0]){st.txt='';st.own=false}st.rw=c[0];go('rewrite');return}
+  app.append(el('h2',null,'最後一個任務：把「找理由」改成「改做法」'),
+    el('p','lead',mine?'這些是你放進「找理由」抽屜的句子。挑一句，我們來幫它改一改。':'你沒有把句子放進「找理由」抽屜。下面這幾句，網頁覺得比較像找理由。挑一句，我們來幫它改一改。'));
+  var g=el('div','opts');
+  c.forEach(function(k){g.appendChild(btn(S[k].t,function(){st.rw=k;st.txt='';st.own=false;go('rewrite')},'btn alt'))});
+  app.appendChild(g);
+}
+function rewrite(){
+  var q=S[st.rw];app.innerHTML='';
+  app.append(el('h2',null,'把這句改成「改做法」'),el('p','slip',q.t),el('p','lead','如果是你，下次可以真的「做」什麼？選一個，或自己寫。'));
+  var g=el('div','opts');var ta;
+  var go2=btn('就是這一句！',function(){var v=(st.txt||'').trim();if(!v)return;st.txt=v;go('show')});
+  function upd(){go2.disabled=!(st.txt||'').trim()}
+  q.o.forEach(function(t){
+    var b=btn(t,function(){st.txt=t;st.own=false;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');ta.value='';upd()},'btn alt');
+    if(!st.own&&st.txt===t)b.classList.add('pick');
+    g.appendChild(b);
+  });
+  ta=document.createElement('textarea');ta.maxLength=60;ta.rows=2;ta.placeholder='或是自己寫：下次我可以……';ta.setAttribute('aria-label','自己寫一句改做法');
+  if(st.own)ta.value=st.txt;
+  ta.addEventListener('input',function(){st.txt=ta.value;st.own=true;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});upd()});
+  app.append(g,el('p','case','或是自己寫'),ta,go2,btn('換一句來改',function(){st.txt='';st.own=false;go('choose')},'btn alt'));
+  upd();
+  if(candidates().length===1&&candidates()[0]===st.rw)app.lastChild.remove();
+}
+function show(){
+  var q=S[st.rw];app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','old',q.t),el('p','arrow','改成「改做法」以後：'),el('p','big',fmt(st.txt)));
+  app.append(el('h2',null,'你改好的句子'),c,el('p','note','事情沒做好，不等於我這個人不好。把「事情」和「人」分開來想，比較敢改。'),
+    btn('看我的抽屜',function(){go('end')}),btn('回去再改一下',function(){go('rewrite')},'btn alt'));
+}
+function fmt(s){s=String(s).trim();return /^(下次|以後|明天|我)/.test(s)?esc(s):'下次我可以：<br>'+esc(s)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(ch){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]})}
+function end(){
+  app.innerHTML='';
+  var t=el('table');
+  ORDER.forEach(function(k){var tr=el('tr');tr.append(el('td',null,'<b style="color:'+D[k].c+'">'+D[k].nm+'</b> 抽屜'),el('td','n',count(k)+' 句'));t.appendChild(tr)});
+  var tr=el('tr');tr.append(el('td',null,'和網頁說明一樣的'),el('td','n',matches()+' 句（共 8 句）'));t.appendChild(tr);
+  var c=el('div','card');c.append(t);
+  var c2=el('div','card');
+  c2.append(el('p','case','我改寫的句子'),el('p','old',st.rw!=null?S[st.rw].t:'—'),el('p','big',st.txt?fmt(st.txt):'—'));
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,c2);
+}
+var R={intro:intro,sort:sort,choose:choose,rewrite:rewrite,show:show,end:end};
+function render(){(R[st.step]||intro)();window.scrollTo(0,0)}
+render();
+})();
+</script>

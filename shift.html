@@ -1,0 +1,315 @@
+<title>園遊會排班表</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story + two helper cards → guess who should do what (no answer shown) → schedule grid round 1 (2 rows × 6 ten-minute slots, tap to toggle poster/skewer, live totals) → result → hint table (who loses fewer skewers per poster) → schedule round 2 starting from round 1 → compare with the best possible 170 → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.who{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.who svg{width:96px;height:96px}
+.who h3{font-size:clamp(24px,3.4vw,30px);margin:0}
+.who p{margin:0;font-size:clamp(19px,2.6vw,23px);line-height:1.6}
+.who .or{color:var(--muted);font-weight:700}
+.who b{font-size:1.15em}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.small{font-size:clamp(19px,2.4vw,21px);padding:10px 14px;text-align:center}
+.btn.go{background:var(--rust)}
+.btn:focus-visible,.cell:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.letter{display:inline-block;min-width:1.6em;font-weight:900;color:var(--sea)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1 1 200px}
+/* schedule grid */
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:clamp(19px,2.4vw,22px);font-weight:700;margin:0;color:var(--muted)}
+.sched{display:grid;grid-template-columns:auto repeat(6,minmax(0,1fr));gap:6px;align-items:stretch}
+.th{font-size:clamp(14px,2vw,19px);font-weight:700;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums;align-self:end}
+.nm{display:flex;flex-direction:column;justify-content:center;padding-right:4px;font-weight:900;font-size:clamp(19px,2.8vw,25px);line-height:1.25}
+.nm small{display:block;font-size:clamp(13px,1.8vw,16px);font-weight:700;color:var(--muted)}
+.cell{font:inherit;color:var(--ink);border:3px solid var(--sea);background:var(--note);border-radius:14px;min-height:84px;padding:4px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:background .12s,border-color .12s,transform .08s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.cell:active{transform:scale(.95)}
+.cell .ic{font-size:clamp(26px,4.2vw,38px);line-height:1.15}
+.cell .tx{font-size:clamp(13px,1.9vw,18px);font-weight:900;line-height:1.2;white-space:nowrap}
+.cell .wd{display:inline}
+.cell.p{border-color:var(--gold);background:var(--warm)}
+.cell.p .tx{color:#7A5A16}
+.cell.f .tx{color:var(--sea)}
+.totals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tot{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 14px;text-align:center}
+.tot .k{font-size:clamp(19px,2.6vw,23px);font-weight:700;color:var(--muted);margin:0}
+.tot .v{font-size:clamp(40px,7.5vw,64px);font-weight:900;margin:0;line-height:1.15;font-variant-numeric:tabular-nums}
+.tot .v small{font-size:.42em;margin-left:4px}
+.tot.poster .v{color:#8A6216}
+.tot.fish .v{color:var(--sea)}
+.tot.ok{border-color:var(--good)}
+.pips{display:flex;justify-content:center;gap:6px;margin-top:4px}
+.pip{width:22px;height:22px;border-radius:6px;border:3px solid var(--gold);background:transparent}
+.pip.on{background:var(--gold)}
+.tot .goal{font-size:clamp(19px,2.4vw,21px);font-weight:700;margin:4px 0 0;color:var(--muted)}
+.tot.ok .goal{color:var(--good)}
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:700}
+td.n{text-align:center;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+th.n{text-align:center}
+td.hl{color:var(--rust);font-weight:900;text-align:center}
+td.ic1{white-space:nowrap}
+.big{font-size:clamp(46px,9vw,80px);font-weight:900;text-align:center;color:var(--sea);margin:0;line-height:1.2;font-variant-numeric:tabular-nums}
+.lose{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;align-items:center}
+.lose .who2{font-weight:900;font-size:clamp(19px,2.6vw,24px);white-space:nowrap}
+.lose .bar{display:flex;flex-wrap:wrap;gap:2px;font-size:clamp(17px,2.6vw,24px);line-height:1.2}
+.lose .bar span{opacity:.9}
+.lose .cap{grid-column:2;margin:-4px 0 6px;font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:500}
+ul.why{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;font-size:clamp(19px,2.6vw,24px);line-height:1.65}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .cell .wd{display:none}
+  .sched{gap:4px}
+  .cell{min-height:72px;border-radius:12px}
+  .card.gridcard{padding:10px}
+  th,td{padding:8px 4px}
+}
+@media (max-width:440px){.two{grid-template-columns:1fr}.who{flex-direction:row;text-align:left;align-items:center}.who svg{width:76px;height:76px;flex:none}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.cell .ic{display:flex}
+.lose .bar svg.i{width:1.3em;height:1.3em}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={p:'<rect x="3.5" y="3" width="13" height="17" rx="2" fill="#F3E3BE"/><path d="M6.5 8h7M6.5 11.5h4.5"/><path d="M13.6 20.4l.6-3 6.3-6.3a1.6 1.6 0 0 1 2.3 2.3l-6.3 6.3z" fill="#FBFCF9"/>',f:'<path d="M12 1.5v21"/><circle cx="12" cy="5.4" r="2.9" fill="#F6EBD2"/><circle cx="12" cy="11.4" r="2.9" fill="#F6EBD2"/><circle cx="12" cy="17.4" r="2.9" fill="#F6EBD2"/>',m:'<path d="M3.5 9.5h3l8-4.5v14l-8-4.5h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z" fill="#DCE8F0"/><path d="M6.5 14.5l1.6 5h2.6l-1.4-4.2"/><path d="M18 9.2a4 4 0 0 1 0 5.6M20.5 6.8a7.4 7.4 0 0 1 0 10.4"/>',c:'<path d="M3.5 6.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6V6.5" fill="#F3E3BE"/><ellipse cx="9.5" cy="6.5" rx="6" ry="2.6" fill="#FBF4E2"/><path d="M8.5 13.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-4.2" fill="#F3E3BE"/><ellipse cx="14.5" cy="13.5" rx="6" ry="2.6" fill="#FBF4E2"/>',s:'<path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="#F3D27A"/>'};
+function ic(k){return '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='shift-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function blank(){return [['f','f','f','f','f','f'],['f','f','f','f','f','f']]}
+var st=load()||{step:0,guess:null,g1:blank(),g2:null,r1:null,r2:null};
+if(!st.g1)st.g1=blank();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+var P=[{name:'小佃',poster:2,fish:20,hair:'#2B2118',shirt:'#205E86'},{name:'阿海',poster:1,fish:15,hair:'#5A3A22',shirt:'#2F7D4F'}];
+var TIMES=['9:00','9:10','9:20','9:30','9:40','9:50'];
+var G=[['A','兩樣都由小佃做，阿海休息'],['B','小佃串魚丸，阿海畫海報'],['C','小佃畫海報，阿海串魚丸'],['D','兩個人各畫一半海報，其他時間都串魚丸']];
+var BEST=170, GOAL=4;
+
+function face(p){
+  return '<svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="46" fill="#EAF1EC"/><path d="M18 96 Q18 66 48 66 Q78 66 78 96 Z" fill="'+p.shirt+'"/><circle cx="48" cy="40" r="22" fill="#F2CFAE"/><path d="M26 38 Q28 14 48 15 Q70 14 70 38 Q60 26 48 27 Q36 26 26 38 Z" fill="'+p.hair+'"/><circle cx="40" cy="42" r="3" fill="#1F2A2E"/><circle cx="56" cy="42" r="3" fill="#1F2A2E"/><path d="M41 51 Q48 56 55 51" fill="none" stroke="#1F2A2E" stroke-width="2.5" stroke-linecap="round"/></svg>';
+}
+function calc(g){
+  var a=0,b=0;g[0].forEach(function(x){if(x==='p')a++});g[1].forEach(function(x){if(x==='p')b++});
+  return {a:a,b:b,p:2*a+b,f:20*(6-a)+15*(6-b)};
+}
+
+/* ---------- step 0: story ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','星期六早上，海佃國小要辦園遊會。五年13班的攤位要賣「虱目魚丸串」，十點整準時開店。'),
+    el('p','lead','現在是早上 9:00，只剩 60 分鐘。老師說：「開店前，至少要畫好 <b style="color:var(--ink)">4 張海報</b>，貼在攤位旁邊，讓大家知道我們賣什麼；魚丸串則是<b style="color:var(--ink)">串得越多越好</b>，才不會一下子就賣光。」'),
+    el('p','lead','這 60 分鐘，有兩位同學可以幫忙：'));
+  var two=el('div','two');
+  P.forEach(function(p){
+    var w=el('div','card who');w.innerHTML=face(p);
+    var t=el('div');t.append(el('h3',null,p.name),el('p',null,'10 分鐘可以'),el('p',null,''+ic("p")+' 畫 <b>'+p.poster+'</b> 張海報'),el('p','or','或是'),el('p',null,''+ic("f")+' 串 <b>'+p.fish+'</b> 串魚丸'));
+    w.appendChild(t);two.appendChild(w);
+  });
+  var n=el('p','note','小佃兩樣都比較快：畫海報的速度是阿海的 2 倍，串魚丸比阿海多 5 串。阿海串魚丸也很快，10 分鐘就能串 15 串。<br>每 10 分鐘，一個人只能做一件事：畫海報，或是串魚丸。');
+  app.append(el('h1',null,'園遊會排班表'),c,two,n,button('開始','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: guess ---------- */
+function guess(){
+  app.innerHTML='';
+  var h=el('h2',null,'小佃兩樣都比較快，他應該做什麼？');
+  var l=el('p','lead','先猜猜看。選完先不公布答案，等一下你自己排班就知道了。');
+  var g=el('div','opts');var nx=button('我猜好了，開始排班','btn',function(){if(st.guess==null)return;st.g1=st.g1||blank();go(2)});
+  nx.disabled=st.guess==null;nx.style.opacity=st.guess==null?.45:1;
+  G.forEach(function(o,k){
+    var b=button('<span class="letter">'+o[0]+'</span>'+o[1],'btn alt'+(st.guess===k?' pick':''),function(){
+      st.guess=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;nx.style.opacity=1;
+    });
+    g.appendChild(b);
+  });
+  app.append(el('p','case','先猜一猜'),h,l,g,nx);
+}
+
+/* ---------- schedule grid (steps 2 and 5) ---------- */
+function schedule(round){
+  var key=round===1?'g1':'g2';
+  if(!st[key])st[key]=round===1?blank():JSON.parse(JSON.stringify(st.g1));
+  var g=st[key];
+  app.innerHTML='';
+  app.appendChild(el('p','case',round===1?'第一次排班':'第二次排班'));
+  app.appendChild(el('h2',null,round===1?'點格子，排好這 60 分鐘誰做什麼，再按「開店！」':'從你第一次的排法開始改，排好再按「開店！」'));
+  app.appendChild(el('p','lead',round===1?'每一格是 10 分鐘。一開始全部都是串魚丸，點一下會變成畫海報，再點一下又變回來。':'第一次你排出海報 '+st.r1.p+' 張、魚丸 '+st.r1.f+' 串。想一想剛剛的提示，看看能不能串得更多。'));
+  var lg=el('p','legend');lg.append(el('span',null,''+ic("f")+' 串魚丸'),el('span',null,''+ic("p")+' 畫海報'),el('span',null,'點格子就會切換'));
+  var card=el('div','card gridcard');card.appendChild(lg);
+  var grid=el('div','sched');grid.setAttribute('role','group');grid.setAttribute('aria-label','排班表');
+  grid.appendChild(el('div','th',''));
+  TIMES.forEach(function(t){grid.appendChild(el('div','th',t))});
+  var tots=el('div','totals');
+  function cellHtml(r,c){
+    var p=P[r],v=g[r][c];
+    return v==='p'?'<span class="ic">'+ic("p")+'</span><span class="tx">'+p.poster+' 張<span class="wd">海報</span></span>':'<span class="ic">'+ic("f")+'</span><span class="tx">'+p.fish+' 串<span class="wd">魚丸</span></span>';
+  }
+  function label(r,c){var v=g[r][c];return P[r].name+' '+TIMES[c]+'：'+(v==='p'?'畫海報':'串魚丸')+'。點一下改成'+(v==='p'?'串魚丸':'畫海報')}
+  var cells=[];
+  P.forEach(function(p,r){
+    var nm=el('div','nm',p.name+'<small>'+p.poster+' 張／'+p.fish+' 串</small>');grid.appendChild(nm);
+    for(var c=0;c<6;c++){(function(c){
+      var b=el('button','cell '+g[r][c],cellHtml(r,c));b.type='button';b.setAttribute('aria-label',label(r,c));
+      b.addEventListener('click',function(){
+        g[r][c]=g[r][c]==='p'?'f':'p';save(st);
+        b.className='cell '+g[r][c];b.innerHTML=cellHtml(r,c);b.setAttribute('aria-label',label(r,c));
+        warn.innerHTML='';updTot();
+      });
+      grid.appendChild(b);cells.push(b);
+    })(c)}
+  });
+  card.appendChild(grid);
+  function updTot(){
+    var s=calc(g);tots.innerHTML='';
+    var tp=el('div','tot poster'+(s.p>=GOAL?' ok':''));
+    tp.append(el('p','k',''+ic("p")+' 海報'),el('p','v',s.p+'<small>張</small>'));
+    var pips=el('div','pips');for(var i=0;i<GOAL;i++)pips.appendChild(el('span','pip'+(i<s.p?' on':'')));
+    tp.append(pips,el('p','goal',s.p>=GOAL?'目標 4 張：夠了':'目標 4 張：還差 '+(GOAL-s.p)+' 張'));
+    var tf=el('div','tot fish');tf.append(el('p','k',''+ic("f")+' 魚丸'),el('p','v',s.f+'<small>串</small>'),el('p','goal','越多越好'));
+    tots.append(tp,tf);
+  }
+  updTot();
+  var warn=el('div','opts');
+  function open(){
+    var s=calc(g);
+    if(round===1){st.r1=s;st.g2=null;st.r2=null}else{st.r2=s}
+    go(round===1?3:6);
+  }
+  var btns=el('div','row-btns');
+  btns.append(button('全部改回串魚丸','btn alt small',function(){for(var r=0;r<2;r++)for(var c=0;c<6;c++)g[r][c]='f';save(st);schedule(round)}),
+    button('開店！','btn go',function(){
+      var s=calc(g);
+      if(s.p<GOAL){
+        warn.innerHTML='';
+        var bx=el('div','row-btns');
+        bx.append(button('回去調整','btn alt small',function(){warn.innerHTML='';try{grid.scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}}),button('照樣開店','btn small',open));
+        warn.append(el('p','note warm','海報還差 '+(GOAL-s.p)+' 張，要不要再調整？'),bx);
+        try{bx.scrollIntoView({behavior:'smooth',block:'end'})}catch(e){}
+      }else open();
+    }));
+  app.append(card,tots,btns,warn);
+}
+
+/* ---------- step 3: first result ---------- */
+function result1(){
+  var s=st.r1;app.innerHTML='';
+  var c=el('div','card');
+  var t=el('div','totals');
+  t.append(el('div','tot poster'+(s.p>=GOAL?' ok':''),'<p class="k">'+ic("p")+' 海報</p><p class="v">'+s.p+'<small>張</small></p>'),el('div','tot fish','<p class="k">'+ic("f")+' 魚丸</p><p class="v">'+s.f+'<small>串</small></p>'));
+  c.appendChild(t);
+  c.appendChild(el('p','lead','小佃畫了 '+s.a+' 格海報、串了 '+(6-s.a)+' 格魚丸；阿海畫了 '+s.b+' 格海報、串了 '+(6-s.b)+' 格魚丸。'));
+  if(s.p<GOAL)c.appendChild(el('p','note warm','這次海報只有 '+s.p+' 張，比老師要的 4 張少了 '+(GOAL-s.p)+' 張。'));
+  app.append(el('p','case','第一次排班的結果'),el('h2',null,'十點到了，攤位開店！'),c,el('p','note','先記住這兩個數字。等一下看一個小提示，你還有一次重新排班的機會。'),button('看提示','btn',function(){go(4)}));
+}
+
+/* ---------- step 4: hint ---------- */
+function hint(){
+  app.innerHTML='';
+  var c=el('div','card');
+  var t=el('table');
+  t.innerHTML='<thead><tr><th>10 分鐘可以</th><th class="n">小佃</th><th class="n">阿海</th><th class="n">小佃比阿海</th></tr></thead><tbody>'+
+   '<tr><td class="ic1">'+ic("p")+' 畫海報</td><td class="n">2 張</td><td class="n">1 張</td><td class="hl">2 倍</td></tr>'+
+   '<tr><td class="ic1">'+ic("f")+' 串魚丸</td><td class="n">20 串</td><td class="n">15 串</td><td class="hl">只多 5 串</td></tr></tbody>';
+  c.append(el('p','lead','小佃兩樣都比阿海快，可是「快多少」不一樣：'),t);
+  var c2=el('div','card');
+  c2.append(el('p','lead','可是，畫海報的時候，就不能串魚丸。畫 1 張海報，會少串幾串呢？'));
+  var lo=el('div','lose');
+  function bar(n){var h='';for(var i=0;i<n;i++)h+='<span>'+ic("f")+'</span>';return h}
+  lo.append(el('div','who2','小佃'),el('div','bar',bar(10)),el('p','cap','10 分鐘畫 2 張，畫 1 張只要 5 分鐘；這 5 分鐘本來可以串 10 串。'),
+            el('div','who2','阿海'),el('div','bar',bar(15)),el('p','cap','10 分鐘畫 1 張，畫 1 張要整整 10 分鐘；這 10 分鐘本來可以串 15 串。'));
+  c2.appendChild(lo);
+  var q=el('p','note warm','<b>想一想：</b>小佃畫 1 張海報，就少串 10 串；阿海畫 1 張海報，就少串 15 串。誰畫海報比較不吃虧？');
+  app.append(el('p','case','小提示'),el('h2',null,'小佃比阿海快多少？'),c,c2,q,button('再排一次班','btn',function(){if(!st.g2)st.g2=JSON.parse(JSON.stringify(st.g1));go(5)}));
+}
+
+/* ---------- step 6: second result ---------- */
+function result2(){
+  var s1=st.r1,s=st.r2;app.innerHTML='';
+  var c=el('div','card');
+  var t=el('table');
+  t.innerHTML='<thead><tr><th></th><th class="n">'+ic("p")+' 海報</th><th class="n">'+ic("f")+' 魚丸</th></tr></thead><tbody>'+
+   '<tr><td>第一次</td><td class="n">'+s1.p+' 張</td><td class="n">'+s1.f+' 串</td></tr>'+
+   '<tr><td>第二次</td><td class="n">'+s.p+' 張</td><td class="n">'+s.f+' 串</td></tr>'+
+   '<tr><td>最多可以</td><td class="n">4 張</td><td class="hl">170 串</td></tr></tbody>';
+  c.appendChild(t);
+  var best=s.p>=GOAL&&s.f>=BEST;
+  var msg=el('div','card');
+  if(best){
+    msg.append(el('p','big','170 串'),el('p','lead','你排到 170 串了。小佃畫 2 格海報，剛好 4 張；其他時間，兩個人都在串魚丸。在海報要 4 張的條件下，這就是兩個人最多能串的數量。'));
+  }else{
+    msg.append(el('p','lead','在海報至少 4 張的條件下，最多可以串到 <b style="color:var(--rust)">170 串</b>：小佃畫 2 格海報（剛好 4 張），其他時間兩個人都串魚丸。'));
+    var ul=el('ul','why');
+    if(s.p<GOAL){
+      ul.appendChild(el('li',null,'這次海報只有 '+s.p+' 張，還差 '+(GOAL-s.p)+' 張。魚丸雖然有 '+s.f+' 串，攤位旁邊的海報卻不夠。'));
+      if(s.b>0)ul.appendChild(el('li',null,'這次阿海畫了 '+s.b+' 格海報。阿海畫 1 張海報要少串 15 串，小佃畫 1 張只要少串 10 串。'));
+    }else{
+      msg.appendChild(el('p','lead','你這次是 '+s.f+' 串，比 170 少了 '+(BEST-s.f)+' 串，差在這裡：'));
+      if(s.p>GOAL)ul.appendChild(el('li',null,'海報畫了 '+s.p+' 張，比需要的 4 張多了 '+(s.p-GOAL)+' 張。多出來的時間拿去串魚丸，至少可以多串 '+(10*(s.p-GOAL))+' 串。'));
+      if(s.b>0)ul.appendChild(el('li',null,'有 '+s.b+' 張海報是阿海畫的。阿海畫 1 張海報要少串 15 串，換給小佃畫只要少串 10 串，每張可以多出 5 串，'+s.b+' 張就是 '+(5*s.b)+' 串。'));
+    }
+    if(ul.children.length)msg.appendChild(ul);
+  }
+  var why=el('p','note','為什麼這樣排最多？小佃畫海報特別快，速度是阿海的 2 倍；串魚丸只比阿海多 5 串。所以海報交給小佃，畫起來最「不吃虧」。阿海也很重要：他整整 60 分鐘都在串魚丸，一共串了 90 串，比全部 170 串的一半還多。少了阿海，攤位只剩 80 串。');
+  app.append(el('p','case','第二次排班的結果'),el('h2',null,'兩次排班，比一比'),c,msg,why,button('下一步','btn',function(){go(7)}));
+}
+
+/* ---------- step 7: end ---------- */
+function end(){
+  app.innerHTML='';
+  var g=st.guess!=null?G[st.guess]:null,s1=st.r1||{p:0,f:0},s2=st.r2||{p:0,f:0};
+  var best=s2.p>=GOAL&&s2.f>=BEST;
+  var t=el('table');
+  [['一開始你猜小佃應該',g?'<b>'+g[0]+'</b>　'+g[1]:'—'],
+   ['第一次排班','海報 <b>'+s1.p+'</b> 張、魚丸 <b>'+s1.f+'</b> 串'],
+   ['第二次排班','海報 <b>'+s2.p+'</b> 張、魚丸 <b>'+s2.f+'</b> 串'],
+   ['海報夠 4 張，又排到 170 串',best?'<b>有</b>':'<b>還沒有</b>']].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var S=[intro,guess,function(){schedule(1)},result1,hint,function(){schedule(2)},result2,end];
+  if(st.step>=3&&!st.r1)st.step=2;
+  if(st.step>=6&&!st.r2)st.step=5;
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

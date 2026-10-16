@@ -1,0 +1,105 @@
+<title>下一次會是 6 點嗎？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: guess what follows five rolls without a 6 → the tablet rolls 3,000 dice and compares "6 after a long drought" with "6 overall" → second experiment: 100 groups of 10 rolls, how many have no 6 at all. Single light classroom look on purpose. */
+:root{
+  --bg:#EFF0EA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D4C8;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.dice{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.d{width:70px;height:70px;border-radius:14px;display:grid;place-items:center;font-size:34px;font-weight:900;background:#FFFFFF;border:4px solid #1F2A2E;color:#1F2A2E}
+.d.q{background:#E6E6DE;border-color:#B9B8AC;color:var(--muted)}
+.d.six{background:#F6E4DC;border-color:var(--rust);color:var(--rust)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left}
+.btn.alt[aria-pressed="true"]{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar{display:grid;grid-template-columns:9.5em 1fr 4em;align-items:center;gap:10px;font-size:clamp(17px,2.4vw,22px);font-weight:700}
+.track{height:30px;background:#E4E6DF;border-radius:10px;overflow:hidden}
+.fill{height:100%;border-radius:10px;transition:width .3s}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+.stream{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(15px,2vw,18px);color:var(--muted);word-break:break-all;line-height:1.5;margin:0;max-height:4.6em;overflow:hidden;letter-spacing:2px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.7vw,25px);line-height:1.7;margin:0}
+.big{font-size:clamp(46px,9vw,80px);font-weight:900;line-height:1.15;margin:0;text-align:center;font-variant-numeric:tabular-nums;color:var(--sea)}
+@media (max-width:480px){.bar{grid-template-columns:1fr 4em}.bar .track{grid-column:1 / -1;grid-row:2}}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='dice-streak-v1';
+var CH=[{k:'a',t:'6 點很久沒出現了，下一次「應該」輪到 6'},{k:'b',t:'6 點正在走霉運，下一次「還是」不會出現'},{k:'c',t:'骰子不記得剛才的事，下一次是 6 的機會，還是 6 次裡大約 1 次'}];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,pick:null,s1:null,s2:null};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function roll(){try{var a=new Uint32Array(1);var lim=4294967296-4294967296%6;do{crypto.getRandomValues(a)}while(a[0]>=lim);return a[0]%6+1}catch(e){return Math.floor(Math.random()*6)+1}}
+function dice(arr){var d=el('div','dice');arr.forEach(function(x){d.appendChild(el('span','d'+(x==='?'?' q':(x===6?' six':'')),String(x)))});return d}
+function pct(a,b){return b?Math.round(a/b*1000)/10:0}
+function bar(label,p,color){var r=el('div','bar');var t=el('div','track');var f=el('div','fill');f.style.background=color;f.style.width=Math.min(100,p*3)+'%';t.appendChild(f);r.append(el('span',null,label),t,el('b',null,p+'%'));return r}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(dice([2,4,1,5,3,'?']),el('p','lead','一顆公平的骰子，已經連續擲了 5 次，都沒有出現 6 點。第 6 次還沒擲。'));
+  var h=el('h2',null,'你最相信哪一句？');
+  var g=el('div','opts');var bs=[];var go=el('button','btn','選好了，請平板來試試看');go.type='button';go.disabled=true;
+  CH.forEach(function(o){var b=el('button','btn alt',o.t);b.type='button';b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){st.pick=o.k;bs.forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');go.disabled=false});bs.push(b);g.appendChild(b)});
+  go.addEventListener('click',function(){st.step=1;save(st);exp1()});
+  app.append(el('h1',null,'下一次會是 6 點嗎？'),c,h,g,go);
+}
+function exp1(){
+  app.innerHTML='';
+  var h=el('h2',null,'實驗一：平板擲 3,000 次骰子。每次遇到「連續 5 次沒有 6 點」，就記下下一次是不是 6。');
+  var c=el('div','card');var stream=el('p','stream');var bars=el('div','bars');var msg=el('p','lead','按下按鈕開始擲。');
+  c.append(stream,bars,msg);
+  var go=el('button','btn','開始擲 3,000 次');go.type='button';
+  function draw(r){bars.innerHTML='';bars.append(bar('全部的結果裡，6 點占',pct(r.all6,r.n),'#205E86'),bar('連續 5 次沒有 6 之後，6 點占',pct(r.six,r.ev),'#A8441A'))}
+  function done1(r){
+    msg.innerHTML='3,000 次裡，遇到「連續 5 次沒有 6 點」<b>'+r.ev+'</b> 次，接下來那一次是 6 點的，大約占 <b>'+pct(r.six,r.ev)+'%</b>。<br>全部的結果裡，6 點大約占 <b>'+pct(r.all6,r.n)+'%</b>。兩個數字差不多，都在 6 分之 1（大約 17%）附近。';
+    if(!document.getElementById('n2')){var nx=el('button','btn','下一個實驗');nx.id='n2';nx.type='button';nx.addEventListener('click',function(){st.step=3;save(st);exp2()});app.appendChild(nx)}}
+  go.addEventListener('click',function(){
+    go.disabled=true;var seq=[],r={n:0,all6:0,ev:0,six:0},txt='';
+    var timer=setInterval(function(){
+      for(var k=0;k<150;k++){var x=roll();var n=seq.length;
+        if(n>=5&&seq[n-1]!==6&&seq[n-2]!==6&&seq[n-3]!==6&&seq[n-4]!==6&&seq[n-5]!==6){r.ev++;if(x===6)r.six++}
+        seq.push(x);r.n++;if(x===6)r.all6++;txt=x+txt}
+      stream.textContent=txt.slice(0,120);draw(r);msg.textContent='已經擲了 '+r.n+' 次。';
+      if(r.n>=3000){clearInterval(timer);st.s1=r;st.step=2;save(st);done1(r);go.disabled=false;go.textContent='再擲 3,000 次'}
+    },60);
+  });
+  app.append(h,c,go);
+  if(st.s1){draw(st.s1);done1(st.s1);go.textContent='再擲 3,000 次'}
+}
+function exp2(){
+  app.innerHTML='';
+  var h=el('h2',null,'實驗二：擲 10 次骰子，完全沒有 6 點，是很稀奇的事嗎？');
+  var c=el('div','card');c.append(dice([1,3,5,2,4,4,1,5,2,3]),el('p','lead','平板擲 100 組，每組擲 10 次，數一數「10 次都沒有 6 點」的有幾組。'));
+  var res=el('div','card');res.style.display='none';
+  var go=el('button','btn','擲 100 組');go.type='button';
+  function show(n){res.style.display='';res.innerHTML='';res.append(el('p','big',n+' / 100 組'),el('p','note','擲 10 次都沒有 6 點，大約每 6 組就有 1 組，一點也不稀奇。<br>所以「6 點很久沒出現了」，常常只是平常會發生的事，不代表 6 點「快要出現」。'))}
+  function fin(){if(!document.getElementById('fin')){var f=el('div','card');f.id='fin';var pk=CH.filter(function(o){return o.k===st.pick})[0];f.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),el('p','lead','你一開始選的是：'+(pk?pk.t:'—')));app.appendChild(f)}}
+  go.addEventListener('click',function(){var n=0;for(var g=0;g<100;g++){var none=true;for(var k=0;k<10;k++)if(roll()===6)none=false;if(none)n++}st.s2=n;st.step=4;save(st);show(n);go.textContent='再擲 100 組';fin()});
+  app.append(h,c,go,res);
+  if(st.s2!=null){show(st.s2);fin();go.textContent='再擲 100 組'}
+}
+var S=[intro,exp1,exp1,exp2,exp2];(S[st.step]||intro)();
+})();
+</script>

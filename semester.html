@@ -1,0 +1,295 @@
+<title>一學期日曆</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: three pairs of school items (cheap vs sturdy). For each: pick one to buy + guess which is cheaper over a semester → two 20-week calendars run side by side (crypto decides breakdown weeks) → totals and cost per week → next pair. Then one closing question and a summary for show of hands. No right answers on choices. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --used:#CFE3D4; --empty:#F1F3EF;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:920px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:pretty}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;min-width:0}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.ghost{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.two .btn{display:flex;flex-direction:column;justify-content:flex-start;padding:14px 10px}
+.item{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.item svg{width:84px;height:84px}
+.item .nm{font-size:clamp(20px,2.8vw,25px);font-weight:900}
+.item .pr{font-size:clamp(28px,4.6vw,40px);font-weight:900;color:var(--rust);line-height:1.2}
+.item .ds{font-size:clamp(17px,2.2vw,20px);color:var(--muted);font-weight:500;line-height:1.5}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.formula{font-size:clamp(19px,2.6vw,24px);font-weight:900;text-align:center;color:var(--sea);margin:0}
+/* calendar */
+.cals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cal h3{margin:0;font-size:clamp(20px,2.6vw,24px);font-weight:900;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.cal h3 small{font-size:.8em;color:var(--muted);font-weight:700}
+.tag{font-size:16px;background:var(--gold);color:#fff;border-radius:999px;padding:1px 10px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.wk{aspect-ratio:1;border-radius:8px;background:var(--empty);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:clamp(12px,1.6vw,15px);font-weight:700;color:var(--muted);position:relative;font-variant-numeric:tabular-nums}
+.wk.u{background:var(--used);border-color:#9FC7AA;color:var(--good)}
+.wk.x{background:#FBE3D6;border-color:var(--rust)}
+.wk.x svg{width:100%;height:100%}
+.wk.now{outline:3px solid var(--sea);outline-offset:1px}
+.stat{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:clamp(19px,2.4vw,22px);font-weight:700;margin:0}
+.stat b{color:var(--rust);font-size:1.2em;font-variant-numeric:tabular-nums}
+.say{min-height:2.2em;font-size:clamp(19px,2.4vw,22px);font-weight:900;margin:0;color:var(--good)}
+.say.bad{color:var(--rust)}
+.log{margin:0;padding-left:1.2em;font-size:clamp(17px,2.2vw,20px);color:var(--muted)}
+.wkno{font-size:clamp(26px,4vw,36px);font-weight:900;color:var(--sea);margin:0;text-align:center;font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top;text-align:left}
+th{color:var(--muted);font-size:.9em}
+td.n{font-weight:900;font-variant-numeric:tabular-nums}
+td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+tr.me td{background:#FBF1DC}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 200px}
+@media (max-width:640px){.cals{grid-template-columns:1fr}.three{grid-template-columns:1fr}}
+@media (max-width:420px){.item svg{width:64px;height:64px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='semester-calendar-v1';
+var WEEKS=20;
+// k: [min,max] breakdowns in one semester
+var G=[
+ {name:'自動鉛筆',unit:'支',pic:'pencil',
+  a:{nm:'便宜的自動鉛筆',p:20,ds:'塑膠筆管，筆頭容易卡住或斷掉，大約一個月就可能壞。',k:[3,5],ev:'壞了！再買一支',end:'筆頭又開始卡卡的，不知道還能撐多久。'},
+  b:{nm:'耐用的自動鉛筆',p:80,ds:'金屬筆頭，比較不容易壞，可以用好幾個學期。',k:[0,1],ev:'弄丟了！再買一支',end:'還很好寫，下學期可以繼續用。'},
+  story:'開學前，你在海佃路上的文具店挑自動鉛筆。'},
+ {name:'雨傘',unit:'把',pic:'umbrella',
+  a:{nm:'便宜的雨傘',p:100,ds:'傘骨比較細，颳大風的時候容易開花、折斷。',k:[2,3],ev:'壞了！再買一把',end:'傘骨有一根歪歪的，下次颳風就難說了。'},
+  b:{nm:'耐用的雨傘',p:300,ds:'傘骨比較粗、比較牢，可以撐好幾年。',k:[0,1],ev:'忘在公車上了！再買一把',end:'還很牢，下學期可以繼續用。'},
+  story:'安南區的午後雷陣雨說來就來，你要買一把上學用的雨傘。'},
+ {name:'水壺',unit:'個',pic:'bottle',
+  a:{nm:'便宜的水壺',p:60,ds:'塑膠蓋子容易裂，摔到地上就可能漏水。',k:[2,4],ev:'壞了！再買一個',end:'蓋子有一點裂痕，不知道還能用多久。'},
+  b:{nm:'耐用的水壺',p:250,ds:'不鏽鋼、蓋子比較厚，不小心摔到也不容易壞。',k:[0,1],ev:'弄丟了！再買一個',end:'只有一點刮痕，下學期可以繼續用。'},
+  story:'體育課、戶外教學都要帶水，你要買一個新水壺。'}
+];
+var GUESS=['便宜的比較省','貴的比較省','差不多'];
+var FINAL=[
+ ['它能用多久？','這個問題幫你看到「以後還要再買幾次」，標價上看不到的部分就露出來了。'],
+ ['我會用幾次？','這個問題幫你想到：如果只會用一兩次，貴的再耐用也用不到；如果天天用，耐用就很重要。'],
+ ['壞了好不好修？','這個問題幫你想到：有些東西壞了換個零件就好（像換筆芯、換傘骨），不一定要整個重買。'],
+ ['先看標價就好','這樣最快、最省力，很多時候也夠用。代價是：比較容易忘記「以後還要再付幾次」。等一下可以和全班聊聊，什麼時候只看標價就夠了。']
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+// step: 'intro' | 'pick' | 'run' | 'res' | 'final' | 'end'
+var st=load()||{step:'intro',g:0,buy:[],guess:[],sim:[],fin:null};
+var timer=null;
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function money(x){return (Math.round(x*10)/10)+''}
+
+var PIC={
+ pencil:'<svg viewBox="0 0 84 84" aria-hidden="true"><g transform="rotate(-35 42 42)"><rect x="34" y="6" width="16" height="56" rx="4" fill="#205E86"/><rect x="34" y="44" width="16" height="10" fill="#B7862B"/><path d="M36 62 H48 L44 74 H40 Z" fill="#9AA3A0"/><rect x="41" y="74" width="2" height="6" fill="#1F2A2E"/><rect x="47" y="10" width="5" height="22" rx="2" fill="#56605C"/></g></svg>',
+ umbrella:'<svg viewBox="0 0 84 84" aria-hidden="true"><path d="M8 40 Q42 0 76 40 Q67 34 59 40 Q50 34 42 40 Q34 34 25 40 Q17 34 8 40 Z" fill="#A8441A"/><rect x="40" y="10" width="4" height="56" fill="#56605C"/><path d="M42 66 V72 Q42 78 36 78 Q31 78 31 73" stroke="#56605C" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+ bottle:'<svg viewBox="0 0 84 84" aria-hidden="true"><rect x="33" y="6" width="18" height="10" rx="3" fill="#56605C"/><rect x="26" y="16" width="32" height="62" rx="10" fill="#2F7D4F"/><rect x="26" y="36" width="32" height="18" fill="#CFE3D4"/></svg>'
+};
+var BURST='<svg viewBox="0 0 40 40" aria-label="壞了"><path d="M20 2 L24 13 L35 8 L29 18 L39 22 L28 25 L32 37 L22 29 L16 39 L15 27 L3 30 L11 21 L2 13 L14 14 Z" fill="#A8441A"/><path d="M20 10 L22 17 L29 16 L24 21 L28 27 L21 24 L17 30 L17 23 L10 22 L16 19 L12 13 L18 16 Z" fill="#F2C94C"/></svg>';
+
+function pickWeeks(k){
+  // k distinct weeks in 3..19, at least 3 weeks apart: choose k of (17-2(k-1)) slots, then spread them out
+  if(k===0)return [];
+  var n=17-2*(k-1),pool=[];for(var i=0;i<n;i++)pool.push(i);
+  for(var j=pool.length-1;j>0;j--){var r=rnd(j+1),t=pool[j];pool[j]=pool[r];pool[r]=t}
+  var s=pool.slice(0,k).sort(function(x,y){return x-y});
+  return s.map(function(v,i){return 3+v+2*i});
+}
+function simulate(g){
+  var out={};['a','b'].forEach(function(s){var o=G[g][s];var k=o.k[0]+rnd(o.k[1]-o.k[0]+1);
+    if(s==='b'&&o.k[1]>0)k=rnd(3)===0?1:0; // sturdy one: about one in three gets lost
+    out[s]=pickWeeks(k)});
+  return out;
+}
+function total(g,s){return G[g][s].p*(1+st.sim[g][s].length)}
+function verdict(g){
+  var ta=total(g,'a'),tb=total(g,'b'),d=Math.abs(ta-tb);
+  if(d<=Math.max(10,Math.min(ta,tb)*0.1))return 2;
+  return ta<tb?0:1;
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','新學期就要開始了。你要買三樣東西：自動鉛筆、雨傘、水壺。每一樣都有便宜的和耐用的可以選。'),
+    el('p','lead','買東西的時候，我們的眼睛很自然只看到標價上「現在要付多少」。這個遊戲要讓你看到另一件事：一學期 20 週過去，「以後還要再付幾次」。'),
+    el('p','lead','每一樣東西，你都要：<br>① 選一個買下來，再猜猜看哪一個比較省；<br>② 看兩條日曆一週一週跑完一學期；<br>③ 看看最後各花了多少錢。'));
+  app.append(el('h1',null,'一學期日曆'),c,btn('開始','',function(){st.step='pick';st.g=0;save(st);render()}));
+}
+
+function itemCard(g,s){
+  var o=G[g][s];var d=el('div','item');
+  d.innerHTML=PIC[G[g].pic]+'<div class="nm">'+o.nm+'</div><div class="pr">'+o.p+' 元</div><div class="ds">'+o.ds+'</div>';
+  return d;
+}
+function pick(){
+  var g=st.g,q=G[g];app.innerHTML='';
+  app.append(el('p','case','第 '+(g+1)+' 樣，共 3 樣：'+q.name),el('p','lead',q.story));
+  var two=el('div','two');
+  var buyBtns=[];
+  ['a','b'].forEach(function(s){
+    var b=el('button','btn alt');b.type='button';b.appendChild(itemCard(g,s));b.setAttribute('aria-label','買'+q[s].nm+'，'+q[s].p+' 元');
+    if(st.buy[g]===s)b.classList.add('pick');
+    b.addEventListener('click',function(){st.buy[g]=s;save(st);buyBtns.forEach(function(x){x.classList.remove('pick')});b.classList.add('pick');check()});
+    buyBtns.push(b);two.appendChild(b);
+  });
+  var h1=el('h2',null,'① 你要買哪一個？點它就買下來。');
+  var h2=el('h2',null,'② 你猜：一學期（20 週）用下來，哪一個花的錢比較少？');
+  var gr=el('div','three');var gBtns=[];
+  GUESS.forEach(function(t,k){var b=btn(t,'alt',function(){st.guess[g]=k;save(st);gBtns.forEach(function(x){x.classList.remove('pick')});b.classList.add('pick');check()});
+    if(st.guess[g]===k)b.classList.add('pick');gBtns.push(b);gr.appendChild(b)});
+  var go=btn('開始這學期','',function(){st.sim[g]=simulate(g);st.step='run';save(st);run(true)});
+  var hint=el('p','lead','兩題都選好，就可以開始。');
+  function check(){var ok=st.buy[g]!=null&&st.guess[g]!=null;go.disabled=!ok;hint.style.display=ok?'none':''}
+  app.append(h1,two,h2,gr,hint,go);check();
+}
+
+function calBox(g,s){
+  var o=G[g][s];var c=el('div','card cal');
+  var h=el('h3',null,o.nm+' <small>'+o.p+' 元</small>'+(st.buy[g]===s?' <span class="tag">我買的</span>':''));
+  var grid=el('div','grid');
+  for(var w=1;w<=WEEKS;w++){grid.appendChild(el('div','wk',''+w))}
+  var say=el('p','say','還沒開始。');
+  var stat=el('p','stat');stat.innerHTML='<span>買了 <b class="n">1</b> 次</span><span>花了 <b class="m">'+o.p+'</b> 元</span>';
+  var log=el('ul','log');
+  c.append(h,grid,say,stat,log);
+  return {box:c,cells:grid.children,say:say,n:stat.querySelector('.n'),m:stat.querySelector('.m'),log:log,g:g,s:s};
+}
+function paint(v,upto){
+  var o=G[v.g][v.s],br=st.sim[v.g][v.s],cnt=1;
+  v.log.innerHTML='';
+  for(var w=1;w<=WEEKS;w++){
+    var c=v.cells[w-1];c.className='wk';c.innerHTML=''+w;
+    if(w<=upto){
+      if(br.indexOf(w)>=0){c.className='wk x';c.innerHTML=BURST;cnt++;v.log.appendChild(el('li',null,'第 '+w+' 週：'+o.ev+'（再付 '+o.p+' 元）'))}
+      else c.className='wk u';
+      if(w===upto&&upto<WEEKS)c.classList.add('now');
+    }
+  }
+  v.n.textContent=cnt;v.m.textContent=o.p*cnt;
+  if(upto===0){v.say.textContent='還沒開始。';v.say.className='say'}
+  else if(br.indexOf(upto)>=0){v.say.textContent='第 '+upto+' 週：'+o.ev+'！';v.say.className='say bad'}
+  else if(upto>=WEEKS){v.say.textContent='一學期跑完了！'+(br.length?'':'一次都沒有換。');v.say.className='say'}
+  else{v.say.textContent='第 '+upto+' 週：用得好好的。';v.say.className='say'}
+}
+function run(animate){
+  var g=st.g;app.innerHTML='';
+  app.append(el('p','case','第 '+(g+1)+' 樣，共 3 樣：'+G[g].name),el('h2',null,'一學期 20 週，開始！'));
+  var wk=el('p','wkno','第 0 週');
+  var cals=el('div','cals');var A=calBox(g,'a'),B=calBox(g,'b');cals.append(A.box,B.box);
+  var row=el('div','row');
+  var ff=btn('快轉','ghost',function(){finish()});
+  var nx=btn('看結果','',function(){st.step='res';save(st);render()});
+  row.append(ff,nx);
+  app.append(wk,cals,row);
+  var w=0;
+  function show(n){paint(A,n);paint(B,n);wk.textContent=n>=WEEKS?'一學期結束（20 週）':'第 '+n+' 週'}
+  function finish(){if(timer){clearInterval(timer);timer=null}w=WEEKS;show(WEEKS);ff.style.display='none';nx.style.display='';nx.focus()}
+  if(animate){
+    nx.style.display='none';show(0);
+    timer=setInterval(function(){w++;show(w);if(w>=WEEKS)finish()},350);
+  }else finish();
+}
+
+function result(){
+  var g=st.g,q=G[g];app.innerHTML='';
+  app.append(el('p','case','第 '+(g+1)+' 樣，共 3 樣：'+q.name),el('h2',null,'一學期結束了，兩個各花了多少錢？'));
+  var c=el('div','card');
+  var t=el('table');
+  t.innerHTML='<tr><th></th><th>'+q.a.nm+'</th><th>'+q.b.nm+'</th></tr>';
+  function row(k,fa,fb){var tr=el('tr');tr.append(el('td','k',k),el('td','n',fa),el('td','n',fb));t.appendChild(tr)}
+  var na=1+st.sim[g].a.length,nb=1+st.sim[g].b.length,ta=total(g,'a'),tb=total(g,'b');
+  row('標價',q.a.p+' 元',q.b.p+' 元');
+  row('一共買了',na+' '+q.unit,nb+' '+q.unit);
+  row('總共花了',ta+' 元',tb+' 元');
+  row('用了幾週',WEEKS+' 週',WEEKS+' 週');
+  row('每用一週',' 大約 '+money(ta/WEEKS)+' 元','大約 '+money(tb/WEEKS)+' 元');
+  row('學期結束時',q.a.end,q.b.end);
+  // mark my column
+  Array.prototype.forEach.call(t.rows,function(r){var cell=r.cells[st.buy[g]==='a'?1:2];if(cell)cell.style.background='#FBF1DC'});
+  c.appendChild(t);
+  c.appendChild(el('p','lead','黃色那一欄是你買的。'));
+  if(g===0)c.appendChild(el('p','formula','每用一週花多少 ＝ 總共花的錢 ÷ 用了幾週'));
+  var v=verdict(g),gs=st.guess[g];
+  var msg;
+  if(v===0)msg='這一次，<b>便宜的比較省</b>。便宜的買了 '+na+' 次，一共 '+ta+' 元；'+(nb>1?'耐用的那個不小心'+q.b.ev.replace(/！.*/,'')+'，只好再買一次，一共 '+tb+' 元。':'耐用的雖然一次都沒換，買一次就要 '+tb+' 元。')+'不過，便宜的那個學期結束時還能撐多久，就不知道了。';
+  else if(v===1)msg='這一次，<b>耐用的比較省</b>。便宜的那個一次只要 '+q.a.p+' 元，看起來很少，可是壞了 '+(na-1)+' 次、買了 '+na+' 次，加起來就變多了。';
+  else msg='這一次，兩個花的錢<b>差不多</b>。可是學期結束時，兩個「還能用多久」不一樣。';
+  var guessLine='你一開始猜「'+GUESS[gs]+'」，'+(gs===v?'這一次和結果一樣。':'這一次和結果不一樣。')+'每個人的日曆都不一樣，等一下可以和全班比比看。';
+  app.append(c,el('p','note',msg),el('p','note warm',guessLine+'<br>便宜的不一定比較貴，有時候它剛好沒壞，或是你很快就不需要它了；貴的也不一定比較省，萬一弄丟就要再買一次。重點是買之前多問一句：<b>它能用多久？</b>'));
+  app.appendChild(btn(g<G.length-1?'下一樣東西':'最後一個問題','',function(){if(g<G.length-1){st.g=g+1;st.step='pick'}else st.step='final';save(st);render()}));
+}
+
+function final(){
+  app.innerHTML='';
+  app.append(el('p','case','最後一個問題'),el('h2',null,'下次買東西，你會先問自己哪一個問題？'),el('p','lead','沒有標準答案，選你真的會先想到的那一個。'));
+  var g=el('div','opts');var fb=el('div','opts');var bs=[];
+  function showFb(k){fb.innerHTML='';fb.append(el('p','note',FINAL[k][1]+'<br><span style="font-size:.85em;color:var(--muted)">想換一個也可以，直接點別的選項。</span>'),btn('看我的摘要','',function(){st.step='end';save(st);render()}))}
+  FINAL.forEach(function(x,k){var b=btn(x[0],'alt',function(){st.fin=k;save(st);bs.forEach(function(y){y.classList.remove('pick')});b.classList.add('pick');showFb(k)});
+    if(st.fin===k)b.classList.add('pick');bs.push(b);g.appendChild(b)});
+  app.append(g,fb);if(st.fin!=null)showFb(st.fin);
+}
+
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');var t=el('table');
+
+  var sum=0;
+  G.forEach(function(q,g){
+    var s=st.buy[g],tt=st.sim[g]?total(g,s):0;sum+=tt;
+    var v=st.sim[g]?verdict(g):null;
+    var tr=el('tr');
+    tr.append(el('td','k',q.name),el('td',null,'我買：<b>'+(s==='a'?'便宜的':'耐用的')+'</b>（'+q[s].p+' 元），一學期花 '+tt+' 元<br>我猜：'+GUESS[st.guess[g]]+'<br>結果：'+(v!=null?GUESS[v]:'—')+'，和我猜的<b>'+(st.guess[g]===v?'一樣':'不一樣')+'</b>'));
+    t.appendChild(tr);
+  });
+  var same=G.filter(function(q,g){return st.sim[g]&&st.guess[g]===verdict(g)}).length;
+  var ncheap=st.buy.filter(function(s){return s==='a'}).length;
+  var t2=el('table');
+  [['我買了幾樣便宜的',ncheap+' 樣（耐用的 '+(3-ncheap)+' 樣）'],['猜的和結果一樣',same+' 樣'],['我買的三樣，一學期總共花了',sum+' 元'],['下次買東西，我會先問',st.fin!=null?FINAL[st.fin][0]:'—']]
+   .forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','n',r[1]));t2.appendChild(tr)});
+  t2.querySelectorAll('td.k').forEach(function(x){x.style.whiteSpace='normal'});
+  c.append(t,t2);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  if(timer){clearInterval(timer);timer=null}
+  window.scrollTo(0,0);
+  if(st.step==='pick')pick();
+  else if(st.step==='run')run(false);
+  else if(st.step==='res')result();
+  else if(st.step==='final')final();
+  else if(st.step==='end')end();
+  else intro();
+}
+render();
+})();
+</script>

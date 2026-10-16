@@ -1,0 +1,266 @@
+<title>腳踏車的一天</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: ride the same route twice on a map (5 stops). Round 1 the bike is in a mutual-aid jar, round 2 it is not. Every option can be chosen; feedback only says whether the chance of trouble goes up or down. Then: side-by-side comparison → "if the whole class did this" (30 bikes, jar money) → summary for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:1px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.scene{font-size:clamp(23px,3.3vw,30px);font-weight:900;line-height:1.5;margin:0}
+.badge{align-self:flex-start;font-size:clamp(19px,2.5vw,23px);font-weight:900;border-radius:999px;padding:6px 16px;margin:0}
+.badge.ins{background:#E4EEF6;color:var(--sea)}
+.badge.self{background:#FBF1DC;color:var(--rust)}
+svg.map{width:100%;height:auto;display:block;touch-action:manipulation}
+svg.map .stop{cursor:pointer}
+svg.map .stop:focus{outline:none}
+svg.map .stop:focus-visible .ring{stroke:var(--gold);stroke-width:8}
+@keyframes pulse{0%{r:30;opacity:.9}100%{r:52;opacity:0}}
+svg.map .halo{animation:pulse 1.3s ease-out infinite}
+@media (prefers-reduced-motion:reduce){svg.map .halo{animation:none;opacity:.5}}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.chip{background:var(--card);color:var(--ink);border:3px solid var(--line);padding:8px 0;min-width:0}
+.btn.chip.pick{border-color:var(--rust);background:#FBE9E1;color:var(--rust)}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.small{color:var(--muted);margin:0}
+.meter{font-weight:900}
+.up{color:var(--rust)} .mid{color:var(--gold)} .down{color:var(--good)}
+.cmp{display:flex;flex-direction:column;gap:10px}
+.row{border:3px solid var(--line);border-radius:16px;padding:10px 14px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 14px;font-size:clamp(19px,2.4vw,22px)}
+.row.flag{border-color:var(--rust);background:#FDF3EE}
+.row .st{grid-column:1/-1;font-weight:900}
+.row .lab{font-size:.82em;color:var(--muted);font-weight:700;display:block}
+.tag{display:inline-block;font-size:.8em;font-weight:900;border-radius:999px;padding:0 10px;margin-left:4px;white-space:nowrap}
+.tag.t0{background:#E3F1E8;color:var(--good)} .tag.t1{background:#F6EBD3;color:#8A6216} .tag.t2{background:#F7E0D6;color:var(--rust)}
+.flagtxt{grid-column:1/-1;color:var(--rust);font-weight:900}
+.bikes{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}
+.bikes svg{width:100%;height:auto;display:block}
+.chips{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.big{font-size:clamp(46px,9vw,80px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--rust);font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two .card{align-items:center;text-align:center;gap:4px}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.n{text-align:right;font-weight:900;white-space:nowrap}
+@media (max-width:620px){.bikes{grid-template-columns:repeat(6,minmax(0,1fr))}.row{grid-template-columns:1fr}.chips{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='bike-day-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,r:[[],[]],i:0,q:0,k:null};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+
+/* 5 stops; each option: [text, level 0=小心 1=普通 2=冒險, why] */
+var S=[
+ {name:'便利商店',time:'早上 7:20',x:110,y:150,
+  s:'上學途中，你想進便利商店買一瓶水，大概只要 1 分鐘。腳踏車要怎麼停？',
+  o:[['把車鎖在門口的柱子上，再進去買。',0,'車子鎖在固定的東西上，就很難被牽走。'],
+     ['只把輪子鎖住，不鎖在柱子上。',1,'輪子轉不動，車子不容易被騎走；不過整台車還是可以被抬走。'],
+     ['不鎖了，反正只有 1 分鐘。',2,'沒上鎖的車子，別人一下子就能牽走，1 分鐘也夠了。']]},
+ {name:'海佃國小',time:'早上 7:35',x:300,y:78,
+  s:'到學校的時候正在下雨。車棚在操場的另一邊，要多牽一段路；校門口旁邊的路邊就有空位。',
+  o:[['牽到車棚，停進車架裡。',0,'車棚淋不到雨，車架也讓車子不容易倒。'],
+     ['停在校門旁邊的屋簷下，可以遮一半的雨。',1,'淋到一點雨，比較不怕；不過車子靠在牆邊，比較容易被碰倒。'],
+     ['直接停在路邊，淋一整天也沒關係。',2,'淋一整天的雨，鏈條和煞車容易生鏽；停在路邊，也比較容易被撞倒。']]},
+ {name:'放學路口',time:'下午 4:00',x:510,y:140,
+  s:'放學了，同學大喊：「比賽！看誰先騎到公園！」前面要經過一個沒有紅綠燈的路口。',
+  o:[['不比賽，照平常的速度騎。',0,'騎得穩，摔車和撞車的機會都比較小。'],
+     ['比賽，但是到路口一定先停下來看。',1,'路口停下來，最危險的地方小心了；其他路段騎得快，還是比較容易摔車。'],
+     ['全力衝，路口也不減速。',2,'騎得太快又不減速，摔車、撞車的機會都變大，車子和人都可能受傷。']]},
+ {name:'公園',time:'下午 4:20',x:470,y:330,
+  s:'到了公園，一個你不太熟的隔壁班同學走過來說：「你的車好新喔，借我騎一圈好不好？」',
+  o:[['不借，跟他說這是家裡買給我的車。',0,'車子一直在自己身邊，出事的機會比較小。'],
+     ['借他，但是自己跟在旁邊看。',1,'你在旁邊可以提醒他；不過別人騎不熟悉的車，比較容易摔。'],
+     ['借他，自己先去盪鞦韆。',2,'車子離開你的視線，他騎去哪裡、怎麼騎，你都不知道。']]},
+ {name:'家門口',time:'晚上 8:00',x:230,y:340,
+  s:'晚上回到家，明天一早又要騎。這一晚，車子要放在哪裡？',
+  o:[['搬進家裡或院子裡。',0,'車子在家裡過夜，被偷和被風雨吹壞的機會都很小。'],
+     ['停在門口，用鎖鎖在欄杆上。',1,'有上鎖比較安全；不過整晚放在外面，還是有人可能動它。'],
+     ['停在門口，不鎖，明天比較方便。',2,'整個晚上停在門口又沒上鎖，是最容易被牽走的情況。']]}
+];
+var EFFECT=['<span class="meter down">出事的機會：變小</span>','<span class="meter mid">出事的機會：稍微變大</span>','<span class="meter up">出事的機會：變大</span>'];
+var TAG=['小心','普通','冒險'];
+var HOME={x:80,y:330};
+
+function bikeSvg(x,y,s,color){
+  return '<g transform="translate('+x+' '+y+') scale('+s+')" aria-hidden="true"><circle cx="-14" cy="6" r="11" fill="none" stroke="'+color+'" stroke-width="4"/><circle cx="14" cy="6" r="11" fill="none" stroke="'+color+'" stroke-width="4"/><path d="M-14 6 L-4 -10 L10 -10 L14 6 M-4 -10 L2 6 L10 -10 M-6 -14 L-1 -14 M10 -10 L8 -17 L13 -17" fill="none" stroke="'+color+'" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>';
+}
+function mapSvg(round,i,done){
+  var pts=[HOME].concat(S.map(function(p){return {x:p.x,y:p.y}}));
+  var d='M'+HOME.x+' '+HOME.y+' C 60 260, 80 200, '+S[0].x+' '+S[0].y+' S 220 70, '+S[1].x+' '+S[1].y+' S 470 80, '+S[2].x+' '+S[2].y+' S 560 300, '+S[3].x+' '+S[3].y+' S 300 360, '+S[4].x+' '+S[4].y+' S 120 345, '+HOME.x+' '+HOME.y;
+  var h='<svg class="map" viewBox="0 0 600 410" role="group" aria-label="從家裡到海佃國小、公園，再回到家的路線地圖">';
+  h+='<rect x="0" y="0" width="600" height="410" rx="20" fill="#E6EFE3"/>';
+  h+='<path d="M0 230 Q160 210 300 238 T600 222 L600 262 Q440 282 300 270 T0 266 Z" fill="#CFE3EE"/>';
+  h+='<text x="590" y="296" text-anchor="end" font-size="24" fill="#205E86" font-weight="700">小溪</text>';
+  h+='<path d="'+d+'" fill="none" stroke="#C9C6BB" stroke-width="30" stroke-linecap="round"/>';
+  h+='<path d="'+d+'" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="12 12"/>';
+  /* home */
+  h+='<g aria-hidden="true"><path d="M'+(HOME.x-32)+' '+(HOME.y-14)+' L'+HOME.x+' '+(HOME.y-44)+' L'+(HOME.x+32)+' '+(HOME.y-14)+' Z" fill="#A8441A"/><rect x="'+(HOME.x-24)+'" y="'+(HOME.y-14)+'" width="48" height="36" fill="#F4E6CF" stroke="#A8441A" stroke-width="3"/><rect x="'+(HOME.x-7)+'" y="'+(HOME.y+2)+'" width="14" height="20" fill="#A8441A"/><text x="'+HOME.x+'" y="'+(HOME.y+50)+'" text-anchor="middle" font-size="30" font-weight="900" fill="#1F2A2E">家</text></g>';
+  S.forEach(function(p,k){
+    var isDone=k<i||done, isCur=!done&&k===i;
+    var lx=p.x, ly=p.y+(p.y<200?-42:62);
+    h+='<g class="stop" data-k="'+k+'"'+(isCur?' role="button" tabindex="0" aria-label="第 '+(k+1)+' 站 '+p.name+'，點這裡騎過去"':' aria-hidden="true"')+'>';
+    h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="46" fill="transparent"/>';
+    if(isCur)h+='<circle class="halo" cx="'+p.x+'" cy="'+p.y+'" r="30" fill="none" stroke="#B7862B" stroke-width="6"/>';
+    h+='<circle class="ring" cx="'+p.x+'" cy="'+p.y+'" r="27" fill="'+(isDone?'#2F7D4F':isCur?'#B7862B':'#FBFCF9')+'" stroke="'+(isDone?'#2F7D4F':isCur?'#8A6216':'#56605C')+'" stroke-width="4"/>';
+    if(isDone)h+='<path d="M'+(p.x-11)+' '+p.y+' l8 9 l15 -17" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>';
+    else h+='<text x="'+p.x+'" y="'+(p.y+10)+'" text-anchor="middle" font-size="28" font-weight="900" fill="'+(isCur?'#fff':'#56605C')+'">'+(k+1)+'</text>';
+    h+='<text x="'+lx+'" y="'+ly+'" text-anchor="middle" font-size="31" font-weight="900" fill="'+(isCur?'#8A6216':'#1F2A2E')+'" stroke="#E6EFE3" stroke-width="6" paint-order="stroke">'+p.name+'</text>';
+    h+='</g>';
+  });
+  var at=done?HOME:(i===0?HOME:S[i-1]);
+  var bx=at.x+(at===HOME?52:0), by=at.y+(at===HOME?-4:-2);
+  if(at!==HOME){bx=at.x+Math.sign(300-at.x)*50;by=at.y+Math.sign(220-at.y)*44}
+  h+='<circle cx="'+bx+'" cy="'+by+'" r="26" fill="#fff" stroke="'+(round===0?'#205E86':'#A8441A')+'" stroke-width="3"/>'+bikeSvg(bx,by-2,.75,round===0?'#205E86':'#A8441A');
+  h+='</svg>';
+  return h;
+}
+function badge(round){
+  return round===0?el('p','badge ins','這一趟：有參加互助罐，壞了或被偷，罐子會賠一台新的'):el('p','badge self','這一趟：沒有互助罐，壞了或被偷，要用自己的零用錢買');
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.innerHTML=mapSvg(0,0,false).replace('class="halo"','class="halo" style="display:none"');
+  c.append(el('p','lead','這學期，你有了一台新腳踏車，每天騎它上學。'),
+    el('p','lead','安南區有一群家庭一起成立了「腳踏車互助罐」：每一家每個月放 50 枚代幣進罐子（這是假設的數字）。誰家的腳踏車被偷了、或是壞到不能騎，罐子就拿錢出來，幫他買一台新的。你家也替這台車參加了。'),
+    el('p','lead','接下來，你要沿著地圖騎完一天，經過 5 個站。每一站都有一個小決定，每個選項都可以選，照你真的會怎麼做來選就好。'));
+  app.append(el('h1',null,'腳踏車的一天'),c,button('出發','btn',function(){st.step=1;st.i=0;st.q=0;save(st);render()}));
+}
+
+function round(rd){
+  app.innerHTML='';
+  var i=st.i;
+  var head=el('p','case',(rd===0?'第一趟':'第二趟')+'・第 '+(Math.min(i,4)+1)+' 站，共 5 站');
+  if(st.q===0){
+    var c=el('div','card');c.innerHTML=mapSvg(rd,i,false);
+    var go=function(){st.q=1;save(st);render()};
+    var g=c.querySelector('.stop[tabindex]');
+    if(g){g.addEventListener('click',go);g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})}
+    app.append(head,badge(rd),el('h2',null,i===0?'點地圖上閃閃發亮的 1 號站，騎過去吧！':'點地圖上閃閃發亮的 '+(i+1)+' 號站，騎到「'+S[i].name+'」。'),c);
+    return;
+  }
+  var p=S[i];
+  var sc=el('div','card');sc.append(el('p','case',p.time+'・'+p.name),el('p','scene',p.s));
+  var g2=el('div','opts');var fb=el('div');fb.style.cssText='display:flex;flex-direction:column;gap:12px';
+  function show(k){
+    Array.prototype.forEach.call(g2.children,function(x,j){x.classList.toggle('pick',j===k)});
+    var o=p.o[k];fb.innerHTML='';
+    var nx=button(i<4?'騎到下一站':(rd===0?'回到家了，下一步':'回到家了，比一比兩趟'),'btn',function(){
+      if(st.i<4){st.i++;st.q=0}else{st.step=rd===0?2:4;st.i=0;st.q=0}
+      save(st);render();
+    });
+    fb.append(el('p','note'+(o[1]===2?' warm':''),EFFECT[o[1]]+'<br>'+o[2]+'<br><span class="small">想改也可以，直接點別的選項。</span>'),nx);
+    return nx;
+  }
+  p.o.forEach(function(o,k){g2.appendChild(button(o[0],'btn alt',function(){st.r[rd][i]=k;save(st);var nx=show(k);try{nx.scrollIntoView({behavior:'smooth',block:'end'})}catch(e){}}))});
+  app.append(head,badge(rd),sc,el('h2',null,'你會怎麼做？'),g2,fb);
+  if(st.r[rd][i]!=null)show(st.r[rd][i]);
+}
+
+function between(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','scene','同一條路，再騎一次。'),
+    el('p','lead','現在想像另一種情況：家裡「沒有」替這台腳踏車參加互助罐。車子被偷了、或是壞到不能騎，就要拿你自己存的零用錢，去買一台新的。'),
+    el('p','lead','同樣的 5 個站、同樣的情況，請你重新選一次。不用去想第一趟選了什麼，照你這一次真的會怎麼做來選。'));
+  app.append(el('h2',null,'第一趟騎完了！'),badge(1),c,button('再出發一次','btn',function(){st.step=3;st.i=0;st.q=0;save(st);render()}));
+}
+
+function stats(){
+  var A=st.r[0],B=st.r[1],lv=function(rd,k){var v=st.r[rd][k];return v==null?0:S[k].o[v][1]};
+  var riskA=0,riskB=0,diff=0,more=0,flags=[];
+  S.forEach(function(p,k){var a=lv(0,k),b=lv(1,k);if(a===2)riskA++;if(b===2)riskB++;if(A[k]!==B[k])diff++;if(a>b){more++;flags.push(k)}});
+  return {riskA:riskA,riskB:riskB,diff:diff,more:more,flags:flags,lv:lv};
+}
+
+function compare(){
+  app.innerHTML='';
+  var s=stats();
+  var list=el('div','cmp');
+  S.forEach(function(p,k){
+    var a=s.lv(0,k),b=s.lv(1,k);var f=a>b;
+    var r=el('div','row'+(f?' flag':''));
+    r.append(el('div','st',(k+1)+'. '+p.name),
+      el('div',null,'<span class="lab">有互助罐</span>'+(st.r[0][k]!=null?S[k].o[st.r[0][k]][0]:'—')+'<span class="tag t'+a+'">'+TAG[a]+'</span>'),
+      el('div',null,'<span class="lab">自己出錢</span>'+(st.r[1][k]!=null?S[k].o[st.r[1][k]][0]:'—')+'<span class="tag t'+b+'">'+TAG[b]+'</span>'));
+    if(f)r.appendChild(el('div','flagtxt','這一站，有互助罐的時候你選得比較冒險。'));
+    list.appendChild(r);
+  });
+  var msg=s.more?'你有 '+s.more+' 站，在「有互助罐」的時候選得比較冒險（紅框的站）。':'你在每一站，有互助罐的時候都沒有選得比較冒險。';
+  var n1=el('p','note',msg);
+  var n2=el('p','note warm','很多人有保險的時候，會覺得比較放心，也就比較不小心。這種情況有一個名字，叫做<b>「道德風險」</b>。白話的意思是：<b>有人幫你付，就比較不在乎。</b>');
+  var n3=el('p','note','這不是在說誰是壞人。大部分的人都不是故意的，只是心裡少了一點「壞了好心疼」的感覺。也有很多人兩趟選得一模一樣，等一下看看全班是怎樣。');
+  app.append(el('h2',null,'兩趟的選擇，放在一起比一比'),list,n1,n2,n3,button('如果全班都這樣呢？','btn',function(){st.step=5;save(st);render()}));
+}
+
+function classView(){
+  app.innerHTML='';
+  var s=stats();
+  if(st.k==null){st.k=s.more;save(st)}
+  var k=st.k;
+  var broken=2+2*k, coins=25*broken;
+  app.append(el('h2',null,'如果全班 30 個人都這樣騎……'));
+  app.append(el('p','lead','假設全班 30 個人的腳踏車都參加同一個互助罐。大家都很小心的時候，一個月大約壞掉或被偷 2 台，每個人每月放 50 枚就夠了。'));
+  var chipsCard=el('div','card');
+  chipsCard.appendChild(el('p','case','如果每個人有互助罐時，都多冒險幾站？（你是 '+s.more+' 站）'));
+  var chips=el('div','chips');
+  [0,1,2,3,4,5].forEach(function(n){chips.appendChild(button(n+' 站','btn chip'+(n===k?' pick':''),function(){st.k=n;save(st);render()}))});
+  chipsCard.appendChild(chips);
+  var grid=el('div','bikes');grid.setAttribute('role','img');grid.setAttribute('aria-label','30 台腳踏車裡，有 '+broken+' 台出事');
+  var html='';
+  for(var j=0;j<30;j++){var bad=j<broken;
+    html+='<svg viewBox="-34 -30 68 52" aria-hidden="true">'+bikeSvg(0,0,1,bad?'#A8441A':'#205E86')+(bad?'<path d="M-24 -24 L24 18 M24 -24 L-24 18" stroke="#A8441A" stroke-width="5" stroke-linecap="round" opacity=".85"/>':'')+'</svg>';}
+  grid.innerHTML=html;
+  var bikeCard=el('div','card');bikeCard.append(el('p','case','一個月裡，出事的腳踏車（紅色打叉）'),grid);
+  var two=el('div','two');
+  var c1=el('div','card');c1.append(el('p','lead','出事的車'),el('p','big',broken+' 台'));
+  var c2=el('div','card');c2.append(el('p','lead','每人每月要放'),el('p','big',coins+' 枚'));
+  two.append(c1,c2);
+  var n=el('p','note'+(k>0?' warm':''),k===0?'大家都和沒有互助罐時一樣小心，罐子每個月放 50 枚就夠了。':'大家都多冒險一點點，出事的車就變多。罐子要賠的車變多，<b>每個人</b>每個月要放的錢也跟著變多，連一直很小心的同學也要多付。');
+  var hint=el('p','small','這裡的數字都是假設的，只是用來示意：每多冒險 1 站，就假設一個月多出事 2 台。');
+  app.append(chipsCard,bikeCard,two,n,hint,button('看我的摘要','btn',function(){st.step=6;save(st);render()}));
+}
+
+function end(){
+  app.innerHTML='';
+  var s=stats();
+  var t=el('table');
+  [['有互助罐時，選「冒險」的站',s.riskA+' 個'],['沒有互助罐時，選「冒險」的站',s.riskB+' 個'],['兩趟選得不一樣的站',s.diff+' 站'],['有互助罐時，選得比較冒險的站',s.more+' 站']].forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.innerHTML=mapSvg(1,5,true);c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  if(st.step===1)round(0);else if(st.step===2)between();else if(st.step===3)round(1);
+  else if(st.step===4)compare();else if(st.step===5)classView();else if(st.step===6)end();else intro();
+  try{window.scrollTo(0,0)}catch(e){}
+}
+render();
+})();
+</script>

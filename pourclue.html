@@ -1,0 +1,479 @@
+<title>這條線索有多重</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro → for each of three cases: story page (two empty-ish see-through jugs = two possible answers) → four clue pages (press and hold a faucet over a jug to pour; or press "不倒") → after each clue a reference card with two measuring cups ("if the answer were left / right, how likely is this clue?") → pick an answer (or "not sure yet") and compare your water level with a reference level → summary page for a show of hands. Fixed script, no randomness, no scoring. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --wl:#7DB7DE; --wls:#205E86; --wr:#8CCFB5; --wrs:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:pretty}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:1px;margin:0;display:flex;align-items:flex-start;gap:8px}
+.case svg.i{margin-top:.2em}
+.nw{white-space:nowrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;justify-content:flex-start;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn.ghostb{background:transparent;color:var(--muted);border:3px dashed var(--line);font-size:clamp(19px,2.3vw,21px);padding:8px 14px}
+.btn:focus-visible,.tap:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.3vw,22px);color:var(--muted);font-weight:700;display:flex;align-items:flex-start;gap:8px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.7em;height:1.7em}
+.big svg.i{width:64px;height:64px}
+.ask{display:flex;gap:12px;align-items:center;background:var(--warm);border:3px solid #EBD9AE;border-radius:18px;padding:12px 16px;font-size:clamp(20px,2.8vw,26px);font-weight:900;line-height:1.5}
+.ask svg.i{width:46px;height:46px}
+.sideL{color:var(--wls)}.sideR{color:var(--wrs)}
+.tagL,.tagR{display:inline-flex;align-items:center;gap:4px;font-weight:900;border-radius:10px;padding:0 8px;white-space:nowrap}
+.tagL{background:#E2EEF7;color:var(--wls)}.tagR{background:#E1F2EA;color:var(--wrs)}
+/* clue */
+.clue{font-size:clamp(23px,3.8vw,32px);font-weight:900;line-height:1.55;margin:0;background:var(--card);border:3px solid var(--line);border-left:10px solid var(--gold);border-radius:18px;padding:14px 18px;text-wrap:pretty}
+/* jugs */
+.jugs{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,3vw,40px);align-items:end;max-width:640px;width:100%;margin:0 auto}
+.jcol{display:flex;flex-direction:column;align-items:center;gap:0;min-width:0}
+.tap{font:inherit;width:100%;max-width:230px;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 10px;border-radius:16px;border:3px solid var(--sea);background:#DCE8F0;color:var(--ink);font-weight:900;font-size:clamp(19px,2.6vw,23px);cursor:pointer;line-height:1.3;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;position:relative;z-index:1}
+.tap svg.i{width:42px;height:42px}
+.tap.R{border-color:var(--wrs);background:#E1F2EA}
+.tap.on{background:var(--sea);color:#fff;transform:translateY(2px)}
+.tap.R.on{background:var(--wrs)}
+.tap[disabled]{opacity:.45;cursor:default}
+.jsvg{width:100%;max-width:min(200px,22vh);height:auto;display:block;margin-top:-4px}
+.jname{display:flex;align-items:center;gap:6px;font-weight:900;font-size:clamp(20px,2.8vw,26px);line-height:1.3;text-align:center;justify-content:center;margin-top:2px}
+.jname svg.i{width:36px;height:36px}
+.strm{opacity:0;transition:opacity .12s}
+.pouring .strm{opacity:1}
+.strm .fl{stroke-dasharray:16 9;animation:flow .35s linear infinite}
+.splash{opacity:0}
+.pouring .splash{opacity:1}
+.splash ellipse{transform-box:fill-box;transform-origin:50% 50%;animation:rip .6s ease-out infinite}
+@keyframes flow{to{stroke-dashoffset:-25}}
+@keyframes rip{from{transform:scale(.4);opacity:1}to{transform:scale(1.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.strm .fl,.splash ellipse{animation:none}}
+.capmsg{min-height:1.2em;line-height:1.2;margin:0;font-size:19px;color:var(--rust);font-weight:700;text-align:center}
+/* split bar */
+.split{display:flex;flex-direction:column;gap:6px;max-width:640px;width:100%;margin:0 auto}
+.split .st{display:flex;justify-content:space-between;gap:8px;font-weight:900;font-size:clamp(19px,2.5vw,23px);flex-wrap:wrap}
+.split .st .lb{color:var(--muted);font-weight:700}
+.sbar{height:22px;border-radius:11px;overflow:hidden;display:flex;border:3px solid var(--line);background:var(--card)}
+.sbar i{display:block;height:100%;transition:width .15s}
+.sbar .l{background:var(--wl)}.sbar .r{background:var(--wr)}
+.acts{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.acts .btn{flex:1 1 260px}
+.acts .btn.ghostb{flex:0 0 auto}
+/* reference */
+.ref h3{display:flex;align-items:center;gap:8px}
+.ref h3 svg.i{width:40px;height:40px}
+.cups{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+.cupc{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.cupc .if{font-size:19px;font-weight:700;color:var(--muted);line-height:1.4}
+.cupc .pw{font-size:clamp(20px,2.7vw,25px);font-weight:900;line-height:1.3}
+.cupsvg{width:84px;height:auto}
+.gap{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:900;font-size:clamp(19px,2.5vw,23px);text-align:center;line-height:1.35;color:var(--gold)}
+.gap svg{width:62px;height:auto}
+.wt{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:900;font-size:clamp(20px,2.7vw,25px)}
+.wt .blk{display:flex;gap:4px}
+.wt .blk i{display:block;width:26px;height:18px;border-radius:5px;background:#E3E6E0;border:2px solid var(--line)}
+.wt .blk i.on{background:var(--gold);border-color:#8C6A1E}
+.cmpp{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.55;align-items:center}
+.cmpp dt{font-weight:900;color:var(--muted);white-space:nowrap}
+.cmpp dd{margin:0;display:flex;flex-direction:column;gap:4px}
+.amt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mbar{display:inline-flex;width:120px;height:14px;border-radius:7px;background:#E3E6E0;overflow:hidden;flex:none}
+.mbar i{display:block;height:100%}
+.mbar.L i{background:var(--wl)}.mbar.R i{background:var(--wr)}
+.exp{margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.75}
+/* compare */
+.cmpj{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cmpj .pane{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.cmpj .pane.ref{border-color:#EBD9AE;background:#FFFCF4}
+.cmpj .pt{font-weight:900;font-size:clamp(19px,2.5vw,23px)}
+.cmpj .mj{display:flex;gap:6px;justify-content:center;width:100%}
+.cmpj .mj svg{width:46%;max-width:110px;height:auto}
+.cmpj .pv{font-size:19px;line-height:1.5;font-weight:700}
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+.sum td:first-child{color:var(--muted);font-weight:700;width:44%}
+.sum td b{font-size:1.05em}
+.sum .sub{display:block;font-size:19px;color:var(--muted);font-weight:500}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .acts .btn{flex:1 1 100%}
+  .tap{padding:6px 6px;gap:4px}
+  .tap svg.i{width:34px;height:34px}
+  .cups{grid-template-columns:1fr 1fr}
+  .gap{grid-column:1/-1;order:3;flex-direction:row;justify-content:center}
+  .gap svg{width:44px}
+  .cupsvg{width:70px}
+  .cmpp{grid-template-columns:1fr;gap:0}
+  .cmpp dd{margin-bottom:8px}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0;width:auto!important}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ask svg.i{width:38px;height:38px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"pour_tap": "<path d=\"M2.5 7.6h10a5 5 0 0 1 5 5v2.2h-4.2v-2.2a.9.9 0 0 0-.9-.9H2.5z\" fill=\"#DCE8F0\"/><path d=\"M8 7.6V4.4M5.4 4.4h5.2\"/><path d=\"M15.4 17.6c-1 1.3-1.5 2.2-1.5 2.9a1.5 1.5 0 0 0 3 0c0-.7-.5-1.6-1.5-2.9z\" fill=\"#BFD8EA\"/>", "pour_jug": "<path d=\"M5.7 12.4h10.6l-.45 7a1.6 1.6 0 0 1-1.6 1.5H7.75a1.6 1.6 0 0 1-1.6-1.5z\" fill=\"#BFD8EA\" stroke=\"none\"/><path d=\"M5 4.6h12l-.95 14.8a1.8 1.8 0 0 1-1.8 1.7H7.75a1.8 1.8 0 0 1-1.8-1.7z\"/><path d=\"M5 4.6L3.3 2.9\"/><path d=\"M16.8 8.2h1.7a2 2 0 0 1 2 2v3.6a2 2 0 0 1-2 2h-2.1\"/>", "pour_cup": "<path d=\"M8.7 12.2h6.6v7.2a1.4 1.4 0 0 1-1.4 1.4H10.1a1.4 1.4 0 0 1-1.4-1.4z\" fill=\"#BFD8EA\" stroke=\"none\"/><path d=\"M6.4 3h11.2M8 3v16.4A1.6 1.6 0 0 0 9.6 21h4.8a1.6 1.6 0 0 0 1.6-1.6V3\"/><path d=\"M8 7h3M8 10.5h2M8 14h3M8 17.5h2\"/>", "pour_desk": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"10\" rx=\"1.4\" fill=\"#CFE3C4\"/><path d=\"M6.4 6.8h5.2M6.4 9.6h3\"/><rect x=\"6.6\" y=\"15\" width=\"10.8\" height=\"3\" rx=\".8\" fill=\"#F3E3BE\"/><path d=\"M8.4 18v3M15.6 18v3\"/>", "pour_field": "<rect x=\"2.5\" y=\"5.5\" width=\"19\" height=\"13\" rx=\"6.5\" fill=\"#F2C9B5\"/><rect x=\"6.6\" y=\"9.2\" width=\"10.8\" height=\"5.6\" rx=\"2.8\" fill=\"#CFE3C4\"/><path d=\"M12 9.2v5.6\"/>", "pour_air": "<circle cx=\"8.4\" cy=\"15.6\" r=\"4.4\" fill=\"#DCE8F0\"/><circle cx=\"16\" cy=\"9.6\" r=\"3.2\" fill=\"#DCE8F0\"/><circle cx=\"10.4\" cy=\"4.6\" r=\"2\" fill=\"#DCE8F0\"/><path d=\"M6.4 14.4a2 2 0 0 1 1.8-1.4\"/><path d=\"M15 8.6a1.4 1.4 0 0 1 1.2-.8\"/><path d=\"M17 18.6h4M19 16.6v4\" />", "pour_dirty": "<path d=\"M12 2.8c-3.8 4.8-6 8.2-6 11a6 6 0 0 0 12 0c0-2.8-2.2-6.2-6-11z\" fill=\"#D9C79E\"/><circle cx=\"10\" cy=\"14.6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"13.8\" cy=\"12.2\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"13.6\" cy=\"17\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/>", "pour_move": "<path d=\"M2.4 12.6h6.2M6 9.8l2.8 2.8L6 15.4\"/><path d=\"M12.2 20.5V7.2a3.5 3.5 0 0 1 7 0v13.3z\" fill=\"#E3E6E0\"/><path d=\"M10.6 20.5h10.4\"/><path d=\"M14.2 9.6h3M14.2 12.6h3M14.2 15.6h3\"/>", "pour_stay": "<path d=\"M8.5 18.6V6.2a3.5 3.5 0 0 1 7 0v12.4z\" fill=\"#E3E6E0\"/><rect x=\"6\" y=\"18.6\" width=\"12\" height=\"2.8\" rx=\".8\" fill=\"#F3E3BE\"/><path d=\"M10.5 8.8h3M10.5 11.8h3M10.5 14.8h3\"/><path d=\"M2.5 21.4h19\"/>", "pour_none": "<path d=\"M2.5 7.6h10a5 5 0 0 1 5 5v2.2h-4.2v-2.2a.9.9 0 0 0-.9-.9H2.5z\" fill=\"#EEF0EC\"/><path d=\"M8 7.6V4.4M5.4 4.4h5.2\"/><path d=\"M3.4 3.4l17.2 17.2\"/>", "key": "<circle cx=\"8\" cy=\"8\" r=\"5\" fill=\"#F3D27A\"/><circle cx=\"7.4\" cy=\"7.4\" r=\"1.3\"/><path d=\"M11.6 11.6l9 9\"/><path d=\"M17.6 17.6l2.3-2.3M14.9 14.9l1.9-1.9\"/>", "cane_fish": "<path d=\"M2.8 12c2.6-3.8 6-5.4 10-5.4 3.4 0 5.6 2.4 6.4 5.4-.8 3-3 5.4-6.4 5.4-4 0-7.4-1.6-10-5.4z\" fill=\"#DCE8F0\"/><path d=\"M19.2 12l2.6-3.2v6.4z\" fill=\"#DCE8F0\"/><circle cx=\"7.8\" cy=\"11\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M11.8 9.2q1.4 2.8 0 5.6\"/>", "think": "<path d=\"M7.2 16.6a3.9 3.9 0 0 1-.7-7.7 5.4 5.4 0 0 1 10.4-1.3 4.4 4.4 0 0 1 .6 9z\" fill=\"#EEF0EC\"/><circle cx=\"6.2\" cy=\"19.4\" r=\"1.2\" fill=\"#EEF0EC\"/><circle cx=\"3.6\" cy=\"21.4\" r=\".6\" fill=\"currentColor\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>", "undo": "<path d=\"M4 4.5v5h5\"/><path d=\"M4.8 9.5A8 8 0 1 1 4 13.5\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "spark": "<path d=\"M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21M5.6 5.6l3.2 3.2M15.2 15.2l3.2 3.2M18.4 5.6l-3.2 3.2M8.8 15.2l-3.2 3.2\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='pourclue-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+
+/* ---------- the three cases (fixed script). p = chance (out of 10) the clue shows up IF the answer is that side. w = weight 0..4. ---------- */
+var CASES=[
+ {name:'小安的鑰匙',icon:'key',
+  story:['星期三放學的時候，五年13班的小安一摸書包，發現家裡的鑰匙不見了。',
+         '他今天只待過兩個地方：<b>教室</b>，還有上體育課的<b>操場</b>。鑰匙到底是掉在教室，還是掉在操場呢？'],
+  q:'你覺得小安的鑰匙掉在哪裡？',
+  L:{n:'教室',ic:'pour_desk'},R:{n:'操場',ic:'pour_field'},
+  clues:[
+   {t:'小安說，他早上出門的時候，確定有把鑰匙帶來學校。',s:'早上有帶鑰匙來學校',pL:9,pR:9,w:0,both:true,
+    e:'不管鑰匙掉在教室還是操場，小安早上都一定有把鑰匙帶來，不然鑰匙根本不會掉在學校。兩杯一樣滿，這條線索分不出是哪一邊，所以不用倒。'},
+   {t:'下午體育課跳繩的時候，小安外套的口袋被扯破了一個洞。',s:'外套口袋破了一個洞',pL:2,pR:6,w:2,side:'R',
+    e:'如果鑰匙掉在操場，很可能就是從這個破洞掉出去的；如果鑰匙掉在教室，口袋還是可能剛好破洞，只是比較少見。兩杯差了一些，可以往操場倒一些。'},
+   {t:'放學前，值日生說：「教室的講桌上有一串鑰匙，不知道是誰的。」',s:'講桌上有一串鑰匙',pL:6,pR:2,w:2,side:'L',
+    e:'如果小安的鑰匙掉在教室，很可能就是講桌上這一串；可是就算掉在操場，講桌上還是可能有別人的鑰匙。它偏向教室，但還說不準是誰的，倒一些就好。'},
+   {t:'小安走到講桌前一看，那串鑰匙上，掛著他自己的海豚吊飾。',s:'鑰匙上掛著小安的海豚吊飾',pL:9,pR:1,w:4,side:'L',
+    e:'如果鑰匙掉在教室，講桌上那串幾乎一定就是他的；如果掉在操場，除非有人在操場撿到、又剛好拿回教室，不然講桌上不會出現他的海豚吊飾。兩杯差非常多，這是很重的線索。'}
+  ],
+  why:'最重的是「海豚吊飾」那一條：如果鑰匙掉在操場，講桌上的鑰匙很少會掛著小安的吊飾。「早上有帶鑰匙來學校」那一條，兩邊都會出現，一點重量也沒有。'},
+ {name:'魚塭的魚浮頭',icon:'cane_fish',
+  story:['夏天的一個清早，七股的阿海伯走到自己的虱目魚塭，看到好多魚浮到水面，嘴巴一開一合地拚命吸氣，這叫做「浮頭」。',
+         '是天氣太悶、<b>水裡缺氧氣</b>？還是<b>水被汙染</b>了？'],
+  q:'你覺得魚塭的魚為什麼浮頭？',
+  L:{n:'天氣悶，缺氧',ic:'pour_air'},R:{n:'水被汙染',ic:'pour_dirty'},
+  clues:[
+   {t:'這幾天都很熱，下午悶得像蒸籠一樣，一點風也沒有。',s:'這幾天很熱、很悶',pL:8,pR:6,w:1,both:true,side:'L',
+    e:'天氣又熱又悶，水裡的氧氣會變少，所以缺氧常常發生在熱天；可是夏天本來就常常很熱，水被汙染的時候，也很可能剛好是熱天。兩杯只差一點點，頂多倒一點點，不倒也可以。'},
+   {t:'阿海伯回想，魚是在清晨、天快亮的時候開始浮頭的。',s:'清晨天快亮時浮頭',pL:8,pR:2,w:3,side:'L',
+    e:'水裡的藻類晚上會用掉氧氣，天快亮的時候，水裡的氧氣最少，所以缺氧的魚常常在清晨浮頭；如果是水被汙染，什麼時候都可能發生，不一定剛好在清晨。兩杯差不少，可以往缺氧倒不少。'},
+   {t:'阿海伯趕快打開打氣的水車，不到一個小時，魚就慢慢沉回水裡，恢復正常了。',s:'開了水車，魚很快就恢復',pL:9,pR:1,w:4,side:'L',
+    e:'如果是缺氧，水車把空氣打進水裡，魚幾乎一定會好起來；如果是水被汙染，水車打不掉髒東西，魚很少會這麼快恢復。兩杯差非常多，這是很重的線索。'},
+   {t:'後來阿海伯聽鄰居說，隔壁三口魚塭，那天早上也一樣浮頭了。',s:'隔壁三口魚塭也浮頭',pL:7,pR:7,w:0,both:true,
+    e:'如果是天氣太悶，附近的魚塭會一起缺氧；如果是汙染，髒水也可能從同一條水溝流進好幾口魚塭。兩邊都很可能發生。這條線索聽起來很嚇人，其實分不出是哪一個，所以不用倒。'}
+  ],
+  why:'最重的是「開了水車，魚很快就恢復」那一條，再加上「清晨天快亮時浮頭」。「隔壁魚塭也浮頭」聽起來很嚴重，可是兩邊都會出現，幾乎沒有重量。'},
+ {name:'廟口的舊石碑',icon:'pour_stay',
+  story:['安南區有一間老廟，廟埕的角落立著一塊很舊的石碑。五年13班去校外教學的時候，有同學問：',
+         '「這塊碑，是從<b>別的地方搬過來</b>的？還是刻好以後就<b>一直立在這裡</b>？」'],
+  q:'你覺得這塊舊石碑是怎麼來的？',
+  L:{n:'從別的地方搬來',ic:'pour_move'},R:{n:'一直立在這裡',ic:'pour_stay'},
+  clues:[
+   {t:'廟口的阿公阿嬤都說：「這塊碑喔，從我們小時候就在這裡了。」',s:'阿公阿嬤說小時候就在這裡',pL:8,pR:9,w:0,both:true,
+    e:'如果石碑在很久很久以前就搬來了，阿公阿嬤小時候看到的，也是它立在這裡的樣子；如果它一直都在這裡，他們當然也會這樣說。兩邊都很可能聽到這句話，所以不用倒。'},
+   {t:'石碑的底座，和旁邊地上石板的顏色、石頭種類都不一樣。',s:'底座和地上的石板不一樣',pL:6,pR:3,w:2,side:'L',
+    e:'如果是搬來的，底座和地面常常會不一樣；可是就算一直在這裡，地上的石板也可能後來重新鋪過。兩杯差了一些，可以往搬來倒一些。'},
+   {t:'有一張很舊的照片，拍的時間比碑上刻的年份還要晚。照片裡，現在石碑的位置是一棵大樹，沒有石碑。',s:'舊照片裡那裡是一棵大樹',pL:7,pR:0.5,w:4,side:'L',
+    e:'如果石碑是後來才搬來的，照片裡沒有它很合理；如果它刻好以後一直立在這裡，照片裡就應該看得到它，除非照片拍錯了地方。兩杯差非常多，這是很重的線索。'},
+   {t:'碑上刻的地名，不是這個庄，而是隔壁的庄頭。',s:'碑上刻的是隔壁庄的地名',pL:6,pR:1,w:3,side:'L',
+    e:'如果石碑是從隔壁庄搬來的，上面刻隔壁庄的名字很合理；如果它一直立在這裡，碑上通常會刻這裡的地名，刻別庄名字的機會比較小。兩杯差不少，可以往搬來倒不少。'}
+  ],
+  why:'最重的是「舊照片裡那裡是一棵大樹」那一條，再加上「碑上刻的是隔壁庄的地名」。阿公阿嬤說的話，兩邊都會聽到，幾乎沒有重量。'}
+];
+var BASE=1, CAP=17, PERCLUE=4, RATE=1.6; // water units; pour speed per second while holding
+var WNAME=['幾乎沒有重量','輕','中','重','很重'];
+var WGAP=['兩杯差不多','只差一點點','差了一些','差不少','差非常多'];
+var WPOUR=['不用倒','頂多倒一點點','倒一些','倒不少','倒很多'];
+var WAMT=[0,0.6,1.5,2.5,3.6];
+var BOTH_TOTAL=0;CASES.forEach(function(c){c.clues.forEach(function(k){if(k.both)BOTH_TOTAL++})});
+function pword(p){return p>=9?'幾乎一定會':p>=7?'很可能會':p>=5?'有可能':p>=3?'偶爾會':p>=1?'很少會':'幾乎不會'}
+function aword(a){return a<0.05?'沒有倒':a<1?'一點點':a<2?'一些':a<3?'不少':'很多'}
+function post(c){var o=1;CASES[c].clues.forEach(function(k){o*=k.pL/k.pR});return o/(1+o)}
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',c:0,k:0,p:{},np:{},rv:{},ans:{}}}
+var st=load();if(!st||!st.step||!st.p)st=fresh();
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function id(c,k){return c+'-'+k}
+function pv(c,k){return st.p[id(c,k)]||[0,0]}
+function levels(c,upto){var L=BASE,R=BASE;for(var j=0;j<=upto;j++){var a=pv(c,j);L+=a[0];R+=a[1]}return [L,R]}
+function tenths(L,R){return Math.round(L/(L+R)*10)}
+function splitText(c,L,R,br){var x=tenths(L,R),C=CASES[c];if(x===5)return '兩邊一半一半';return C.L.n+' '+x+' 成'+(br?'<br>':'、')+C.R.n+' '+(10-x)+' 成'}
+function tag(c,s){var C=CASES[c],o=C[s];return '<span class="tag'+s+'">'+ic(o.ic)+o.n+'</span>'}
+
+/* ---------- jug SVG (viewBox 170×250): nozzle, stream, see-through jug with water ---------- */
+var JT=60,JB=240,JH=JB-JT-6; // inner usable height
+function jugSVG(side,uid,mini,noz){
+  var wc=side==='L'?'#7DB7DE':'#8CCFB5',ws=side==='L'?'#205E86':'#2F7D4F',sf=side==='L'?'#B5D6EE':'#BFE6D6';
+  var body='M24 '+JT+'H138L133 '+(JB-12)+'Q132 '+JB+' 120 '+JB+'H42Q30 '+JB+' 29 '+(JB-12)+'Z';
+  var s='<svg class="'+(mini?'':'jsvg')+'" viewBox="0 '+(noz?0:40)+' 170 '+(noz?250:210)+'" aria-hidden="true">';
+  s+='<defs><clipPath id="cp'+uid+'"><path d="'+body+'"/></clipPath></defs>';
+  if(noz){
+    s+='<rect x="72" y="0" width="16" height="16" rx="3" fill="#B9C3C8" stroke="#56605C" stroke-width="3"/>';
+    s+='<g class="strm"><line x1="80" y1="16" x2="80" y2="230" class="sl" stroke="'+wc+'" stroke-width="12" stroke-linecap="round"/><line x1="80" y1="16" x2="80" y2="230" class="sl fl" stroke="#E8F3FA" stroke-width="4" stroke-linecap="round"/></g>';
+  }
+  s+='<path d="'+body+'" fill="#FBFCF9" fill-opacity=".55"/>';
+  s+='<g clip-path="url(#cp'+uid+')"><rect class="wt" x="0" y="'+JB+'" width="170" height="0" fill="'+wc+'"/><rect class="ws" x="0" y="'+JB+'" width="170" height="7" fill="'+sf+'"/></g>';
+  if(noz)s+='<g class="splash"><ellipse class="sp" cx="80" cy="'+JB+'" rx="22" ry="5" fill="none" stroke="#FBFCF9" stroke-width="3"/></g>';
+  for(var t=1;t<=4;t++){var y=JB-6-JH*t/4.25;s+='<path d="M34 '+y.toFixed(1)+'h'+(t%2?16:10)+'" stroke="'+ws+'" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"/>'}
+  s+='<path d="M126 '+(JT+18)+'L122 '+(JB-30)+'" stroke="#FFFFFF" stroke-opacity=".8" stroke-width="5" stroke-linecap="round"/>';
+  s+='<path d="M138 '+(JT+26)+'h10a14 14 0 0 1 14 14v52a14 14 0 0 1-14 14h-13" fill="none" stroke="#56605C" stroke-width="7" stroke-linecap="round"/>';
+  s+='<path d="'+body+'" fill="none" stroke="#56605C" stroke-width="5" stroke-linejoin="round"/>';
+  s+='<path d="M24 '+JT+'L12 '+(JT-10)+'" stroke="#56605C" stroke-width="5" stroke-linecap="round"/>';
+  s+='<path d="M20 '+JT+'H142" stroke="#56605C" stroke-width="6" stroke-linecap="round"/>';
+  return s+'</svg>';
+}
+function setLevel(svg,v){
+  var h=Math.min(JH+6,JH*v/CAP),y=JB-h;
+  var w=svg.querySelector('.wt'),s=svg.querySelector('.ws');
+  w.setAttribute('y',y.toFixed(1));w.setAttribute('height',h.toFixed(1));
+  s.setAttribute('y',(y-1).toFixed(1));
+  svg.querySelectorAll('.sl').forEach(function(l){l.setAttribute('y2',(y+2).toFixed(1))});
+  var sp=svg.querySelector('.sp');if(sp)sp.setAttribute('cy',(y+2).toFixed(1));
+}
+var uidN=0;
+function jugPair(c,lv,opt){
+  // opt: {pour:true, onPour(side,dt)} or static
+  var C=CASES[c],wrap=el('div','jugs'),cols={};
+  ['L','R'].forEach(function(s,si){
+    var col=el('div','jcol');
+    var tap=null;
+    if(opt&&opt.taps){
+      tap=el('button','tap '+s,ic('pour_tap')+'<span class="tl">按住倒水</span>');tap.type='button';
+      tap.setAttribute('aria-label','按住，把水倒進「'+C[s].n+'」這一壺');
+      col.appendChild(tap);
+    }
+    var holder=el('div');holder.style.width='100%';holder.style.display='flex';holder.style.justifyContent='center';
+    holder.innerHTML=jugSVG(s,'j'+(uidN++),false,!!(opt&&opt.taps));col.appendChild(holder);
+    var svg=holder.querySelector('svg');setLevel(svg,lv[si]);
+    col.appendChild(el('div','jname '+(s==='L'?'sideL':'sideR'),ic(C[s].ic)+'<span>'+C[s].n+'</span>'));
+    cols[s]={col:col,tap:tap,svg:svg};wrap.appendChild(col);
+  });
+  return {el:wrap,cols:cols};
+}
+function splitBar(c,L,R){
+  var w=el('div','split');
+  w.innerHTML='<div class="st"><span class="lb">你現在的想法</span><span class="tx"></span></div><div class="sbar" aria-hidden="true"><i class="l"></i><i class="r"></i></div>';
+  function upd(L,R){var f=L/(L+R)*100;w.querySelector('.l').style.width=f.toFixed(1)+'%';w.querySelector('.r').style.width=(100-f).toFixed(1)+'%';w.querySelector('.tx').textContent=splitText(c,L,R)}
+  upd(L,R);w.upd=upd;return w;
+}
+
+/* ---------- pages ---------- */
+function intro(){
+  app.append(el('h1',null,'這條線索有多重'));
+  var c=el('div','card');
+  c.append(el('p','lead','偵探找答案的時候，會一條一條收集線索。可是線索不是每一條都一樣重：<b>有的線索很重</b>，一出現就讓你很有把握；<b>有的線索很輕</b>，聽起來好像有關係，其實幫不上忙。'));
+  c.append(el('p','lead','等一下有三個案子。每個案子都有<b>兩個透明水壺</b>，代表兩個可能的答案。每看到一條線索，你就決定要把水倒進哪一壺、倒多少：<b>按住水壺上面的水龍頭</b>，按越久，倒越多。'));
+  c.append(el('p','lead','如果你覺得這條線索<b>兩邊都會出現</b>，就按「不倒」。兩壺水的多少，就是你現在的想法。'));
+  app.append(c);
+  app.append(el('div','ask',ic('pour_cup')+'<span>判斷一條線索有多重，就問自己：「如果答案是另一個，這條線索還會出現嗎？」</span>'));
+  app.append(el('p','hint','倒法沒有對錯，也不會扣分。每條線索倒完，會給你看一個「參考倒法」。'));
+  app.append(button('開始第 1 案','btn',function(){st.c=0;st.k=0;go('case')}));
+}
+
+function casePage(){
+  var c=st.c,C=CASES[c];
+  app.append(el('p','case',ic(C.icon)+'<span>第 '+(c+1)+' 案（共 3 案）：'+C.name+'</span>'));
+  var card=el('div','card');C.story.forEach(function(t){card.append(el('p','lead',t))});app.append(card);
+  var jp=jugPair(c,[BASE,BASE]);app.append(jp.el);
+  app.append(el('p','hint','兩壺現在一樣多水，代表你覺得兩個答案一樣有可能。接下來會出現 4 條線索。'));
+  app.append(button('看第 1 條線索','btn',function(){st.k=0;go('clue')}));
+}
+
+function cluePage(){
+  var c=st.c,k=st.k,C=CASES[c],K=C.clues[k],key=id(c,k);
+  var rv=!!st.rv[key];
+  app.append(el('p','case',ic(C.icon)+'<span>第 '+(c+1)+' 案：'+C.name+'　<span class="nw">・ 線索 '+(k+1)+'／4</span></span>'));
+  app.append(el('p','clue',K.t));
+  app.append(el('p','hint',ic('think')+'<span>想一想：如果答案是「'+C.L.n+'」，會有這條線索嗎？如果答案是「'+C.R.n+'」，還會有嗎？</span>'));
+  var lv=levels(c,k);
+  var jp=jugPair(c,lv,{taps:!rv});app.append(jp.el);
+  var msg=el('p','capmsg','');if(!rv)app.append(msg);
+  var sb=splitBar(c,lv[0],lv[1]);app.append(sb);
+  var acts=el('div','acts');
+  var done=button(ic('check')+'倒好了，看參考倒法','btn',function(){finish(false)});
+  var none=button(ic('pour_none')+'這條線索兩邊都會出現，不倒','btn soft',function(){finish(true)});
+  var redo=button(ic('undo')+'重倒這一條','btn ghostb',function(){st.p[key]=[0,0];save(st);render()});
+  if(!rv){acts.append(done,none,redo);app.append(acts)}
+  function upBtns(){var a=pv(c,k),t=a[0]+a[1];done.disabled=t<0.05;none.disabled=t>=0.05;none.style.display=t>=0.05?'none':'';redo.style.display=t>=0.05?'':'none'}
+  if(!rv){
+    upBtns();
+    var pouring=null,last=0,raf=0;
+    function frame(ts){
+      if(!pouring)return;
+      var dt=last?Math.min(0.1,(ts-last)/1000):0;last=ts;
+      var a=pv(c,k).slice(),si=pouring==='L'?0:1;
+      var room=Math.min(PERCLUE-a[si],CAP-levels(c,k)[si]);
+      var add=Math.min(room,RATE*dt);
+      if(add>0){a[si]+=add;st.p[key]=a}
+      if(room<=0.0001){msg.textContent='這一條線索，這一壺最多倒到這裡。'}
+      var l=levels(c,k);setLevel(jp.cols.L.svg,l[0]);setLevel(jp.cols.R.svg,l[1]);sb.upd(l[0],l[1]);upBtns();
+      raf=requestAnimationFrame(frame);
+    }
+    function start(s){if(pouring)return;pouring=s;last=0;msg.textContent='';var cl=jp.cols[s];cl.tap.classList.add('on');cl.svg.parentNode.classList.add('pouring');cl.tap.querySelector('.tl').textContent='倒水中…';raf=requestAnimationFrame(frame)}
+    function stop(){if(!pouring)return;var cl=jp.cols[pouring];cl.tap.classList.remove('on');cl.svg.parentNode.classList.remove('pouring');cl.tap.querySelector('.tl').textContent='按住倒水';pouring=null;cancelAnimationFrame(raf);var a=pv(c,k);st.p[key]=[Math.round(a[0]*100)/100,Math.round(a[1]*100)/100];save(st);upBtns()}
+    ['L','R'].forEach(function(s){
+      var t=jp.cols[s].tap;
+      t.addEventListener('pointerdown',function(e){if(e.button>0)return;e.preventDefault();try{t.setPointerCapture(e.pointerId)}catch(_){}start(s)});
+      t.addEventListener('pointerup',stop);t.addEventListener('pointercancel',stop);t.addEventListener('lostpointercapture',stop);
+      t.addEventListener('contextmenu',function(e){e.preventDefault()});
+      t.addEventListener('keydown',function(e){if((e.key===' '||e.key==='Enter')){e.preventDefault();if(!e.repeat)start(s)}});
+      t.addEventListener('keyup',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();stop()}});
+      t.addEventListener('blur',stop);
+    });
+    window.addEventListener('blur',stop,{once:true});
+  }else{
+    app.append(refCard(c,k));
+    var last3=k===3;
+    app.append(button(last3?'選一個答案'+ic('chev'):'下一條線索'+ic('chev'),'btn',function(){if(last3)go('decide');else{st.k=k+1;go('clue')}}));
+  }
+  function finish(no){
+    var a=pv(c,k);if(no){st.p[key]=[0,0];st.np[key]=true}else{delete st.np[key]}
+    st.rv[key]=true;save(st);render();
+    var r=document.querySelector('.ref');if(r)try{r.scrollIntoView({block:'start'})}catch(e){}
+  }
+}
+function cupSVG(p,side){
+  var wc=side==='L'?'#7DB7DE':'#8CCFB5';
+  var top=14,bot=150,h=(bot-top)*Math.min(10,p)/10,y=bot-h;
+  var s='<svg class="cupsvg" viewBox="0 0 90 164" aria-hidden="true">';
+  s+='<defs><clipPath id="cc'+side+(uidN++)+'"><rect x="22" y="'+top+'" width="46" height="'+(bot-top)+'" rx="0"/></clipPath></defs>';
+  s+='<path d="M22 '+top+'V'+(bot-6)+'Q22 '+bot+' 30 '+bot+'H60Q68 '+bot+' 68 '+(bot-6)+'V'+top+'" fill="#FBFCF9"/>';
+  s+='<path d="M23 '+y.toFixed(1)+'H67V'+(bot-6)+'Q67 '+(bot-1)+' 60 '+(bot-1)+'H30Q23 '+(bot-1)+' 23 '+(bot-6)+'Z" fill="'+wc+'"/>';
+  for(var t=1;t<10;t++){var yy=bot-(bot-top)*t/10;s+='<path d="M22 '+yy+'h'+(t===5?16:9)+'" stroke="#56605C" stroke-width="2.4" stroke-linecap="round"/>'}
+  s+='<path d="M14 '+top+'H76M22 '+top+'V'+(bot-6)+'Q22 '+bot+' 30 '+bot+'H60Q68 '+bot+' 68 '+(bot-6)+'V'+top+'" fill="none" stroke="#56605C" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>';
+  s+='<path d="M8 160H82" stroke="#56605C" stroke-width="4" stroke-linecap="round"/>';
+  return s+'</svg>';
+}
+function scaleSVG(w){
+  var tilt=[0,4,9,13,17][w];
+  return '<svg viewBox="0 0 64 44" aria-hidden="true"><path d="M32 8V40M20 40h24" stroke="#8C6A1E" stroke-width="3.4" stroke-linecap="round"/><g transform="rotate('+(-tilt)+' 32 10)"><path d="M8 10H56" stroke="#8C6A1E" stroke-width="3.4" stroke-linecap="round"/><path d="M3 22h14a7 7 0 0 1-14 0zM47 22h14a7 7 0 0 1-14 0z" fill="#F3D27A" stroke="#8C6A1E" stroke-width="2.6"/><path d="M8 10L4 22M8 10l5 12M56 10l-4 12M56 10l5 12" stroke="#8C6A1E" stroke-width="2"/></g><circle cx="32" cy="9" r="3.4" fill="#FBF4E2" stroke="#8C6A1E" stroke-width="2.4"/></svg>';
+}
+function amtRow(c,side,a,w){return '<span class="amt">'+tag(c,side)+'<span class="mbar '+side+'"><i style="width:'+Math.min(100,a/PERCLUE*100).toFixed(0)+'%"></i></span>'+(w||aword(a))+'</span>'}
+function refCard(c,k){
+  var C=CASES[c],K=C.clues[k],a=pv(c,k),key=id(c,k);
+  var card=el('div','card ref');
+  card.append(el('h3',null,ic('pour_cup')+'參考倒法：兩根小量杯'));
+  card.append(el('p','exp','量杯裡的水，是「如果答案是這一邊，這條線索出現的機會」。'));
+  var cups=el('div','cups');
+  function cc(s,p){return '<div class="cupc"><span class="if">如果答案是</span>'+tag(c,s)+cupSVG(p,s)+'<span class="pw">'+pword(p)+'</span></div>'}
+  cups.innerHTML=cc('L',K.pL)+'<div class="gap">'+scaleSVG(K.w)+'<span>'+WGAP[K.w]+'</span></div>'+cc('R',K.pR);
+  card.append(cups);
+  var wt=el('div','wt','<span>這條線索的重量：</span><span class="blk">'+[1,2,3,4].map(function(i){return '<i class="'+(i<=K.w?'on':'')+'"></i>'}).join('')+'</span><span>'+WNAME[K.w]+'</span>');
+  card.append(wt);
+  card.append(el('p','exp',K.e));
+  var refTxt=K.w===0?'不用倒（兩邊都會出現）':amtRow(c,K.side,WAMT[K.w],K.w===1?'頂多倒一點點，不倒也可以':WPOUR[K.w]);
+  var yours;
+  if(st.np[key])yours='你選了「兩邊都會出現，不倒」。';
+  else{var parts=[];if(a[0]>=0.05)parts.push(amtRow(c,'L',a[0]));if(a[1]>=0.05)parts.push(amtRow(c,'R',a[1]));yours=parts.join('')||'沒有倒'}
+  card.append(el('dl','cmpp','<dt>你的倒法</dt><dd>'+yours+'</dd><dt>參考倒法</dt><dd>'+refTxt+'</dd>'));
+  card.append(el('p','hint','參考倒法只是給你比一比，你的倒法不扣分。'));
+  return card;
+}
+
+function decidePage(){
+  var c=st.c,C=CASES[c];
+  app.append(el('p','case',ic(C.icon)+'<span>第 '+(c+1)+' 案：'+C.name+'　<span class="nw">・ 4 條線索都看完了</span></span>'));
+  app.append(el('h2',null,C.q));
+  var lv=levels(c,3);
+  var jp=jugPair(c,lv);app.append(jp.el);app.append(splitBar(c,lv[0],lv[1]));
+  var o=el('div','opts');var bs={};var fb=el('div');fb.style.display='contents';
+  [['L',C.L.ic,C.L.n],['R',C.R.ic,C.R.n],['U','think','還不能確定']].forEach(function(x){
+    var b=button(ic(x[1])+'<span>'+x[2]+'</span>','btn alt'+(st.ans[c]===x[0]?' pick':''),function(){st.ans[c]=x[0];save(st);upd(true)});bs[x[0]]=b;o.appendChild(b)});
+  var nx=button(c<2?'下一案'+ic('chev'):'看看結果'+ic('chev'),'btn',function(){if(!st.ans[c])return;if(c<2){st.c=c+1;st.k=0;go('case')}else go('end')});
+  app.append(o,fb,nx);
+  function upd(scroll){
+    Object.keys(bs).forEach(function(k){bs[k].classList.toggle('pick',st.ans[c]===k);bs[k].setAttribute('aria-pressed',st.ans[c]===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.ans[c];
+    if(st.ans[c]){var cc=compareCard(c,lv);fb.appendChild(cc);if(scroll)try{cc.scrollIntoView({block:'nearest'})}catch(e){}}
+  }
+  upd(false);
+}
+function refText(p){return p>=0.95?['超過 9 成','不到 1 成']:['大約 '+Math.round(p*10)+' 成','大約 '+(10-Math.round(p*10))+' 成']}
+function compareCard(c,lv){
+  var C=CASES[c],P=post(c),ans=st.ans[c];
+  var card=el('div','card');
+  card.append(el('h3',null,'比一比：你的水位和參考水位'));
+  var g=el('div','cmpj');
+  var you=el('div','pane');you.append(el('span','pt','你的水位'));
+  var mj=el('div','mj');mj.innerHTML=jugSVG('L','m'+(uidN++),true)+jugSVG('R','m'+(uidN++),true);you.append(mj);
+  you.append(el('span','pv',splitText(c,lv[0],lv[1],true)));
+  var ref=el('div','pane ref');ref.append(el('span','pt','參考水位'));
+  var mj2=el('div','mj');mj2.innerHTML=jugSVG('L','m'+(uidN++),true)+jugSVG('R','m'+(uidN++),true);ref.append(mj2);
+  var rt=refText(P);ref.append(el('span','pv',C.L.n+' '+rt[0]+'<br>'+C.R.n+' '+rt[1]));
+  g.append(you,ref);card.append(g);
+  var sv=mj.querySelectorAll('svg');setLevel(sv[0],lv[0]);setLevel(sv[1],lv[1]);
+  var tot=12,sv2=mj2.querySelectorAll('svg');setLevel(sv2[0],tot*P);setLevel(sv2[1],tot*(1-P));
+  card.append(el('p','exp',C.why));
+  var yf=lv[0]/(lv[0]+lv[1]),lean;
+  if(yf<0.5)lean='你的水位比較偏向「'+C.R.n+'」。可以回頭想想：哪一條線索你倒得最多？它在兩邊是不是都很可能出現？';
+  else if(P-yf>0.15)lean='你的水位比參考水位平一些，可能是很重的那幾條，你倒得比參考少一點。';
+  else lean='你的水位和參考水位差不多。';
+  var pick=ans==='U'?'你選了「還不能確定」。多查一點再下結論是好習慣；你可以想想：還需要哪一條線索，你才會比較確定？'
+    :(ans==='L'?'你選了「'+C.L.n+'」，和參考水位偏的方向一樣。':'你選了「'+C.R.n+'」，和參考水位偏的方向不一樣。等一下可以說說看，是哪一條線索讓你這樣選。');
+  card.append(el('p','note',pick+'<br>'+lean));
+  return card;
+}
+
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var rows=[];
+  CASES.forEach(function(C,c){var a=st.ans[c];rows.push(['第 '+(c+1)+' 案：'+C.name,a==='U'?'還不能確定':(a?C[a].n:'—')])});
+  var nb=0;CASES.forEach(function(C,c){C.clues.forEach(function(K,k){if(K.both&&st.np[id(c,k)])nb++})});
+  rows.push(['「兩邊都會出現」的線索（共 '+BOTH_TOTAL+' 條），你選擇不倒的有',nb+' 條']);
+  var all=[];
+  CASES.forEach(function(C,c){C.clues.forEach(function(K,k){var a=pv(c,k),t=a[0]+a[1];if(t>=0.05)all.push({c:c,k:k,K:K,a:a,t:t})})});
+  var best=null;
+  if(all.length){
+    var mx=Math.max.apply(null,all.map(function(x){return x.t}));
+    // near-ties (within a twentieth of a second of pouring) count as the same amount; then prefer the heavier clue
+    all.filter(function(x){return x.t>=mx-0.08}).forEach(function(x){if(!best||x.K.w>best.K.w)best=x});
+  }
+  if(best){
+    var into=best.a[0]>=best.a[1]?'L':'R';
+    rows.push(['你倒最多水的線索','「'+best.K.s+'」<span class="sub">第 '+(best.c+1)+' 案第 '+(best.k+1)+' 條，倒進「'+CASES[best.c][into].n+'」</span>']);
+    rows.push(['它是不是那一案最重的線索',(best.K.w===4?'是':'不是')+'<span class="sub">它的參考重量：'+WNAME[best.K.w]+'</span>']);
+  }else{
+    rows.push(['你倒最多水的線索','你每一條都沒有倒水']);
+    rows.push(['它是不是那一案最重的線索','—']);
+  }
+  var card=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  card.append(tb);app.append(card);
+  app.append(el('div','ask',ic('pour_cup')+'<span>記得這個問題：「如果答案是另一個，這條線索還會出現嗎？」</span>'));
+  app.append(el('p','note warm','老師等一下會請大家舉手：三案各選了什麼？「兩邊都會出現」的線索，你有幾條沒有倒？你倒最多水的那一條，是不是最重的那一條？'));
+}
+
+function render(){
+  app.innerHTML='';
+  var s=st.step;
+  if(s==='intro')intro();
+  else if(s==='case'&&CASES[st.c])casePage();
+  else if(s==='clue'&&CASES[st.c]&&st.k>=0&&st.k<4)cluePage();
+  else if(s==='decide'&&CASES[st.c])decidePage();
+  else if(s==='end')endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

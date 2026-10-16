@@ -1,0 +1,178 @@
+<title>最後兩塊雞蛋糕</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1E242B; --muted:#475569; --line:#E3DED7;
+  --co:#D95D39; --te:#2A6F68; --lco:#FFF5F2; --lte:#F0F7F6; --peach:#F2B79F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:18px;padding-block:22px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,48px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.8vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--co);letter-spacing:2px;margin:0}
+.lead{font-size:clamp(19px,2.7vw,24px);color:var(--muted);margin:0}
+p{margin:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 24px rgba(30,36,43,.06)}
+.note{background:var(--lte);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,23px);line-height:1.65}
+.note.warm{background:var(--lco)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--co);color:#fff;cursor:pointer;line-height:1.4;touch-action:manipulation}
+.btn.teal{background:var(--te)}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--co);background:var(--lco)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible{outline:4px solid var(--te);outline-offset:3px}
+.chip{display:inline-block;border-radius:999px;padding:4px 16px;font-weight:900;color:#fff}
+.chip.red{background:var(--co)} .chip.blue{background:var(--te)}
+svg{display:block;max-width:100%;height:auto}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top}
+td.k{color:var(--muted);font-weight:700;width:52%}
+td.v{font-weight:900}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+.stage{display:flex;justify-content:center;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.jarbox{width:min(260px,62vw)}
+.plate{width:min(150px,36vw)}
+.cake{cursor:pointer;transition:transform .5s ease,opacity .5s ease}
+.cake.gone{opacity:0;transform:translateY(-40px)}
+.queue{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.qp{border:2px solid var(--line);background:var(--card);border-radius:12px;padding:4px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;font:inherit;font-size:clamp(14px,2vw,18px);color:var(--muted);font-weight:700}
+.qp svg{width:80%}
+.qp.on{border-color:var(--co);background:var(--lco);color:var(--co)}
+.qp.me{border-color:var(--te);background:var(--lte);color:var(--te)}
+.tickets{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.tk{border:0;background:none;padding:0;cursor:pointer;width:clamp(56px,14vw,90px)}
+.big{font-size:clamp(40px,8vw,64px);font-weight:900;text-align:center;color:var(--co);margin:0}
+.ad{border-radius:24px;border:3px solid var(--ink);background:#fff;padding:18px;display:flex;flex-direction:column;gap:10px;max-width:520px;margin:0 auto;width:100%}
+.ad .tag{align-self:flex-start;background:var(--co);color:#fff;font-weight:900;border-radius:10px;padding:2px 12px}
+.ad .tag.calm{background:var(--te)}
+.timer{font-size:clamp(36px,7vw,56px);font-weight:900;color:var(--co);text-align:center;font-variant-numeric:tabular-nums}
+.bar{height:16px;border-radius:8px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--co)}
+</style>
+<main class="wrap" id="app" aria-live="polite"></main>
+<script>
+(function(){
+"use strict";
+var KEY='u2d-cookiejar-v1', app=document.getElementById('app');
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+var h=location.hash;
+if(h==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}}
+var st=load();
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}
+if(!st||h==='#red'||h==='#blue'){st={g:h==='#red'?'red':h==='#blue'?'blue':(rnd()<.5?'red':'blue'),s:0,taken:false,q:null,t:0,taste:null,buy:null,seen:false}}
+if(h==='#reset'||h==='#red'||h==='#blue'){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+save();
+var RED=st.g==='red';
+function el(t,c,html){var e=document.createElement(t);if(c)e.className=c;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.s=n;save();render();window.scrollTo(0,0)}
+var POS=[[46,172],[80,172],[114,172],[63,140],[97,140],[46,108],[80,108],[114,108],[63,76],[97,76]];
+function jarSVG(n,ghost,clickable){
+  var s='<svg viewBox="0 0 160 205" aria-label="玻璃罐裡有 '+n+' 塊雞蛋糕"><rect x="34" y="6" width="92" height="22" rx="8" fill="#F0F7F6" stroke="#2A6F68" stroke-width="4"/><path d="M30 34 H130 Q148 34 148 56 V176 Q148 196 128 196 H32 Q12 196 12 176 V56 Q12 34 30 34 Z" fill="#fff" stroke="#2A6F68" stroke-width="4"/>';
+  for(var i=0;i<n+ghost;i++){var p=POS[i];
+    if(i<n)s+='<g class="cake" data-i="'+i+'"'+(clickable?' role="button" tabindex="0" aria-label="拿這一塊"':'')+'><circle cx="'+p[0]+'" cy="'+p[1]+'" r="15" fill="#F2B79F" stroke="#D95D39" stroke-width="4"/><path d="M'+(p[0]-7)+' '+(p[1]-3)+' Q'+p[0]+' '+(p[1]-9)+' '+(p[0]+7)+' '+(p[1]-3)+'" stroke="#D95D39" stroke-width="3" fill="none" stroke-linecap="round"/></g>';
+    else s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="15" fill="none" stroke="#E3DED7" stroke-width="3" stroke-dasharray="5 6"/>';}
+  return s+'</svg>';
+}
+function plateSVG(full){return '<svg viewBox="0 0 150 90" aria-label="'+(full?'盤子上有一塊雞蛋糕':'空盤子')+'"><ellipse cx="75" cy="66" rx="66" ry="18" fill="#fff" stroke="#475569" stroke-width="4"/>'+(full?'<circle cx="75" cy="52" r="17" fill="#F2B79F" stroke="#D95D39" stroke-width="4"/>':'')+'</svg>'}
+var PERSON='<svg viewBox="0 0 30 40" aria-hidden="true"><circle cx="15" cy="10" r="7" fill="#fff" stroke="currentColor" stroke-width="3"/><path d="M4 38 Q4 21 15 21 Q26 21 26 38" fill="#fff" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+function ticket(on){return '<svg viewBox="0 0 90 56" aria-hidden="true"><path d="M6 6 H84 V20 Q76 28 84 36 V50 H6 V36 Q14 28 6 20 Z" fill="'+(on?'#FFF5F2':'#fff')+'" stroke="'+(on?'#D95D39':'#E3DED7')+'" stroke-width="4" stroke-linejoin="round"/><path d="M30 14 V42" stroke="'+(on?'#D95D39':'#E3DED7')+'" stroke-width="3" stroke-dasharray="4 5"/><circle cx="58" cy="28" r="9" fill="none" stroke="'+(on?'#D95D39':'#E3DED7')+'" stroke-width="4"/></svg>'}
+var TASTE=['普通','還不錯','好吃','非常好吃'];
+var BUY={now:'馬上買',later:'先去別攤逛逛，再決定',no:'不買'};
+var timerId=null;
+function render(){
+  if(timerId){clearInterval(timerId);timerId=null}
+  app.innerHTML='';
+  var s=st.s;
+  if(s===0){
+    app.append(el('p','kick','線上小遊戲・稀缺與制度'),el('h1',null,'最後兩塊雞蛋糕'));
+    var c=el('div','card');
+    c.append(el('p','lead','園遊會的試吃攤上，阿嬤把剛烤好的古早味雞蛋糕放在玻璃罐裡，請經過的人拿一塊試吃。'),
+      el('p','lead','等一下你會看到阿嬤的玻璃罐。請你先拿一塊雞蛋糕試吃，吃完以後再回答四個問題。每個問題都沒有對錯，請照你心裡真正的想法選。'));
+    var g=el('div','note warm','平板發給你的卡片是：<span class="chip '+(RED?'red':'blue')+'">'+(RED?'紅色卡':'藍色卡')+'</span><br>請記住你的卡片顏色，先不要告訴別人。');
+    app.append(c,g,btn('走到試吃攤','',function(){go(1)}));
+  }else if(s===1){
+    app.append(el('p','kick','第 1 步，共 5 步'),el('h2',null,'阿嬤的試吃罐'));
+    var stg=el('div','stage');var jb=el('div','jarbox');var pl=el('div','plate');
+    var n,ghost,msg;
+    if(RED){n=st.taken?9:10;ghost=st.taken?1:0;msg='罐子裡有 10 塊雞蛋糕，阿嬤說：「慢慢吃，還有很多。」';}
+    else if(!st.seen){n=10;ghost=0;msg='罐子裡本來有 10 塊雞蛋糕。';}
+    else{n=st.taken?1:2;ghost=10-n;msg='隔壁班的同學跑過來說：「這個好好吃！」一下子拿走了 8 塊。罐子裡只剩下 2 塊。';}
+    jb.innerHTML=jarSVG(n,ghost,!st.taken&&(RED||st.seen));pl.innerHTML=plateSVG(st.taken);
+    stg.append(jb,pl);
+    var card=el('div','card');card.append(el('p','lead',msg),stg);app.append(card);
+    if(!RED&&!st.seen){
+      app.append(btn('等一下，有人跑過來了……','teal',function(){
+        var cakes=jb.querySelectorAll('.cake');for(var i=2;i<10;i++){(function(k){setTimeout(function(){cakes[k].classList.add('gone')},(k-2)*130)})(i)}
+        setTimeout(function(){st.seen=true;save();render()},1300);
+        this.disabled=true;}));
+    }else if(!st.taken){
+      app.append(el('p','note','點罐子裡的一塊雞蛋糕，把它拿到盤子上試吃。'));
+      jb.querySelectorAll('.cake').forEach(function(ck){
+        function take(){ck.classList.add('gone');setTimeout(function(){st.taken=true;save();render()},450)}
+        ck.addEventListener('click',take);ck.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')take()});});
+    }else{
+      app.append(el('p','note','你吃了一塊。'+(RED?'罐子裡還有 9 塊。':'罐子裡只剩最後 1 塊了。')),btn('回答問題','',function(){go(2)}));
+    }
+  }else if(s===2){
+    app.append(el('p','kick','第 2 步，共 5 步'),el('h2',null,'吃完一塊，還想再吃嗎？'),
+      el('p','lead','試吃攤前面排了很多人。如果你還想再吃一塊，就要重新排隊。你最多願意排在幾個人的後面？請點一下隊伍裡的位置，例如點 5，就表示你願意排在 5 個人的後面。如果你不想再吃了，請按最下面的按鈕。'));
+    var qc=el('div','card');var q=el('div','queue');
+    for(var i=1;i<=10;i++){(function(k){var b=el('button','qp'+(st.q!=null&&k<=st.q?' on':''),PERSON+'<span>'+k+'</span>');b.type='button';b.setAttribute('aria-label','前面有 '+k+' 個人');
+      b.addEventListener('click',function(){st.q=k;save();render()});q.appendChild(b)})(i)}
+    qc.append(q,el('p','big',st.q==null?'還沒選':(st.q===0?'不排隊':'排在 '+st.q+' 個人後面')));
+    app.append(qc,btn('我不想再吃了，不排隊','alt'+(st.q===0?' pick':''),function(){st.q=0;save();render()}),
+      btn('下一步','',function(){if(st.q!=null)go(3)}));
+    app.lastChild.disabled=st.q==null;
+  }else if(s===3){
+    app.append(el('p','kick','第 3 步，共 5 步'),el('h2',null,'你覺得一塊雞蛋糕，值幾張園遊券？'),
+      el('p','lead','在園遊會裡，一張園遊券可以買一杯小杯的飲料。如果要用園遊券買一塊這樣的雞蛋糕，你覺得付幾張才合理？請點園遊券，選 1 到 5 張。'));
+    var tc=el('div','card');var tw=el('div','tickets');
+    for(var j=1;j<=5;j++){(function(k){var b=el('button','tk',ticket(k<=st.t));b.type='button';b.setAttribute('aria-label',k+' 張');b.addEventListener('click',function(){st.t=k;save();render()});tw.appendChild(b)})(j)}
+    tc.append(tw,el('p','big',st.t?st.t+' 張':'還沒選'));
+    var nb=btn('下一步','',function(){if(st.t)go(4)});nb.disabled=!st.t;
+    app.append(tc,nb);
+  }else if(s===4){
+    app.append(el('p','kick','第 4 步，共 5 步'),el('h2',null,'剛剛那一塊雞蛋糕，吃起來怎麼樣？'));
+    var o=el('div','opts');
+    TASTE.forEach(function(t,k){o.appendChild(btn(t,'alt'+(st.taste===k?' pick':''),function(){st.taste=k;save();render()}))});
+    var nb2=btn('下一步','',function(){if(st.taste!=null)go(5)});nb2.disabled=st.taste==null;
+    app.append(o,nb2);
+  }else if(s===5){
+    app.append(el('p','kick','第 5 步，共 5 步'),el('h2',null,'隔壁攤位貼出一張新口味的廣告'));
+    var ad=el('div','ad');
+    if(RED){ad.append(el('span','tag calm','新口味'),el('p','lead','<b style="color:#1E242B">芋頭雞蛋糕</b>，一份 2 張園遊券。<br>每天都有，想吃隨時來買。'));}
+    else{
+      ad.append(el('span','tag','限量 20 份'),el('p','lead','<b style="color:#1E242B">芋頭雞蛋糕</b>，一份 2 張園遊券。<br>已經賣出 17 份，大家都在買！'));
+      var tm=el('p','timer','10 秒');var bar=el('div','bar');var bi=el('i');bi.style.width='100%';bar.appendChild(bi);ad.append(tm,bar);
+      var left=st.buy?0:10;
+      if(left>0){timerId=setInterval(function(){left--;tm.textContent=left>0?left+' 秒':'倒數結束了，你還是可以選';bi.style.width=(left*10)+'%';if(left<=0){clearInterval(timerId);timerId=null}},1000)}
+      else{tm.textContent='倒數結束了';bi.style.width='0%'}
+    }
+    app.append(ad,el('p','lead','看到這張廣告，你會怎麼做？'));
+    var o2=el('div','opts');
+    Object.keys(BUY).forEach(function(k){o2.appendChild(btn(BUY[k],'alt'+(st.buy===k?' pick':''),function(){st.buy=k;save();go(6)}))});
+    app.append(o2);
+  }else{
+    app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+    var c2=el('div','card');var tb=el('table');
+    [['我的卡片顏色','<span class="chip '+(RED?'red':'blue')+'">'+(RED?'紅色卡':'藍色卡')+'</span>'],
+     ['想再吃一塊的時候，願意排在幾個人的後面',st.q?st.q+' 個人':'不排隊'],
+     ['我覺得一塊雞蛋糕值幾張園遊券',st.t+' 張'],
+     ['我覺得雞蛋糕好不好吃',TASTE[st.taste]],
+     ['看到新口味的廣告，我選了',BUY[st.buy]]].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));tb.appendChild(tr)});
+    c2.appendChild(tb);
+    app.append(c2,el('p','note','等一下，老師會請紅色卡和藍色卡分開舉手。兩種卡片到底差在哪裡？請等老師揭曉。'));
+  }
+}
+render();
+})();
+</script>

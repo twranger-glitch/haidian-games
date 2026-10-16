@@ -1,0 +1,292 @@
+<title>海佃魚市喊價</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story → secret role card (buyer: up to X / pond owner: at least Y) → round-1 price ladder (20–90, auto-marked raise / don't raise; students only watch while the teacher calls prices) → cold wave (about 1/3 of pond owners lose their fish) → round-2 ladder → two reasoning questions with neutral feedback → summary for a show of hands. Same light classroom look as the other games. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --off:#E9EBE7; --offline:#C9CEC7; --offink:#7D8581; --rail:#C9A26A;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance;display:flex;align-items:center;gap:12px}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:pretty}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.small{font-size:clamp(19px,2.4vw,21px);padding:10px 14px;text-align:center}
+.btn.go{background:var(--rust)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.letter{display:inline-block;min-width:1.6em;font-weight:900;color:var(--sea)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1 1 220px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.hero{display:flex;justify-content:center;gap:14px;color:var(--ink)}
+.hero svg.i{width:clamp(70px,14vw,110px);height:clamp(70px,14vw,110px)}
+/* role card */
+.idcard{border:4px solid var(--sea);border-radius:24px;background:var(--card);padding:clamp(16px,3.4vw,26px);display:flex;flex-direction:column;gap:12px}
+.idcard.s{border-color:var(--rust)}
+.idtop{display:flex;align-items:center;gap:14px}
+.idtop .badge{width:clamp(64px,12vw,86px);height:clamp(64px,12vw,86px);border-radius:50%;background:var(--note);display:flex;align-items:center;justify-content:center;flex:none}
+.idcard.s .idtop .badge{background:var(--warm)}
+.idtop .badge svg.i{width:62%;height:62%}
+.idtop .who{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--muted);margin:0}
+.idtop .role{font-size:clamp(30px,5.4vw,46px);font-weight:900;margin:0;line-height:1.2;color:var(--sea)}
+.idcard.s .idtop .role{color:var(--rust)}
+.price{background:var(--note);border-radius:18px;padding:12px 16px;text-align:center}
+.idcard.s .price{background:var(--warm)}
+.price p{margin:0}
+.price .k{font-size:clamp(19px,2.8vw,25px);font-weight:700}
+.price .v{font-size:clamp(52px,10vw,88px);font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--sea)}
+.idcard.s .price .v{color:var(--rust)}
+.price .v small{font-size:.38em;margin-left:4px}
+.price .tag{font-size:clamp(19px,2.2vw,20px);color:var(--muted);font-weight:700}
+.chip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card);border:3px solid var(--sea);border-radius:16px;padding:8px 14px;font-size:clamp(19px,2.6vw,24px);font-weight:700;margin:0}
+.chip.s{border-color:var(--rust)}
+.chip b{font-size:1.15em}
+/* price ladder */
+.ladder{position:relative;display:flex;flex-direction:column;gap:8px;padding:10px 16px}
+.ladder::before,.ladder::after{content:'';position:absolute;top:0;bottom:0;width:9px;border-radius:5px;background:var(--rail)}
+.ladder::before{left:0}.ladder::after{right:0}
+.rung{position:relative;z-index:1;display:grid;grid-template-columns:clamp(86px,16vw,130px) 1fr;align-items:center;gap:10px;border-radius:16px;min-height:58px;padding:4px 12px 4px 16px;border:3px solid transparent}
+.rung .pr{font-size:clamp(27px,4.6vw,38px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.1;white-space:nowrap}
+.rung .pr small{font-size:.55em;margin-left:2px}
+.rung .act{display:flex;align-items:center;gap:10px;min-width:0}
+.rung .word{font-size:clamp(23px,3.8vw,32px);font-weight:900;white-space:nowrap}
+.rung .mine{margin-left:auto;font-size:19px;font-weight:700;border-radius:999px;padding:2px 12px;white-space:nowrap}
+.rung.up{background:var(--sea);color:#fff;box-shadow:0 4px 0 #154463}
+.ladder.s .rung.up{background:var(--rust);box-shadow:0 4px 0 #7A2F10}
+.rung.up .hand{width:clamp(44px,6vw,50px);height:clamp(44px,6vw,50px);border-radius:50%;background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;flex:none}
+.rung.up .hand svg.i{width:72%;height:72%}
+.rung.up .mine{background:#fff;color:var(--sea)}
+.ladder.s .rung.up .mine{color:var(--rust)}
+.rung.dn{background:var(--off);color:var(--offink);border:3px dashed var(--offline)}
+.rung.dn .hand{width:clamp(44px,6vw,50px);height:clamp(44px,6vw,50px);flex:none}
+.rung.dn .word{font-size:clamp(19px,3vw,25px);font-weight:700}
+.rung.dn .mine{background:var(--card);color:var(--muted);border:2px solid var(--offline)}
+.lgrid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:'top' 'lad' 'bot';gap:16px}
+.lgrid>.top{grid-area:top}.lgrid>.lad{grid-area:lad;display:flex;flex-direction:column;gap:10px}.lgrid>.bot{grid-area:bot}
+.lgrid>.top,.lgrid>.bot{display:flex;flex-direction:column;gap:16px}
+@media (min-width:760px){.lgrid{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-areas:'lad top' 'lad bot';grid-template-rows:auto 1fr;align-items:start}.wrap.wide{max-width:1000px}}
+.dir{display:flex;align-items:center;gap:8px;justify-content:center;font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--muted);margin:0}
+/* cold wave */
+.cold{display:flex;gap:14px;align-items:flex-start;background:#E4EEF5;border:3px solid #9DBBD0;border-radius:20px;padding:14px 18px}
+.cold svg.i{width:clamp(48px,9vw,64px);height:clamp(48px,9vw,64px);color:var(--sea)}
+.cold p{margin:0;font-size:clamp(19px,2.7vw,25px);line-height:1.65}
+.frozen{border:4px solid var(--sea);background:#F2F7FA;border-radius:20px;padding:16px 18px;font-size:clamp(23px,3.6vw,31px);font-weight:900;line-height:1.5;margin:0;color:var(--sea)}
+/* summary */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;width:42%}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .ladder{padding:8px 12px;gap:7px}
+  .rung{min-height:58px;padding:5px 8px 5px 12px;gap:6px}
+  .rung .act{gap:8px}
+  .rung .mine{padding:1px 9px}
+  th,td{padding:8px 4px}
+}
+@media (max-width:400px){
+  .rung .hand{width:42px!important;height:42px!important}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"fish": "<path d=\"M2.6 12C5.4 7.6 11.4 6.9 16.8 10.4L21.4 6.6 19.9 12l1.5 5.4-4.6-3.8C11.4 17.1 5.4 16.4 2.6 12z\" fill=\"#DCE8F0\"/><path d=\"M8.6 9.2c.9 1.8.9 3.8 0 5.6\"/><path d=\"M11.2 8.1l1.6-2.4 2.1 3.3\"/><circle cx=\"5.8\" cy=\"11.3\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/>", "hand": "<path d=\"M9.2 21.6 8.3 18.3C7.1 16.6 5.6 14.7 4.3 12.6a1.45 1.45 0 0 1 2.4-1.6L7.7 12.4V6.6a1.45 1.45 0 0 1 2.9 0V5a1.45 1.45 0 0 1 2.9 0v1a1.45 1.45 0 0 1 2.9 0v2.4a1.3 1.3 0 0 1 2.6 0v6.3c0 3.6-1.6 5.8-3.4 6.9z\" fill=\"#F6DCC0\"/><path d=\"M10.6 6.6v5.2M13.5 6v5.6M16.4 8.4v3.6\"/>", "snow": "<path d=\"M12 7.6l3.8 2.2v4.4L12 16.4l-3.8-2.2V9.8z\" fill=\"#DCE8F0\"/><g transform=\"rotate(0 12 12)\"><path d=\"M12 2.4v5.2M9.8 3.9 12 5.8l2.2-1.9\"/></g><g transform=\"rotate(60 12 12)\"><path d=\"M12 2.4v5.2M9.8 3.9 12 5.8l2.2-1.9\"/></g><g transform=\"rotate(120 12 12)\"><path d=\"M12 2.4v5.2M9.8 3.9 12 5.8l2.2-1.9\"/></g><g transform=\"rotate(180 12 12)\"><path d=\"M12 2.4v5.2M9.8 3.9 12 5.8l2.2-1.9\"/></g><g transform=\"rotate(240 12 12)\"><path d=\"M12 2.4v5.2M9.8 3.9 12 5.8l2.2-1.9\"/></g><g transform=\"rotate(300 12 12)\"><path d=\"M12 2.4v5.2M9.8 3.9 12 5.8l2.2-1.9\"/></g>", "pond": "<path d=\"M2.5 15.5c1.6 1.3 3.2 1.3 4.8 0s3.2-1.3 4.8 0 3.2 1.3 4.8 0 3.2-1.3 4.6 0\" /><path d=\"M2.5 19.5c1.6 1.3 3.2 1.3 4.8 0s3.2-1.3 4.8 0 3.2 1.3 4.8 0 3.2-1.3 4.6 0\"/><path d=\"M5.5 9.5C7.4 6.6 11.4 6.2 14.8 8.4L18 6l-1 3.4 1 3.4-3.2-2.4C11.4 12.6 7.4 12.3 5.5 9.5z\" fill=\"#DCE8F0\"/>", "bowl": "<path d=\"M3 11.5h18a9 9 0 0 1-18 0z\" fill=\"#F3E3BE\"/><path d=\"M8 20.5h8\"/><path d=\"M9 7.5c-1-1.2 1-2.3 0-3.6M12.5 7.5c-1-1.2 1-2.3 0-3.6M16 7.5c-1-1.2 1-2.3 0-3.6\"/>", "purse": "<path d=\"M4.5 10h15l-1.1 9.6a1.8 1.8 0 0 1-1.8 1.6H7.4a1.8 1.8 0 0 1-1.8-1.6z\" fill=\"#F3E3BE\"/><path d=\"M8.3 10a3.7 3.7 0 0 1 7.4 0\"/><circle cx=\"9.8\" cy=\"5.6\" r=\"1.2\" fill=\"#FBF4E2\"/><circle cx=\"14.2\" cy=\"5.6\" r=\"1.2\" fill=\"#FBF4E2\"/>", "coins": "<path d=\"M3.5 6.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6V6.5\" fill=\"#F3E3BE\"/><ellipse cx=\"9.5\" cy=\"6.5\" rx=\"6\" ry=\"2.6\" fill=\"#FBF4E2\"/><path d=\"M8.5 13.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-4.2\" fill=\"#F3E3BE\"/><ellipse cx=\"14.5\" cy=\"13.5\" rx=\"6\" ry=\"2.6\" fill=\"#FBF4E2\"/>"};
+function ic(k){return '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='fishmkt-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,role:null,v:null,frozen:false,qa:null,qb:null};
+
+function rint(n){ /* uniform 0..n-1 */
+  try{var a=new Uint32Array(1),lim=Math.floor(4294967296/n)*n;do{crypto.getRandomValues(a)}while(a[0]>=lim);return a[0]%n}
+  catch(e){return Math.floor(Math.random()*n)}
+}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+var PRICES=[20,30,40,50,60,70,80,90];
+var BUY=[30,40,50,60,70,80,90], SELL=[10,20,30,40,50,60,70];
+function assign(){
+  if(st.role)return;
+  st.role=rint(2)===0?'b':'s';
+  st.v=st.role==='b'?BUY[rint(7)]:SELL[rint(7)];
+  st.frozen=st.role==='s'&&rint(3)===0;   /* about one third of pond owners */
+}
+function isB(){return st.role==='b'}
+function roleName(){return isB()?'買魚的人':'魚塭老闆'}
+function cardLine(){return isB()?'這尾魚，你最多願意付 '+st.v+'&nbsp;元':'這尾魚，至少要賣到 '+st.v+'&nbsp;元你才肯賣'}
+function askWord(){return isB()?'想買的人':'想賣的人'}
+
+/* ---------- step 0: story ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','星期六清晨五點多，天還沒全亮，安南區的魚市已經很熱鬧了。今天這個魚市只賣一樣東西：剛從魚塭撈上來的<b>虱目魚</b>，一次賣一尾。'),
+    el('p','lead','魚市裡有兩種人：一種是<b>來買魚的人</b>，一種是自己養魚、帶魚來賣的<b>魚塭老闆</b>。你是哪一種，平板會偷偷幫你抽。抽到以後，不要給旁邊的同學看喔。'),
+    el('p','lead','等一下老師會在全班面前喊價錢，大家照著自己的卡舉手，看看這個魚市會發生什麼事。'));
+  app.append(el('h1',null,'海佃魚市喊價'),el('div','hero',ic('fish')+ic('purse')+ic('coins')),c,
+    el('p','note warm','這個遊戲裡的價錢都是<b>假設</b>的，只是為了玩遊戲，不是魚市真的賣多少錢。'),
+    button('抽我的身分卡','btn',function(){assign();go(1)}));
+}
+
+/* ---------- step 1: role card ---------- */
+function roleCard(){
+  app.innerHTML='';
+  var b=isB();
+  var c=el('div','idcard'+(b?'':' s'));
+  var top=el('div','idtop');
+  top.append(el('div','badge',ic(b?'purse':'fish')),el('div',null,'<p class="who">你抽到的身分是</p><p class="role">'+roleName()+'</p>'));
+  var pr=el('div','price');
+  pr.append(el('p','k','這尾魚，'+(b?'你最多願意付':'至少要賣到')),el('p','v',st.v+'<small>元</small>'),el('p','tag',b?'（假設）比這個貴，你就不買':'（假設）比這個便宜，你就不賣'));
+  c.append(top,pr);
+  var story=b?
+    '今天中午，你要煮一鍋熱呼呼的虱目魚粥給家人吃。出門前，媽媽給你的錢包裡，買這尾魚的預算是 <b>'+st.v+'&nbsp;元</b>。<br>魚的價錢是 '+st.v+'&nbsp;元或更便宜，你就願意買；比 '+st.v+'&nbsp;元還貴，你寧可改煮別的菜，這尾魚就不買了。':
+    '這尾虱目魚是你在魚塭一天一天養大的：每天要撒飼料，晚上要開水車幫魚塭打氧氣、付電費，清晨還要下水撈魚，你自己的辛苦也要算工錢。<br>全部算一算，這尾魚至少要賣到 <b>'+st.v+'&nbsp;元</b>才划算。價錢是 '+st.v+'&nbsp;元或更高，你就願意賣；比 '+st.v+'&nbsp;元還便宜，你就虧了，寧可不賣。';
+  app.append(el('p','case','我的身分卡'),c,el('p','note',story),
+    el('p','lead','把你的卡記好。等一下老師喊價的時候，平板會幫你把每一個價錢要不要舉手都標好。'),
+    button('看我的價格梯','btn',function(){go(2)}));
+}
+
+/* ---------- price ladder ---------- */
+function raise(p,round){
+  if(round===2&&st.frozen)return false;
+  return isB()?p<=st.v:p>=st.v;
+}
+function ladder(round){
+  var b=isB();
+  var L=el('div','ladder'+(b?'':' s'));L.setAttribute('role','list');L.setAttribute('aria-label','第 '+round+' 輪價格梯');
+  PRICES.slice().reverse().forEach(function(p){
+    var up=raise(p,round);
+    var r=el('div','rung '+(up?'up':'dn'));r.setAttribute('role','listitem');
+    var mine=(p===st.v&&!(round===2&&st.frozen))?'<span class="mine">'+(b?'你的上限':'你的底線')+'</span>':'';
+    r.innerHTML='<span class="pr">'+p+'<small>元</small></span><span class="act">'+
+      (up?'<span class="hand">'+ic('hand')+'</span><span class="word">舉手</span>':'<span class="hand"></span><span class="word">不舉手</span>')+mine+'</span>';
+    r.setAttribute('aria-label',p+' 元：'+(up?'舉手':'不舉手'));
+    L.appendChild(r);
+  });
+  return L;
+}
+function chip(round){
+  var b=isB(),t;
+  if(round===2&&st.frozen)t=ic('snow')+'<span>魚塭老闆：這一輪沒有魚可以賣</span>';
+  else t=ic(b?'purse':'fish')+'<span>'+roleName()+'：'+(b?'最多付 <b>'+st.v+'</b> 元':'至少賣 <b>'+st.v+'</b> 元')+'</span>';
+  return el('p','chip'+(b?'':' s'),t);
+}
+function grid(top,lad,bot){
+  var g=el('div','lgrid'),a=el('div','top'),l=el('div','lad'),z=el('div','bot');
+  top.forEach(function(x){a.appendChild(x)});lad.forEach(function(x){l.appendChild(x)});bot.forEach(function(x){z.appendChild(x)});
+  g.append(a,l,z);return g;
+}
+function confirmBox(holder,msg,yes,fn){
+  holder.innerHTML='';
+  var bx=el('div','row-btns');
+  bx.append(button('還沒，回去看價格梯','btn alt small',function(){holder.innerHTML=''}),button(yes,'btn small',fn));
+  holder.append(el('p','note warm',msg),bx);
+  try{bx.scrollIntoView({behavior:'smooth',block:'end'})}catch(e){}
+}
+
+/* ---------- step 2: round 1 ---------- */
+function round1(){
+  app.innerHTML='';
+  var how=el('p','note','老師會從 20 元一格一格喊到 90 元。每喊一個價錢，會先問「想買的人舉手」，再問「想賣的人舉手」。你是<b>'+roleName()+'</b>，老師問「'+askWord()+'舉手」的時候，就看這一格。你不用按任何東西，只要看，手舉高，讓老師數得清楚。');
+  var w=el('div','opts');
+  app.append(el('p','case','第 1 輪喊價'),el('h2',null,'老師喊到哪個價錢，你就看這一格：亮起來就舉手。'),
+    grid([chip(1)],[ladder(1),el('p','dir','老師從最下面的 20&nbsp;元開始，往上喊到 90&nbsp;元')],
+    [how,button('老師說：寒流來了！','btn go',function(){confirmBox(w,'要等老師說「寒流來了！」才按喔。老師已經說了嗎？','老師說了，下一步',function(){go(3)})}),w]));
+}
+
+/* ---------- step 3: round 2 ---------- */
+function round2(){
+  app.innerHTML='';
+  var b=isB();
+  var cold=el('div','cold',ic('snow')+'<p>寒流來了！昨天晚上氣溫掉得很低，虱目魚很怕冷，有些魚塭的魚被凍傷了。這些魚塭老闆今天沒有魚可以賣。</p>');
+  var mine;
+  if(b)mine=el('p','note','你是買魚的人，寒流沒有改變你的卡：這尾魚你<b>最多還是願意付 '+st.v+'&nbsp;元</b>。舉手的格子和第 1 輪一樣。');
+  else if(st.frozen)mine=el('p','frozen',ic('snow')+' 寒流把你魚塭的魚凍傷了，這一輪你沒有魚可以賣，請都不要舉手。');
+  else mine=el('p','note','你的魚塭撐過了寒流，魚都好好的。你的卡沒有變：這尾魚<b>至少要賣到 '+st.v+'&nbsp;元</b>。舉手的格子和第 1 輪一樣。');
+  var w=el('div','opts');
+  app.append(el('p','case','第 2 輪喊價：老師再喊一次'),el('h2',null,'老師喊到哪個價錢，你就看這一格：亮起來就舉手。'),
+    grid(st.frozen?[cold,mine]:[cold,mine,chip(2)],[ladder(2),el('p','dir','老師一樣從最下面的 20&nbsp;元，往上喊到 90&nbsp;元')],
+    [button('老師喊完第 2 輪了','btn',function(){confirmBox(w,'要等老師把第 2 輪喊完才按喔。老師已經喊完了嗎？','喊完了，下一步',function(){go(4)})}),w]));
+}
+
+/* ---------- steps 4 and 5: questions ---------- */
+var QA={q:'第 2 輪，願意賣魚的人變多還是變少？',lead:'想一想：同樣喊 50 元，第 1 輪和第 2 輪，舉手想賣的人一樣多嗎？',
+  o:['變多','變少','一樣'],ans:1,
+  why:'寒流來了以後，有些魚塭老闆的魚被凍傷，沒有魚可以賣，整輪都不舉手；其他老闆的卡沒變，舉手的格子和第 1 輪一樣。所以同一個價錢，舉手想賣的人變少了。買魚的人卡沒變，想買的人還是一樣多。'};
+var QB={q:'想買的人和想賣的人一樣多的那個價錢，第 2 輪比第 1 輪？',lead:'看看老師記下來的舉手人數：每一輪都找一找，哪一個價錢，想買的人和想賣的人差不多一樣多？',
+  o:['變高','變低','一樣'],ans:0,
+  why:'賣的魚變少了。同樣的價錢，想買的人比想賣的人多，有些人會買不到魚，價錢就會往上推；價錢越高，願意賣的人越多、想買的人越少，一直推到兩邊差不多一樣多為止。所以第 2 輪，兩邊一樣多的那個價錢通常會變高。看看老師的表，第 1 輪大約在哪一格，第 2 輪又往上移到哪一格？'};
+function question(Q,key,next,caseTxt){
+  app.innerHTML='';
+  var opts=el('div','opts'),fb=el('div','opts');
+  var nx=button('下一步','btn',function(){if(st[key]==null)return;go(next)});
+  nx.disabled=st[key]==null;
+  function show(){
+    fb.innerHTML='';if(st[key]==null)return;
+    var pick=Q.o[st[key]],right=Q.o[Q.ans];
+    var head=st[key]===Q.ans?'你選「'+pick+'」，和這次魚市的情況一樣。':'你選「'+pick+'」。這次魚市的情況比較像是「'+right+'」，原因是這樣：';
+    fb.appendChild(el('p','note','<b>'+head+'</b><br>'+Q.why));
+  }
+  Q.o.forEach(function(o,k){
+    var b=button('<span class="letter">'+'ABC'[k]+'</span>'+o,'btn alt'+(st[key]===k?' pick':''),function(){
+      st[key]=k;save(st);Array.prototype.forEach.call(opts.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;show();
+    });
+    opts.appendChild(b);
+  });
+  show();
+  app.append(el('p','case',caseTxt),el('h2',null,Q.q),el('p','lead',Q.lead),opts,fb,nx);
+}
+
+/* ---------- step 6: end ---------- */
+function end(){
+  app.innerHTML='';
+  var b=isB();
+  var rows=[['我的身分',ic(b?'purse':'fish')+' <b>'+roleName()+'</b>'],
+    ['我的卡',b?'最多願意付 <b>'+st.v+'&nbsp;元</b>':'至少要賣到 <b>'+st.v+'&nbsp;元</b>']];
+  if(!b)rows.push(['第 2 輪寒流',st.frozen?ic('snow')+' <b>魚被凍傷了</b>，沒有魚可以賣':'<b>撐過了</b>，魚都好好的']);
+  rows.push(['第 1 題：願意賣魚的人',st.qa!=null?'<b>'+QA.o[st.qa]+'</b>':'—'],
+    ['第 2 題：兩邊一樣多的價錢',st.qb!=null?'<b>'+QB.o[st.qb]+'</b>':'—']);
+  var t=el('table');
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  if(st.step>0&&!st.role)st.step=0;
+  var S=[intro,roleCard,round1,round2,
+    function(){question(QA,'qa',5,'想一想（1／2）')},
+    function(){question(QB,'qb',6,'想一想（2／2）')},end];
+  if(st.step>=5&&st.qa==null)st.step=4;
+  if(st.step>=6&&st.qb==null)st.step=5;
+  (S[st.step]||intro)();
+  app.classList.toggle('wide',st.step===2||st.step===3);
+}
+render();
+})();
+</script>

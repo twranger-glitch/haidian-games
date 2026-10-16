@@ -1,0 +1,214 @@
+<title>唱反調偵探</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: four campus sayings. For each: do you think it's true? → sort six mixed evidence cards into "supports it" / "might prove it wrong" (tap to toggle) → explanation → where would you look for the second pile? → do you think it's true now? Summary for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --seaBg:#E3EEF5; --rustBg:#F6E6DD;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.saying{font-size:clamp(24px,3.8vw,34px);font-weight:900;line-height:1.5;margin:0}
+.opts{display:flex;flex-direction:column;gap:10px}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.hint{font-size:clamp(17px,2.3vw,21px);color:var(--muted);margin:0}
+.tally{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pile{border-radius:16px;padding:10px 14px;font-size:clamp(18px,2.5vw,23px);font-weight:900;text-align:center}
+.pile.s{background:var(--seaBg);color:var(--sea)} .pile.d{background:var(--rustBg);color:var(--rust)}
+.ev{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.e{font:inherit;text-align:left;background:var(--card);color:var(--ink);border:3px dashed var(--line);border-radius:18px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:8px;font-size:clamp(19px,2.5vw,23px);line-height:1.55}
+.e:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.e .tag{align-self:flex-start;font-size:clamp(16px,2.1vw,19px);font-weight:900;border-radius:999px;padding:2px 12px;background:#E6E8E3;color:var(--muted)}
+.e.s{border:3px solid var(--sea);background:var(--seaBg)} .e.s .tag{background:var(--sea);color:#fff}
+.e.d{border:3px solid var(--rust);background:var(--rustBg)} .e.d .tag{background:var(--rust);color:#fff}
+.e.done{cursor:default}
+.e .why{font-size:clamp(17px,2.3vw,21px);color:var(--ink);background:rgba(255,255,255,.7);border-radius:12px;padding:8px 10px;margin:0}
+.e .why b{color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+.big{font-size:clamp(48px,9vw,84px);font-weight:900;line-height:1.1;margin:0;color:var(--sea);font-variant-numeric:tabular-nums}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sum .card{align-items:center;text-align:center}
+@media (max-width:620px){.ev,.sum{grid-template-columns:1fr}.three{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='devil-detective-v1';
+/* t: 's' supports, 'd' might prove it wrong */
+var Q=[
+ {k:'卡 A',s:'「下雨天，福利社的生意一定比較差。」',
+  e:[
+   ['上星期三下大雨，下課時福利社前面幾乎沒有人排隊。','s','這是一次「下雨天、生意差」的例子，和這句話一樣。'],
+   ['你記得有一次下雨，你自己也懶得撐傘去福利社。','s','這是你自己的一次經驗，和這句話說的一樣。'],
+   ['同學說：「下雨天走去福利社，鞋子會濕掉，我才不去。」','s','這是一個讓雨天生意變差的理由，站在這句話這一邊。'],
+   ['有一天下雨不能去操場，大家下課都擠到福利社，排了好長的隊。','d','這是一個「下雨天、生意反而很好」的例子，和這句話剛好相反。'],
+   ['福利社的記帳本上，有幾個下雨天賣出的東西比晴天還多。','d','只要有好幾個下雨天賣得比較多，「一定比較差」就說不通了。'],
+   ['某個大晴天，大家都跑去操場打球，福利社冷冷清清。','d','晴天也會生意差，代表生意好不好，可能不是只看有沒有下雨。']],
+  w:['問幾個也覺得「雨天生意差」的好朋友','請福利社阿姨讓你看好幾個晴天和雨天的記帳本','等下一個下雨天，自己再去福利社看一次'],wb:1,
+  wf:['好朋友和你想得一樣，問他們，大多只會聽到「對啊」，比較難聽到相反的例子。','記帳本把晴天、雨天都記下來了，不會只留下你印象最深的那幾天，第二堆的證據最有機會在這裡出現。','只看一次，不管看到什麼都很難下結論；而且我們很容易把「看到的那一次」當成證據。']},
+ {k:'卡 B',s:'「穿紅色衣服去比賽，比較容易贏。」',
+  e:[
+   ['上次學校的拔河比賽，我們班穿紅色班服，拿了第一名。','s','這是一次「穿紅色、贏了」的例子，和這句話一樣。'],
+   ['隊長說：「穿紅色看起來比較有氣勢，對手會怕。」','s','這是有人相信紅色有用的理由，站在這句話這一邊。'],
+   ['你記得穿紅色的那一天，你投進了一顆很遠的球。','s','這是你印象很深的一次好表現，剛好穿紅色。'],
+   ['有一場比賽我們穿紅色，結果輸了好多分。','d','穿紅色也會輸，這是和這句話相反的例子。'],
+   ['冠軍賽那天，對手穿藍色，最後是對手贏了。','d','沒穿紅色的隊伍也能贏，紅色可能沒有那麼重要。'],
+   ['把整學期的比賽列出來，穿紅色和沒穿紅色，贏的次數差不多。','d','把每一場都算進來，紅色看起來沒有讓我們比較會贏。']],
+  w:['只回想自己印象最深的那幾場比賽','問隊上最相信紅色的那位同學','把整學期每一場比賽都列出來，寫上穿什麼顏色、輸還是贏'],wb:2,
+  wf:['印象最深的，常常就是「穿紅色又贏了」那幾場，輸掉的比較容易被忘記。','最相信紅色的人，最記得的也是支持紅色的例子。','每一場都寫下來，穿紅色輸掉的、沒穿紅色贏的，都跑不掉，第二堆的證據最有機會在這裡出現。']},
+ {k:'卡 C',s:'「只要考前一晚熬夜念書，考試就會考比較好。」',
+  e:[
+   ['有一次熬夜念完整本，第二天考了很高的分數。','s','這是一次「熬夜、考很好」的例子，和這句話一樣。'],
+   ['表哥說他每次都熬夜念書，成績一直很好。','s','這是別人支持這句話的經驗。'],
+   ['熬夜時把課本全部看完一遍，心裡覺得很安心。','s','這是熬夜讓你覺得有準備好的感覺，站在這句話這一邊。'],
+   ['熬夜後的那一場考試，一直打瞌睡，還看錯好幾題。','d','熬夜反而考不好，這是和這句話相反的例子。'],
+   ['有好幾次沒熬夜、早早睡覺，也考得很好。','d','不熬夜也能考好，代表考得好可能不是因為熬夜。'],
+   ['健康課本說：睡不夠的時候，記憶力和專心都會變差。','d','這是一個「熬夜可能讓考試變差」的理由，站在相反那一邊。']],
+  w:['記錄好幾次考試，熬夜和早睡的時候各考幾分','問也很愛熬夜念書的表哥','只記得自己考最好的那一次'],wb:0,
+  wf:['把每一次都記下來，熬夜考不好、早睡考很好的例子都會留下來，第二堆的證據最有機會在這裡出現。','表哥和你想法一樣，他記得的多半也是熬夜考好的那幾次。','考最好的那一次，最容易讓你覺得「你看，果然熬夜有用」，其他次就被忘記了。']},
+ {k:'卡 D',s:'「只要早上升旗時颳大風，那天下午一定會下雨。」',
+  e:[
+   ['上星期一升旗時風好大，下午真的下了一場大雷雨。','s','這是一次「颳大風、下午下雨」的例子，和這句話一樣。'],
+   ['阿公說：「早上風很大，下午就會下雨，我從小看到大。」','s','這是長輩支持這句話的經驗。'],
+   ['有一次風大到國旗都纏在旗桿上，放學時就下起大雨。','s','這又是一次「颳大風、後來下雨」的例子，而且印象特別深。'],
+   ['有一天升旗時風大到帽子被吹走，下午卻一直是大太陽。','d','颳大風卻沒下雨，這是和這句話相反的例子。'],
+   ['冬天東北季風來的時候，幾乎天天颳大風，卻很少下雨。','d','好多天颳大風都沒下雨，「一定會下雨」就說不通了。'],
+   ['連續記錄一個月，颳大風的早上，下午有下雨的還不到一半。','d','把每一天都算進來，颳大風以後下雨的次數沒有那麼多。']],
+  w:['問也相信這個說法的阿公','連續一個月，每天記下升旗時有沒有颳大風、下午有沒有下雨','等下一次升旗颳大風，看看下午會不會下雨'],wb:1,
+  wf:['阿公和你想得一樣，他記得的多半是「颳風又下雨」的那幾天。','每天都記下來，颳風沒下雨的日子也會留下紀錄，第二堆的證據最有機會在這裡出現。','只看一次，下雨了就覺得「果然」，沒下雨又可能說「這次是例外」，很難看出真相。']}
+];
+var OP=['我覺得對','不一定','我覺得不對'];
+var TAG={'':'還沒分（點一下）',s:'支持它的',d:'可能證明它錯的'};
+function rnd(){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}catch(e){return Math.random()}}
+function shuffle(n){var a=[];for(var i=0;i<n;i++)a.push(i);for(var j=n-1;j>0;j--){var r=Math.floor(rnd()*(j+1));var t=a[j];a[j]=a[r];a[r]=t}return a}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+function fresh(){return {started:false,i:0,stage:0,first:[],last:[],order:[],sort:[],where:[]}}
+var st=load();if(!st||typeof st!=='object'||!Array.isArray(st.order))st=fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function bt(cls,txt,fn){var b=el('button',cls,txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(){save(st);render();window.scrollTo(0,0)}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','接下來有 4 句同學常說的話。每一句，你都要當一次「唱反調偵探」：'),
+    el('p','lead','① 先說說看，你覺得這句話對不對。<br>② 把 6 張證據卡分成兩堆：「支持它的」和「可能證明它錯的」。<br>③ 想一想：要去哪裡找，才找得到第二堆的證據？<br>④ 最後再說一次，你現在覺得這句話對不對。'));
+  app.append(el('h1',null,'唱反調偵探'),c,bt('btn','開始',function(){st.started=true;go()}));
+}
+function head(q){
+  app.append(el('p','case','第 '+(st.i+1)+' 句，共 4 句・'+q.k));
+  var c=el('div','card');c.appendChild(el('p','saying',q.s));app.appendChild(c);
+}
+function opinion(key,title,note){
+  app.appendChild(el('h2',null,title));
+  var g=el('div','three');
+  OP.forEach(function(t,k){g.appendChild(bt('btn alt',t,function(){
+    st[key][st.i]=k;
+    if(key==='first'){st.stage=1;if(!st.order[st.i])st.order[st.i]=shuffle(6);if(!st.sort[st.i])st.sort[st.i]=['','','','','',''];}
+    else{st.i++;st.stage=0;}
+    go();
+  }))});
+  app.appendChild(g);
+  if(note)app.appendChild(el('p','hint',note));
+}
+function sortStage(q,checked){
+  var srt=st.sort[st.i],ord=st.order[st.i];
+  app.appendChild(el('h2',null,checked?'看看說明：每一張證據，應該放哪一堆？':'把 6 張證據卡分成兩堆。點一下卡片就能換一堆。'));
+  var ns=0,nd=0;srt.forEach(function(x){if(x==='s')ns++;if(x==='d')nd++});
+  var ta=el('div','tally');ta.append(el('div','pile s','支持它的：'+ns+' 張'),el('div','pile d','可能證明它錯的：'+nd+' 張'));
+  app.appendChild(ta);
+  var g=el('div','ev');var match=0;
+  ord.forEach(function(ix){
+    var ev=q.e[ix],v=srt[ix];
+    var b=el('button','e'+(v?' '+v:'')+(checked?' done':''));b.type='button';
+    b.appendChild(el('span','tag',checked?'你放在：'+TAG[v]:TAG[v]));
+    b.appendChild(el('span',null,ev[0]));
+    if(checked){
+      var same=v===ev[1];if(same)match++;
+      b.appendChild(el('p','why','<b>'+(same?'和說明一樣。':'說明把它放在「'+TAG[ev[1]]+'」。')+'</b>'+ev[2]));
+      b.disabled=true;
+    }else{
+      b.setAttribute('aria-label',ev[0]+'，目前：'+TAG[v]);
+      b.addEventListener('click',function(){srt[ix]=srt[ix]==='s'?'d':'s';save(st);var y=window.scrollY;render();window.scrollTo(0,y)});
+    }
+    g.appendChild(b);
+  });
+  app.appendChild(g);
+  if(!checked){
+    var left=6-ns-nd;
+    var nb=bt('btn',left?'還有 '+left+' 張還沒分':'分好了，看說明',function(){st.stage=2;go()});nb.disabled=left>0;
+    app.appendChild(nb);
+  }else{
+    app.appendChild(el('p','note','你有 '+match+' 張和說明一樣。'+(match<6?'分得不一樣也沒關係，有些卡片本來就可以討論。':'')+'<br>想一想：如果你只記得藍色那一堆，你會不會越來越覺得這句話是對的？'));
+    app.appendChild(bt('btn','下一步：去哪裡找？',function(){st.stage=3;go()}));
+  }
+}
+function whereStage(q){
+  var picked=st.where[st.i];
+  app.appendChild(el('h2',null,'要去哪裡找，才找得到「可能證明它錯的」證據？'));
+  var g=el('div','opts');
+  q.w.forEach(function(t,k){var b=bt('btn alt'+(picked===k?' pick':''),t,function(){st.where[st.i]=k;save(st);var y=window.scrollY;render();window.scrollTo(0,y)});g.appendChild(b)});
+  app.appendChild(g);
+  if(picked!=null){
+    var best=picked===q.wb;
+    app.appendChild(el('p','note',(best?'這個方法最有機會找到第二堆的證據。':'這個方法比較難找到第二堆的證據。')+q.wf[picked]+(best?'':'<br><span style="color:var(--muted)">最有機會的是：「'+q.w[q.wb]+'」。</span>')));
+    app.appendChild(bt('btn','下一步',function(){st.stage=4;go()}));
+  }
+}
+function step(){
+  var q=Q[st.i];app.innerHTML='';head(q);
+  if(st.stage===0)opinion('first','你覺得這句話對嗎？','怎麼想都可以，沒有標準答案。');
+  else if(st.stage===1)sortStage(q,false);
+  else if(st.stage===2)sortStage(q,true);
+  else if(st.stage===3)whereStage(q);
+  else opinion('last','看過兩堆證據以後，你現在覺得這句話對嗎？','你一開始選的是「'+OP[st.first[st.i]]+'」。改不改都可以，選你現在真正的想法。');
+}
+function end(){
+  app.innerHTML='';
+  var changed=0,match=0,bestN=0;
+  Q.forEach(function(q,k){
+    if(st.first[k]===0&&st.last[k]!==0)changed++;
+    (st.sort[k]||[]).forEach(function(v,ix){if(v===q.e[ix][1])match++});
+    if(st.where[k]===q.wb)bestN++;
+  });
+  app.appendChild(el('h2',null,'做完了！請停在這一頁，等其他同學。'));
+  var s=el('div','sum');
+  var c1=el('div','card');c1.append(el('p','lead','一開始覺得「對」，<br>後來改變看法的'),el('p','big',changed+' 題'),el('p','hint','共 4 題'));
+  var c2=el('div','card');c2.append(el('p','lead','證據卡分得<br>和說明一樣的'),el('p','big',match+' 張'),el('p','hint','共 24 張'));
+  s.append(c1,c2);app.appendChild(s);
+  var t=el('table');
+  Q.forEach(function(q,k){var tr=el('tr');
+    tr.append(el('td','k',q.k),el('td',null,'<b>'+q.s+'</b><br>一開始：'+(st.first[k]!=null?OP[st.first[k]]:'—')+' → 現在：'+(st.last[k]!=null?OP[st.last[k]]:'—')));
+    t.appendChild(tr)});
+  var c3=el('div','card');c3.appendChild(t);
+  app.append(c3,el('p','hint','「要去哪裡找」選到最有機會的方法：'+bestN+' 題（共 4 題）'));
+}
+function render(){if(!st.started)intro();else if(st.i>=Q.length)end();else step()}
+render();
+})();
+</script>

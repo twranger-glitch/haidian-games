@@ -1,0 +1,284 @@
+<title>這個能收嗎？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: helping grandma at a salted-egg stall in an Annan market. 8 customers (shuffled; the 海佃券 customer always 3rd–6th) each put something on the counter; drag it down into the wooden cash drawer (accept) or push it back up to the customer (refuse) → one reason question → after all 8, "which one worries you most for tomorrow" → summary. Secret groups: green sees an official market announcement about 海佃券, orange only hears a rumour. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --wood:#A9713E; --wood2:#8A5A2E; --wood3:#6E4521; --counter:#E6D3AE;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.gtag{display:inline-block;border-radius:999px;padding:2px 14px;font-size:clamp(15px,2vw,18px);font-weight:700;letter-spacing:1px;color:#fff;align-self:flex-start}
+.gtag.green{background:#2F7D4F}.gtag.orange{background:#BF5B12}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.link{background:none;color:var(--sea);font-weight:700;font-size:clamp(17px,2.3vw,21px);padding:6px 4px;text-decoration:underline;align-self:flex-start}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible,summary:focus-visible,.goods:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.small{font-size:clamp(16px,2.1vw,19px);color:var(--muted);margin:0}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700} td.v{font-weight:900;text-align:right;white-space:nowrap}
+td .why{display:block;font-size:.8em;color:var(--muted);font-weight:500;white-space:normal}
+.yes{color:var(--good)} .no{color:var(--rust)}
+details{background:var(--card);border:3px dashed var(--line);border-radius:18px;padding:12px 16px}
+summary{font-size:clamp(19px,2.8vw,25px);font-weight:900;cursor:pointer}
+
+/* announcement */
+.notice{background:#FFFDF4;border:3px solid #C9A64A;border-radius:12px;padding:14px 16px;position:relative;box-shadow:0 4px 0 #E2D3A4}
+.notice .hd{font-weight:900;font-size:clamp(19px,2.7vw,24px);color:#7A5A12;letter-spacing:2px;margin:0 0 4px}
+.notice p{margin:0;font-size:clamp(19px,2.7vw,25px);font-weight:700;line-height:1.6}
+.notice .pin{position:absolute;top:-9px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#C8352B;box-shadow:0 2px 0 #8E211A}
+.rumor{display:flex;gap:12px;align-items:flex-start}
+.rumor .say{background:var(--note);border-radius:16px;padding:12px 16px;font-size:clamp(19px,2.7vw,25px);font-weight:700;line-height:1.6;margin:0}
+
+/* stall */
+.stall{display:flex;flex-direction:column;border-radius:22px;overflow:hidden;border:3px solid var(--line);background:var(--card);user-select:none;-webkit-user-select:none}
+.cust{display:flex;gap:12px;align-items:center;padding:12px 14px;background:#F4F1E8;transition:background .15s}
+.cust.hot{background:#FCE3D6}
+.face{width:64px;height:64px;flex:none}
+.bubble{position:relative;background:#fff;border:3px solid var(--line);border-radius:16px;padding:8px 14px;font-size:clamp(19px,2.7vw,24px);font-weight:700;line-height:1.5;margin:0;min-width:0}
+.bubble::before{content:"";position:absolute;left:-12px;top:50%;margin-top:-8px;border:8px solid transparent;border-right-color:var(--line);border-left:0;border-right-width:12px}
+.hintup,.hintdn{font-size:clamp(16px,2.1vw,19px);font-weight:700;color:var(--muted);text-align:center;margin:0;padding:4px 8px}
+.counter{position:relative;background:linear-gradient(#EFE0C2,var(--counter));border-top:4px solid #CDB68A;border-bottom:4px solid #CDB68A;min-height:clamp(150px,22vw,190px);display:flex;align-items:center;justify-content:center;padding:10px}
+.goods{position:relative;z-index:5;width:min(250px,64vw);touch-action:none;cursor:grab;outline:none;will-change:transform;filter:drop-shadow(0 4px 3px rgba(60,40,10,.25))}
+.goods.drag{cursor:grabbing;filter:drop-shadow(0 12px 8px rgba(60,40,10,.3))}
+.goods svg{display:block;width:100%;height:auto}
+.goods.fly{transition:transform .32s ease-in,opacity .32s ease-in}
+.goods.back{transition:transform .22s ease-out}
+.drawer{position:relative;background:#5A3A1C;padding:10px 14px 16px}
+.tray{background:#3B2612;border-radius:8px 8px 0 0;min-height:44px;padding:6px 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{background:#F4E7CC;color:#3B2612;border-radius:8px;padding:0 8px;font-size:clamp(14px,1.9vw,17px);font-weight:700;white-space:nowrap}
+.tray .empty{color:#B99C77;font-size:clamp(15px,2vw,18px)}
+.front{height:clamp(66px,9vw,84px);border-radius:0 0 10px 10px;background:repeating-linear-gradient(90deg,var(--wood) 0 38px,#B07A46 38px 40px,var(--wood) 40px 90px,#9C6634 90px 92px);box-shadow:inset 0 -6px 0 var(--wood3),inset 0 4px 0 #C38E58;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.handle{width:120px;height:20px;border-radius:10px;background:#D9C08F;box-shadow:0 3px 0 var(--wood3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:var(--wood3);letter-spacing:4px}
+.drawer.hot .front{transform:translateY(8px);box-shadow:inset 0 -6px 0 var(--wood3),inset 0 4px 0 #C38E58,0 0 0 5px #F2C94C}
+.drawer.hot .tray{outline:4px solid #F2C94C}
+.drawer.bump .front{animation:bump .35s}
+@keyframes bump{40%{transform:translateY(10px)}}
+.ctrl{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.done{display:flex;gap:12px;align-items:center}
+.done .mini{width:110px;flex:none}
+.done .mini svg{width:100%;height:auto;display:block}
+@media (max-width:620px){.ctrl{grid-template-columns:1fr}.face{width:52px;height:52px}.done .mini{width:84px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='accept-v1';
+var GN={green:'綠組',orange:'橘組'};
+var NOTE_G='市集管理處宣布：這條街上每一家攤位，都說好收「海佃券」，一張當 70 元用。';
+var NOTE_O='有一位客人說，聽說可以用「海佃券」付錢。';
+
+/* items: id, name, chip, line (customer says), shirt colour */
+var IT={
+ cash:{n:'新台幣 100 元鈔票',c:'100 元鈔票',t:'「我要一盒鹹蛋。給你 100 元，找我 30 元就好。」',s:'#2F6FB0'},
+ hd:{n:'海佃券一張',c:'海佃券',t:'「我要一盒鹹蛋。我用海佃券付，一張剛好 70 元。」',s:'#2F7D4F'},
+ note:{n:'自己用筆寫的「1000 元」紙條',c:'1000 元紙條',t:'「這張紙條我寫了 1000 元，給你，不用找了！」',s:'#7A4FA3'},
+ yen:{n:'日本的 500 日圓硬幣',c:'500 日圓',t:'「我身上只有這個日本的 500 日圓硬幣，可以付嗎？」',s:'#B7862B'},
+ iou:{n:'陌生人簽名的欠條',c:'欠條',t:'「我今天忘了帶錢，下星期再付你。這張欠條上面有我的簽名。」',s:'#56605C'},
+ shell:{n:'一顆很漂亮的大貝殼',c:'大貝殼',t:'「你看這顆大貝殼多漂亮！我用它跟你換一盒鹹蛋。」',s:'#D0517E'},
+ game:{n:'手機遊戲裡的 1000 金幣',c:'1000 金幣',t:'「你看我的手機，遊戲裡有 1000 金幣，全部轉給你！」',s:'#205E86'},
+ pts:{n:'好寶寶點數卡 3 點',c:'點數卡 3 點',t:'「這是我們學校的好寶寶點數卡，3 點給你。」',s:'#A8441A'}
+};
+var CANON=['cash','hd','note','yen','iou','shell','game','pts'];
+var WHY_Y=['我拿去別家也能用','我自己用得到','怕客人不高興','我不確定它值多少'];
+var WHY_N=['我拿去別家也不能用','我自己用不到','怕阿嬤不高興','我不確定它值多少'];
+
+function rint(n){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function clearHash(){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function makeOrder(){
+  var o=CANON.filter(function(x){return x!=='hd'});
+  for(var i=o.length-1;i>0;i--){var j=rint(i+1),t=o[i];o[i]=o[j];o[j]=t}
+  o.splice(2+rint(4),0,'hd');return o;
+}
+function fresh(g){return {g:g,stage:0,order:makeOrder(),i:0,sub:0,dec:{},why:{},worry:null}}
+var h=location.hash;
+if(h==='#reset'){save(null);clearHash()}
+var st=load();
+if(h==='#green'||h==='#orange'){var want=h.slice(1);if(!st||st.g!==want)st=null;clearHash();if(!st){st=fresh(want);save(st)}}
+if(!st||!GN[st.g]||!st.order||st.order.length!==8){st=fresh(rint(2)?'green':'orange');save(st)}
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function gtag(){return el('span','gtag '+st.g,'你是'+GN[st.g])}
+
+/* ---------- drawings ---------- */
+function face(shirt){
+  return '<svg class="face" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 64c0-14 10-22 24-22s24 8 24 22z" fill="'+shirt+'"/><circle cx="32" cy="26" r="15" fill="#F1C9A5"/><path d="M17 24c0-11 7-16 15-16s15 5 15 16c-4-5-10-7-15-7s-11 2-15 7z" fill="#2B2118"/><circle cx="26.5" cy="27" r="2" fill="#1F2A2E"/><circle cx="37.5" cy="27" r="2" fill="#1F2A2E"/><path d="M27 34q5 4 10 0" fill="none" stroke="#8E4A2E" stroke-width="2" stroke-linecap="round"/></svg>';
+}
+var F='font-family="Noto Sans TC,PingFang TC,Microsoft JhengHei,sans-serif"';
+function art(id){
+  var s='<svg viewBox="0 0 240 150" role="img" aria-label="'+IT[id].n+'">';
+  if(id==='cash')s+='<rect x="8" y="22" width="224" height="106" rx="8" fill="#E9A49B" stroke="#B24A3C" stroke-width="3"/><rect x="18" y="32" width="204" height="86" rx="5" fill="none" stroke="#C86C5E" stroke-width="2"/><circle cx="168" cy="75" r="30" fill="#F3C6BF" stroke="#C86C5E" stroke-width="2"/><text x="168" y="86" text-anchor="middle" font-size="30" font-weight="900" fill="#8E2E22" '+F+'>100</text><text x="30" y="62" font-size="18" font-weight="700" fill="#8E2E22" '+F+'>新台幣</text><text x="30" y="98" font-size="34" font-weight="900" fill="#8E2E22" '+F+'>100元</text>';
+  else if(id==='hd')s+='<path d="M10 30h220v30a15 15 0 0 0 0 30v30H10V90a15 15 0 0 0 0-30z" fill="#D7EEE3" stroke="#2F7D4F" stroke-width="3"/><line x1="170" y1="34" x2="170" y2="116" stroke="#2F7D4F" stroke-width="2" stroke-dasharray="6 5"/><text x="26" y="72" font-size="30" font-weight="900" fill="#1E5A37" '+F+'>海佃券</text><path d="M26 92q10-8 20 0t20 0 20 0 20 0 20 0" fill="none" stroke="#2F7D4F" stroke-width="3"/><text x="200" y="70" text-anchor="middle" font-size="26" font-weight="900" fill="#1E5A37" '+F+'>70</text><text x="200" y="98" text-anchor="middle" font-size="18" font-weight="700" fill="#1E5A37" '+F+'>元</text>';
+  else if(id==='note')s+='<g transform="rotate(-4 120 75)"><rect x="26" y="20" width="188" height="112" fill="#FFFFFF" stroke="#BFC6C0" stroke-width="2"/><line x1="26" y1="54" x2="214" y2="54" stroke="#D6E3EE" stroke-width="2"/><line x1="26" y1="84" x2="214" y2="84" stroke="#D6E3EE" stroke-width="2"/><line x1="26" y1="114" x2="214" y2="114" stroke="#D6E3EE" stroke-width="2"/><text x="120" y="98" text-anchor="middle" font-size="44" font-weight="700" fill="#2A4FA8" font-style="italic" '+F+'>1000元</text></g>';
+  else if(id==='yen')s+='<circle cx="120" cy="75" r="62" fill="#E2C46A" stroke="#A88A2E" stroke-width="4"/><circle cx="120" cy="75" r="50" fill="none" stroke="#B99A3E" stroke-width="2"/><text x="120" y="82" text-anchor="middle" font-size="40" font-weight="900" fill="#6E5612" '+F+'>500</text><text x="120" y="112" text-anchor="middle" font-size="18" font-weight="700" fill="#6E5612" '+F+'>日本 円</text>';
+  else if(id==='iou')s+='<rect x="20" y="14" width="200" height="124" rx="4" fill="#FFFDF4" stroke="#C9B98A" stroke-width="2"/><text x="120" y="44" text-anchor="middle" font-size="24" font-weight="900" fill="#3B2612" '+F+'>欠　條</text><text x="36" y="76" font-size="17" font-weight="700" fill="#3B2612" '+F+'>下星期付鹹蛋錢 70 元</text><text x="36" y="112" font-size="17" font-weight="700" fill="#3B2612" '+F+'>簽名：</text><path d="M92 110c8-14 14 6 22-6s10 10 20-2 12 4 22-4" fill="none" stroke="#2A4FA8" stroke-width="3" stroke-linecap="round"/>';
+  else if(id==='shell')s+='<path d="M120 132 L48 70 Q60 18 120 14 Q180 18 192 70 Z" fill="#F7C9B4" stroke="#C47A5A" stroke-width="3" stroke-linejoin="round"/><g stroke="#D9967A" stroke-width="3"><line x1="120" y1="130" x2="70" y2="46"/><line x1="120" y1="130" x2="94" y2="26"/><line x1="120" y1="130" x2="120" y2="18"/><line x1="120" y1="130" x2="146" y2="26"/><line x1="120" y1="130" x2="170" y2="46"/></g><path d="M100 132h40l-6 10h-28z" fill="#F7C9B4" stroke="#C47A5A" stroke-width="3"/>';
+  else if(id==='game')s+='<rect x="72" y="4" width="96" height="142" rx="14" fill="#26313A"/><rect x="80" y="18" width="80" height="112" rx="4" fill="#3E7FB8"/><circle cx="120" cy="60" r="22" fill="#F2C94C" stroke="#B7862B" stroke-width="3"/><text x="120" y="68" text-anchor="middle" font-size="22" font-weight="900" fill="#8A6414" '+F+'>G</text><text x="120" y="104" text-anchor="middle" font-size="20" font-weight="900" fill="#FFFFFF" '+F+'>1000</text><text x="120" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#FFFFFF" '+F+'>金幣</text>';
+  else if(id==='pts'){s+='<rect x="12" y="22" width="216" height="110" rx="12" fill="#FFF3D6" stroke="#D49A2A" stroke-width="3"/><text x="120" y="56" text-anchor="middle" font-size="22" font-weight="900" fill="#8A5A0E" '+F+'>好寶寶點數卡</text>';
+    for(var k=0;k<5;k++){var cx=48+k*36,on=k<3;s+='<path transform="translate('+cx+' 96)" d="M0-16 4.7-6.5 15.2-4.9 7.6 2.5 9.4 13 0 8 -9.4 13 -7.6 2.5 -15.2-4.9 -4.7-6.5Z" fill="'+(on?'#E2A21E':'#FFF3D6')+'" stroke="#D49A2A" stroke-width="2"/>'}}
+  return s+'</svg>';
+}
+
+/* ---------- pages ---------- */
+function groupBox(){
+  if(st.g==='green'){var n=el('div','notice');n.append(el('span','pin'),el('p','hd','市集公告'),el('p',null,NOTE_G));return n}
+  var r=el('div','rumor');r.innerHTML=face('#7A8A84');r.appendChild(el('p','say',NOTE_O));return r;
+}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','星期六下午，你在安南區的市集幫阿嬤顧鹹蛋攤。一盒鹹蛋賣 70 元（這是假設的價錢）。阿嬤去隔壁幫忙之前說：「客人付的東西，你覺得可以收就收進抽屜，收攤以後再交給我。」'),
+           el('p','lead','今天會有 8 位客人來買鹹蛋，每一位拿出來付錢的東西都不一樣。收還是不收，由你決定。'));
+  var how=el('p','note','<b>收下</b>：把東西拖進下面的木頭抽屜。<br><b>不收</b>：把東西往上推回去給客人。<br>也可以直接按按鈕。');
+  app.append(el('h1',null,'這個能收嗎？'),gtag(),c,groupBox(),how,
+    btn('開店囉！',null,function(){st.stage=1;st.i=0;st.sub=0;save(st);render()}));
+}
+function drawerEl(){
+  var d=el('div','drawer');var tr=el('div','tray');
+  var got=st.order.filter(function(id){return st.dec[id]===true});
+  if(!got.length)tr.appendChild(el('span','empty','抽屜裡還是空的'));
+  got.forEach(function(id){tr.appendChild(el('span','chip',IT[id].c))});
+  var fr=el('div','front');fr.appendChild(el('span','handle','收銀'));
+  d.append(tr,fr);return d;
+}
+function customer(){
+  var id=st.order[st.i],it=IT[id];app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'第 '+(st.i+1)+' 位客人，共 8 位'),gtag());
+  app.appendChild(cs);
+  if(st.sub===0)decide(id,it);else reason(id,it);
+}
+function decide(id,it){
+  var stall=el('div','stall');
+  var cu=el('div','cust');cu.innerHTML=face(it.s);cu.appendChild(el('p','bubble',it.t));
+  var up=el('p','hintup','↑ 推回去給客人（不收）');
+  var counter=el('div','counter');
+  var g=el('div','goods',art(id));g.tabIndex=0;g.setAttribute('aria-label',it.n+'。按 Enter 收下，按 Esc 推回去。');
+  counter.appendChild(g);
+  var dn=el('p','hintdn','↓ 拖進抽屜（收下）');
+  var dr=drawerEl();
+  stall.append(cu,up,counter,dn,dr);
+  var ctrl=el('div','ctrl');
+  var bNo=btn('推回去（不收）','alt',function(){finish(false)}),bYes=btn('收進抽屜（收）',null,function(){finish(true)});
+  ctrl.append(bNo,bYes);
+  app.append(el('h2',null,'這位客人拿出了：'+it.n+'。你要收嗎？'),stall,ctrl);
+
+  var busy=false,drag=false,pid=null,sx=0,sy=0,dx=0,dy=0;
+  function set(x,y){g.style.transform='translate('+x+'px,'+y+'px)'}
+  function zone(){
+    var gr=g.getBoundingClientRect(),drr=dr.getBoundingClientRect();
+    if(gr.top+gr.height*0.55>drr.top)return 'yes';
+    if(dy<-Math.min(70,gr.height*0.5))return 'no';
+    return null;
+  }
+  function mark(z){dr.classList.toggle('hot',z==='yes');cu.classList.toggle('hot',z==='no')}
+  g.addEventListener('pointerdown',function(e){
+    if(busy)return;drag=true;pid=e.pointerId;try{g.setPointerCapture(pid)}catch(_){}
+    sx=e.clientX;sy=e.clientY;dx=dy=0;g.classList.remove('back');g.classList.add('drag');e.preventDefault();
+  });
+  g.addEventListener('pointermove',function(e){
+    if(!drag||e.pointerId!==pid)return;dx=e.clientX-sx;dy=e.clientY-sy;set(dx,dy);mark(zone());e.preventDefault();
+  });
+  function end(e){
+    if(!drag||e.pointerId!==pid)return;drag=false;g.classList.remove('drag');
+    var z=e.type==='pointercancel'?null:zone();mark(null);
+    if(z==='yes')finish(true);else if(z==='no')finish(false);
+    else{g.classList.add('back');set(0,0)}
+  }
+  g.addEventListener('pointerup',end);g.addEventListener('pointercancel',end);
+  g.addEventListener('keydown',function(e){if(e.key==='Enter'){finish(true);e.preventDefault()}else if(e.key==='Escape'){finish(false);e.preventDefault()}});
+  function finish(yes){
+    if(busy)return;busy=true;bNo.disabled=bYes.disabled=true;
+    var gr=g.getBoundingClientRect(),tg=yes?dr.getBoundingClientRect():cu.getBoundingClientRect();
+    var tx=dx+(tg.left+tg.width/2)-(gr.left+gr.width/2),ty=dy+(tg.top+tg.height*(yes?0.3:0.5))-(gr.top+gr.height/2);
+    g.classList.remove('back');g.classList.add('fly');
+    requestAnimationFrame(function(){g.style.transform='translate('+tx+'px,'+ty+'px) scale(.25)';g.style.opacity='0'});
+    if(yes){dr.classList.add('hot');setTimeout(function(){dr.classList.remove('hot');dr.classList.add('bump')},250)}
+    else cu.classList.add('hot');
+    st.dec[id]=yes;delete st.why[id];
+    setTimeout(function(){st.sub=1;save(st);render()},420);
+  }
+}
+function reason(id,it){
+  var yes=st.dec[id]===true,W=yes?WHY_Y:WHY_N;
+  var d=el('div','card done');var m=el('div','mini',art(id));
+  d.append(m,el('p','scene',null));
+  d.lastChild.style.cssText='margin:0;font-size:clamp(21px,3vw,27px);font-weight:900;line-height:1.5';
+  d.lastChild.innerHTML=yes?'你把<span class="yes">'+it.n+'</span>收進抽屜了。':'你把<span class="no">'+it.n+'</span>推回去給客人了。';
+  app.append(d,drawerEl(),el('h2',null,'你'+(yes?'收下':'不收')+'的理由，比較接近哪一句？'));
+  app.lastChild.previousSibling.style.borderRadius='18px';
+  var g=el('div','opts');
+  var nx=btn(st.i<7?'下一位客人':'客人都來過了',null,function(){st.i++;st.sub=0;if(st.i>=8)st.stage=2;save(st);render()});
+  nx.disabled=st.why[id]==null;
+  W.forEach(function(t,k){var b=btn(t,'alt'+(st.why[id]===k?' pick':''),function(){
+    st.why[id]=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;
+    nx.scrollIntoView({behavior:'smooth',block:'nearest'});
+  });g.appendChild(b)});
+  app.append(g,el('p','small','選最接近的一句就好，沒有對錯。'),nx,
+    btn(yes?'我想改主意：還是不收好了':'我想改主意：還是收下好了','link',function(){st.dec[id]=!yes;delete st.why[id];save(st);render()}));
+}
+function worry(){
+  app.innerHTML='';
+  var got=CANON.filter(function(id){return st.dec[id]===true});
+  app.append(el('p','case',null),drawerEl());
+  app.firstChild.append(el('span',null,'8 位客人都來過了'),gtag());
+  app.lastChild.style.borderRadius='18px';
+  app.appendChild(el('h2',null,got.length?'收攤了。明天，你要拿抽屜裡的東西去買東西。你收下的東西裡，哪一樣你最擔心明天花不出去？':'收攤了。你今天一樣東西都沒有收。'));
+  var g=el('div','opts');
+  var opts=got.slice();opts.push(got.length?'none':'empty');
+  var nx=btn('看看我的攤位紀錄',null,function(){st.stage=3;save(st);render()});nx.disabled=st.worry==null||opts.indexOf(st.worry)<0;
+  opts.forEach(function(id){var t=id==='none'?'都不擔心':id==='empty'?'我一樣都沒收':IT[id].n;
+    var b=btn(t,'alt'+(st.worry===id?' pick':''),function(){st.worry=id;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;nx.scrollIntoView({behavior:'smooth',block:'nearest'})});
+    g.appendChild(b)});
+  app.append(g,el('p','small','選你心裡真正的想法就好，沒有對錯。'),nx);
+}
+function summary(){
+  app.innerHTML='';
+  var got=CANON.filter(function(id){return st.dec[id]===true});
+  var other=CANON.filter(function(id){return st.dec[id]===true&&st.why[id]===0}).length;
+  var t=el('table');
+  function row(k,v){var tr=el('tr');tr.append(el('td','k',k),el('td','v',v));t.appendChild(tr)}
+  row('你的組別',GN[st.g]);
+  row('收了幾樣',got.length+' 樣（共 8 樣）');
+  row('有沒有收海佃券',st.dec.hd?'<span class="yes">有收</span>':'<span class="no">沒有收</span>');
+  row('收下時選「拿去別家也能用」',other+' 次');
+  row('最擔心明天花不出去',st.worry==='none'?'都不擔心':st.worry==='empty'?'一樣都沒收':st.worry&&IT[st.worry]?IT[st.worry].c:'—');
+  var c=el('div','card');c.appendChild(t);
+  var t2=el('table');
+  CANON.forEach(function(id){var y=st.dec[id];var tr=el('tr');
+    var w=st.why[id]!=null?(y?WHY_Y:WHY_N)[st.why[id]]:'';
+    var k=el('td',null,IT[id].n+(w?'<span class="why">理由：'+w+'</span>':''));
+    tr.append(k,el('td','v',y===true?'<span class="yes">收</span>':y===false?'<span class="no">不收</span>':'—'));t2.appendChild(tr)});
+  var c2=el('div','card');c2.append(el('p','small','每一樣東西，你收了沒有？'),t2);
+  var d=el('details');d.appendChild(el('summary',null,'老師說可以再打開'));
+  var inner=el('p','note warm','同一張海佃券，你會不會收，常常要看你相不相信別人也會收。');inner.style.marginTop='10px';d.appendChild(inner);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),gtag(),c,c2,d);
+}
+window.addEventListener('hashchange',function(){var x=location.hash;if(x==='#reset'||x==='#green'||x==='#orange')location.reload()});
+function render(){window.scrollTo(0,0);if(st.stage<=0)intro();else if(st.stage===1)customer();else if(st.stage===2)worry();else summary()}
+render();
+})();
+</script>

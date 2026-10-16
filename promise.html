@@ -1,0 +1,184 @@
+<title>說話算話嗎？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: a five-panel comic at a community art camp (the tablet secretly puts each student in group 甲 or 乙; the two groups see a big brother who keeps or misses his promises) → choose: eat the small cookie now or wait 10 minutes for two big ones → why → reveal of the two groups and the study → summary for a show of hands. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#F0EFEA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.panel{background:#fff;border:4px solid var(--ink);border-radius:10px;padding:clamp(10px,2.4vw,18px);display:flex;flex-direction:column;gap:12px}
+.cap{background:var(--warm);border:2px solid var(--gold);border-radius:6px;padding:8px 14px;font-size:clamp(19px,2.6vw,24px);line-height:1.6;margin:0}
+svg.pic{width:100%;height:auto;max-height:280px;display:block}
+.say{position:relative;background:var(--note);border:3px solid var(--sea);border-radius:22px;padding:12px 18px;font-size:clamp(21px,3vw,28px);font-weight:700;line-height:1.55;margin:8px 0 0}
+.say::before{content:"";position:absolute;top:-17px;left:44px;border:14px solid transparent;border-bottom:16px solid var(--sea);border-top:0}
+.say::after{content:"";position:absolute;top:-11px;left:47px;border:11px solid transparent;border-bottom:12px solid var(--note);border-top:0}
+.say b{display:block;font-size:.72em;color:var(--sea)}
+.dots{display:flex;gap:8px;justify-content:center}
+.dots i{width:16px;height:16px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--sea)}
+.row{display:flex;gap:12px}
+.row .btn{flex:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.opts .btn.alt{text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.choice{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 10px}
+.choice svg{width:min(150px,100%);height:auto}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.grp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grp > div{border:3px solid var(--line);border-radius:16px;padding:12px 14px;font-size:clamp(19px,2.4vw,22px);line-height:1.6;background:var(--card)}
+.grp > div.me{border-color:var(--gold);background:var(--warm)}
+.grp h3{margin:0 0 4px;font-size:clamp(21px,2.8vw,26px);font-weight:900}
+.tag{display:inline-block;background:var(--gold);color:#fff;border-radius:999px;padding:0 10px;font-size:.8em;margin-left:6px;vertical-align:middle}
+.big{font-size:clamp(46px,9vw,84px);font-weight:900;line-height:1.15;margin:0;text-align:center;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap} td.v{font-weight:900}
+@media (max-width:560px){.grp{grid-template-columns:1fr}}
+@media (max-width:400px){.two{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='promise-keeper-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+var st=load()||{step:'intro',p:0,g:null,eat:null,why:null};
+if(st.g!=='A'&&st.g!=='B'){st.g=rnd()?'A':'B';save(st)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+
+/* ---------- drawings ---------- */
+var BRO='<g><circle cx="120" cy="92" r="32" fill="#F2CFAE"/><path d="M88 86 Q92 50 120 52 Q150 50 152 86 Q138 70 120 72 Q100 70 88 86Z" fill="#2B2118"/><circle cx="110" cy="96" r="3.6" fill="#1F2A2E"/><circle cx="132" cy="96" r="3.6" fill="#1F2A2E"/><path d="M111 109 Q121 116 131 109" stroke="#1F2A2E" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M78 300 L82 150 Q84 128 120 126 Q156 128 158 150 L162 300Z" fill="#205E86"/><rect x="128" y="150" width="24" height="16" rx="3" fill="#FCFBF7"/></g>';
+var KID='<g><circle cx="500" cy="150" r="30" fill="#F2CFAE"/><path d="M470 146 Q472 112 500 114 Q530 112 530 146 Q516 132 500 134 Q484 132 470 146Z" fill="#3A2A1E"/><circle cx="491" cy="154" r="3.4" fill="#1F2A2E"/><circle cx="511" cy="154" r="3.4" fill="#1F2A2E"/><path d="M462 214 Q464 186 500 184 Q536 186 538 214Z" fill="#A8441A"/></g>';
+var TABLE='<rect x="0" y="0" width="600" height="300" fill="#EAF1EC"/><rect x="200" y="30" width="160" height="70" rx="6" fill="#FCFBF7" stroke="#D5D2C6" stroke-width="4"/><path d="M212 80 Q240 60 268 80 T324 80 T352 76" stroke="#205E86" stroke-width="4" fill="none"/><rect x="180" y="212" width="420" height="88" fill="#C9A77A"/><rect x="180" y="212" width="420" height="10" fill="#B08D60"/>';
+var IT={
+ crayons:'<g><rect x="250" y="176" width="110" height="40" rx="4" fill="#9C7B55"/><rect x="258" y="160" width="10" height="22" fill="#B05050"/><rect x="274" y="166" width="10" height="16" fill="#5C7C9A"/><rect x="290" y="158" width="10" height="24" fill="#6E8F5A"/><rect x="306" y="170" width="10" height="12" fill="#C9A23C"/><rect x="322" y="164" width="10" height="18" fill="#7A6A8E"/><rect x="338" y="168" width="10" height="14" fill="#8E8E8E"/><text x="305" y="204" text-anchor="middle" font-size="16" font-weight="700" fill="#FCFBF7">舊蠟筆</text></g>',
+ markers:'<g><rect x="232" y="164" width="150" height="52" rx="6" fill="#FCFBF7" stroke="#205E86" stroke-width="4"/>'+['#D64545','#E8823A','#E8C23A','#4FA35A','#3A8FD6','#5A4FD6','#B04FD6','#D64F9A','#7A5230','#1F2A2E'].map(function(c,i){return '<rect x="'+(240+i*14)+'" y="150" width="10" height="38" rx="3" fill="'+c+'"/>'}).join('')+'<text x="307" y="208" text-anchor="middle" font-size="15" font-weight="900" fill="#205E86">36 色彩色筆</text></g>',
+ drawing:'<g><rect x="262" y="150" width="120" height="66" fill="#fff" stroke="#D5D2C6" stroke-width="3"/><circle cx="356" cy="168" r="10" fill="#E8C23A"/><path d="M268 200 Q290 184 312 200 T356 200 T378 196" stroke="#3A8FD6" stroke-width="5" fill="none"/></g>',
+ sticker:'<g><path d="M262 140 l8 16 18 3 -13 12 3 18 -16 -9 -16 9 3 -18 -13 -12 18 -3z" fill="#E8C23A" stroke="#B7862B" stroke-width="3"/></g>',
+ cookie:'<g><circle cx="320" cy="200" r="16" fill="#D9A866" stroke="#A9773A" stroke-width="3"/><circle cx="315" cy="196" r="2.6" fill="#5A3A1E"/><circle cx="326" cy="204" r="2.6" fill="#5A3A1E"/></g>',
+ think:'<g><ellipse cx="420" cy="58" rx="130" ry="46" fill="#fff" stroke="#56605C" stroke-width="3" stroke-dasharray="8 6"/><circle cx="380" cy="58" r="28" fill="#D9A866" stroke="#A9773A" stroke-width="3"/><circle cx="452" cy="58" r="28" fill="#D9A866" stroke="#A9773A" stroke-width="3"/><circle cx="372" cy="50" r="3.4" fill="#5A3A1E"/><circle cx="388" cy="66" r="3.4" fill="#5A3A1E"/><circle cx="444" cy="50" r="3.4" fill="#5A3A1E"/><circle cx="460" cy="66" r="3.4" fill="#5A3A1E"/><text x="416" y="64" text-anchor="middle" font-size="20" font-weight="900" fill="#56605C">＋</text><circle cx="200" cy="112" r="6" fill="#fff" stroke="#56605C" stroke-width="2"/><circle cx="232" cy="98" r="9" fill="#fff" stroke="#56605C" stroke-width="2"/></g>',
+ empty:'<g><path d="M70 170 Q50 150 56 130" stroke="#F2CFAE" stroke-width="12" fill="none" stroke-linecap="round"/><path d="M170 170 Q190 150 184 130" stroke="#F2CFAE" stroke-width="12" fill="none" stroke-linecap="round"/></g>',
+ busy:'<g><circle cx="50" cy="196" r="16" fill="#F2CFAE"/><path d="M30 250 Q32 216 50 214 Q68 216 70 250Z" fill="#6E8F5A"/><text x="50" y="170" text-anchor="middle" font-size="22" font-weight="900" fill="#A8441A">？</text></g>'
+};
+function pic(items,label){return '<svg class="pic" viewBox="0 0 600 300" role="img" aria-label="'+label+'">'+TABLE+BRO+KID+items.map(function(k){return IT[k]}).join('')+'</svg>'}
+
+/* ---------- story: both groups get 5 panels of similar length ---------- */
+var P1={cap:'星期六早上，你參加海佃社區活動中心的美術營。帶隊的是一位讀大學的大哥哥。',say:'先用這盒舊蠟筆，等一下我去拿一盒新的 36 色彩色筆給你。',pic:['crayons'],alt:'大哥哥站在桌邊，桌上有一盒舊蠟筆，有幾枝已經斷了。'};
+var P3={cap:'你畫好了一張海佃溪的圖，大哥哥走過來看。',say:'畫得很用心！等一下我拿新的貼紙給你，讓你貼在畫上。',pic:['drawing'],alt:'桌上有一張畫好的溪流圖，大哥哥在旁邊看。'};
+var P5={cap:'快下課了，大哥哥第三次走過來，在你的桌上放了一塊小餅乾。',say:'這塊小餅乾你可以現在吃；如果等我 10 分鐘，我會帶兩塊大餅乾回來。',pic:['cookie','think'],alt:'桌上有一塊小餅乾，旁邊的想像泡泡裡有兩塊大餅乾。'};
+var STORY={
+ A:[P1,
+  {cap:'你用舊蠟筆畫了一會兒，大哥哥回來了，手上拿著一個盒子。',say:'來，說好的 36 色彩色筆，新的，給你用！',pic:['markers'],alt:'大哥哥回來，桌上多了一盒新的 36 色彩色筆。'},
+  P3,
+  {cap:'過了一陣子，大哥哥在教室裡繞了一圈，又走回你的桌子旁邊。',say:'說好的貼紙來了，你想貼在哪裡都可以！',pic:['drawing','sticker'],alt:'大哥哥回來，畫的旁邊多了一張星星貼紙。'},
+  P5],
+ B:[P1,
+  {cap:'你用舊蠟筆畫了一會兒，大哥哥回來了，兩手空空的。',say:'對不起，我去倉庫找過了，彩色筆已經沒有了。',pic:['crayons','empty'],alt:'大哥哥兩手空空地回來，桌上還是那盒舊蠟筆。'},
+  P3,
+  {cap:'過了一陣子，大哥哥一直忙著幫別的小朋友找剪刀、換水彩。',say:'啊，貼紙的事我忙到忘了，不好意思喔。',pic:['drawing','busy'],alt:'大哥哥身邊有別的小朋友在問問題，畫的旁邊沒有貼紙。'},
+  P5]
+};
+var N=5;
+var GN={A:'甲組',B:'乙組'};
+var GSEE={A:'大哥哥說話算話：說好的 36 色彩色筆真的拿來了，說好的貼紙也真的拿來了。',B:'大哥哥沒有做到：彩色筆被拿完了，貼紙他忙到忘了。他不是壞人，只是兩次都沒做到。'};
+var EAT={now:'現在吃小餅乾',wait:'等他 10 分鐘'};
+var WHY=['我相信他會回來','他之前沒做到，我不太相信','我本來就很想吃','我想試試看自己能不能等'];
+
+/* ---------- pages ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','接下來你會看到一則 5 格的小漫畫。你就是故事裡的小朋友。'),el('p','lead','請一格一格看清楚，最後要替自己做一個決定。這個決定沒有對錯，選你真的會做的就好。'));
+  app.append(el('h1',null,'說話算話嗎？'),c,btn('開始看漫畫','btn',function(){st.step='story';st.p=0;save(st);render()}));
+}
+function story(){
+  app.innerHTML='';
+  var k=Math.min(Math.max(st.p,0),N-1),q=STORY[st.g][k];
+  var dots=el('div','dots');for(var i=0;i<N;i++)dots.appendChild(el('i',i<=k?'on':null));
+  var pn=el('div','panel');
+  pn.append(el('p','cap',q.cap));
+  var fig=el('div');fig.innerHTML=pic(q.pic,q.alt);pn.appendChild(fig);
+  pn.appendChild(el('p','say','<b>大哥哥說：</b>「'+q.say+'」'));
+  var row=el('div','row');
+  if(k>0)row.appendChild(btn('上一格','btn alt',function(){st.p=k-1;save(st);render()}));
+  row.appendChild(btn(k<N-1?'下一格':'輪到你決定了','btn',function(){if(k<N-1){st.p=k+1}else{st.step='choice'}save(st);render();window.scrollTo(0,0)}));
+  app.append(el('p','case','第 '+(k+1)+' 格，共 '+N+' 格'),dots,pn,row);
+}
+function cookieSvg(n){var s='<svg viewBox="0 0 150 90" aria-hidden="true">';if(n===1){s+='<circle cx="75" cy="48" r="20" fill="#D9A866" stroke="#A9773A" stroke-width="3"/><circle cx="69" cy="43" r="3" fill="#5A3A1E"/><circle cx="82" cy="53" r="3" fill="#5A3A1E"/>'}else{s+='<circle cx="42" cy="46" r="32" fill="#D9A866" stroke="#A9773A" stroke-width="3"/><circle cx="108" cy="46" r="32" fill="#D9A866" stroke="#A9773A" stroke-width="3"/><circle cx="34" cy="38" r="3.6" fill="#5A3A1E"/><circle cx="50" cy="56" r="3.6" fill="#5A3A1E"/><circle cx="100" cy="38" r="3.6" fill="#5A3A1E"/><circle cx="116" cy="56" r="3.6" fill="#5A3A1E"/>'}return s+'</svg>'}
+function choice(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','say','<b>大哥哥說：</b>「'+P5.say+'」'));
+  var g=el('div','two');
+  [['now',1,'現在就吃','這一塊小餅乾，現在就拿得到。'],['wait',2,'等他回來','等 10 分鐘，他說會帶兩塊大餅乾。']].forEach(function(x){
+    var b=btn('','btn alt choice',function(){st.eat=x[0];st.step='why';save(st);render();window.scrollTo(0,0)});
+    b.innerHTML=cookieSvg(x[1])+'<span>'+x[2]+'</span><span style="font-size:.78em;font-weight:500;color:var(--muted)">'+x[3]+'</span>';
+    if(st.eat===x[0])b.classList.add('pick');g.appendChild(b)});
+  app.append(el('p','case','關鍵選擇'),c,el('h2',null,'如果你真的坐在那張桌子前，你會怎麼做？'),el('p','lead','兩個都可以選，選你真的會做的那一個。'),g);
+}
+function why(){
+  app.innerHTML='';
+  var g=el('div','opts');
+  WHY.forEach(function(t,k){var b=btn(t,'btn alt',function(){st.why=k;st.step='reveal';save(st);render();window.scrollTo(0,0)});if(st.why===k)b.classList.add('pick');g.appendChild(b)});
+  app.append(el('p','case','你選了「'+EAT[st.eat]+'」'),el('h2',null,'你為什麼這樣選？選最接近你心裡想法的一個。'),el('p','lead','沒有對錯，每一個理由都說得通。'),g,
+    btn('我想改剛剛的選擇','btn alt',function(){st.step='choice';save(st);render()}));
+}
+function reveal(){
+  app.innerHTML='';
+  var me=st.g,ot=me==='A'?'B':'A';
+  var grp=el('div','grp');
+  ['A','B'].forEach(function(g){var d=el('div',g===me?'me':null);d.append(el('h3',null,GN[g]+(g===me?'<span class="tag">你</span>':'')),el('p',null,GSEE[g]));d.firstChild.nextSibling.style.margin='0';grp.appendChild(d)});
+  var c1=el('div','card');
+  c1.append(el('p','lead','平板在你按「開始」之前，就已經偷偷把全班分成兩組，兩組看到的大哥哥不一樣。前兩次的承諾，一組看到他做到了，另一組看到他沒做到。第三次的餅乾約定，兩組一模一樣。'),
+    el('p','big',(me==='A'?'你是甲組':'你是乙組')),grp,
+    el('p','lead','你看到的是'+GN[me]+'的故事；'+GN[ot]+'的同學，看到的是另一個版本。'));
+  var c2=el('div','card');
+  c2.append(el('h2',null,'科學家真的做過這個實驗'),
+    el('p','note','美國羅徹斯特大學的研究人員基德（Kidd）、帕梅里（Palmeri）和阿斯林（Aslin），在 2013 年發表了一個研究。他們請三到五歲的小朋友來畫畫，大人先說：「等一下我拿新的美術用品給你。」一組小朋友遇到的大人真的拿來了；另一組遇到的大人回來說：「對不起，沒有了。」接著，大人讓每個小朋友選：現在吃一顆棉花糖，或是等一下吃兩顆。'),
+    el('p','note','結果，遇過說話算話大人的小朋友，平均等得久很多；遇過說話不算話大人的小朋友，大多很快就把眼前的棉花糖吃掉了。'),
+    el('p','note warm','這代表：願不願意等，不只是「意志力強不強」，也和「相不相信承諾會實現」有關。如果說好的事常常落空，先拿眼前的，其實是很合理的判斷；如果說好的事常常做到，等一等就比較值得。'));
+  var c3=el('div','card');
+  c3.append(el('h2',null,'你選的是「'+EAT[st.eat]+'」'),
+    el('p','note',st.eat==='now'?'現在吃的作用：東西確定拿到手，不用擔心落空。代價是：如果大哥哥真的回來，你就少了兩塊大餅乾。':'等他回來的作用：如果他真的回來，你會得到更多。代價是：要忍耐 10 分鐘，而且如果他沒有回來，這 10 分鐘就白等了。'),
+    el('p','lead','兩種選擇都說得通。等一下全班一起看看：甲組和乙組，選的有沒有不一樣？'));
+  app.append(el('p','case','揭曉'),el('h2',null,'其實，平板偷偷分了組！'),c1,c2,c3,btn('看我的摘要','btn',function(){st.step='end';save(st);render();window.scrollTo(0,0)}));
+}
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','big',GN[st.g]));
+  var t=el('table');
+  [['我是',GN[st.g]+'（'+(st.g==='A'?'大哥哥說話算話':'大哥哥沒有做到')+'）'],['我選',EAT[st.eat]||'—'],['我的理由',st.why!=null?WHY[st.why]:'—']].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,el('p','lead','老師會請大家舉手：先問是哪一組，再問選「現在吃」還是「等他回來」。'));
+}
+var S={intro:intro,story:story,choice:choice,why:why,reveal:reveal,end:end};
+function render(){
+  if(st.step==='why'&&!st.eat)st.step='choice';
+  if((st.step==='reveal'||st.step==='end')&&(!st.eat||st.why==null))st.step=st.eat?'why':'choice';
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

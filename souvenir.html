@@ -1,0 +1,194 @@
+<title>紀念品交換日</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1E242B; --coral:#D95D39; --teal:#2A6F68; --muted:#475569;
+  --line:#E3DED7; --lc:#FFF5F2; --lt:#F0F7F6; --dark:#1E242B; --gold:#C99A2E; --lg:#FBF3DD;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,46px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.8vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--coral);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.7vw,24px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.card.c{background:var(--lc);border-color:#F2D3C7}
+.card.t{background:var(--lt);border-color:#CFE3E0}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--coral);color:#fff;cursor:pointer;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.btn.teal{background:var(--teal)}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--coral);background:var(--lc)}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--lt);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.5vw,23px);line-height:1.7;margin:0}
+.note.c{background:var(--lc)}
+.hint{margin:0;font-size:19px;color:var(--muted);font-weight:700}
+svg.i{width:1.3em;height:1.3em;vertical-align:-0.28em;flex:none;display:inline-block}
+.prog{display:flex;gap:6px}
+.prog i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.prog i.on{background:var(--coral)}
+table.sum{width:100%;border-collapse:collapse;font-size:clamp(19px,2.5vw,22px)}
+table.sum td{border-top:2px solid var(--line);padding:10px 6px;vertical-align:top}
+table.sum td.k{font-weight:900;color:var(--muted);width:40%}
+.bigdone{font-size:clamp(24px,4vw,34px)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 偷偷分組：黃組（擁有者，問最少幾點才肯賣）／青組（買的人，問最多願意付幾點）。
+   流程：分組 → 黃組拆禮物、青組看櫥窗，都選繩子顏色 → 數字滾輪寫點數 → 第二關換不換（黃：鑰匙圈換明信片；青：明信片換鑰匙圈）→ 總結 */
+.grp{display:flex;align-items:center;gap:16px;border-radius:20px;padding:16px 20px;font-weight:900;font-size:clamp(26px,5vw,38px)}
+.grp.y{background:var(--lg);border:3px solid var(--gold);color:#8A6716}
+.grp.t{background:var(--lt);border:3px solid var(--teal);color:var(--teal)}
+.grp svg{width:64px;height:64px;flex:none}
+.scene{width:100%;max-width:440px;height:auto;display:block;margin:0 auto;touch-action:none}
+.bow{cursor:grab}
+.ropes{display:flex;gap:12px;flex-wrap:wrap}
+.rope{font:inherit;display:flex;align-items:center;gap:10px;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:8px 14px;font-weight:700;font-size:19px;cursor:pointer}
+.rope i{display:block;width:28px;height:28px;border-radius:50%}
+.rope.pick{border-color:var(--coral);background:var(--lc)}
+/* 數字滾輪 */
+.odo{display:flex;justify-content:center;align-items:flex-end;gap:10px;background:var(--dark);border-radius:22px;padding:14px 16px;align-self:center}
+.wheel{display:flex;flex-direction:column;align-items:center;gap:6px}
+.wheel button{font:inherit;width:clamp(64px,16vw,84px);height:52px;border:0;border-radius:12px;background:#475569;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.wheel button svg{width:30px;height:30px}
+.win{width:clamp(64px,16vw,84px);height:clamp(84px,20vw,104px);border-radius:12px;background:linear-gradient(#D9D4CC,#FFFFFF 30%,#FFFFFF 70%,#D9D4CC);overflow:hidden;position:relative}
+.strip{position:absolute;left:0;right:0;top:0;transition:transform .25s ease-out}
+.strip span{display:flex;align-items:center;justify-content:center;height:clamp(84px,20vw,104px);font-size:clamp(46px,11vw,64px);font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+.unit{color:#FAF7F2;font-weight:900;font-size:clamp(22px,4vw,28px);padding-bottom:14px}
+.trade{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.trade .btn.alt{flex-direction:column;align-items:center;text-align:center;gap:6px}
+.trade svg{width:96px;height:96px}
+details{background:var(--card);border:2px dashed var(--line);border-radius:16px;padding:10px 16px;font-size:19px}
+details summary{font-weight:900;cursor:pointer;color:var(--muted)}
+</style>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+"use strict";
+var KEY='u2b-souvenir-v1';
+var app=document.getElementById('app');
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+if(location.hash==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}}
+var st=load();
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}
+var force=location.hash==='#yellow'?'y':location.hash==='#teal'?'t':null;
+if(!st||(force&&st.g!==force)){st={g:force||(rnd()<0.5?'y':'t'),s:0,open:false,rope:null,price:[0,0,0],priceSet:false,swap:null}}
+save();
+var Y=st.g==='y';
+var ROPES=[['#D95D39','珊瑚紅'],['#2A6F68','深青色'],['#C99A2E','金黃色']];
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+function btn(t,c,f){var b=el('button','btn'+(c?' '+c:''),t);b.type='button';b.addEventListener('click',f);return b}
+function go(n){st.s=n;save();render();window.scrollTo(0,0)}
+function prog(){var p=el('div','prog');for(var i=0;i<4;i++)p.appendChild(el('i',i<st.s?'on':''));return p}
+function grpIcon(){return Y?'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#FBF3DD" stroke="#C99A2E" stroke-width="5"/></svg>':'<svg viewBox="0 0 64 64"><rect x="8" y="8" width="48" height="48" rx="8" fill="#F0F7F6" stroke="#2A6F68" stroke-width="5"/></svg>'}
+function grpBox(){return el('div','grp '+(Y?'y':'t'),grpIcon()+'<span>'+(Y?'你是黃組':'你是青組')+'</span>')}
+function fish(rope,x,y,s){x=x||0;y=y||0;s=s||1;var r=rope||'#475569';
+ return '<g transform="translate('+x+' '+y+') scale('+s+')" stroke-linecap="round" stroke-linejoin="round" stroke-width="5" fill="none">'+
+ '<circle cx="40" cy="22" r="14" stroke="#475569"/><path d="M40 36 C40 50 52 56 60 62" stroke="'+r+'" stroke-width="7"/>'+
+ '<path d="M56 86 C76 54 128 54 150 86 C128 118 76 118 56 86 Z" fill="#F0F7F6" stroke="#2A6F68"/><path d="M56 86 L32 64 L32 108 Z" fill="#F0F7F6" stroke="#2A6F68"/>'+
+ '<circle cx="128" cy="80" r="5" fill="#2A6F68" stroke="#2A6F68"/><path d="M96 70 C102 80 102 92 96 102" stroke="#2A6F68"/></g>'}
+function card(){return '<g stroke-linecap="round" stroke-linejoin="round" stroke-width="5"><rect x="20" y="20" width="160" height="110" rx="10" fill="#FFFFFF" stroke="#475569"/>'+
+ '<path d="M30 120 C50 60 70 60 100 30 C130 60 150 60 170 120 Z" fill="#F0F7F6" stroke="#2A6F68"/><path d="M100 120 V60" stroke="#2A6F68"/><path d="M70 120 V88 M130 120 V88" stroke="#2A6F68"/></g>'}
+var UP='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
+var DN='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+function price(){return st.price[0]*100+st.price[1]*10+st.price[2]}
+
+function render(){app.innerHTML='';
+ if(st.s===0)return intro();
+ app.appendChild(prog());
+ if(st.s===1)return item();
+ if(st.s===2)return odo();
+ if(st.s===3)return trade();
+ return end();
+}
+function intro(){
+ app.append(el('p','kick','活動二・線上小遊戲'),el('h1',null,'紀念品交換日'),grpBox());
+ var c=el('div','card c');
+ c.append(el('p','lead','電腦已經偷偷幫你分好組了。<b>請不要告訴旁邊的同學你是哪一組，也不要偷看別人的平板。</b>兩組看到的問題不一樣，等大家都做完，老師會告訴大家差在哪裡。'),
+  el('p','lead','遊戲裡的「點數」只在遊戲裡使用，不是真的錢。'));
+ app.append(c,btn('開始玩','',function(){go(1)}));
+}
+function item(){
+ var c=el('div','card');
+ if(Y){
+  app.append(el('p','kick','第一關：你收到一份禮物'),el('h2',null,st.open?'禮物是一個虱目魚鑰匙圈。從現在開始，它就是你的了！':'老師送你一份禮物。請把蝴蝶結往旁邊拖開，或是直接點一下蝴蝶結，就可以打開禮物。'));
+  var sv='<svg class="scene" viewBox="0 0 440 300" aria-label="'+(st.open?'打開的盒子，裡面是虱目魚鑰匙圈':'綁著蝴蝶結的禮物盒')+'">';
+  if(!st.open){sv+='<g stroke-linecap="round" stroke-linejoin="round" stroke-width="5"><rect x="100" y="110" width="240" height="170" rx="14" fill="#F0F7F6" stroke="#2A6F68"/><path d="M100 160 H340" stroke="#2A6F68"/><path d="M220 110 V280" stroke="#D95D39" stroke-width="10"/>'+
+   '<g class="bow" id="bow"><path d="M220 110 C180 50 130 70 150 100 C162 116 196 114 220 110 C244 114 278 116 290 100 C310 70 260 50 220 110 Z" fill="#FFF5F2" stroke="#D95D39"/><circle cx="220" cy="108" r="12" fill="#D95D39" stroke="#D95D39"/></g></g>'}
+  else{sv+='<g stroke-linecap="round" stroke-linejoin="round" stroke-width="5"><path d="M100 170 H340 V280 H100 Z" fill="#F0F7F6" stroke="#2A6F68"/><path d="M100 170 L70 120 H310 L340 170" fill="#FFFFFF" stroke="#2A6F68"/></g>'+fish(st.rope,140,30,1.1)}
+  sv+='</svg>';c.innerHTML=sv;app.appendChild(c);
+  if(!st.open){var bow=c.querySelector('#bow');var sx=null;var svgE=c.querySelector('svg');
+   function openIt(){st.open=true;save();render()}
+   bow.addEventListener('click',openIt);
+   bow.addEventListener('pointerdown',function(e){sx=e.clientX;bow.setPointerCapture(e.pointerId)});
+   bow.addEventListener('pointermove',function(e){if(sx==null)return;var dx=e.clientX-sx;bow.setAttribute('transform','translate('+(dx*440/svgE.getBoundingClientRect().width)+' 0)');if(Math.abs(dx)>60){sx=null;openIt()}});
+   bow.addEventListener('pointerup',function(){sx=null;bow.removeAttribute('transform')});
+   var b=btn('如果拉不開，請點這裡打開禮物','teal',openIt);app.appendChild(b);return}
+  app.appendChild(el('p','lead','請幫你的鑰匙圈選一條繩子。選好以後，你就可以把它掛在書包上了。'));
+ }else{
+  app.append(el('p','kick','第一關：文具店的櫃子'),el('h2',null,'你走進學校附近的文具店，看到櫃子裡擺著一個虱目魚鑰匙圈。'));
+  c.innerHTML='<svg class="scene" viewBox="0 0 440 300" aria-label="文具店櫃子裡的虱目魚鑰匙圈"><g stroke-linecap="round" stroke-linejoin="round" stroke-width="5"><rect x="40" y="20" width="360" height="260" rx="16" fill="#FFFFFF" stroke="#475569"/><path d="M40 230 H400" stroke="#475569"/><path d="M70 50 L110 50 M70 70 L90 70" stroke="#D9D4CC"/><path d="M330 60 L370 100 M350 50 L380 80" stroke="#E3DED7"/></g>'+fish(st.rope,140,60,1.1)+'</svg>';
+  app.appendChild(c);
+  app.appendChild(el('p','lead','如果你買下這個鑰匙圈，你會想選哪一條繩子？現在只是先看看，它還不是你的。'));
+ }
+ var r=el('div','ropes');
+ ROPES.forEach(function(x){var b=el('button','rope'+(st.rope===x[0]?' pick':''),'<i style="background:'+x[0]+'"></i>'+x[1]);b.type='button';b.addEventListener('click',function(){st.rope=x[0];save();render()});r.appendChild(b)});
+ app.appendChild(r);
+ if(st.rope)app.appendChild(btn('下一步','',function(){go(2)}));
+}
+function odo(){
+ app.append(el('p','kick','第一關：請轉動數字滾輪，寫下一個點數'));
+ app.append(el('h2',null,Y?'隔壁班有一位同學很喜歡你的鑰匙圈，想用點數跟你買。他<b style="color:var(--coral)">最少</b>要給你多少點，你才願意把鑰匙圈賣給他？':'如果你想把文具店櫃子裡的鑰匙圈買下來，你<b style="color:var(--teal)">最多</b>願意花多少點？'));
+ var c=el('div','card');c.innerHTML='<svg class="scene" style="max-width:220px" viewBox="0 0 220 160" aria-hidden="true">'+fish(st.rope,10,10,1)+'</svg>';app.appendChild(c);
+ var o=el('div','odo');var H=null;
+ [0,1,2].forEach(function(k){var w=el('div','wheel');
+  var up=el('button',null,UP);up.type='button';up.setAttribute('aria-label',['百位','十位','個位'][k]+'加一');
+  var dn=el('button',null,DN);dn.type='button';dn.setAttribute('aria-label',['百位','十位','個位'][k]+'減一');
+  var win=el('div','win');var strip=el('div','strip');for(var d=0;d<10;d++)strip.appendChild(el('span',null,String(d)));win.appendChild(strip);
+  function pos(){var h=win.getBoundingClientRect().height||96;strip.style.transform='translateY('+(-st.price[k]*h)+'px)';tot.textContent=price()+' 點'}
+  up.addEventListener('click',function(){st.price[k]=(st.price[k]+1)%10;save();pos()});
+  dn.addEventListener('click',function(){st.price[k]=(st.price[k]+9)%10;save();pos()});
+  w.append(up,win,dn);o.appendChild(w);setTimeout(pos,0);window.addEventListener('resize',pos)});
+ o.appendChild(el('span','unit','點'));
+ app.appendChild(o);
+ var tot=el('p','lead','');tot.style.textAlign='center';tot.style.fontWeight='900';tot.style.fontSize='clamp(24px,4vw,32px)';tot.style.color='var(--ink)';tot.textContent=price()+' 點';
+ app.appendChild(tot);
+ app.appendChild(el('p','hint','請按上下箭頭，轉動每一格數字，可以寫 0 點到 999 點。這題沒有標準答案，請寫下你真正願意的點數。'));
+ app.appendChild(btn('確定寫這個點數','',function(){st.priceSet=true;go(3)}));
+}
+function trade(){
+ var mine=Y?'鑰匙圈':'明信片';var other=Y?'明信片':'鑰匙圈';
+ app.append(el('p','kick','第二關：你要不要交換？'));
+ if(Y)app.append(el('h2',null,'老師拿來一張「四草綠色隧道」的明信片。如果你想要，可以用手上的鑰匙圈換這張明信片。你要換嗎？'));
+ else app.append(el('h2',null,'老師送你一張「四草綠色隧道」的明信片，從現在開始，它就是你的了。如果你想要，可以用這張明信片，換剛剛櫃子裡的鑰匙圈。你要換嗎？'));
+ var fs=function(){return '<svg viewBox="0 0 200 150" aria-hidden="true">'+fish(st.rope,10,0,0.95)+'</svg>'};
+ var cs=function(){return '<svg viewBox="0 0 200 150" aria-hidden="true">'+card()+'</svg>'};
+ var g=el('div','trade');
+ var keep=btn((Y?fs():cs())+'<span>我要留著我的'+mine+'</span>','alt'+(st.swap===false?' pick':''),function(){st.swap=false;save();render()});
+ var sw=btn((Y?cs():fs())+'<span>我要換成'+other+'</span>','alt'+(st.swap===true?' pick':''),function(){st.swap=true;save();render()});
+ g.append(keep,sw);app.appendChild(g);
+ if(st.swap!==null){app.appendChild(el('p','note',st.swap?'你把手上的'+mine+'換成了'+other+'。對你來說，'+other+'比'+mine+'更吸引人。':'你決定留著手上的'+mine+'。很多人都會這樣選，等一下全班會比一比。'));
+  app.appendChild(btn('看看我的結果','',function(){go(4)}))}
+}
+function end(){
+ app.appendChild(el('h2','bigdone','做完了！請停在這一頁，等其他同學。'));
+ app.appendChild(grpBox());
+ var c=el('div','card');var t=el('table','sum');
+ [['第一關寫下的點數',price()+' 點'],['第二關有沒有交換',st.swap===null?'—':(st.swap?'有交換':'沒有交換')]].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,'<b>'+r[1]+'</b>'));t.appendChild(tr)});
+ c.appendChild(t);app.appendChild(c);
+ app.appendChild(el('p','hint','等一下，老師會請黃組和青組分開舉手，分成 0 點到 49 點、50 點到 99 點、100 點到 199 點、200 點或更多。接著，第二關有交換的人，要再舉一次手。'));
+ var d=el('details');d.innerHTML='<summary>等老師揭曉以後，再點這裡，看看兩組的題目差在哪裡</summary><p>黃組：鑰匙圈一開始就送給你了。畫面問你，同學最少要給你多少點，你才願意賣掉它。第二關，你手上拿的是鑰匙圈，可以換成明信片。</p><p>青組：鑰匙圈擺在文具店的櫃子裡。畫面問你，最多願意花多少點把它買下來。第二關，你手上拿的是明信片，可以換成鑰匙圈。</p>';
+ app.appendChild(d);
+}
+render();
+})();
+</script>

@@ -1,0 +1,137 @@
+<title>書本排排站</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: tap 7 shuffled classmate cards from fewest to most books to line them up → tap the one in the middle (median) → see the average → the teacher (500 books) joins → tap the two middle people → compare. Single light classroom look on purpose. */
+:root{
+  --bg:#F1F0EA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.label{font-size:clamp(16px,2.2vw,20px);font-weight:700;color:var(--muted);margin:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;min-height:118px;align-items:flex-end}
+.p{font:inherit;border:3px solid var(--line);background:var(--card);border-radius:16px;padding:8px 10px;min-width:92px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--ink)}
+.p .n{font-size:clamp(17px,2.3vw,21px);font-weight:700;color:var(--muted)}
+.p .v{font-size:clamp(26px,4vw,36px);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2}
+.p .u{font-size:clamp(14px,1.9vw,17px);color:var(--muted)}
+.p.placed{border-color:var(--sea)}
+.p.mid{border-color:var(--good);background:#E3F1E8;box-shadow:0 0 0 3px var(--good) inset}
+.p.bad{border-color:var(--rust);background:#F6E4DC}
+.p.t{border-color:var(--gold);background:#FBF1DC}
+.p:disabled{cursor:default}
+.p:focus-visible,.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.slot{min-width:92px;height:104px;border:3px dashed var(--line);border-radius:16px}
+.btn{font:inherit;font-size:clamp(21px,3.1vw,28px);font-weight:900;border:0;border-radius:16px;padding:14px 20px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.msg{margin:0;font-size:clamp(21px,3vw,28px);font-weight:900;min-height:1.4em}
+.msg.ok{color:var(--good)} .msg.no{color:var(--rust)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.7vw,25px);line-height:1.7;margin:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{border:3px solid var(--line);border-radius:18px;padding:10px;text-align:center;background:var(--card)}
+.stat p{margin:0;font-size:clamp(16px,2.2vw,20px);font-weight:700;color:var(--muted)}
+.stat strong{display:block;font-size:clamp(34px,6.5vw,56px);font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat.mean strong{color:var(--rust)} .stat.med strong{color:var(--good)}
+.stat .was{font-size:clamp(15px,2vw,18px);color:var(--muted);font-weight:700}
+@media (max-width:440px){.stats{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='books-median-v1';
+var KIDS=[{n:'阿明',v:30},{n:'小芳',v:80},{n:'志豪',v:10},{n:'佳佳',v:60},{n:'小安',v:5},{n:'宇翔',v:40},{n:'美美',v:20}];
+var TEACHER={n:'老師',v:500,t:true};
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,miss:0};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function sorted(a){return a.slice().sort(function(x,y){return x.v-y.v})}
+function mean(a){var s=0;a.forEach(function(p){s+=p.v});return s/a.length}
+function fmt(x){return (Math.round(x*10)/10).toLocaleString('zh-TW')}
+function person(p,cls){var b=el('button','p'+(p.t?' t':'')+(cls?' '+cls:''));b.type='button';b.append(el('span','n',p.n),el('span','v',String(p.v)),el('span','u','本'));b.setAttribute('aria-label',p.n+'，'+p.v+'本');return b}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','海佃小隊有 7 位同學，每個人說出家裡大概有幾本課外書。'),el('p','lead','請你幫他們從「書最少」到「書最多」排好隊，再找出站在正中間的人。'),el('p','label','書的數量是遊戲裡編的，不是真實的同學。'));
+  var b=el('button','btn','開始排隊');b.type='button';b.addEventListener('click',function(){st.step=1;save(st);line()});
+  app.append(el('h1',null,'書本排排站'),c,b);
+}
+function line(){
+  app.innerHTML='';
+  var placed=[];var order=sorted(KIDS);
+  var h=el('h2',null,'第 1 步：從書最少的人開始，一個一個點，排進隊伍裡。');
+  var c1=el('div','card');c1.appendChild(el('p','label','還沒排隊的同學'));var pool=el('div','row');c1.appendChild(pool);
+  var c2=el('div','card');c2.appendChild(el('p','label','隊伍（左邊最少，右邊最多）'));var q=el('div','row');c2.appendChild(q);
+  var msg=el('p','msg');
+  function draw(){
+    pool.innerHTML='';q.innerHTML='';
+    KIDS.forEach(function(p){if(placed.indexOf(p)>=0)return;var b=person(p);b.addEventListener('click',function(){
+      var need=order[placed.length];
+      if(p===need){placed.push(p);msg.textContent='';msg.className='msg';draw();if(placed.length===KIDS.length){st.step=2;save(st);setTimeout(pickMid,600)}}
+      else{st.miss++;save(st);b.classList.add('bad');msg.textContent='還有人的書比 '+p.n+' 更少喔，再找找看！';msg.className='msg no'}
+    });pool.appendChild(b)});
+    placed.forEach(function(p){q.appendChild(person(p,'placed'))});
+    for(var k=placed.length;k<KIDS.length;k++)q.appendChild(el('span','slot'));
+  }
+  draw();app.append(h,c1,c2,msg);
+}
+function pickMid(){
+  app.innerHTML='';
+  var order=sorted(KIDS);
+  var h=el('h2',null,'第 2 步：排好了！站在「正中間」的是誰？請點他。');
+  var c=el('div','card');var q=el('div','row');c.appendChild(q);var msg=el('p','msg');
+  order.forEach(function(p,k){var b=person(p,'placed');b.addEventListener('click',function(){
+    if(k===3){st.step=3;save(st);showMean()}else{b.classList.add('bad');msg.textContent=k<3?'他的右邊比左邊多人，再往右邊找找看。':'他的左邊比右邊多人，再往左邊找找看。';msg.className='msg no'}
+  });q.appendChild(b)});
+  app.append(h,c,msg);
+}
+function stats(list,prev){
+  var s=el('div','stats');var o=sorted(list),m=o.length,md=m%2?o[(m-1)/2].v:(o[m/2-1].v+o[m/2].v)/2;
+  s.append(el('div','stat mean','<p>平均數（全部加起來 ÷ 人數）</p><strong>'+fmt(mean(list))+' 本</strong>'+(prev?'<span class="was">本來是 '+prev[0]+' 本</span>':'')),
+           el('div','stat med','<p>中位數（排好隊，站中間的）</p><strong>'+fmt(md)+' 本</strong>'+(prev?'<span class="was">本來是 '+prev[1]+' 本</span>':'')));
+  return s;
+}
+function showMean(){
+  app.innerHTML='';
+  var order=sorted(KIDS);
+  var c=el('div','card');var q=el('div','row');order.forEach(function(p,k){q.appendChild(person(p,k===3?'mid':'placed'))});c.appendChild(q);
+  c.appendChild(el('p','note','站在正中間的是<b>阿明</b>，他家有 <b>30 本</b>。這個數字叫做<b>「中位數」</b>。<br>7 個人的書加起來是 245 本，除以 7，<b>平均數</b>是 35 本。兩個數字差不多。'));
+  var b=el('button','btn','老師說：「我也要排隊！」');b.type='button';b.addEventListener('click',function(){st.step=4;save(st);teacher()});
+  app.append(el('h2',null,'找到了！'),c,stats(KIDS),b);
+}
+function teacher(){
+  app.innerHTML='';
+  var all=KIDS.concat([TEACHER]);var order=sorted(all);
+  var h=el('h2',null,'老師家有 500 本書，站到了隊伍最後面。現在有 8 個人，正中間有兩位。請點出這兩位。');
+  var c=el('div','card');var q=el('div','row');c.appendChild(q);var msg=el('p','msg');var got=[];
+  order.forEach(function(p,k){var b=person(p,'placed');b.addEventListener('click',function(){
+    if((k===3||k===4)&&got.indexOf(k)<0){got.push(k);b.classList.add('mid');b.disabled=true;if(got.length===2){st.step=5;save(st);setTimeout(result,700)}}
+    else if(k!==3&&k!==4){b.classList.add('bad');msg.textContent='8 個人的正中間，是第 4 位和第 5 位。';msg.className='msg no'}
+  });q.appendChild(b)});
+  app.append(h,c,msg);
+}
+function result(){
+  app.innerHTML='';
+  var all=KIDS.concat([TEACHER]);var order=sorted(all);
+  var c=el('div','card');var q=el('div','row');order.forEach(function(p,k){q.appendChild(person(p,(k===3||k===4)?'mid':(p.t?'':'placed')))});c.appendChild(q);
+  c.appendChild(el('p','note','中位數：中間兩位是阿明 30 本、宇翔 40 本，(30 ＋ 40) ÷ 2 ＝ <b>35 本</b>，只多了 5 本。<br>平均數：8 個人加起來是 745 本，除以 8，約 <b>93 本</b>，一下子多了快 60 本！'));
+  c.appendChild(el('p','note','老師一個人，就把平均數拉高了很多；中位數只動了一點點。<br>現在 8 個人裡，有 <b>7 個人</b>的書比「平均」還少。'));
+  app.append(el('h2',null,'完成了！請停在這一頁，等其他同學。'),c,stats(all,['35','30']));
+}
+var steps=[intro,line,pickMid,showMean,teacher,result];
+(steps[st.step]||intro)();
+})();
+</script>

@@ -1,0 +1,400 @@
+<title>園遊會獎金切蛋糕</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story (600 dollars, three classmates) → cut a round cake of 12 slices (tap a slice to cycle owner, or +/- per person, live dollars) → "which idea is your split closest to?" (every option shows its use and its cost) → three model splits as three small cakes → stand in each classmate's shoes and pick the fair one → summary for a show of hands. No right answer anywhere. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(23px,3.2vw,28px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;touch-action:manipulation}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.small{font-size:clamp(19px,2.4vw,21px);padding:10px 14px;text-align:center;justify-content:center}
+.btn.go{background:var(--rust)}
+.btn:focus-visible,.sl:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1 1 200px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.5em;height:1.5em}
+svg.av{display:block;flex:none}
+.money{font-variant-numeric:tabular-nums}
+.tag{font-size:.8em;font-weight:700;color:var(--muted)}
+/* people */
+.people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.who{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.who svg.av{width:clamp(72px,10vw,96px);height:clamp(72px,10vw,96px)}
+.who h3{display:flex;align-items:center;gap:6px}
+.who p{margin:0;text-align:left;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+/* cake */
+.cutbox{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+.cakewrap{display:flex;justify-content:center}
+svg.cake{width:100%;max-width:400px;height:auto;display:block;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none}
+.sl{cursor:pointer;outline:none}
+.sl path{transition:fill .12s}
+.sl.pop{animation:pop .22s ease-out}
+@keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.05)}100%{transform:scale(1)}}
+.tally{display:flex;flex-direction:column;gap:10px}
+.tl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:8px 10px}
+.tl svg.av{width:56px;height:56px}
+.tl .nm{font-weight:900;font-size:clamp(21px,2.8vw,25px);line-height:1.3}
+.tl .amt{font-size:clamp(19px,2.4vw,22px);font-weight:700;line-height:1.35;font-variant-numeric:tabular-nums}
+.tl .amt b{font-size:1.25em}
+.pm{display:flex;gap:6px}
+.pmb{font:inherit;width:52px;height:52px;border-radius:14px;border:3px solid var(--line);background:var(--card);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;padding:0}
+.pmb svg.i{width:26px;height:26px}
+.pmb[disabled]{opacity:.35;cursor:default}
+.pmb:focus-visible{outline:4px solid var(--gold);outline-offset:2px}
+.left{font-size:clamp(19px,2.6vw,24px);font-weight:900;margin:0;text-align:center;padding:10px;border-radius:16px;background:var(--warm);color:#7A5A16}
+.left.done{background:#E3F0E6;color:var(--good)}
+/* model cakes */
+.models{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.model{align-items:center;text-align:center;gap:8px}
+.model h3{display:flex;align-items:center;gap:6px;justify-content:center}
+.model svg.cake{max-width:200px}
+.model .why{margin:0;font-size:clamp(19px,2.2vw,21px);color:var(--muted);line-height:1.55;text-align:left}
+.amts{list-style:none;margin:0;padding:0;width:100%;display:flex;flex-direction:column;gap:2px}
+.amts li{display:flex;justify-content:space-between;gap:8px;font-size:clamp(19px,2.4vw,22px);font-weight:700;font-variant-numeric:tabular-nums;border-bottom:2px solid var(--line);padding:2px 4px}
+.dot{display:inline-block;width:.8em;height:.8em;border-radius:50%;border:2px solid;vertical-align:-.05em;margin-right:6px}
+/* roles */
+.role .head{display:flex;align-items:center;gap:12px}
+.role .head svg.av{width:clamp(64px,9vw,80px);height:clamp(64px,9vw,80px)}
+.role .head p{margin:0;font-size:clamp(19px,2.4vw,22px);color:var(--muted)}
+.btn.alt .gets{margin-left:auto;font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums}
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;width:42%}
+@media (max-width:760px){
+  .cutbox{grid-template-columns:1fr}
+  .cakewrap svg.cake{max-width:340px}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .people{grid-template-columns:1fr}
+  .who{flex-direction:row;text-align:left;align-items:flex-start;gap:12px}
+  .models{grid-template-columns:1fr}
+  .model{display:grid;grid-template-columns:120px minmax(0,1fr);text-align:left;align-items:center;column-gap:12px}
+  .model h3{grid-column:1/-1;justify-content:flex-start}
+  .model .why{grid-column:1/-1}
+  th,td{padding:8px 4px}
+  td:first-child{width:46%}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={
+eq:'<rect x="3" y="7" width="4.6" height="11" rx="1.2" fill="#DCE8F0"/><rect x="9.7" y="7" width="4.6" height="11" rx="1.2" fill="#DCE8F0"/><rect x="16.4" y="7" width="4.6" height="11" rx="1.2" fill="#DCE8F0"/><path d="M2.5 21h19"/>',
+clock:'<circle cx="12" cy="12" r="8.8" fill="#DCE8F0"/><path d="M12 6.8v5.4l3.6 2.2"/>',
+heart:'<path d="M12 20.2S3.5 15.2 3.5 9.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 8.5 1.8c0 6-8.5 11-8.5 11z" fill="#F2B8A0"/>',
+bulb:'<path d="M9 16.6c0-1.6-3.2-3.3-3.2-7A6.2 6.2 0 0 1 18.2 9.6c0 3.7-3.2 5.4-3.2 7z" fill="#F3D27A"/><path d="M9.2 19.4h5.6M10.2 22h3.6"/><path d="M10.4 12.6l1.6 1.6 1.6-1.6M12 14.2v2.4"/>',
+pencil:'<path d="M4 20l1-4.2L15.4 5.4a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19z" fill="#F3E3BE"/><path d="M13.6 7.2l3.2 3.2"/>',
+cake:'<rect x="4" y="11.5" width="16" height="9" rx="1.6" fill="#F6E3D6"/><path d="M4 14.8q2 1.8 4 0t4 0t4 0t4 0"/><rect x="10.8" y="6.6" width="2.4" height="4.9" rx=".6" fill="#DCE8F0"/><path d="M12 1.6c1.5 1.5 1.7 3 0 4-1.7-1-1.5-2.5 0-4z" fill="#F3D27A"/><path d="M2.5 20.5h19"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
+minus:'<path d="M5 12h14"/>',
+undo:'<path d="M4 4.5v5h5"/><path d="M4.8 9.5A8 8 0 1 1 4 13.5"/>'
+};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+function _av(skin,hair,shirt,extra){return '<circle cx="32" cy="32" r="31" fill="#EEF1EC"/><path d="M12 64 Q13 44 32 44 Q51 44 52 64 Z" fill="'+shirt+'"/><circle cx="32" cy="27" r="13" fill="'+skin+'"/>'+hair+'<circle cx="27.5" cy="28" r="1.8" fill="#1F2A2E"/><circle cx="36.5" cy="28" r="1.8" fill="#1F2A2E"/><path d="M27.5 33 Q32 36.5 36.5 33" fill="none" stroke="#1F2A2E" stroke-width="2" stroke-linecap="round"/>'+(extra||'')}
+var AVI={
+z:_av('#E9BE96','<path d="M19 25 Q19 12 32 13 Q45 12 45 25 Q40 18 32 18.5 Q24 18 19 25 Z" fill="#2B2118"/>','#205E86'),
+q:_av('#F2CFAE','<circle cx="45.5" cy="17" r="5.2" fill="#3A2A1C"/><path d="M18 34 Q16 12 32 12.5 Q48 12 46 34 Q44 22 40 19 Q32 22 22 19.5 Q19 24 18 34 Z" fill="#3A2A1C"/><circle cx="42.6" cy="15.6" r="2" fill="#F2B8A0"/>','#A8441A'),
+x:_av('#E3B48C','<path d="M19.5 24 Q20 12.5 32 13 Q44 12.5 44.5 24 Q38 17 26 19 Q22 20 19.5 24 Z" fill="#5A3A22"/><path d="M31 13.5 Q32 8.5 36.5 9.5" fill="none" stroke="#5A3A22" stroke-width="2.6" stroke-linecap="round"/>','#2F7D4F')
+};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='cake-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function blank(){var a=[];for(var i=0;i<12;i++)a.push(-1);return a}
+var st=load()||{step:0,cake:blank(),idea:null,roles:[null,null,null]};
+if(!st.cake||st.cake.length!==12)st.cake=blank();
+if(!st.roles)st.roles=[null,null,null];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+var TOTAL=600, N=12, PER=50;
+var P=[
+ {k:'z',name:'阿哲',ch:'哲',dark:'#205E86',light:'#A9CBE0',ic:'clock',desc:'從早上到傍晚都在顧攤：收錢、補貨、招呼客人，做的工作最多。',short:'從早到晚都在顧攤，做最多工作'},
+ {k:'q',name:'小琪',ch:'琪',dark:'#A8441A',light:'#F2B8A0',ic:'heart',desc:'只來了半天。下午她要去醫院陪生病的阿嬤；她說，家裡最近比較需要錢。',short:'只來半天，下午去醫院陪阿嬤；家裡最近比較需要錢'},
+ {k:'x',name:'阿翔',ch:'翔',dark:'#2F7D4F',light:'#B9DDBF',ic:'bulb',desc:'當天做的事不多，可是攤位要賣什麼、怎麼布置，點子都是他想出來的。',short:'做得不多，但攤位的點子是他想的'}
+];
+var IDEAS=[
+ {k:'eq',ic:'eq',t:'平分：三個人一樣多',
+  use:'簡單、清楚，不用比誰做得多、誰比較需要，大家比較不會吵架，也像是同一隊。',
+  cost:'阿哲從早做到晚，拿的卻和別人一樣，他可能覺得自己的辛苦沒有被看見，下次不一定想那麼拼。'},
+ {k:'work',ic:'clock',t:'照做了多少分：做越多，分越多',
+  use:'辛苦有回報，會鼓勵大家多出一點力；做最多的阿哲會覺得被看見。',
+  cost:'小琪少做，是因為要去醫院陪阿嬤，不是偷懶，可是她家最近比較需要錢，卻拿得少。阿翔想點子的功勞，也很難用「做了幾個小時」來算。'},
+ {k:'need',ic:'heart',t:'照誰比較需要分：比較需要的人多分一點',
+  use:'把錢給最需要幫忙的人，像大家一起照顧同學，這筆錢能幫上最大的忙。',
+  cost:'做最多的阿哲可能覺得不公平。而且「誰比較需要」很難判斷，有的人也不好意思把家裡的事說出來。'},
+ {k:'mix',ic:'bulb',t:'照點子和工作一起算：想點子和動手做都算功勞',
+  use:'不同的貢獻都被算進去：動手做的阿哲、想點子的阿翔，都會覺得自己有被看見。',
+  cost:'一個點子值多少錢、顧一個小時值多少錢，很難算得讓每個人都同意，可能要討論很久。'},
+ {k:'other',ic:'pencil',t:'其他：我有自己的想法',
+  use:'你可能把好幾種想法混在一起，或是想到了大家沒想到的理由。',
+  cost:'別人不一定一看就懂你的理由，要把想法說清楚，才能讓大家同意。等一下老師問的時候，可以說說看。'}
+];
+var MODELS=[
+ {k:'eq',ic:'eq',t:'平分',cake:[0,0,0,0,1,1,1,1,2,2,2,2],why:'三個人一樣多，不管誰做了多少、誰比較需要。'},
+ {k:'work',ic:'clock',t:'照工作時間',cake:[0,0,0,0,0,0,1,1,1,2,2,2],why:'阿哲顧了一整天，算兩份；小琪來半天、阿翔做得不多，大約各算一份。'},
+ {k:'need',ic:'heart',t:'照需要',cake:[0,0,0,0,1,1,1,1,1,1,2,2],why:'小琪家裡最近比較需要錢，她多拿一些；剩下的錢，阿哲和阿翔再分。'}
+];
+var ROLE_ORDER=[1,0,2]; // 小琪、阿哲、阿翔
+
+function counts(a){var c=[0,0,0];a.forEach(function(v){if(v>=0)c[v]++});return c}
+function left(a){var n=0;a.forEach(function(v){if(v<0)n++});return n}
+function yuan(n){return (n*PER)+' 元'}
+
+/* ---------- cake svg ---------- */
+function wedge(i,R,cx,cy){
+  var a0=(-90+30*i)*Math.PI/180,a1=(-90+30*(i+1))*Math.PI/180;
+  var x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
+  return 'M'+cx+' '+cy+'L'+x0.toFixed(2)+' '+y0.toFixed(2)+'A'+R+' '+R+' 0 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+'Z';
+}
+function sliceInner(i,v,small){
+  var cx=150,cy=150,R=128,am=(-75+30*i)*Math.PI/180;
+  var fill=v<0?'#FBF1DC':P[v].light;
+  var h='<path d="'+wedge(i,R,cx,cy)+'" fill="'+fill+'" stroke="#7A5A3A" stroke-width="2.2" stroke-linejoin="round"/>';
+  /* a little cream dollop near the rim */
+  var dx=cx+(R-16)*Math.cos(am),dy=cy+(R-16)*Math.sin(am);
+  h+='<circle cx="'+dx.toFixed(1)+'" cy="'+dy.toFixed(1)+'" r="7" fill="#FFFFFF" stroke="#7A5A3A" stroke-width="1.8"/>';
+  if(!small){
+    var lx=cx+76*Math.cos(am),ly=cy+76*Math.sin(am);
+    if(v<0)h+='<text x="'+lx.toFixed(1)+'" y="'+(ly+7).toFixed(1)+'" text-anchor="middle" font-size="19" font-weight="700" fill="#9A8A70" font-family="Noto Sans TC,sans-serif">50</text>';
+    else h+='<text x="'+lx.toFixed(1)+'" y="'+(ly+9).toFixed(1)+'" text-anchor="middle" font-size="26" font-weight="900" fill="'+P[v].dark+'" font-family="Noto Sans TC,sans-serif">'+P[v].ch+'</text>';
+  }
+  return h;
+}
+function cakeSvg(a,small,label){
+  var s='<svg class="cake" viewBox="0 0 300 300" role="'+(small?'img':'group')+'" aria-label="'+label+'">';
+  s+='<circle cx="150" cy="150" r="145" fill="#FFFFFF" stroke="#D4D9D2" stroke-width="3"/>';
+  for(var i=0;i<N;i++){
+    if(small)s+='<g>'+sliceInner(i,a[i],true)+'</g>';
+    else s+='<g class="sl" data-i="'+i+'" tabindex="0" role="button" style="transform-origin:150px 150px">'+sliceInner(i,a[i],false)+'</g>';
+  }
+  s+='<circle cx="150" cy="150" r="128" fill="none" stroke="#7A5A3A" stroke-width="3"/><circle cx="150" cy="150" r="5" fill="#7A5A3A"/></svg>';
+  return s;
+}
+function sliceLabel(i,v){return '第 '+(i+1)+' 塊，'+(v<0?'還沒分':'分給'+P[v].name)+'。點一下換人'}
+
+/* ---------- step 0: story ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','星期六，海佃國小辦園遊會。五年13班的攤位生意很好，扣掉買材料的錢以後，一共賺了 <b>600 元（假設）</b>。'),
+    el('p','lead','老師說：「這 600 元，讓三位負責攤位的同學自己決定怎麼分。」這三位同學是這樣的（都是虛構的人物）：'));
+  var pp=el('div','people');
+  P.forEach(function(p){
+    var w=el('div','card who');w.innerHTML=av(p.k);
+    var t=el('div');t.append(el('h3',null,ic(p.ic)+p.name),el('p',null,p.desc));
+    w.appendChild(t);pp.appendChild(w);
+  });
+  var n=el('p','note',ic('cake')+' 我們把 600 元想成一個蛋糕，切成 12 塊，每一塊是 50 元（假設）。等一下由你來決定，每一塊要分給誰。');
+  app.append(el('h1',null,'園遊會獎金切蛋糕'),c,pp,n,button('開始切蛋糕','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: cut the cake ---------- */
+function cut(){
+  app.innerHTML='';
+  var a=st.cake;
+  app.append(el('p','case','切蛋糕'),el('h2',null,'把 12 塊蛋糕分給三個人'),
+    el('p','lead','點一下某一塊，它會分給<b>阿哲</b>；再點一下換<b>小琪</b>，再點換<b>阿翔</b>，再點一次就變回沒分。也可以按每個人旁邊的加號、減號。每一塊是 50 元（假設）。'));
+  var box=el('div','cutbox');
+  var cw=el('div','cakewrap');cw.innerHTML=cakeSvg(a,false,'蛋糕，12 塊');
+  var side=el('div','tally');
+  var leftP=el('p','left');
+  var rows=[];
+  P.forEach(function(p,pi){
+    var r=el('div','tl');r.style.borderColor=p.light;
+    var mid=el('div');var nm=el('div','nm',p.name);nm.style.color=p.dark;var am=el('div','amt');mid.append(nm,am);
+    var pm=el('div','pm');
+    var mb=el('button','pmb',ic('minus'));mb.type='button';mb.setAttribute('aria-label',p.name+'少一塊');
+    var pb=el('button','pmb',ic('plus'));pb.type='button';pb.setAttribute('aria-label',p.name+'多一塊');
+    mb.addEventListener('click',function(){for(var i=N-1;i>=0;i--){if(a[i]===pi){a[i]=-1;save(st);upd(i);return}}});
+    pb.addEventListener('click',function(){for(var i=0;i<N;i++){if(a[i]<0){a[i]=pi;save(st);upd(i);return}}});
+    pm.append(mb,pb);
+    r.innerHTML=av(p.k);r.append(mid,pm);side.appendChild(r);
+    rows.push({am:am,mb:mb,pb:pb});
+  });
+  side.appendChild(leftP);
+  box.append(cw,side);
+  var nx=button('分好了，下一步','btn',function(){if(left(a)===0)go(2)});
+  var btns=el('div','row-btns');
+  btns.append(button(ic('undo')+' 全部重切','btn alt small',function(){st.cake=blank();save(st);cut()}),nx);
+  app.append(box,btns);
+  function bindSlice(g){
+    var i=+g.getAttribute('data-i');
+    g.setAttribute('aria-label',sliceLabel(i,a[i]));
+    function act(){a[i]=a[i]>=2?-1:a[i]+1;save(st);upd(i)}
+    g.addEventListener('click',act);
+    g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();act()}});
+  }
+  Array.prototype.forEach.call(cw.querySelectorAll('.sl'),bindSlice);
+  function upd(i){
+    if(i!=null){
+      var g=cw.querySelector('.sl[data-i="'+i+'"]');
+      g.innerHTML=sliceInner(i,a[i],false);g.setAttribute('aria-label',sliceLabel(i,a[i]));
+      g.classList.remove('pop');void g.getBoundingClientRect();g.classList.add('pop');
+    }
+    var c=counts(a),l=left(a);
+    rows.forEach(function(r,pi){
+      r.am.innerHTML='<b>'+c[pi]+'</b> 塊・<b>'+(c[pi]*PER)+'</b> 元';
+      r.mb.disabled=c[pi]===0;r.pb.disabled=l===0;
+    });
+    if(l>0){leftP.className='left';leftP.textContent='還有 '+l+' 塊沒分（'+(l*PER)+' 元）';}
+    else{leftP.className='left done';leftP.textContent='12 塊都分完了！';}
+    nx.disabled=l>0;
+  }
+  upd(null);
+}
+
+function splitLine(a){var c=counts(a);return P.map(function(p,pi){return p.name+' '+(c[pi]*PER)+' 元'}).join('、')}
+
+/* ---------- step 2: which idea ---------- */
+function idea(){
+  app.innerHTML='';
+  var c=counts(st.cake);
+  var mine=el('div','card');
+  var ul=el('ul','amts');
+  P.forEach(function(p,pi){ul.appendChild(el('li',null,'<span><span class="dot" style="background:'+p.light+';border-color:'+p.dark+'"></span>'+p.name+'</span><span>'+c[pi]+' 塊・'+(c[pi]*PER)+' 元</span>'))});
+  mine.append(el('p','lead','你的分法（600 元是假設的）：'),ul);
+  var g=el('div','opts');
+  var fb=el('div','opts');
+  var nx=button('下一步：看看三種分法','btn',function(){if(st.idea!=null)go(3)});
+  nx.disabled=st.idea==null;
+  function show(){
+    fb.innerHTML='';if(st.idea==null)return;
+    var o=IDEAS[st.idea];
+    fb.append(el('p','note','<b>這種想法的作用：</b>'+o.use),el('p','note warm','<b>可能的代價：</b>'+o.cost));
+  }
+  IDEAS.forEach(function(o,k){
+    var b=button(ic(o.ic)+'<span>'+o.t+'</span>','btn alt'+(st.idea===k?' pick':''),function(){
+      st.idea=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;show();
+      try{fb.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){}
+    });
+    g.appendChild(b);
+  });
+  show();
+  app.append(el('p','case','你是怎麼想的？'),el('h2',null,'你這樣分，最接近哪一種想法？'),mine,
+    el('p','lead','每一種想法都有人支持，沒有標準答案。選一個最接近你的。'),g,fb,nx);
+}
+
+/* ---------- step 3: three model splits ---------- */
+function amtsList(a){
+  var c=counts(a),ul=el('ul','amts');
+  P.forEach(function(p,pi){ul.appendChild(el('li',null,'<span><span class="dot" style="background:'+p.light+';border-color:'+p.dark+'"></span>'+p.name+'</span><span>'+(c[pi]*PER)+' 元</span>'))});
+  return ul;
+}
+function models(){
+  app.innerHTML='';
+  var wrap=el('div','models');
+  MODELS.forEach(function(m){
+    var c=el('div','card model');
+    var cz=el('div');cz.innerHTML=cakeSvg(m.cake,true,m.t+'的蛋糕：'+splitLine(m.cake));
+    c.append(el('h3',null,ic(m.ic)+m.t),cz,amtsList(m.cake),el('p','why',m.why));
+    wrap.appendChild(c);
+  });
+  app.append(el('p','case','看看三種分法'),el('h2',null,'照三種不同的想法，蛋糕可以這樣分'),
+    el('p','lead','這是三種示範的分法，數字都是大約、假設的。你剛剛的分法是：<b>'+splitLine(st.cake)+'</b>。'),
+    wrap,
+    el('p','note','接下來，請你輪流站在三個人的位置想一想：如果你是他，你會覺得哪一種比較公平？'),
+    button('換你當當看','btn',function(){go(4)}));
+}
+
+/* ---------- step 4: in their shoes ---------- */
+function selfMax(pi){ /* which model gives this person the most */
+  var best=-1,bi=-1;MODELS.forEach(function(m,mi){var v=counts(m.cake)[pi];if(v>best){best=v;bi=mi}});return bi;
+}
+function roles(){
+  app.innerHTML='';
+  app.append(el('p','case','站在別人的位置'),el('h2',null,'如果你是他，你會覺得哪一種公平？'),
+    el('p','lead','三個人各選一次。每一種都可以選，沒有標準答案。（錢都是假設的）'));
+  var nx=button('下一步','btn go',function(){if(all())go(5)});
+  var refl=el('div','opts');
+  function all(){return st.roles[0]!=null&&st.roles[1]!=null&&st.roles[2]!=null}
+  function upd(){
+    nx.disabled=!all();refl.innerHTML='';
+    if(!all())return;
+    var same=st.roles[0]===st.roles[1]&&st.roles[1]===st.roles[2];
+    var mx=0;ROLE_ORDER.forEach(function(pi){if(st.roles[pi]===selfMax(pi))mx++});
+    var t=same?'你站在三個人的位置，都選了「'+MODELS[st.roles[0]].t+'」。換成誰，你都覺得這種分法說得過去。':'你換了位置，選的分法也跟著變了。';
+    t+='這三次裡，有 <b>'+mx+'</b> 次你選的，剛好是讓那個人拿最多錢的分法。站的位置不一樣，看到的理由也可能不一樣；這沒有對錯，等一下可以說說你是怎麼想的。';
+    refl.appendChild(el('p','note',t));
+  }
+  ROLE_ORDER.forEach(function(pi){
+    var p=P[pi];
+    var c=el('div','card role');c.style.borderColor=p.light;
+    var hd=el('div','head');hd.innerHTML=av(p.k);
+    var ht=el('div');ht.append(el('h3',null,'如果你是'+p.name+'……'),el('p',null,p.short));hd.appendChild(ht);
+    var g=el('div','opts');
+    MODELS.forEach(function(m,mi){
+      var amt=counts(m.cake)[pi]*PER;
+      var b=button(ic(m.ic)+'<span>'+m.t+'</span><span class="gets">你拿 '+amt+' 元</span>','btn alt'+(st.roles[pi]===mi?' pick':''),function(){
+        st.roles[pi]=mi;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');upd();
+      });
+      b.setAttribute('aria-label','如果我是'+p.name+'，我覺得'+m.t+'比較公平（'+p.name+'拿 '+amt+' 元）');
+      g.appendChild(b);
+    });
+    c.append(hd,g);app.appendChild(c);
+  });
+  app.append(refl,nx);
+  upd();
+}
+
+/* ---------- step 5: end ---------- */
+function end(){
+  app.innerHTML='';
+  var c=counts(st.cake),mxv=Math.max(c[0],c[1],c[2]);
+  var tops=P.filter(function(p,pi){return c[pi]===mxv}).map(function(p){return p.name});
+  var most=tops.length===3?'三個人一樣多':tops.join('和')+(tops.length>1?'一樣多':'');
+  var mx=0;ROLE_ORDER.forEach(function(pi){if(st.roles[pi]===selfMax(pi))mx++});
+  var rows=[
+    ['我的分法（假設）',P.map(function(p,pi){return p.name+' <b>'+(c[pi]*PER)+'</b> 元'}).join('<br>')],
+    ['我分最多錢給',' <b>'+most+'</b>'],
+    ['我最接近的想法',st.idea!=null?'<b>'+IDEAS[st.idea].t.split('：')[0]+'</b>':'—']
+  ];
+  ROLE_ORDER.forEach(function(pi){rows.push(['如果我是'+P[pi].name+'，覺得公平的是',st.roles[pi]!=null?'<b>'+MODELS[st.roles[pi]].t+'</b>':'—'])});
+  rows.push(['選到「讓那個人拿最多」的次數','<b>'+mx+'</b> 次（共 3 次）']);
+  var t=el('table');
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var card=el('div','card');card.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),card);
+}
+
+function render(){
+  var S=[intro,cut,idea,models,roles,end];
+  if(st.step>=2&&left(st.cake)>0)st.step=1;
+  if(st.step>=3&&st.idea==null)st.step=2;
+  if(st.step>=5&&(st.roles[0]==null||st.roles[1]==null||st.roles[2]==null))st.step=4;
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

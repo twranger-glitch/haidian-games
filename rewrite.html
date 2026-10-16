@@ -1,0 +1,190 @@
+<title>標籤改寫工坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: four labels said to a whole person. For each, pick one sentence block from three rows (what happened this time / what to do next time / how to know it improved), read what that block does, then see the assembled sentence shown large with a tag on every block. Any block is allowed. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.label{font-size:clamp(28px,5vw,44px);font-weight:900;color:var(--rust);margin:0;line-height:1.35}
+.scene{font-size:clamp(19px,2.7vw,24px);margin:0;line-height:1.65}
+.slots{display:flex;flex-direction:column;gap:8px}
+.slot{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:clamp(19px,2.6vw,23px);line-height:1.5}
+.slot .k{font-weight:900;color:var(--muted);flex:none}
+.slot .v{font-weight:700;min-width:0}
+.slot .v.empty{color:#9AA39F}
+.slot.now .k{color:var(--sea)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;gap:12px;align-items:center}
+.btn.alt::before{content:"";flex:none;width:18px;height:28px;border-radius:5px;background:var(--line)}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.alt.pick::before{background:var(--gold)}
+.btn.ghost{background:transparent;color:var(--sea);border:3px solid var(--sea)}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note small{display:block;font-size:max(18px,.85em);color:var(--muted);margin-top:4px}
+.tag{display:inline-block;font-size:clamp(16px,2.2vw,19px);font-weight:900;border-radius:999px;padding:2px 12px;color:#fff;white-space:nowrap;vertical-align:middle}
+.tag.cS{background:var(--good)} .tag.cV{background:var(--gold)} .tag.cP{background:var(--rust)}
+.final{display:flex;flex-direction:column;gap:14px}
+.fl{display:flex;flex-direction:column;gap:4px;border-left:8px solid var(--line);padding-left:14px}
+.fl.cS{border-color:var(--good)} .fl.cV{border-color:var(--gold)} .fl.cP{border-color:var(--rust)}
+.fl .k{font-size:clamp(17px,2.3vw,20px);font-weight:900;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fl .s{font-size:clamp(26px,4.4vw,40px);font-weight:900;line-height:1.4;margin:0}
+.old{font-size:clamp(19px,2.6vw,23px);color:var(--muted);margin:0}
+.old s{color:var(--rust)}
+.verdict{font-size:clamp(21px,3vw,27px);font-weight:900;margin:0;line-height:1.5}
+.big{font-size:clamp(56px,11vw,100px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(17px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;width:32%}
+td .line{display:block;margin:2px 0}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='label-rewrite-v1';
+var ROW=['這一次發生了什麼事？','下一次可以怎麼做？','怎麼知道有沒有進步？'];
+var RK=['這一次','下一次','怎麼知道有進步'];
+var TAG={S:'這一次',V:'空泛',P:'整個人'};
+/* each row: [P(整個人), V(空泛), S(這一次・具體)] */
+var Q=[
+ {l:'「你就是粗心。」',s:'數學小考發回來了。小傑的第三題錯了，因為題目寫的是「至少要幾個」，他沒看到「至少」這兩個字。',
+  r:[['你本來就是一個粗心的人。','你這次考得不太好。','第三題題目寫「至少」，你沒看到這兩個字。'],
+     ['你要把粗心的個性改掉。','下次要更細心一點。','下次先把題目裡的條件用筆圈起來。'],
+     ['等你變成細心的人，就知道了。','下次分數高一點，就是進步了。','寫完回頭看，圈起來的條件是不是每一個都用到了。']]},
+ {l:'「你就是愛遲到。」',s:'早上打掃時間，阿哲在教室和同學聊天，拿著掃把走到外掃區的時候，大家已經掃了一半。',
+  r:[['你這個人做什麼都慢吞吞。','你今天又沒做好。','今天打掃鐘響後，你在教室聊了五分鐘才出門。'],
+     ['你要當一個準時的人。','下次動作快一點。','下次鐘一響，先拿掃把出門，到了外掃區再聊。'],
+     ['等大家不再說你愛遲到，就是進步了。','下次表現好一點就好。','這個星期每天記下：走到外掃區時，鐘已經響了幾分鐘。']]},
+ {l:'「你根本不會做報告。」',s:'社會課上，小琪上台報告「台江的黑面琵鷺」。她講了很多，可是最後沒有說出重點，台下同學聽完，不知道要記住什麼。',
+  r:[['你就是不會說話的人。','你這次報告怪怪的。','你的報告講了很多，可是最後沒有說出重點。'],
+     ['你要變成很會說話的人。','下次要報告得更好。','下次上台前，先寫下三個想讓大家記住的重點。'],
+     ['等你變得有自信，就知道了。','大家覺得不錯，就是進步了。','報告完，請兩位同學說說他們記得哪三個重點。']]},
+ {l:'「你就是不會收東西。」',s:'美勞課做七股鹽山的模型。下課鐘響了，小宇的桌上和地上還有碎紙和沒蓋好的膠水。',
+  r:[['你這個人本來就很亂。','你的位置又不太乾淨。','美勞課結束時，你的桌上和地上還有碎紙和膠水。'],
+     ['你要學著當一個愛乾淨的人。','下次要收乾淨一點。','下次下課前五分鐘，先把碎紙丟進回收袋，再蓋好膠水。'],
+     ['等老師不再唸你，就代表你變了。','看起來比較整齊就好。','下課鐘響時，看看桌上和地上還有沒有東西沒收。']]}
+];
+var TY=['P','V','S'];
+var FB=[
+ {P:'這塊積木說的是「整個人」。聽的人很容易覺得「我就是這樣，改不了」，也不知道到底是哪一件事出了問題。',
+  V:'這塊積木說的是這一次，可是很空泛。聽的人知道「好像不太好」，卻不知道是哪裡不好。',
+  S:'這塊積木說出一件看得到、說得出來的事。聽的人知道問題出在哪裡，也比較不會覺得自己整個人被罵。'},
+ {P:'這塊積木要對方「變成另一種人」。這是一個很大的目標，聽的人不知道明天第一步要做什麼。',
+  V:'這塊積木有方向，可是很空泛。「更好」「快一點」要怎麼做，聽的人還是要自己猜。',
+  S:'這塊積木說出一個明天就做得到的動作，聽的人可以馬上試試看。'},
+ {P:'這塊積木要等「整個人都變了」才算進步，可能要等很久，中間的小進步也很容易被忽略。',
+  V:'這塊積木有提到結果，可是很空泛。「好一點」是多好？每個人想的可能不一樣。',
+  S:'這塊積木給了一個看得到、數得出來的方法，做完馬上就能檢查有沒有進步。'}
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuf(){var a=[0,1,2];for(var i=2;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
+function fresh(){var o=[];Q.forEach(function(){o.push([shuf(),shuf(),shuf()])});return {go:false,i:0,row:0,cur:null,ord:o,pk:[[],[],[],[]]}}
+var st=load();if(!st||!st.ord||st.ord.length!==Q.length)st=fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',fn);return b}
+function txt(q,r){var k=st.pk[q][r];return k==null?null:Q[q].r[r][k]}
+function ty(q,r){var k=st.pk[q][r];return k==null?null:TY[k]}
+function allS(q){return [0,1,2].every(function(r){return ty(q,r)==='S'})}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','有時候我們會聽到「你就是＿＿」這種話。這種話像一張標籤，貼在整個人身上。'),
+           el('p','lead','今天你是工坊的師傅。每一題有一張標籤，請你從三排「句子積木」裡，每排挑一塊，組成一句新的話：'),
+           el('p','lead','① 這一次發生了什麼事？（看得到的）<br>② 下一次可以怎麼做？<br>③ 怎麼知道有沒有進步？'),
+           el('p','lead','每一塊積木都可以用。挑了以後，畫面會告訴你這塊積木有什麼作用。一共 4 題。'));
+  app.append(el('h1',null,'標籤改寫工坊'),c,btn('開始','btn',function(){st.go=true;save(st);render()}));
+}
+function head(q){
+  var c=el('div','card');
+  c.append(el('p','case','要改寫的標籤'),el('p','label',Q[q].l),el('p','scene',Q[q].s));
+  return c;
+}
+function build(q){
+  var c=el('div','card');c.appendChild(el('p','case','你正在組的句子'));
+  var s=el('div','slots');
+  for(var r=0;r<3;r++){
+    var t=txt(q,r);var d=el('div','slot'+(r===st.row?' now':''));
+    d.append(el('span','k',RK[r]+'：'),el('span','v'+(t?'':' empty'),t||'＿＿＿＿＿＿'));s.appendChild(d);
+  }
+  c.appendChild(s);return c;
+}
+function pickRow(){
+  var q=st.i,r=st.row;app.innerHTML='';
+  app.append(el('p','case','第 '+(q+1)+' 題，共 '+Q.length+' 題　・　第 '+(r+1)+' 排積木，共 3 排'),head(q),build(q));
+  app.appendChild(el('h2',null,'第 '+(r+1)+' 排：'+ROW[r]));
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(k){
+    Array.prototype.forEach.call(g.children,function(x){x.classList.toggle('pick',+x.dataset.k===k)});
+    fb.innerHTML='';
+    fb.appendChild(el('p','note','<b>這塊積木的作用：</b>'+FB[r][TY[k]]+'<small>每一塊積木都可以用。想換一塊，直接點別塊就好。</small>'));
+    var nx=btn(r<2?'放上去，看下一排積木':'放上去，看看組好的句子','btn',function(){st.pk[q][r]=k;st.cur=null;st.row++;save(st);render();window.scrollTo(0,0)});
+    fb.appendChild(nx);
+  }
+  st.ord[q][r].forEach(function(k){
+    var b=btn(Q[q].r[r][k],'btn alt',function(){st.cur=k;save(st);show(k);fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})});
+    b.dataset.k=k;g.appendChild(b);
+  });
+  app.append(g,fb);
+  if(st.cur!=null)show(st.cur);
+}
+function result(){
+  var q=st.i;app.innerHTML='';
+  app.appendChild(el('p','case','第 '+(q+1)+' 題，共 '+Q.length+' 題　・　組好了！'));
+  var c=el('div','card');
+  c.appendChild(el('p','old','原本的標籤：<s>'+Q[q].l+'</s>'));
+  var f=el('div','final');
+  for(var r=0;r<3;r++){var t=ty(q,r);var d=el('div','fl c'+t);
+    d.append(el('div','k','<span>'+RK[r]+'</span><span class="tag c'+t+'">'+(t==='P'?'說的是「整個人」':t==='V'?'說的是這一次，但很空泛':'說的是「這一次」')+'</span>'),el('p','s',txt(q,r)));f.appendChild(d)}
+  c.appendChild(f);
+  var n={S:0,V:0,P:0};[0,1,2].forEach(function(r){n[ty(q,r)]++});
+  var v=allS(q)?'這句話三塊都在說「這一次」：看得到發生了什麼、知道下一步、也有辦法檢查。':
+    '這句話有 '+n.S+' 塊說「這一次」、'+n.V+' 塊比較空泛、'+n.P+' 塊說的是「整個人」。';
+  c.appendChild(el('p','verdict',v));
+  app.appendChild(c);
+  app.appendChild(el('p','note','想一想：如果你是'+Q[q].s.match(/(小傑|阿哲|小琪|小宇)/)[0]+'，聽到這句話，明天會想怎麼做？'));
+  app.appendChild(btn('重新組這一題','btn ghost',function(){st.pk[q]=[];st.row=0;st.cur=null;save(st);render();window.scrollTo(0,0)}));
+  app.appendChild(btn(q<Q.length-1?'下一題':'看看我組的四句話','btn',function(){st.i++;st.row=0;st.cur=null;save(st);render();window.scrollTo(0,0)}));
+}
+function end(){
+  app.innerHTML='';
+  var k=0;Q.forEach(function(_,q){if(allS(q))k++});
+  var np=0;Q.forEach(function(_,q){[0,1,2].forEach(function(r){if(ty(q,r)==='P')np++})});
+  var top=el('div','card');
+  top.append(el('p','lead','三塊積木都是「這一次」的題數'),el('p','big',k+' / '+Q.length+' 題'),
+    el('p','lead','你一共用了 <b>'+np+'</b> 塊「整個人」積木（全部 12 塊）。'));
+  var t=el('table');
+  Q.forEach(function(x,q){var tr=el('tr');var h='';
+    for(var r=0;r<3;r++){var y=ty(q,r);h+='<span class="line"><span class="tag c'+y+'">'+TAG[y]+'</span> '+(txt(q,r)||'—')+'</span>'}
+    tr.append(el('td','k','第 '+(q+1)+' 題<br>'+x.l),el('td',null,h));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),top,c);
+}
+function render(){
+  if(!st.go){intro();return}
+  if(st.i>=Q.length){end();return}
+  if(st.row<3)pickRow();else result();
+}
+render();
+})();
+</script>

@@ -1,0 +1,101 @@
+<title>猜數字大挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one tablet screen per step — 3 questions, each "more or less than X?" then "your guess". Group (甲/乙) is assigned silently and only shown at the end. Single light classroom look on purpose. */
+:root{
+  --bg:#F1F0EA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:26px 36px;display:flex;flex-direction:column;gap:22px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(26px,4.4vw,40px);font-weight:900;margin:0;line-height:1.4;text-wrap:balance}
+.lead{font-size:clamp(20px,2.8vw,26px);color:var(--muted);margin:0}
+.step{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(18px,3.4vw,32px);display:flex;flex-direction:column;gap:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.btn{font:inherit;font-size:clamp(24px,3.6vw,34px);font-weight:900;border:0;border-radius:18px;padding:18px 24px;background:var(--sea);color:#fff;cursor:pointer}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--rust);outline-offset:3px}
+.entry{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+input{font:inherit;font-size:clamp(40px,7vw,64px);font-weight:900;width:min(100%,320px);padding:8px 18px;border:3px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
+.unit{font-size:clamp(28px,4.4vw,40px);font-weight:900}
+.err{color:var(--rust);font-weight:700;margin:0;min-height:1.6em}
+.group{font-size:clamp(64px,13vw,120px);font-weight:900;line-height:1.1;margin:0;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(20px,2.8vw,26px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left}
+td.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tablewrap{overflow-x:auto}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='anchor-guess-v1';
+var Q=[
+  {story:'台江國家公園的商店裡，有一隻黑面琵鷺布偶。',hi:'1,200 元',lo:'120 元',cmp:['比較貴','比較便宜'],cq:function(a){return '這隻布偶，比 '+a+' 貴，還是比 '+a+' 便宜？'},ask:'你猜這隻布偶賣多少元？',unit:'元'},
+  {story:'鄭成功過世的時候，是幾歲？',hi:'90 歲',lo:'15 歲',cmp:['比較大','比較小'],cq:function(a){return '鄭成功過世時，比 '+a+' 大，還是比 '+a+' 小？'},ask:'你猜鄭成功過世時幾歲？',unit:'歲'},
+  {story:'夏天在市場買的一顆大西瓜。',hi:'30 公斤',lo:'2 公斤',cmp:['比較重','比較輕'],cq:function(a){return '這顆西瓜，比 '+a+' 重，還是比 '+a+' 輕？'},ask:'你猜這顆西瓜大約幾公斤？',unit:'公斤'}
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load();
+if(!st||!st.g){st={g:Math.random()<0.5?'甲':'乙',ans:[]};save(st)}
+function anchor(q){return st.g==='甲'?q.hi:q.lo}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+
+function intro(){
+  app.innerHTML='';
+  var h=el('h1',null,'猜數字大挑戰');
+  var c=el('div','card');
+  c.append(el('p','lead','一共 3 題。每一題先回答一個比一比的問題，再寫下你猜的數字。'),el('p','lead','不用查資料，也不用跟別人討論，憑感覺猜就好。'));
+  var b=el('button','btn','開始');b.type='button';b.addEventListener('click',function(){compare(0)});
+  app.append(h,c,b);
+}
+function compare(i){
+  var q=Q[i];app.innerHTML='';
+  var s=el('p','step','第 '+(i+1)+' 題，共 3 題');
+  var h=el('h2',null,q.story);
+  var c=el('div','card');c.appendChild(el('h2',null,q.cq(anchor(q))));
+  var r=el('div','row');
+  q.cmp.forEach(function(t){var b=el('button','btn alt',t);b.type='button';b.addEventListener('click',function(){guess(i)});r.appendChild(b)});
+  c.appendChild(r);app.append(s,h,c);
+}
+function guess(i){
+  var q=Q[i];app.innerHTML='';
+  var s=el('p','step','第 '+(i+1)+' 題，共 3 題');
+  var h=el('h2',null,q.ask);
+  var c=el('div','card');
+  var en=el('div','entry');var inp=document.createElement('input');inp.type='text';inp.inputMode='numeric';inp.id='g'+i;inp.setAttribute('aria-label',q.ask);inp.autocomplete='off';
+  en.append(inp,el('span','unit',q.unit));
+  var err=el('p','err');
+  var b=el('button','btn','確定');b.type='button';
+  function ok(){var v=inp.value.replace(/[,，\s]/g,'');if(!/^\d+(\.\d+)?$/.test(v)){err.textContent='請輸入一個數字。';inp.focus();return}
+    st.ans[i]=Number(v);save(st);if(i<Q.length-1)compare(i+1);else done()}
+  b.addEventListener('click',ok);inp.addEventListener('keydown',function(e){if(e.key==='Enter')ok()});
+  c.append(en,err,b);app.append(s,h,c);setTimeout(function(){inp.focus()},50);
+}
+function done(){
+  app.innerHTML='';
+  var h=el('h2',null,'完成了！請停在這一頁，等其他同學。');
+  var c=el('div','card');c.append(el('p','lead','你是'),el('p','group',st.g+'組'));
+  var w=el('div','tablewrap');var t=el('table');
+  ['布偶的價錢','鄭成功過世時的年紀','西瓜的重量'].forEach(function(name,i){var tr=el('tr');tr.append(el('td',null,name),el('td','n',(st.ans[i]!=null?st.ans[i].toLocaleString('zh-TW'):'—')+' '+Q[i].unit));t.appendChild(tr)});
+  w.appendChild(t);
+  var note=el('p','lead','先不要給別的同學看。');
+  app.append(h,c,w,note);
+}
+if(st.ans&&st.ans.length===Q.length&&st.ans.every(function(x){return x!=null}))done();else intro();
+})();
+</script>

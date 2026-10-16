@@ -1,0 +1,194 @@
+<title>錢包去哪裡</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1E242B; --muted:#475569; --line:#E3DED7;
+  --coral:#D95D39; --teal:#2A6F68; --lc:#FFF5F2; --lt:#F0F7F6;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6;-webkit-tap-highlight-color:transparent}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:22px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,48px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.8vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(17px,2.3vw,20px);font-weight:700;color:var(--coral);letter-spacing:2px;margin:0}
+.lead{font-size:clamp(19px,2.7vw,24px);color:var(--muted);margin:0}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--coral);color:#fff;cursor:pointer;line-height:1.45}
+.btn.teal{background:var(--teal)}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--coral);background:var(--lc)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,[tabindex]:focus-visible{outline:4px solid var(--teal);outline-offset:3px}
+.note{background:var(--lt);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,23px);line-height:1.7;margin:0}
+.note.warm{background:var(--lc)}
+.row{display:flex;gap:12px;align-items:center}
+.ico{flex:none;display:flex}
+table{border-collapse:collapse;width:100%;font-size:clamp(17px,2.4vw,21px)}
+th,td{padding:9px 6px;border-bottom:2px solid var(--line);vertical-align:top;text-align:left}
+th{color:var(--muted);font-weight:700}
+.big{font-size:clamp(40px,8vw,64px);font-weight:900;color:var(--coral);margin:0;line-height:1.1;font-variant-numeric:tabular-nums}
+.drag-ghost{position:fixed;pointer-events:none;z-index:50;transform:translate(-50%,-50%);opacity:.9}
+details{background:var(--lt);border-radius:16px;padding:12px 16px;font-size:clamp(18px,2.5vw,22px)}
+summary{font-weight:900;cursor:pointer}
+td:first-child{white-space:nowrap}
+@media (max-width:480px){table{font-size:16px}th,td{padding:8px 4px}}
+
+.item{display:flex;gap:14px;align-items:center}
+.item p{margin:0;font-size:clamp(21px,3vw,27px);font-weight:900;line-height:1.5}
+.wallet{font:inherit;align-self:center;display:flex;align-items:center;gap:10px;background:var(--card);border:3px solid var(--ink);border-radius:18px;padding:10px 20px;font-size:clamp(20px,2.8vw,24px);font-weight:900;color:var(--ink);cursor:grab;user-select:none}
+.targets{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.tg{font:inherit;text-align:left;display:flex;gap:12px;align-items:center;background:var(--card);border:3px dashed var(--line);border-radius:18px;padding:14px;font-size:clamp(18px,2.5vw,22px);line-height:1.5;color:var(--ink);cursor:pointer}
+.tg.shop{border-color:var(--coral)}.tg.pig{border-color:var(--teal)}
+.tg.over{background:var(--lt);border-style:solid}
+.tg b{display:block;font-size:clamp(20px,2.8vw,25px)}
+.think{display:flex;gap:6px;margin-top:6px}
+.badge{display:inline-flex;align-items:center;gap:10px;font-weight:900;font-size:clamp(20px,2.8vw,24px)}
+.mk{width:26px;height:26px;display:inline-block}
+.mk.circle{border-radius:50%;background:var(--teal)}.mk.square{border-radius:4px;background:var(--coral)}
+.opts{display:flex;flex-direction:column;gap:10px}
+</style>
+<main class="wrap" id="app" aria-live="polite"></main>
+<script>
+// u2a 共用線條圖示：48x48，線寬 3.5、圓角端點，雙色調（深線＋淡填色），只用色票顏色
+var IC=(function(){
+var P={
+rice:'<path d="M24 44 C24 30 22 18 14 8" fill="none" stroke="$s"/><ellipse cx="17" cy="14" rx="3.5" ry="6" transform="rotate(-30 17 14)" fill="$f" stroke="$s"/><ellipse cx="21" cy="22" rx="3.5" ry="6" transform="rotate(-20 21 22)" fill="$f" stroke="$s"/><ellipse cx="29" cy="17" rx="3.5" ry="6" transform="rotate(30 29 17)" fill="$f" stroke="$s"/><ellipse cx="30" cy="27" rx="3.5" ry="6" transform="rotate(40 30 27)" fill="$f" stroke="$s"/>',
+fish:'<path d="M6 24 C12 13 28 11 36 24 C28 37 12 35 6 24 Z" fill="$f" stroke="$s"/><path d="M36 24 L44 16 L44 32 Z" fill="$f" stroke="$s"/><circle cx="14" cy="22" r="1.8" fill="$s" stroke="none"/>',
+salt:'<path d="M5 40 L19 14 Q24 8 29 14 L43 40 Z" fill="$f" stroke="$s"/><path d="M2 44 H46" fill="none" stroke="$s"/><rect x="35" y="4" width="5" height="5" fill="$f" stroke="$s" transform="rotate(45 37.5 6.5)"/>',
+rain:'<path d="M12 28 a8 8 0 0 1 2-15.5 a10 10 0 0 1 19 1 a7 7 0 0 1 3 14.5 Z" fill="$f" stroke="$s"/><path d="M16 34 l-2 6 M25 34 l-2 6 M34 34 l-2 6" fill="none" stroke="$s"/>',
+sun:'<circle cx="24" cy="24" r="9" fill="$f" stroke="$s"/><path d="M24 5v5 M24 38v5 M5 24h5 M38 24h5 M10.5 10.5l3.5 3.5 M34 34l3.5 3.5 M10.5 37.5l3.5-3.5 M34 14l3.5-3.5" fill="none" stroke="$s"/>',
+wave:'<path d="M4 18 q5-6 10 0 t10 0 t10 0 t10 0" fill="none" stroke="$s"/><path d="M4 30 q5-6 10 0 t10 0 t10 0 t10 0 V42 H4 Z" fill="$f" stroke="$s"/>',
+cloud:'<path d="M12 34 a9 9 0 0 1 2-17.5 a11 11 0 0 1 21 1.5 a8 8 0 0 1 2 16 Z" fill="$f" stroke="$s"/>',
+sign:'<path d="M24 22 V44" fill="none" stroke="$s"/><rect x="8" y="6" width="32" height="18" rx="4" fill="$f" stroke="$s"/>',
+plot:'<path d="M4 34 L14 18 H34 L44 34 Z" fill="$f" stroke="$s"/><path d="M14 26 H34" fill="none" stroke="$s"/>',
+wallet:'<rect x="5" y="13" width="38" height="26" rx="5" fill="$f" stroke="$s"/><path d="M5 19 H43 M32 27 h11 v8 h-11 a4 4 0 0 1 0-8 Z" fill="none" stroke="$s"/><path d="M11 13 L31 6 L34 13" fill="none" stroke="$s"/>',
+piggy:'<path d="M8 26 C8 16 18 12 26 12 C34 12 42 17 42 26 C42 31 39 34 36 36 V41 H30 V38 H20 V41 H14 V36 C10 34 8 30 8 26 Z" fill="$f" stroke="$s"/><path d="M20 12 V8 h8" fill="none" stroke="$s"/><circle cx="34" cy="22" r="1.8" fill="$s" stroke="none"/><path d="M4 24 h4" fill="none" stroke="$s"/>',
+shop:'<path d="M6 18 L10 8 H38 L42 18 Z" fill="$f" stroke="$s"/><path d="M8 18 V40 H40 V18 M20 40 V28 H28 V40" fill="none" stroke="$s"/>',
+coin:'<circle cx="24" cy="24" r="16" fill="$f" stroke="$s"/><path d="M24 15 V33 M19 19 h8 a3.5 3.5 0 0 1 0 7 h-6 a3.5 3.5 0 0 0 0 7 h8" fill="none" stroke="$s"/>',
+clock:'<circle cx="24" cy="24" r="17" fill="$f" stroke="$s"/><path d="M24 14 V24 L31 29" fill="none" stroke="$s"/>',
+heart:'<path d="M24 40 C12 31 6 25 6 17 a9 9 0 0 1 18-2 a9 9 0 0 1 18 2 c0 8-6 14-18 23 Z" fill="$f" stroke="$s"/>',
+people:'<circle cx="17" cy="16" r="6" fill="$f" stroke="$s"/><circle cx="33" cy="18" r="5" fill="$f" stroke="$s"/><path d="M6 40 c0-8 5-13 11-13 s11 5 11 13 Z M30 40 c0-6 1-11 5-11 c5 0 8 5 8 11 Z" fill="$f" stroke="$s"/>',
+book:'<path d="M24 12 C18 8 10 8 5 10 V38 C10 36 18 36 24 40 C30 36 38 36 43 38 V10 C38 8 30 8 24 12 Z" fill="$f" stroke="$s"/><path d="M24 12 V40" fill="none" stroke="$s"/>',
+bird:'<path d="M8 30 C14 20 26 18 34 22 L42 18 L38 26 C36 34 26 38 16 36 Z" fill="$f" stroke="$s"/><path d="M20 26 C24 22 28 22 30 24" fill="none" stroke="$s"/><path d="M22 36 L20 43 M28 36 L28 43" fill="none" stroke="$s"/>',
+robot:'<rect x="10" y="14" width="28" height="22" rx="6" fill="$f" stroke="$s"/><path d="M24 14 V7 M16 36 V42 M32 36 V42 M5 22 V28 M43 22 V28" fill="none" stroke="$s"/><circle cx="24" cy="6" r="2.5" fill="$s" stroke="none"/><circle cx="18" cy="24" r="3" fill="$s" stroke="none"/><circle cx="30" cy="24" r="3" fill="$s" stroke="none"/><path d="M19 31 h10" fill="none" stroke="$s"/>',
+lens:'<circle cx="15" cy="26" r="9" fill="$f" stroke="$s"/><circle cx="33" cy="26" r="9" fill="$f" stroke="$s"/><path d="M24 26 h0 M6 24 L3 18 M42 24 L45 18" fill="none" stroke="$s"/><path d="M21 25 q3-3 6 0" fill="none" stroke="$s"/>',
+ball:'<circle cx="24" cy="24" r="17" fill="$f" stroke="$s"/><path d="M7 24 H41 M24 7 V41 M12 12 C18 18 18 30 12 36 M36 12 C30 18 30 30 36 36" fill="none" stroke="$s"/>',
+pencil:'<path d="M10 38 L12 30 L32 10 L38 16 L18 36 Z" fill="$f" stroke="$s"/><path d="M28 14 L34 20 M10 38 L18 36" fill="none" stroke="$s"/>',
+phones:'<path d="M8 30 V24 a16 16 0 0 1 32 0 V30" fill="none" stroke="$s"/><rect x="5" y="28" width="9" height="14" rx="3" fill="$f" stroke="$s"/><rect x="34" y="28" width="9" height="14" rx="3" fill="$f" stroke="$s"/>',
+key:'<circle cx="16" cy="18" r="9" fill="$f" stroke="$s"/><path d="M23 24 L40 41 M33 34 l4-4 M37 38 l3-3" fill="none" stroke="$s"/>',
+comic:'<rect x="7" y="6" width="28" height="36" rx="3" fill="$f" stroke="$s"/><path d="M13 6 V42 M35 12 h6 v30 h-26" fill="none" stroke="$s"/><path d="M19 16 h10 M19 23 h10" fill="none" stroke="$s"/>',
+cup:'<path d="M12 14 H36 L32 42 H16 Z" fill="$f" stroke="$s"/><path d="M10 14 H38 M26 14 L30 4" fill="none" stroke="$s"/>',
+gift:'<rect x="7" y="18" width="34" height="22" rx="3" fill="$f" stroke="$s"/><path d="M5 18 H43 M24 18 V40 M24 18 C18 8 10 12 16 18 M24 18 C30 8 38 12 32 18" fill="none" stroke="$s"/>',
+home:'<path d="M6 24 L24 8 L42 24" fill="none" stroke="$s"/><path d="M11 21 V40 H37 V21" fill="$f" stroke="$s"/><path d="M20 40 V30 h8 V40" fill="none" stroke="$s"/>',
+train:'<rect x="10" y="6" width="28" height="30" rx="8" fill="$f" stroke="$s"/><path d="M10 22 H38 M16 42 L19 36 M32 42 L29 36" fill="none" stroke="$s"/><circle cx="17" cy="29" r="2" fill="$s" stroke="none"/><circle cx="31" cy="29" r="2" fill="$s" stroke="none"/>'
+};
+return function(k,s,f,size){s=s||'#1E242B';f=f||'#F0F7F6';size=size||48;
+ return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 48 48" aria-hidden="true" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">'+P[k].split('$s').join(s).split('$f').join(f)+'</svg>'};
+})();
+
+// 拖曳小工具：把 token 拖到 target（data-drop 屬性）上；也可以直接點 target。
+function makeDrag(token,onDrop){
+  var ghost=null,sx=0,sy=0,moved=false;
+  token.style.touchAction='none';
+  token.addEventListener('click',function(e){if(moved){e.stopImmediatePropagation();e.preventDefault();moved=false}},true);
+  token.addEventListener('pointerdown',function(e){
+    if(token.disabled)return;sx=e.clientX;sy=e.clientY;moved=false;
+    try{token.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  token.addEventListener('pointermove',function(e){
+    if(!token.hasPointerCapture||!token.hasPointerCapture(e.pointerId))return;
+    if(!moved&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)<8)return;
+    if(!ghost){moved=true;ghost=token.cloneNode(true);ghost.classList.add('drag-ghost');ghost.style.width=token.offsetWidth+'px';document.body.appendChild(ghost)}
+    ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
+    var t=hit(e.clientX,e.clientY);document.querySelectorAll('[data-drop]').forEach(function(d){d.classList.toggle('over',d===t)});
+  });
+  function hit(x,y){if(ghost)ghost.style.display='none';var el=document.elementFromPoint(x,y);if(ghost)ghost.style.display='';return el&&el.closest?el.closest('[data-drop]'):null}
+  function end(e){
+    if(ghost){var t=hit(e.clientX,e.clientY);ghost.remove();ghost=null;document.querySelectorAll('[data-drop]').forEach(function(d){d.classList.remove('over')});if(t)onDrop(t.getAttribute('data-drop'))}
+  }
+  token.addEventListener('pointerup',end);token.addEventListener('pointercancel',function(){if(ghost){ghost.remove();ghost=null}});
+}
+function rnd(n){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+
+(function(){
+"use strict";
+var app=document.getElementById('app'),KEY='u2a-pursepig-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+var h=location.hash;
+if(h==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{g:null,r:-1,pick:[],ref:null};
+if(h==='#teal')st.g='teal';else if(h==='#coral')st.g='coral';
+if(!st.g)st.g=rnd(2)?'coral':'teal';save();
+var R=[
+ {ic:'key',t:'學校附近的文具店裡，有一個你很喜歡的卡通鑰匙圈，一個賣 150 元。',
+  tg:[['shop','買下鑰匙圈','要付 150 元'],['pig','不買',null]],keep:150},
+ {ic:'phones',t:'電器行裡有兩副耳機。大的那一副賣 300 元，聲音比較好；小的那一副賣 200 元，聲音也不錯。',
+  tg:[['shop','買 300 元的大耳機','要付 300 元'],['shop2','買 200 元的小耳機','要付 200 元'],['pig','兩副都不買',null]],keep:100},
+ {ic:'comic',t:'書店正在賣一整套你很想看的漫畫，一套賣 120 元。',
+  tg:[['shop','買下這套漫畫','要付 120 元'],['pig','不買',null]],keep:120}
+];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,f){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',f);return b}
+var THINK='<div class="think">'+IC('cup','#2A6F68','#F0F7F6',34)+IC('pencil','#2A6F68','#F0F7F6',34)+IC('gift','#2A6F68','#F0F7F6',34)+'</div>';
+function label(r,t){
+  var co=st.g==='coral';
+  if(t[0]==='pig')return '<b>'+t[1]+'</b>'+(co?'把這 '+r.keep+' 元留下來，以後可以買別的想要的東西，例如飲料、文具，或是送家人的小禮物。'+THINK:'把錢包收回口袋。');
+  if(t[0]==='shop2'&&co)return '<b>'+t[1]+'</b>'+t[2]+'。買完以後還剩下 100 元，可以拿去買別的想要的東西。'+THINK;
+  return '<b>'+t[1]+'</b>'+t[2]+'。';
+}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','接下來有 3 次買東西的機會。每一次，都請你想像自己的錢包裡剛好有 300 元零用錢。這個金額是假設的。'),
+   el('p','lead','如果你想買，就把錢包拖到店家的櫃台上；如果你不想買，就把錢包拖到撲滿裡。你也可以直接點一下你要的那一格。'),
+   el('p','lead','這裡沒有對錯，請照你真正會做的選擇來選。每個人看到的畫面可能有一點不一樣，所以先不要和旁邊的同學討論。'));
+  app.append(el('p','kick','線上小遊戲・機會成本'),el('h1',null,'錢包去哪裡'),c,btn('開始','',function(){st.r=0;save();round()}));
+}
+function round(){
+  if(st.r>=R.length){reflect();return}
+  var r=R[st.r];app.innerHTML='';
+  app.append(el('p','kick','第 '+(st.r+1)+' 次買東西，一共有 3 次'));
+  var c=el('div','card');var it=el('div','item');it.append(el('span','ico',IC(r.ic,'#D95D39','#FFF5F2',64)),el('p',null,r.t));c.append(it);app.append(c);
+  var w=el('button','wallet',IC('wallet','#1E242B','#FFFFFF',44)+'<span>我的錢包 300 元</span>');w.type='button';w.setAttribute('aria-label','錢包：拖到下面的一格');
+  w.addEventListener('click',function(){hint.textContent='請把錢包拖到下面其中一格，或是直接點一下那一格。'});
+  var hint=el('p','lead','請把錢包拖到你要的那一格。');
+  var tg=el('div','targets');
+  r.tg.forEach(function(t){var d=el('button','tg '+(t[0]==='pig'?'pig':'shop'));d.type='button';d.setAttribute('data-drop',t[0]);
+    d.innerHTML='<span class="ico">'+IC(t[0]==='pig'?'piggy':'shop',t[0]==='pig'?'#2A6F68':'#D95D39',t[0]==='pig'?'#F0F7F6':'#FFF5F2',52)+'</span><span>'+label(r,t)+'</span>';
+    d.addEventListener('click',function(){choose(t[0])});tg.appendChild(d)});
+  makeDrag(w,choose);
+  app.append(w,hint,tg);
+}
+function choose(k){st.pick[st.r]=k;st.r++;save();round();window.scrollTo(0,0)}
+function reflect(){
+  if(st.ref!=null){end();return}
+  app.innerHTML='';
+  app.append(el('p','kick','最後一題'),el('h2',null,'剛剛在決定要不要買的時候，你有沒有想到：這些錢如果不花，還可以拿去做什麼？'));
+  var g=el('div','opts');
+  ['每一次都有想到','有時候有想到','幾乎都沒有想到'].forEach(function(t,i){g.appendChild(btn(t,'alt',function(){st.ref=i;save();end()}))});
+  app.append(g,el('p','lead','三個答案都可以選，這一題沒有對錯。'));
+}
+function end(){
+  app.innerHTML='';
+  var co=st.g==='coral';var p=st.pick;
+  var nm={shop:'買了',shop2:'買了',pig:'沒有買'};
+  var c=el('div','card');
+  c.append(el('p','badge','<span class="mk '+(co?'square':'circle')+'"></span>你是'+(co?'紅組，你的記號是方形':'青組，你的記號是圓形')+'。'));
+  var t=el('table');t.innerHTML='<tr><th>買東西的機會</th><th>我的選擇</th></tr>'+
+   '<tr><td>第 1 次：150 元的鑰匙圈</td><td>'+nm[p[0]]+'</td></tr>'+
+   '<tr><td>第 2 次：兩副耳機</td><td>'+(p[1]==='shop'?'買了 300 元的大耳機':p[1]==='shop2'?'買了 200 元的小耳機':'兩副都沒有買')+'</td></tr>'+
+   '<tr><td>第 3 次：120 元的漫畫</td><td>'+nm[p[2]]+'</td></tr>'+
+   '<tr><td>有沒有想到錢的其他用途</td><td>'+['每一次都有想到','有時候有想到','幾乎都沒有想到'][st.ref]+'</td></tr>';
+  c.append(t,el('p','note','等一下，老師會先請青組舉手，再請紅組舉手，看看兩組的選擇一不一樣。請記住自己是哪一組。'));
+  var d=el('details');d.innerHTML='<summary>等老師揭曉以後，再打開這裡</summary><p>青組看到的「不買」，只寫了「不買」兩個字。紅組看到的「不買」，多寫了一句「把錢留下來，以後可以買別的想要的東西」；200 元的小耳機那一格，也多寫了「買完以後還剩下 100 元」。兩組的東西和價錢完全一樣，紅組的畫面只是把「沒花掉的錢還可以拿去做什麼」說了出來。</p>';
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,d);
+}
+if(st.r<0)intro();else round();
+})();
+</script>

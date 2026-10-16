@@ -1,0 +1,125 @@
+<title>猜硬幣大挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: pick a secret "trick" → up to 5 rounds of guessing a fair coin (one miss = out) → result screen; afterwards a 32-player simulation shows how many are still standing each round. Single light classroom look on purpose. */
+:root{
+  --bg:#F0EFE9; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D6D2C4;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(24px,4vw,36px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(16px,3vw,28px);display:flex;flex-direction:column;gap:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{font:inherit;font-size:clamp(22px,3.3vw,30px);font-weight:900;border:0;border-radius:16px;padding:16px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn.alt[aria-pressed="true"]{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.dots{display:flex;gap:10px;justify-content:center}
+.dot{width:44px;height:44px;border-radius:50%;border:3px solid var(--line);display:grid;place-items:center;font-weight:900;color:var(--muted);font-size:20px}
+.dot.ok{background:var(--good);border-color:var(--good);color:#fff} .dot.no{background:var(--rust);border-color:var(--rust);color:#fff} .dot.now{border-color:var(--sea)}
+.coin{width:150px;height:150px;border-radius:50%;margin:0 auto;display:grid;place-items:center;font-size:44px;font-weight:900;background:radial-gradient(circle at 35% 30%,#F3DFA2,#C9A03E);color:#5C4512;border:6px solid #A9822C}
+.coin.spin{animation:spin .7s ease-in-out}
+@keyframes spin{0%{transform:rotateY(0)}100%{transform:rotateY(1080deg)}}
+.verdict{margin:0;font-size:clamp(26px,4vw,38px);font-weight:900;text-align:center}
+.verdict.ok{color:var(--good)} .verdict.no{color:var(--rust)}
+.big{font-size:clamp(60px,12vw,110px);font-weight:900;line-height:1.1;margin:0;text-align:center}
+.tag{font-size:clamp(20px,2.8vw,26px);font-weight:700;margin:0;text-align:center}
+.sim{display:flex;flex-direction:column;gap:8px}
+.simrow{display:grid;grid-template-columns:5.5em 1fr 3.5em;align-items:center;gap:10px;font-size:clamp(17px,2.4vw,22px);font-weight:700}
+.people{display:flex;flex-wrap:wrap;gap:3px}
+.people i{width:12px;height:22px;border-radius:6px 6px 3px 3px;background:var(--sea)}
+.people i.out{background:#D9DCD5}
+.simrow b{text-align:right;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.coin.spin{animation:none}}
+@media (max-width:440px){.grid{grid-template-columns:1fr}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "x": "<path d=\"M7 7l10 10M17 7L7 17\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='coin-survivor-v1';
+var TRICKS=['靠直覺','一直猜人頭','上一次是什麼，這次就猜相反','上一次是什麼，這次就猜一樣'];
+var ROUNDS=5;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{trick:null,res:[],done:false};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function rnd(){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%2}catch(e){return Math.random()<.5?0:1}}
+var FACE=['人頭','數字'];
+function dots(){var d=el('div','dots');for(var k=0;k<ROUNDS;k++){var r=st.res[k];var c=el('span','dot'+(r===true?' ok':r===false?' no':(k===st.res.length&&!st.done?' now':'')),r===true?ic('check'):r===false?ic('x'):String(k+1));c.setAttribute('aria-label','第'+(k+1)+'回合'+(r===true?'猜對':r===false?'猜錯':''));d.appendChild(c)}return d}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','平板會丟一枚硬幣，一共 5 回合。每一回合猜猜看是人頭還是數字。'),el('p','lead','猜錯一次就出局。能連續猜對 5 回合的人，就是猜硬幣大師！'));
+  var h=el('h2',null,'開始之前，先選你的「祕訣」：');
+  var g=el('div','grid');var bs=[];
+  var go=el('button','btn','開始挑戰');go.type='button';go.disabled=true;
+  TRICKS.forEach(function(t){var b=el('button','btn alt',t);b.type='button';b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){st.trick=t;bs.forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');go.disabled=false});bs.push(b);g.appendChild(b)});
+  go.addEventListener('click',function(){save(st);play()});
+  app.append(el('h1',null,'猜硬幣大挑戰'),c,h,g,go);
+}
+function play(){
+  app.innerHTML='';
+  var n=st.res.length;
+  var h=el('h2',null,'第 '+(n+1)+' 回合：硬幣丟出去了！你猜是哪一面？');
+  var coin=el('div','coin','？');
+  var g=el('div','grid');var bs=[];
+  FACE.forEach(function(f,k){var b=el('button','btn',f);b.type='button';b.addEventListener('click',function(){guess(k)});bs.push(b);g.appendChild(b)});
+  var tip=el('p','lead','你的祕訣：'+st.trick);
+  var fb=el('div','card');fb.style.display='none';
+  app.append(dots(),h,coin,g,tip,fb);
+  function guess(k){
+    bs.forEach(function(b){b.disabled=true});
+    var r=rnd();coin.classList.add('spin');coin.textContent='';
+    setTimeout(function(){
+      coin.classList.remove('spin');coin.textContent=FACE[r];
+      var ok=r===k;st.res.push(ok);if(!ok||st.res.length>=ROUNDS)st.done=true;save(st);
+      fb.style.display='';fb.innerHTML='';
+      fb.appendChild(el('p','verdict '+(ok?'ok':'no'),ok?'猜對了！':'猜錯了，出局！'));
+      var nx=el('button','btn',st.done?'看結果':'下一回合');nx.type='button';nx.addEventListener('click',function(){st.done?end():play()});fb.appendChild(nx);
+      nx.scrollIntoView({behavior:'smooth',block:'end'});
+    },750);
+  }
+}
+function end(){
+  app.innerHTML='';
+  var wins=st.res.filter(function(x){return x}).length;var all=wins===ROUNDS;
+  var c=el('div','card');
+  c.append(dots(),el('p','big',all?'猜硬幣大師！':'撐過 '+wins+' 回合'),el('p','tag','你的祕訣：'+st.trick));
+  var h=el('h2',null,all?'恭喜！請停在這一頁，等一下老師要訪問你的祕訣。':'請停在這一頁，等其他同學。');
+  var b=el('button','btn alt','看看 32 個人一起玩，會怎麼樣？');b.type='button';
+  var box=el('div');
+  b.addEventListener('click',function(){b.remove();sim(box)});
+  app.append(h,c,b,box);
+}
+function sim(box){
+  var alive=[];for(var k=0;k<32;k++)alive.push(true);
+  var card=el('div','card');card.appendChild(el('h2',null,'32 個人一起猜硬幣，每一回合大約有一半的人猜錯。'));
+  var wrap=el('div','sim');card.appendChild(wrap);box.appendChild(card);
+  function row(label){var r=el('div','simrow');var pp=el('div','people');alive.forEach(function(a){pp.appendChild(el('i',a?'':'out'))});r.append(el('span',null,label),pp,el('b',null,alive.filter(Boolean).length+' 人'));wrap.appendChild(r)}
+  row('開始');var k=0;
+  var t=setInterval(function(){k++;var left=alive.filter(Boolean).length;
+    if(left<=1||k>ROUNDS){clearInterval(t);var n=alive.filter(Boolean).length;card.appendChild(el('p','lead','不管每個人用什麼祕訣，玩到最後，本來就會剩下 '+(n<=1?'一兩個人（這一次剩 '+n+' 個）':n+' 個人')+'。<br>再按一次「看看 32 個人一起玩」，每一次的結果都會有一點不一樣。'));var again=el('button','btn alt','再模擬一次');again.type='button';again.addEventListener('click',function(){box.innerHTML='';sim(box)});card.appendChild(again);return}
+    alive=alive.map(function(a){return a&&rnd()===1});row('第 '+k+' 回合');
+  },700);
+}
+if(st.done)end();else if(st.trick&&st.res.length)play();else intro();
+})();
+</script>

@@ -1,0 +1,430 @@
+<title>文具店的色鉛筆</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro with a secret colour (green/purple) → stationery-shop shelf illustration; tap a box of colour pencils and it is taken down into the shopping basket, confirm "就買這一盒" or put it back (green shelf: 12 / 24 colours, purple shelf: 12 / 24 / 48 colours in a tin) → why this box (four reasons, all allowed, each shows its effect and cost) → drink-shop cup size (small / medium / large / depends) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --green:#2F7D4F; --purple:#6B4FA0;
+  --wall:#F5EEDD; --wood:#C99B6B; --woodDk:#A97A4C;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn:focus-visible,.bx:focus-visible,.tg:focus-visible,.opt:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.hero{display:flex;gap:14px;align-items:center}
+.hero svg.i{width:64px;height:64px;color:var(--ink)}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1 1 180px}
+/* colour badge */
+.chip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:4px 16px 4px 6px;font-weight:900;font-size:clamp(19px,2.6vw,24px);color:#fff;white-space:nowrap}
+.chip .dot{width:26px;height:26px;border-radius:50%;background:#fff;opacity:.9;border:5px solid rgba(0,0,0,.12)}
+.chip.c0{background:var(--green)} .chip.c1{background:var(--purple)}
+.mine{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;font-size:clamp(19px,2.7vw,25px);font-weight:700}
+.story p{margin:0;font-size:clamp(20px,2.9vw,26px);line-height:1.75}
+/* shelf */
+.shelf{width:100%;max-width:620px;margin:0 auto;background:var(--wall);border:3px solid var(--line);border-radius:22px;overflow:hidden;padding-bottom:12px}
+.shelf .top{display:block;width:100%;height:auto}
+.srow{display:flex;justify-content:space-evenly;align-items:flex-end;padding:0 4%}
+.bx{font:inherit;color:var(--ink);background:none;border:0;padding:0;margin:0;cursor:pointer;display:block;position:relative;border-radius:10px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .12s}
+.bx:active{transform:scale(.97)}
+.bx svg{display:block;width:100%;height:auto}
+.bx.gone svg{visibility:hidden}
+.bx.gone::after{content:'';position:absolute;inset:18% 2% 0;border:3px dashed #B9AE96;border-radius:8px;border-bottom:0}
+.bx .hole{position:absolute;left:0;right:0;bottom:12%;text-align:center;font-size:clamp(15px,2.2vw,19px);font-weight:700;color:#8A7B5C;line-height:1.3;display:none}
+.bx.gone .hole{display:block}
+.board{height:18px;margin:0 2%;background:linear-gradient(var(--wood),var(--wood) 60%,var(--woodDk) 60%);border:3px solid var(--ink);border-radius:4px;position:relative;z-index:1}
+.trow{display:flex;justify-content:space-evenly;align-items:flex-start;padding:0 4%}
+.tg{font:inherit;color:var(--ink);background:#FFFDF6;border:3px solid var(--ink);border-top:0;border-radius:0 0 12px 12px;padding:4px 2px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.25;-webkit-tap-highlight-color:transparent}
+.tg b{font-size:clamp(19px,3vw,26px);font-weight:900;white-space:nowrap}
+.tg span{font-size:clamp(19px,2.8vw,24px);font-weight:900;color:var(--rust);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tg.on{background:var(--warm)}
+/* basket */
+.cart{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.bk{position:relative;width:220px;height:178px;flex:none}
+.bk .inbox{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);transform-origin:top left}
+.bk .inbox svg{display:block;width:100%;height:auto}
+.bk .front{position:absolute;left:0;bottom:0;width:220px;height:auto;display:block}
+.bk .back{position:absolute;left:0;bottom:0;width:220px;height:auto;display:block}
+.cart .what{display:flex;flex-direction:column;gap:10px}
+.cart .what p{margin:0}
+.cart .big{font-size:clamp(23px,3.6vw,32px);font-weight:900;line-height:1.35;color:var(--ink)}
+.cart .big .pr{color:var(--rust);white-space:nowrap}
+.mini{display:flex;flex-direction:row;gap:16px;align-items:center}
+.mini .mbox{width:96px;flex:none}
+.mini .mbox svg{display:block;width:100%;height:auto}
+.mini p{margin:0;font-size:clamp(19px,2.8vw,25px);font-weight:700}
+/* options */
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 16px;cursor:pointer;text-align:left;display:flex;gap:14px;align-items:center;font-size:clamp(19px,2.8vw,25px);font-weight:700;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.opt .ico{flex:none;width:52px;height:52px;border-radius:14px;background:var(--note);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.opt .ico svg.i{width:34px;height:34px}
+.opt .letter{font-weight:900;color:var(--sea);margin-right:6px}
+.opt .pr{color:var(--rust);font-weight:900;white-space:nowrap;margin-left:6px}
+.opt.on{border-color:var(--gold);background:var(--warm)}
+.opt.on .ico{background:#F6E2B8}
+.detail{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:baseline;background:var(--card);border:3px solid var(--gold);border-top:0;border-radius:0 0 18px 18px;margin:-16px 0 0;padding:20px 16px 14px}
+.detail .tgx{font-weight:900;font-size:clamp(19px,2.4vw,21px);color:#fff;border-radius:10px;padding:2px 10px;white-space:nowrap}
+.detail .tgx.a{background:var(--good)} .detail .tgx.b{background:var(--rust)}
+.detail p{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.6}
+/* drink menu */
+.menu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end;background:#2C3B36;border-radius:18px;padding:14px 12px 12px;color:#F6F3EA}
+.menu .it{display:flex;flex-direction:column;align-items:center;gap:2px}
+.menu svg.i{color:#F6F3EA}
+.menu .it b{font-size:clamp(19px,2.8vw,25px)}
+.menu .it span{font-size:clamp(19px,2.6vw,23px);color:#F3D27A;font-weight:900;font-variant-numeric:tabular-nums}
+.menu .cap{grid-column:1/-1;text-align:center;font-weight:900;font-size:clamp(19px,2.6vw,23px);margin:0 0 4px;letter-spacing:2px}
+/* end */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:12px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;width:34%}
+td b{color:var(--ink)}
+td+td{font-size:clamp(21px,3vw,27px);line-height:1.55}
+td small{font-size:clamp(19px,2.4vw,21px);color:var(--muted);font-weight:700}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .opt{padding:10px 12px;gap:10px}
+  .opt .ico{width:44px;height:44px}
+  .opt .ico svg.i{width:30px;height:30px}
+  td:first-child{width:38%}
+  th,td{padding:10px 4px}
+  .cart{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .cart .what{align-items:stretch;width:100%}
+  .shelf{border-radius:18px}
+  .srow,.trow{padding:0 2%}
+  .tg{border-width:2px;border-top:0}
+  .board{height:14px;border-width:2px}
+}
+@media (max-width:440px){
+  table,tbody,tr,td{display:block;width:100%!important}
+  tr{border-bottom:2px solid var(--line);padding:8px 0}
+  td{border:0;padding:2px 2px}
+  .hero svg.i{width:52px;height:52px}
+  .menu{padding:12px 6px 10px;gap:4px}
+}
+@media (prefers-reduced-motion:reduce){.bx{transition:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+/* duotone icons: 24x24, stroke 1.8 round, dark line + light fill (same style as icons/icons.py) */
+var ICI={
+ pencil:'<path d="M4 20l1.2-4.6L15.6 5a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="#F3D27A"/><path d="M4 20l1.2-4.6 3.4 3.4z" fill="#F6EBD2"/><path d="M13.6 7l3.4 3.4"/>',
+ store:'<path d="M4.5 10v10.5h15V10" fill="#FBFCF9"/><path d="M4 3.5h16l1.8 5.2a2 2 0 0 1-1.9 2.4H4.1a2 2 0 0 1-1.9-2.4z" fill="#F2B8A0"/><path d="M8.6 3.5l-.9 7.6M12 3.5v7.6M15.4 3.5l.9 7.6"/><path d="M9.7 20.5v-5.3h4.6v5.3" fill="#DCE8F0"/>',
+ basket:'<path d="M2.8 9.5h18.4l-2.1 10a1.6 1.6 0 0 1-1.6 1.3H6.5a1.6 1.6 0 0 1-1.6-1.3z" fill="#F3E3BE"/><path d="M7.6 9.5l3-6.2M16.4 9.5l-3-6.2"/><path d="M8.8 13v4.6M12 13v4.6M15.2 13v4.6"/>',
+ back:'<path d="M9 14.5L4 9.5l5-5"/><path d="M4 9.5h10.2a5.3 5.3 0 0 1 0 10.6H11"/>',
+ coins:'<path d="M3.5 6.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6V6.5" fill="#F3E3BE"/><ellipse cx="9.5" cy="6.5" rx="6" ry="2.6" fill="#FBF4E2"/><path d="M8.5 13.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-4.2" fill="#F3E3BE"/><ellipse cx="14.5" cy="13.5" rx="6" ry="2.6" fill="#FBF4E2"/>',
+ palette:'<path d="M12 3a9 9 0 1 0 0 18c1.3 0 2-.9 2-1.9 0-1.3-1-1.7-1-2.9 0-1 .8-1.7 1.8-1.7h2.3a3.9 3.9 0 0 0 3.9-3.9C21 6.4 17 3 12 3z" fill="#F6EBD2"/><g stroke-width="1.2"><circle cx="7.3" cy="11.4" r="1.8" fill="#F2B8A0"/><circle cx="9.4" cy="7.1" r="1.8" fill="#BFD7EA"/><circle cx="14.4" cy="6.9" r="1.8" fill="#F3D27A"/><circle cx="8.8" cy="15.8" r="1.8" fill="#CFE3C4"/></g>',
+ middle:'<rect x="2.8" y="13.2" width="5" height="7.3" rx="1.2" fill="#FBFCF9"/><rect x="9.5" y="9.5" width="5" height="11" rx="1.2" fill="#F3D27A"/><rect x="16.2" y="5.8" width="5" height="14.7" rx="1.2" fill="#FBFCF9"/><path d="M12 2v4.6M10.2 4.9L12 6.6l1.8-1.7"/>',
+ many:'<path d="M3 21V9.5l2.5-5.5 2.5 5.5V21z" fill="#F2B8A0"/><path d="M9.5 21V7.5L12 2l2.5 5.5V21z" fill="#BFD7EA"/><path d="M16 21V9.5l2.5-5.5 2.5 5.5V21z" fill="#F3D27A"/><path d="M3 9.5h5M9.5 7.5h5M16 9.5h5"/>',
+ cup:'<path d="M6 8h12l-1.5 12.2a1.6 1.6 0 0 1-1.6 1.3H9.1a1.6 1.6 0 0 1-1.6-1.3z" fill="#CFE3C4"/><path d="M5 8h14"/><path d="M12.5 8l2-5.5H18"/><path d="M7.2 13h9.6"/>',
+ ask:'<path d="M4 4.5h16a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5h-8.5L6.5 20.5v-4H4A1.5 1.5 0 0 1 2.5 15V6A1.5 1.5 0 0 1 4 4.5z" fill="#F6EBD2"/><path d="M9.6 8.6a2.4 2.4 0 1 1 3.4 2.2c-.6.3-1 .8-1 1.5v.2"/><circle cx="12" cy="14.4" r=".5" fill="currentColor"/>'
+};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='menu3-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+/* g=0 綠組: shelf has 12 and 24 colours. g=1 紫組: shelf also has a 48-colour tin with a sharpener (better and much more expensive). */
+var st=load();
+if(!st||(st.g!==0&&st.g!==1)){st={g:rnd(),step:0,pick:null,buy:null,why:null,drink:null}}
+save(st);
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+
+var COL=[{name:'綠色'},{name:'紫色'}];
+var BOX=[{n:12,p:80,w:100,fill:'#DCE8F0'},{n:24,p:150,w:116,fill:'#F3E3BE'},{n:48,p:320,w:140,fill:'#D3DAE0',tin:true}];
+var SHELF=[[0,1],[0,1,2]];
+var K=0.245; /* box width as a share of the shelf row, per viewBox unit: same size in both groups */
+var WHY=[
+ ['A','coins','最便宜','省下來的錢可以存起來，或是買別的東西。','顏色比較少，想要的顏色可能要自己疊色調出來。'],
+ ['B','palette','顏色夠用就好','不會多花錢買用不到的顏色。','要先想清楚自己需要哪些顏色；想得不準，畫到一半可能會缺色。'],
+ ['C','middle','選中間比較不會錯','不用想太久，也比較不容易後悔。','中間那一盒，不一定剛好是你最需要的。'],
+ ['D','many','想要最多顏色','畫畫的時候選擇最多，顏色分得最細。','要花比較多零用錢，有些顏色可能很少用到。']
+];
+var DRINK=[['小杯',30,0.72],['中杯',45,0.86],['大杯',60,1],['看情況',null,0]];
+
+function chip(){return '<span class="chip c'+st.g+'"><span class="dot"></span>'+COL[st.g].name+'</span>'}
+function boxName(i){var b=BOX[i];return b.n+' 色色鉛筆'}
+function boxDesc(i){var b=BOX[i];return b.n+' 色　'+b.p+' 元'+(b.tin?'（鐵盒，附削筆器）':'')}
+
+/* one box of colour pencils: n thin colour strips sticking out of the box */
+function pcol(i,n){var h=Math.round(i*330/n);var l=n>24?(i%2?50:66):(n>12?(i%2?54:64):58);return 'hsl('+h+',64%,'+l+'%)'}
+function boxSvg(i,label){
+  var b=BOX[i],W=b.w,H=110,n=b.n,x0=8,pw=(W-16)/n,s='';
+  s+='<svg viewBox="0 0 '+W+' '+H+'"'+(label?' role="img" aria-label="'+b.n+' 色色鉛筆，'+b.p+' 元'+(b.tin?'，鐵盒，附削筆器':'')+'"':' aria-hidden="true"')+'>';
+  for(var k=0;k<n;k++){
+    var x=x0+k*pw,c=pcol(k,n);
+    s+='<path d="M'+x.toFixed(2)+' 46V16L'+(x+pw/2).toFixed(2)+' 5L'+(x+pw).toFixed(2)+' 16V46z" fill="'+c+'"/>';
+  }
+  s+='<path d="M'+x0+' 16H'+(W-x0)+'" stroke="#1F2A2E" stroke-width="1" opacity=".25"/>';
+  s+='<rect x="2.5" y="34" width="'+(W-5)+'" height="'+(H-36.5)+'" rx="6" fill="'+b.fill+'" stroke="#1F2A2E" stroke-width="3"/>';
+  if(b.tin){
+    s+='<path d="M2.5 44H'+(W-2.5)+'" stroke="#1F2A2E" stroke-width="2.4"/>';
+    s+='<path d="M10 52v44M16 52v44" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".8"/>';
+  }
+  var cx=b.tin?W/2-10:W/2;
+  s+='<rect x="'+(cx-30)+'" y="'+(b.tin?52:46)+'" width="60" height="38" rx="8" fill="#FFFFFF" stroke="#1F2A2E" stroke-width="2"/>';
+  s+='<text x="'+(cx-4)+'" y="'+(b.tin?80:74)+'" text-anchor="middle" font-size="27" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,PingFang TC,sans-serif">'+n+'</text>';
+  s+='<text x="'+(cx+20)+'" y="'+(b.tin?80:74)+'" text-anchor="middle" font-size="14" font-weight="900" fill="#56605C" font-family="Noto Sans TC,PingFang TC,sans-serif">色</text>';
+  var sy=b.tin?95:92,sw=(W-24)/n;
+  for(var j=0;j<n;j++)s+='<rect x="'+(12+j*sw).toFixed(2)+'" y="'+sy+'" width="'+(sw+.3).toFixed(2)+'" height="6" fill="'+pcol(j,n)+'"/>';
+  if(b.tin){
+    /* sharpener taped on the lid corner */
+    s+='<g stroke="#1F2A2E" stroke-width="2.2" stroke-linejoin="round"><rect x="'+(W-34)+'" y="56" width="26" height="30" rx="5" fill="#F2B8A0"/><circle cx="'+(W-21)+'" cy="66" r="5" fill="#FBFCF9"/><path d="M'+(W-30)+' 78h18" fill="none"/></g>';
+  }
+  s+='</svg>';
+  return s;
+}
+
+/* upper part of the shop shelf: sign and other stationery (same for both colours) */
+function shelfTop(){
+  var s='<svg class="top" viewBox="0 0 480 150" role="img" aria-label="海佃文具店的貨架。上層放著筆記本、尺、膠水和橡皮擦，下層是色鉛筆。">';
+  s+='<rect width="480" height="150" fill="#F5EEDD"/>';
+  s+='<g font-family="Noto Sans TC,PingFang TC,sans-serif" font-weight="900">';
+  s+='<rect x="150" y="10" width="180" height="38" rx="9" fill="#205E86" stroke="#1F2A2E" stroke-width="3"/>';
+  s+='<text x="240" y="37" text-anchor="middle" font-size="21" fill="#FFFFFF">海佃文具店</text></g>';
+  s+='<g stroke="#1F2A2E" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round">';
+  /* notebooks */
+  s+='<rect x="34" y="66" width="42" height="46" rx="3" fill="#BFD7EA"/><rect x="40" y="60" width="42" height="52" rx="3" fill="#F2B8A0"/><path d="M48 74h26M48 82h18"/>';
+  s+='<rect x="92" y="70" width="40" height="42" rx="3" fill="#CFE3C4"/><path d="M100 82h24"/>';
+  /* pen cup with rulers */
+  s+='<path d="M169 70V46l5-9 5 9v24z" fill="#F2B8A0"/><path d="M181 70V40l5-9 5 9v30z" fill="#BFD7EA"/><path d="M193 70V48l5-9 5 9v22z" fill="#CFE3C4"/>';
+  s+='<path d="M162 66h44l-4 46h-36z" fill="#DCE8F0"/>';
+  /* glue sticks */
+  s+='<rect x="242" y="72" width="16" height="40" rx="3" fill="#F3D27A"/><rect x="244" y="64" width="12" height="9" rx="2" fill="#FBFCF9"/>';
+  s+='<rect x="266" y="72" width="16" height="40" rx="3" fill="#F3D27A"/><rect x="268" y="64" width="12" height="9" rx="2" fill="#FBFCF9"/>';
+  /* erasers */
+  s+='<rect x="310" y="94" width="30" height="18" rx="3" fill="#FBFCF9"/><path d="M320 94v18" /><rect x="346" y="94" width="30" height="18" rx="3" fill="#FBFCF9"/><path d="M356 94v18"/>';
+  /* rulers lying */
+  s+='<rect x="392" y="100" width="62" height="12" rx="2" fill="#F6EBD2"/><path d="M402 100v5M412 100v5M422 100v5M432 100v5M442 100v5"/>';
+  /* upper board */
+  s+='<rect x="8" y="112" width="464" height="14" rx="3" fill="#C99B6B"/>';
+  s+='</g>';
+  /* small hanging label for the lower shelf */
+  s+='<g stroke="#1F2A2E" stroke-width="2"><path d="M222 126v6M258 126v6"/><rect x="204" y="131" width="72" height="17" rx="4" fill="#FFFDF6"/></g>';
+  s+='<text x="240" y="144.5" text-anchor="middle" font-size="12.5" font-weight="900" fill="#A8441A" font-family="Noto Sans TC,PingFang TC,sans-serif">色鉛筆</text>';
+  s+='</svg>';
+  return s;
+}
+function basketBack(){return '<svg class="back" viewBox="0 0 220 96" aria-hidden="true"><path d="M58 30 L84 4 M162 30 L136 4" fill="none" stroke="#1F2A2E" stroke-width="4" stroke-linecap="round"/><path d="M84 4h52" stroke="#1F2A2E" stroke-width="4" stroke-linecap="round"/><path d="M14 30h192l-8 6H22z" fill="#C0392B" opacity=".18"/></svg>'}
+function basketFront(){
+  var s='<svg class="front" viewBox="0 0 220 96" aria-hidden="true"><g stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round">';
+  s+='<path d="M10 30h200l-14 60a5 5 0 0 1-5 4H29a5 5 0 0 1-5-4z" fill="#E86F5A"/>';
+  s+='<path d="M10 30h200" stroke-width="4"/></g><g stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".75">';
+  for(var i=0;i<7;i++){var x=40+i*23;s+='<path d="M'+x+' 44v36"/>'}
+  s+='</g></svg>';
+  return s;
+}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var hero=el('div','hero',ic('pencil')+ic('store'));
+  var c=el('div','card story');
+  c.append(el('p',null,'下個星期的美術課，老師要大家畫「我心中的台江」：可以畫鹿耳門溪的夕陽、魚塭旁邊的白鷺鷥，或是四草的紅樹林。每個人都要自己準備一盒色鉛筆。'),
+           el('p',null,'星期六下午，你帶著零用錢走到海佃路上的文具店。錢包裡有 <b>400 元</b>（假設），店裡每一盒色鉛筆你都買得起；沒有花完的錢，可以存起來，也可以買別的東西。'));
+  var m=el('p','mine');m.innerHTML='你的顏色是：'+chip();
+  app.append(hero,el('h1',null,'文具店的色鉛筆'),c,m,
+    el('p','note','先記住你的顏色，等一下老師會用到。這個遊戲<b>沒有標準答案</b>，照你自己的想法選就好。每個人的平板自己做，不用看旁邊同學的畫面。'),
+    button('走進文具店','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: take a box off the shelf ---------- */
+function shop(){
+  app.innerHTML='';
+  var ids=SHELF[st.g];
+  if(st.pick!=null&&ids.indexOf(st.pick)<0)st.pick=null;
+  var shelf=el('div','shelf');shelf.innerHTML=shelfTop();
+  var srow=el('div','srow'),board=el('div','board'),trow=el('div','trow');
+  srow.setAttribute('role','group');srow.setAttribute('aria-label','貨架上的色鉛筆');
+  var bxs={},tgs={};
+  ids.forEach(function(i){
+    var b=BOX[i],wd=(b.w*K).toFixed(2)+'%';
+    var bx=el('button','bx',boxSvg(i,true)+'<span class="hole">在購物籃裡</span>');bx.type='button';bx.style.width=wd;
+    bx.addEventListener('click',function(){take(i)});
+    var tg=el('button','tg','<b>'+b.n+' 色</b><span>'+b.p+' 元</span>');tg.type='button';tg.style.width=wd;
+    tg.setAttribute('aria-label','拿 '+b.n+' 色色鉛筆，'+b.p+' 元');
+    tg.addEventListener('click',function(){take(i)});
+    srow.appendChild(bx);trow.appendChild(tg);bxs[i]=bx;tgs[i]=tg;
+  });
+  shelf.append(srow,board,trow);
+  var info=el('p','lead',st.g===1?'價錢都是假設。48 色那一盒是鐵盒裝，還附一個削筆器。':'價錢都是假設。');
+
+  var cart=el('div','card cart');
+  var bk=el('div','bk');var what=el('div','what');
+  cart.append(bk,what);
+  var nx=button(ic('basket')+'就買這一盒','btn',function(){if(st.pick==null)return;st.buy=st.pick;go(2)});
+  var pb=button(ic('back')+'放回去','btn alt',function(){putBack()});
+  function draw(){
+    ids.forEach(function(i){
+      var on=st.pick===i;
+      bxs[i].classList.toggle('gone',on);tgs[i].classList.toggle('on',on);
+      bxs[i].setAttribute('aria-pressed',on?'true':'false');
+      bxs[i].setAttribute('aria-label',on?(BOX[i].n+' 色色鉛筆已經在購物籃裡'):('拿 '+BOX[i].n+' 色色鉛筆，'+BOX[i].p+' 元'));
+    });
+    bk.innerHTML=basketBack();
+    if(st.pick!=null){
+      var w=Math.round(BOX[st.pick].w*1.05);
+      var ib=el('div','inbox',boxSvg(st.pick,false));ib.style.width=w+'px';bk.appendChild(ib);
+    }
+    bk.insertAdjacentHTML('beforeend',basketFront());
+    what.innerHTML='';
+    if(st.pick==null){
+      what.append(el('p','lead','購物籃還是空的。點貨架上的一盒色鉛筆，把它拿下來。'));
+      nx.disabled=true;
+      what.appendChild(nx);
+    }else{
+      var b=BOX[st.pick];
+      what.append(el('p','lead','你的購物籃裡有：'),el('p','big',b.n+' 色色鉛筆　<span class="pr">'+b.p+' 元</span>'));
+      if(b.tin)what.appendChild(el('p','lead','鐵盒裝，附一個削筆器。'));
+      what.appendChild(el('p','lead','想換別盒？按「放回去」，或直接點貨架上的另一盒。'));
+      nx.disabled=false;
+      var rb=el('div','row-btns');rb.append(nx,pb);what.appendChild(rb);
+    }
+  }
+  function pageRect(e){var r=e.getBoundingClientRect();return {x:r.left+window.scrollX,y:r.top+window.scrollY,w:r.width,h:r.height}}
+  function fly(node,from,to){
+    if(RM||!node||!node.animate||!from||!to||!to.w)return;
+    var dx=from.x-to.x,dy=from.y-to.y,sc=from.w/to.w;
+    try{node.animate([{transform:'translate('+dx+'px,'+dy+'px) scale('+sc+')',transformOrigin:'top left'},{transform:'translate(0,0) scale(1)',transformOrigin:'top left'}],{duration:480,easing:'cubic-bezier(.25,.8,.3,1)'})}catch(e){}
+  }
+  function take(i){
+    if(st.pick===i)return;
+    var prev=st.pick;
+    var from=pageRect(bxs[i].querySelector('svg'));
+    var ib0=bk.querySelector('.inbox svg'),fromB=ib0?pageRect(ib0):null;
+    st.pick=i;save(st);draw();
+    var ib=bk.querySelector('.inbox');
+    try{cart.scrollIntoView({block:'nearest'})}catch(e){}
+    if(ib){
+      /* the inbox is centred with translateX(-50%); animate its svg child instead */
+      fly(ib.querySelector('svg'),from,pageRect(ib.querySelector('svg')));
+    }
+    if(prev!=null&&fromB)fly(bxs[prev].querySelector('svg'),fromB,pageRect(bxs[prev].querySelector('svg')));
+  }
+  function putBack(){
+    if(st.pick==null)return;
+    var i=st.pick,ib=bk.querySelector('.inbox svg'),from=ib?pageRect(ib):null;
+    st.pick=null;save(st);draw();
+    fly(bxs[i].querySelector('svg'),from,pageRect(bxs[i].querySelector('svg')));
+    try{bxs[i].focus({preventScroll:true})}catch(e){}
+  }
+  draw();
+  app.append(el('p','case',ic('store')+'海佃文具店'),el('h2',null,'你會拿哪一盒色鉛筆？'),
+    el('p','lead','點一盒，它就會從貨架拿下來，放進你的購物籃。'),shelf,info,cart);
+}
+
+/* ---------- step 2: why this box ---------- */
+function why(){
+  app.innerHTML='';
+  var b=BOX[st.buy];
+  var mini=el('div','card mini');
+  var mb=el('div','mbox',boxSvg(st.buy,false));
+  mini.append(mb,el('p',null,'你買了 '+b.n+' 色色鉛筆，'+b.p+' 元'+(b.tin?'（鐵盒，附削筆器）':'')+'。'));
+  var opts=el('div','opts');opts.setAttribute('role','group');opts.setAttribute('aria-label','四個理由');
+  var nx=button('選好了，下一步','btn',function(){if(st.why!=null)go(3)});nx.disabled=st.why==null;
+  var dt=null;
+  function draw(){
+    opts.innerHTML='';
+    WHY.forEach(function(o,k){
+      var on=st.why===k;
+      var bt=el('button','opt'+(on?' on':''),'<span class="ico">'+ic(o[1])+'</span><span><span class="letter">'+o[0]+'</span>'+o[2]+'</span>');
+      bt.type='button';bt.setAttribute('aria-pressed',on?'true':'false');
+      bt.addEventListener('click',function(){st.why=k;save(st);draw();nx.disabled=false;try{dt.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}});
+      opts.appendChild(bt);
+      if(on){
+        var d=el('div','detail');
+        d.append(el('span','tgx a','作用'),el('p',null,o[3]),el('span','tgx b','代價'),el('p',null,o[4]));
+        opts.appendChild(d);dt=d;
+      }
+    });
+  }
+  draw();
+  app.append(el('p','case',ic('pencil')+'問題一'),el('h2',null,'你為什麼選這一盒？'),mini,
+    el('p','lead','選一個最接近你想法的理由。每個理由都可以選，選了會看到它的作用和代價，想改也可以再點別的。'),opts,nx);
+}
+
+/* ---------- step 3: drink size ---------- */
+function drink(){
+  app.innerHTML='';
+  var menu=el('div','menu');menu.setAttribute('role','img');menu.setAttribute('aria-label','飲料店的菜單：紅茶小杯 30 元、中杯 45 元、大杯 60 元，價錢都是假設。');
+  menu.appendChild(el('p','cap','紅茶'));
+  DRINK.slice(0,3).forEach(function(d){
+    var it=el('div','it');var sz=Math.round(64*d[2]);
+    it.innerHTML=ic('cup').replace('class="i"','class="i" style="width:'+sz+'px;height:'+sz+'px"')+'<b>'+d[0]+'</b><span>'+d[1]+' 元</span>';
+    menu.appendChild(it);
+  });
+  var c=el('div','card');
+  c.append(el('p','lead','放學後，你和同學走到學校附近的飲料店，想買一杯紅茶。牆上的菜單是這樣寫的（價錢都是假設）：'),menu);
+  var opts=el('div','opts');opts.setAttribute('role','group');opts.setAttribute('aria-label','你通常點哪一杯');
+  var nx=button('選好了，下一步','btn',function(){if(st.drink!=null)go(4)});nx.disabled=st.drink==null;
+  var msg=el('p','note warm');
+  function draw(){
+    opts.innerHTML='';
+    DRINK.forEach(function(d,k){
+      var on=st.drink===k;
+      var icon=d[1]==null?ic('ask'):ic('cup').replace('class="i"','class="i" style="width:'+Math.round(34*d[2])+'px;height:'+Math.round(34*d[2])+'px"');
+      var bt=el('button','opt'+(on?' on':''),'<span class="ico">'+icon+'</span><span>'+d[0]+(d[1]!=null?'<span class="pr">'+d[1]+' 元</span>':'')+'</span>');
+      bt.type='button';bt.setAttribute('aria-pressed',on?'true':'false');
+      bt.addEventListener('click',function(){st.drink=k;save(st);draw();nx.disabled=false});
+      opts.appendChild(bt);
+    });
+    msg.style.display=st.drink==null?'none':'';
+    msg.textContent='每一種都可以。這一題只是問你平常的習慣，沒有對錯。';
+  }
+  draw();
+  app.append(el('p','case',ic('cup')+'問題二'),el('h2',null,'你通常點哪一杯？'),c,opts,msg,nx);
+}
+
+/* ---------- step 4: end ---------- */
+function end(){
+  app.innerHTML='';
+  var b=st.buy!=null?BOX[st.buy]:null,w=st.why!=null?WHY[st.why]:null,d=st.drink!=null?DRINK[st.drink]:null;
+  var t=el('table');
+  [['我的顏色',chip()],
+   ['我拿的色鉛筆',b?'<b>'+b.n+' 色　'+b.p+' 元</b>'+(b.tin?'<br><small>鐵盒，附削筆器</small>':''):'—'],
+   ['我的理由',w?'<b>'+w[0]+'　'+w[2]+'</b>':'—'],
+   ['飲料我通常點',d?'<b>'+d[0]+(d[1]!=null?'　'+d[1]+' 元':'')+'</b>':'—']].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var S=[intro,shop,why,drink,end];
+  if(st.step>=2&&st.buy==null)st.step=1;
+  if(st.step>=3&&st.why==null)st.step=2;
+  if(st.step>=4&&st.drink==null)st.step=3;
+  (S[st.step]||intro)();
+}
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);location.replace(location.pathname+location.search);location.reload()}});
+render();
+})();
+</script>

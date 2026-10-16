@@ -1,0 +1,326 @@
+<title>粥攤補貨王</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: a warehouse shelf with four stacks of boxes (porridge, fish belly, bowls, spoons). Level 1 guess how many bowls can be sold; level 2 drag one crate from the truck; level 3 drag three crates one by one with the live "stuck" marker; level 4 a no-right-answer question; summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --kraft:#D8B47E; --kraft2:#B98E52;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.ghost{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible,button:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 200px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note.ok{background:#E4F1E8}
+.count{font-size:clamp(54px,10vw,90px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums;line-height:1.2}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+/* recipe */
+.recipe{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 8px;font-size:clamp(19px,2.8vw,26px);font-weight:900}
+.recipe span.it{display:inline-flex;align-items:center;gap:4px;background:var(--note);border-radius:12px;padding:4px 10px}
+.recipe svg{width:34px;height:34px}
+/* shelf */
+.shelf{background:#8A6A44;border-radius:18px;padding:10px 10px 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;position:relative}
+.shelf::after{content:"";grid-column:1/-1;height:14px;background:#6E5232;margin:0 -10px;border-radius:0 0 18px 18px}
+.cell{font:inherit;color:var(--ink);background:#F3EEE4;border:4px solid #F3EEE4;border-radius:14px;padding:6px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;position:relative;cursor:default;text-align:center}
+.cell .nm{display:flex;align-items:center;gap:2px;font-weight:900;font-size:clamp(19px,2.6vw,24px);line-height:1.2;white-space:nowrap}
+.cell .nm svg{width:clamp(26px,4vw,36px);height:clamp(26px,4vw,36px);flex:none}
+.cell .num{font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.cell .unit{font-size:.5em;font-weight:700;color:var(--muted)}
+.stack{display:flex;flex-direction:column-reverse;align-items:center;gap:3px;width:100%;min-height:154px;justify-content:flex-start}
+.box{width:min(100%,104px);height:22px;border-radius:5px;background:var(--kraft);border:2px solid var(--kraft2);font-size:15px;font-weight:900;line-height:18px;color:#5A3F1C;position:relative}
+.box::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:10px;margin-left:-5px;background:rgba(255,255,255,.35)}
+.box.part{width:min(80%,84px);background:#EAD3AE;border-style:dashed}
+.box.new{background:#F2C94C;border-color:var(--gold);animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.4)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.cell.stuck{border-color:var(--rust);background:#FBE7DF}
+.tag{position:absolute;top:-4px;left:50%;transform:translate(-50%,-55%);background:var(--rust);color:#fff;font-weight:900;font-size:clamp(15px,2vw,18px);border-radius:999px;padding:0 10px;white-space:nowrap;line-height:1.6}
+.cell.target{cursor:pointer;border-style:dashed;border-color:var(--gold)}
+.cell.target.stuck{border-color:var(--rust)}
+.cell.over{background:var(--warm);border-color:var(--gold);border-style:solid}
+.sell{font-size:clamp(22px,3.4vw,30px);font-weight:900;text-align:center;margin:0}
+.sell b{display:inline-block;font-size:clamp(50px,9vw,80px);color:var(--rust);line-height:1.1;font-variant-numeric:tabular-nums;margin:0 6px}
+.sell small{display:block;font-size:clamp(18px,2.5vw,22px);color:var(--muted);font-weight:700}
+/* stepper */
+.stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stepper .btn{padding:12px 4px;text-align:center;font-variant-numeric:tabular-nums}
+/* truck */
+.truck{background:#DDE8EF;border:3px solid #B9CCD8;border-radius:22px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.truck .hd{display:flex;align-items:center;gap:10px;font-weight:900;font-size:clamp(19px,2.7vw,25px);margin:0}
+.truck .hd svg{width:64px;height:40px;flex:none}
+.crates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.crate{font:inherit;color:#4A3416;background:var(--kraft);border:3px solid var(--kraft2);border-radius:12px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:0;font-weight:900;font-size:clamp(17px,2.4vw,22px);line-height:1.3;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;min-width:0}
+.crate svg{width:36px;height:36px}
+.crate small{font-size:.8em;font-weight:700}
+.crate.sel{outline:5px solid var(--gold);outline-offset:2px;background:#F2C94C}
+.crate.used{visibility:hidden}
+.crate:disabled{opacity:.35;cursor:default}
+.ghostc{position:fixed;z-index:50;pointer-events:none;width:90px;transform:translate(-50%,-50%) rotate(-6deg);box-shadow:0 10px 20px rgba(0,0,0,.25)}
+.left{font-size:clamp(19px,2.7vw,25px);font-weight:900;color:var(--sea);margin:0}
+.dots{display:inline-flex;gap:6px;vertical-align:middle;margin-left:6px}
+.dots i{width:22px;height:18px;border-radius:4px;background:var(--kraft);border:2px solid var(--kraft2)}
+.dots i.off{background:transparent;border-style:dashed;border-color:var(--line)}
+@media (max-width:440px){.box{height:20px;font-size:14px;line-height:16px}.stack{min-height:142px}.shelf{padding:8px 6px 0;gap:5px}.shelf::after{margin:0 -6px}.cell{padding:6px 2px 8px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='stock-v1';
+var K=['p','f','b','s'];
+var NM={p:'粥',f:'魚肚',b:'碗',s:'湯匙'};
+var UN={p:'份',f:'片',b:'個',s:'支'};
+var BASE={p:30,f:24,b:40,s:18};
+var BEST=30;
+var IC={
+ p:'<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 10 q-3 -4 0 -7 M20 10 q-3 -4 0 -7 M28 10 q-3 -4 0 -7" stroke="#9AA3A0" stroke-width="2" fill="none"/><rect x="5" y="15" width="30" height="5" rx="2" fill="#56605C"/><path d="M7 20 H33 V30 a6 6 0 0 1 -6 6 H13 a6 6 0 0 1 -6 -6 Z" fill="#7C8783"/><ellipse cx="20" cy="15" rx="13" ry="3" fill="#F3EAD3"/></svg>',
+ f:'<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 20 Q14 8 28 16 L36 10 L34 20 L36 30 L28 24 Q14 32 4 20 Z" fill="#A9BCC9" stroke="#56718A" stroke-width="2"/><circle cx="11" cy="18" r="2" fill="#1F2A2E"/><path d="M14 22 Q20 26 26 21" stroke="#F2D6C8" stroke-width="3" fill="none"/></svg>',
+ b:'<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M4 16 H36 a16 16 0 0 1 -32 0 Z" fill="#FFFFFF" stroke="#205E86" stroke-width="2.5"/><path d="M8 21 H32" stroke="#205E86" stroke-width="2"/><rect x="14" y="31" width="12" height="4" rx="2" fill="#205E86"/></svg>',
+ s:'<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="13" cy="14" rx="8" ry="10" transform="rotate(-35 13 14)" fill="#FFFFFF" stroke="#56605C" stroke-width="2.5"/><path d="M18 20 L35 36" stroke="#56605C" stroke-width="5" stroke-linecap="round"/></svg>'
+};
+var TRUCK='<svg viewBox="0 0 64 40" aria-hidden="true"><rect x="2" y="6" width="38" height="24" rx="3" fill="#205E86"/><path d="M40 14 H52 L60 22 V30 H40 Z" fill="#2F7D4F"/><rect x="44" y="16" width="8" height="6" fill="#DDE8EF"/><circle cx="14" cy="32" r="6" fill="#1F2A2E"/><circle cx="50" cy="32" r="6" fill="#1F2A2E"/></svg>';
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,guess:null,g:0,l2:null,l2first:null,l2tries:0,l3:[],l3final:null,l4:null};
+if(!st.l3)st.l3=[];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function stockWith(adds){var s={p:BASE.p,f:BASE.f,b:BASE.b,s:BASE.s};adds.forEach(function(k){s[k]+=10});return s}
+function bowls(s){return Math.min(s.p,s.f,s.b,s.s)}
+function stuckOf(s){var m=bowls(s);return K.filter(function(k){return s[k]===m})}
+function go(n){st.step=n;save(st);render()}
+
+/* shelf: opts {stock, mark(bool), fresh(kind count map of new boxes), target(bool), onDrop(kind)} */
+function shelf(o){
+  var sh=el('div','shelf');sh.setAttribute('role','group');sh.setAttribute('aria-label','倉庫貨架');
+  var stuck=o.mark?stuckOf(o.stock):[];
+  K.forEach(function(k){
+    var c=el('button','cell');c.type='button';c.dataset.k=k;
+    var n=o.stock[k];
+    c.setAttribute('aria-label',NM[k]+' '+n+' '+UN[k]+(stuck.indexOf(k)>=0?'，卡住了':''));
+    if(stuck.indexOf(k)>=0){c.classList.add('stuck');c.appendChild(el('span','tag','卡住了'))}
+    var nm=el('div','nm',IC[k]+'<span>'+NM[k]+'</span>');
+    var num=el('div','num',n+'<span class="unit"> '+UN[k]+'</span>');
+    var stk=el('div','stack');
+    var full=Math.floor(n/10),rem=n%10,fresh=(o.fresh&&o.fresh[k])||0;
+    for(var i=0;i<full;i++){var bx=el('div','box'+(i>=full-fresh?' new':''),'10');stk.appendChild(bx)}
+    if(rem){stk.appendChild(el('div','box part',String(rem)))}
+    c.append(nm,num,stk);
+    if(o.target){c.classList.add('target');c.addEventListener('click',function(){if(o.onTap)o.onTap(k)})}
+    else{c.tabIndex=-1;c.setAttribute('aria-disabled','true')}
+    sh.appendChild(c);
+  });
+  return sh;
+}
+function sellLine(s,hide,sub){
+  var p=el('p','sell');
+  p.innerHTML='今天可以賣<b>'+(hide?'？':bowls(s))+'</b>碗'+(sub?'<small>'+sub+'</small>':'');
+  return p;
+}
+/* truck with crates; kinds list; onDrop(kind) */
+function truck(o){
+  var t=el('div','truck');
+  t.appendChild(el('p','hd',TRUCK+'<span>'+o.title+'</span>'));
+  var cr=el('div','crates');var sel=null;
+  K.forEach(function(k){
+    var b=el('button','crate',IC[k]+'<span>'+NM[k]+'</span><small>一箱 10'+UN[k]+'</small>');b.type='button';b.dataset.k=k;
+    b.setAttribute('aria-label',NM[k]+'一箱，10 '+UN[k]+'。點一下選起來，再點貨架上的格子');
+    if(o.disabled){b.disabled=true}
+    cr.appendChild(b);
+    if(o.disabled)return;
+    var start=null,ghost=null,pid=null,over=null;
+    function cellAt(x,y){var e=document.elementFromPoint(x,y);return e&&e.closest?e.closest('.cell'):null}
+    b.addEventListener('pointerdown',function(e){if(e.button>0)return;start={x:e.clientX,y:e.clientY};pid=e.pointerId;try{b.setPointerCapture(pid)}catch(_){}e.preventDefault()});
+    b.addEventListener('pointermove',function(e){
+      if(!start||e.pointerId!==pid)return;
+      var dx=e.clientX-start.x,dy=e.clientY-start.y;
+      if(!ghost&&dx*dx+dy*dy>100){ghost=b.cloneNode(true);ghost.classList.add('ghostc');ghost.classList.remove('sel');document.body.appendChild(ghost)}
+      if(ghost){ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
+        var c=cellAt(e.clientX,e.clientY);if(over&&over!==c)over.classList.remove('over');if(c){c.classList.add('over')}over=c}
+    });
+    function end(e,cancel){
+      if(!start||e.pointerId!==pid)return;
+      var wasDrag=!!ghost;
+      if(ghost){ghost.remove();ghost=null}
+      if(over){over.classList.remove('over')}
+      var c=(!cancel&&wasDrag)?cellAt(e.clientX,e.clientY):null;over=null;start=null;
+      if(wasDrag){if(c){o.onDrop(k,c.dataset.k)}return}
+      if(cancel)return;
+      // tap: select
+      Array.prototype.forEach.call(cr.children,function(x){x.classList.remove('sel')});
+      if(sel===k){sel=null;o.onSel(null);return}
+      sel=k;b.classList.add('sel');o.onSel(k);
+    }
+    b.addEventListener('pointerup',function(e){end(e,false)});
+    b.addEventListener('pointercancel',function(e){end(e,true)});
+    b.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();Array.prototype.forEach.call(cr.children,function(x){x.classList.remove('sel')});sel=k;b.classList.add('sel');o.onSel(k)}});
+  });
+  t.appendChild(cr);
+  return t;
+}
+/* sets up a "drop zone" area: shelf + truck; the truck's selected crate makes cells tappable */
+function dropArea(holder,o){
+  var sel=null;
+  function draw(){
+    holder.innerHTML='';
+    var sh=shelf({stock:o.stock(),mark:true,fresh:o.fresh(),target:!!sel,onTap:function(cell){var k=sel;sel=null;o.drop(k,cell)}});
+    holder.append(sellLine(o.stock(),false,o.sub()),sh);
+  }
+  draw();
+  return {redraw:draw,setSel:function(k){sel=k;draw()}};
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','清晨五點多，天還沒亮，安南區的粥攤阿嬤已經在準備開店了。你來幫忙。'),
+    el('p','lead','阿嬤說：「每一碗虱目魚粥，都要這四樣東西湊齊，少一樣都不能賣。」'));
+  var r=el('div','recipe');
+  r.innerHTML='<span>一碗粥 ＝</span>'+K.map(function(k){return '<span class="it">'+IC[k]+NM[k]+' 1 '+UN[k]+'</span>'}).join('<span>＋</span>');
+  c.appendChild(r);
+  c.appendChild(el('p','lead','倉庫裡已經堆了一些箱子。接下來有 4 關，看你能不能當上「粥攤補貨王」。<br><span style="font-size:.85em">（遊戲裡的數字都是假設的。）</span>'));
+  app.append(el('h1',null,'粥攤補貨王'),c,btn('開始','',function(){go(1)}));
+}
+function lv1(){
+  app.innerHTML='';
+  app.append(el('p','case','第 1 關，共 4 關'),el('p','lead','這是阿嬤倉庫裡的貨架，四格分別堆著四樣東西。每一碗都要粥 1 份、魚肚 1 片、碗 1 個、湯匙 1 支。'));
+  app.append(shelf({stock:BASE,mark:false}),sellLine(BASE,true));
+  app.appendChild(el('h2',null,'猜猜看：今天最多能賣幾碗？'));
+  var out=el('p','count',st.g+' 碗');out.setAttribute('aria-live','polite');
+  var sp=el('div','stepper');
+  [[-10,'－10'],[-1,'－1'],[1,'＋1'],[10,'＋10']].forEach(function(x){
+    sp.appendChild(btn(x[1],'alt',function(){st.g=Math.max(0,Math.min(150,st.g+x[0]));out.textContent=st.g+' 碗';save(st)}));
+  });
+  app.append(out,sp,btn('送出','',function(){st.guess=st.g;go(2)}));
+}
+function lv1r(){
+  app.innerHTML='';
+  var ok=st.guess===18;
+  app.append(el('p','case','第 1 關，共 4 關'),shelf({stock:BASE,mark:true}),sellLine(BASE,false));
+  app.appendChild(el('p','note'+(ok?' ok':' warm'),'你猜 <b>'+st.guess+' 碗</b>。'+(ok?'答對了！':'答案是 <b>18 碗</b>。')));
+  app.appendChild(el('p','note','湯匙只有 18 支。賣到第 18 碗，湯匙就用完了。第 19 位客人來的時候，粥還有、魚肚還有、碗也還有，可是沒有湯匙可以給他，這一碗就賣不出去。<br>所以能賣幾碗，不是看最多的那一樣，而是看<b>最少</b>的那一樣。那一格，就是「卡住了」的地方。'));
+  app.appendChild(el('p','lead','賣完 18 碗以後，倉庫還會剩下：粥 12 份、魚肚 6 片、碗 22 個，只能放著。'));
+  app.appendChild(btn('下一關','',function(){go(3)}));
+}
+function lv2(){
+  app.innerHTML='';
+  app.append(el('p','case','第 2 關，共 4 關'),el('p','lead','送貨的大哥開著小貨車來了。他說：「我車上有粥、魚肚、碗、湯匙各一箱，每箱 10 個，可是今天只能給你<b>一箱</b>。」'));
+  var hold=el('div');hold.style.display='flex';hold.style.flexDirection='column';hold.style.gap='12px';
+  var bottom=el('div');bottom.style.display='flex';bottom.style.flexDirection='column';bottom.style.gap='12px';
+  app.append(hold,bottom);
+  function cur(){return stockWith(st.l2?[st.l2]:[])}
+  var area=dropArea(hold,{stock:cur,fresh:function(){var f={};if(st.l2)f[st.l2]=1;return f},sub:function(){return st.l2?'剛剛補了一箱'+NM[st.l2]:'原本的貨'},drop:place});
+  function place(k){
+    if(!k||st.l2)return;
+    st.l2=k;st.l2tries++;if(!st.l2first)st.l2first=k;save(st);area.redraw();drawBottom();
+  }
+  function drawBottom(){
+    bottom.innerHTML='';
+    if(!st.l2){
+      bottom.appendChild(el('h2',null,'你要補哪一箱？把它拖到貨架上那一格。'));
+      bottom.appendChild(el('p','lead','也可以先點一下箱子，再點貨架上的格子。'));
+      bottom.appendChild(truck({title:'貨車上的四箱（只能挑一箱）',onDrop:function(k){place(k)},onSel:function(k){area.setSel(k)}}));
+      return;
+    }
+    var n=bowls(cur());
+    var msg;
+    if(st.l2==='s')msg='你補了一箱湯匙，湯匙變成 28 支。現在可以賣 <b>24 碗</b>，比原本多 6 碗！<br>可是現在換<b>魚肚</b>卡住了：魚肚只有 24 片，再多的湯匙也用不到。';
+    else msg='你補了一箱'+NM[st.l2]+'，'+NM[st.l2]+'變成 '+cur()[st.l2]+' '+UN[st.l2]+'。可是能賣的還是 <b>'+n+' 碗</b>。<br>因為湯匙還是只有 18 支，多出來的'+NM[st.l2]+'只能放在倉庫裡。';
+    bottom.appendChild(el('p','note'+(st.l2==='s'?' ok':''),msg));
+    if(st.l2first&&st.l2tries>1)bottom.appendChild(el('p','lead','（你第一次補的是「'+NM[st.l2first]+'」，已經記下來了。）'));
+    var r=el('div','row');
+    r.append(btn('再試一次','ghost',function(){st.l2=null;save(st);area.redraw();drawBottom()}),btn('下一關','',function(){go(4)}));
+    bottom.appendChild(r);
+  }
+  drawBottom();
+}
+function lv3(){
+  app.innerHTML='';
+  app.append(el('p','case','第 3 關，共 4 關'),el('p','lead','今天送貨的大哥心情很好：「這次可以給你 <b>3 箱</b>，想要哪一種都可以，同一種要兩箱也行。」'));
+  app.appendChild(el('h2',null,'目標：讓今天能賣的碗數越多越好。一箱一箱拖到貨架上吧！'));
+  var hold=el('div');hold.style.display='flex';hold.style.flexDirection='column';hold.style.gap='12px';
+  var bottom=el('div');bottom.style.display='flex';bottom.style.flexDirection='column';bottom.style.gap='12px';
+  app.append(hold,bottom);
+  function cur(){return stockWith(st.l3)}
+  var area=dropArea(hold,{stock:cur,fresh:function(){var f={};if(st.l3.length){f[st.l3[st.l3.length-1]]=1}return f},
+    sub:function(){var s=stuckOf(cur());return '現在卡住的是：'+s.map(function(k){return NM[k]}).join('、')},drop:place});
+  function place(k){if(!k||st.l3.length>=3)return;st.l3.push(k);save(st);area.redraw();drawBottom()}
+  function drawBottom(){
+    bottom.innerHTML='';
+    var left=3-st.l3.length;
+    var lp=el('p','left',left?'還可以補 '+left+' 箱':'3 箱都補完了');var d=el('span','dots');for(var i=0;i<3;i++)d.appendChild(el('i',i<left?'':'off'));lp.appendChild(d);
+    bottom.appendChild(lp);
+    if(st.l3.length)bottom.appendChild(el('p','lead','你補了：'+st.l3.map(function(k){return NM[k]}).join(' → ')));
+    if(left>0){
+      bottom.appendChild(truck({title:'貨車（拖一箱，或先點箱子再點格子）',onDrop:function(k){place(k)},onSel:function(k){area.setSel(k)}}));
+      return;
+    }
+    var n=bowls(cur());
+    if(n>=BEST)bottom.appendChild(el('p','note ok','今天可以賣 <b>'+n+' 碗</b>，這是 3 箱能做到的最多碗數！<br>你每一次都補在「卡住了」的那一格。現在換<b>粥</b>卡住了，要再多賣，就得多煮一點粥。'));
+    else bottom.appendChild(el('p','note warm','今天可以賣 <b>'+n+' 碗</b>。3 箱最多可以賣到 '+BEST+' 碗。<br>想一想：每補一箱之前，先看看哪一格「卡住了」，補在那裡會怎樣？'));
+    var r=el('div','row');
+    r.append(btn('重新補一次','ghost',function(){st.l3=[];save(st);area.redraw();drawBottom()}),btn('下一關','',function(){st.l3final=n;go(5)}));
+    bottom.appendChild(r);
+  }
+  drawBottom();
+}
+var L4=[
+ ['照常營業','如果倉庫裡還有湯匙，今天早上也許還撐得住。可是湯匙用完的那一刻，就算其他東西還堆得滿滿的，粥攤也只能停下來。'],
+ ['少賣一些','倉庫裡剩幾支湯匙，就最多只能賣幾碗。湯匙一用完，後面的客人就吃不到了。'],
+ ['一碗都賣不了','如果倉庫裡一支湯匙都沒有了，粥煮得再香、魚肚再多，也一碗都送不出去。']
+];
+function lv4(){
+  app.innerHTML='';
+  app.append(el('p','case','第 4 關，共 4 關'),el('h2',null,'想一想：如果送湯匙的工廠今天放假，沒辦法送湯匙來，整個粥攤會怎樣？'),el('p','lead','這一題沒有對錯，選你覺得最可能的。'));
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(i){
+    Array.prototype.forEach.call(g.children,function(x,j){x.classList.toggle('pick',j===i)});
+    fb.innerHTML='';
+    fb.append(el('p','note',L4[i][1]),el('p','note warm','煮粥的、殺魚的、洗碗的、送湯匙的，每一樣都要湊齊，一碗粥才做得出來。只要有一段供應不上，整碗就做不出來。所以每一個人負責的那一小段，都很重要。<br><span style="font-size:.85em;color:var(--muted)">想換一個也可以，直接點別的選項。</span>'),
+      btn('看看我的紀錄','',function(){go(6)}));
+  }
+  L4.forEach(function(x,i){g.appendChild(btn(x[0],'alt',function(){st.l4=i;save(st);show(i)}))});
+  app.append(g,fb);
+  if(st.l4!=null)show(st.l4);
+}
+function end(){
+  app.innerHTML='';
+  var t=el('table');
+  [['第 1 關','猜 <b>'+st.guess+' 碗</b>（'+(st.guess===18?'猜對了':'答案是 18 碗')+'）'],
+   ['第 2 關','第一次補了 <b>'+(st.l2first?NM[st.l2first]:'—')+'</b>（'+(st.l2first?bowls(stockWith([st.l2first]))+' 碗':'—')+'）'],
+   ['第 3 關','最後賣 <b>'+(st.l3final!=null?st.l3final:'—')+' 碗</b>（'+(st.l3final>=BEST?'達到最多':'還沒到最多 '+BEST+' 碗')+'）'],
+   ['第 4 關','<b>'+(st.l4!=null?L4[st.l4][0]:'—')+'</b>']
+  ].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+var S=[intro,lv1,lv1r,lv2,lv3,lv4,end];
+function render(){(S[st.step]||intro)();window.scrollTo(0,0)}
+render();
+})();
+</script>

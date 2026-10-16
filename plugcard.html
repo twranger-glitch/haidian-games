@@ -1,0 +1,689 @@
+<title>如果就插頭</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story + demo plug → level 1 plug four "if" cards into a "good if" board (bulb) or a "too vague" board → level 2 same with four "then" cards → level 3 three daily situations, connect one "if" plug to one "then" socket each → level 4 plug the three sentences into "my week" board and play a fixed 5-day script: plugged + good sentences light up and the kid just does it; vague ones and the unplugged writing practice pop a "do it?" dialog with temptations (every choice allowed) → value question (every option allowed) → summary for a show of hands. Fixed script, no randomness. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --lit:#F7D65A; --wire:#8E968F;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;justify-content:flex-start}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn svg.i{width:1.4em;height:1.4em}
+.btn.alt svg.i{width:1.7em;height:1.7em}
+.btn:focus-visible,.pc:focus-visible,.board:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.lt{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.6em;border-radius:50%;color:#fff;background:var(--sea);font-weight:900;font-size:19px;flex:none;line-height:1}
+.say{display:flex;gap:14px;align-items:center}
+.say .av{width:76px;height:76px;flex:none}
+.goal{display:flex;gap:12px;align-items:center;background:var(--warm);border-radius:18px;padding:12px 16px;font-size:clamp(19px,2.6vw,24px);font-weight:700;line-height:1.5}
+.goal svg.i{width:48px;height:48px}
+.goal b{color:var(--rust)}
+
+/* bulb (scene drawing) */
+svg.bulb{flex:none;overflow:visible}
+.bulb .glass{fill:#E6E8E3;stroke:#1F2A2E;stroke-width:2.4;transition:fill .3s}
+.bulb .rays{opacity:0;transition:opacity .3s}
+.bulb.on .glass{fill:var(--lit)}
+.bulb.on .rays{opacity:1}
+.bulb.on{filter:drop-shadow(0 0 7px rgba(247,214,90,.95))}
+.bulb.flick .glass{animation:flk 1s linear 1}
+.bulb.flick .rays{animation:flr 1s linear 1}
+@keyframes flk{0%,22%,48%{fill:var(--lit)}12%,36%,62%,100%{fill:#E6E8E3}}
+@keyframes flr{0%,22%,48%{opacity:1}12%,36%,62%,100%{opacity:0}}
+
+/* plug & socket cards */
+.play{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:clamp(40px,9vw,96px);align-items:start}
+.play.wk{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)}
+.play .col{display:flex;flex-direction:column;gap:12px;position:relative;z-index:1}
+svg.wires{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible}
+.w{fill:none;stroke-width:5;stroke-linecap:round;stroke:var(--wire)}
+.w.on{stroke:#E0A82E;stroke-dasharray:16 7;animation:flow .9s linear infinite;filter:drop-shadow(0 0 3px rgba(247,214,90,.9))}
+.w.off{stroke-dasharray:1 10}
+@keyframes flow{to{stroke-dashoffset:-23}}
+.pc{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:4px;cursor:grab;position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;min-height:64px}
+.pc .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pc .tag{font-size:19px;font-weight:900;color:#fff;background:var(--sea);border-radius:10px;padding:0 10px;line-height:1.6;display:inline-flex;align-items:center;gap:4px}
+.pc .tag svg.i{width:1.1em;height:1.1em}
+.pc.sock .tag{background:var(--rust)}
+.pc .tx{font-size:clamp(19px,2.5vw,23px);font-weight:700;line-height:1.45}
+.pc .wh{font-size:19px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.4}
+.pc.sel{border-color:var(--gold);box-shadow:0 0 0 4px #F3E3BE}
+.pc.used{background:#F4F6F2;border-style:dashed}
+.pc.lit{border-color:#E0A82E;background:#FFF8DF}
+.pc.dim{border-color:#A9AFA8}
+.pc.ready{outline:4px dashed var(--gold);outline-offset:2px}
+.pc.over{outline:4px solid var(--good);outline-offset:2px}
+.jack{position:absolute;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:#C9CEC6;border:3px solid var(--ink);right:-11px}
+.jack.l{right:auto;left:-11px}
+.unp{font:inherit;font-size:19px;font-weight:700;color:var(--sea);background:var(--card);border:2px solid var(--sea);border-radius:12px;padding:0 10px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;line-height:1.6}
+.unp svg.i{width:1em;height:1em}
+.board{background:#FBF7EC;border:3px solid var(--line);border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:8px;cursor:pointer;position:relative}
+.board.vb{background:#F2F3F0}
+.board .bh{display:flex;align-items:center;gap:8px}
+.board .bh svg.bulb{width:44px;height:52px}
+.board .bh svg.i{width:44px;height:44px;color:var(--muted)}
+.board .bn{font-weight:900;font-size:clamp(19px,2.6vw,24px);line-height:1.3;display:block}
+.board .bs{font-size:19px;color:var(--muted);line-height:1.35;display:block}
+.board.ready{outline:4px dashed var(--gold);outline-offset:2px}
+.board.over{outline:4px solid var(--good);outline-offset:2px}
+.slot{display:flex;align-items:center;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:12px;min-height:50px;padding:4px 8px 4px 16px;position:relative;font-weight:900}
+.slot .jack{left:-11px;right:auto}
+.slot svg.bulb{width:24px;height:30px}
+.slot svg.i{width:28px;height:28px}
+.slot.empty{border-style:dashed;color:var(--muted);font-weight:700;font-size:19px;background:transparent}
+.slot.empty .jack{background:var(--card)}
+.slot.lit{border-color:#E0A82E;background:#FFF8DF}
+.slot .sl{font-size:19px;line-height:1.3}
+.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.93;transform:rotate(-3deg);box-shadow:0 12px 26px rgba(31,42,46,.25)}
+.cnt{margin:0;font-size:19px;color:var(--muted);font-weight:700;text-align:center}
+
+/* inline feedback */
+.fbk{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:3px solid var(--ink);border-radius:18px;padding:12px 14px;scroll-margin:16px}
+.fbk[hidden]{display:none}
+.fbk svg.bulb{width:40px;height:48px;margin-top:2px}
+.fbk p{margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.6;flex:1;min-width:0}
+.play{-webkit-user-select:none;user-select:none}
+/* sentence */
+.sent{display:flex;gap:14px;align-items:center}
+.sent svg.bulb{width:52px;height:62px}
+.sent p{margin:0;font-size:clamp(21px,3vw,28px);font-weight:900;line-height:1.55}
+.sent u{text-decoration:none;border-bottom:3px solid var(--line);padding:0 2px}
+.sent .ki{color:var(--sea)}.sent .kd{color:var(--rust)}
+.why{margin:0;font-size:clamp(19px,2.5vw,23px);color:var(--muted);line-height:1.6}
+
+/* week */
+.wkout{display:flex;gap:10px;align-items:center;border:3px dashed var(--line);border-radius:14px;padding:8px 12px;font-size:19px;color:var(--muted);font-weight:700;line-height:1.45}
+.wkout svg.i{width:32px;height:32px}
+.ctr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ctr div{background:var(--card);border:3px solid var(--line);border-radius:16px;padding:8px 12px;display:flex;align-items:center;gap:10px;font-weight:900;font-size:19px;line-height:1.35}
+.ctr b{font-size:clamp(28px,4.4vw,40px);margin-left:auto;font-variant-numeric:tabular-nums}
+.ctr svg.bulb{width:34px;height:40px}
+.ctr svg.i{width:36px;height:36px}
+.ctr .c1 b{color:var(--gold)}.ctr .c2 b{color:var(--sea)}
+.stage{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.stage .top{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.stage .when{font-weight:900;font-size:clamp(21px,2.9vw,26px);color:var(--sea);line-height:1.4}
+.stage .top svg.bulb{width:52px;height:62px}
+.lane{position:relative;height:124px;background:#EEF3EA;border-radius:16px;overflow:hidden}
+.lane .flr{position:absolute;left:0;right:0;bottom:0;height:16px;background:#DCE5D3}
+.lane .kid{position:absolute;bottom:6px;left:2%;width:80px;height:80px;transition:left .9s ease}
+.lane .kid .av{width:80px;height:80px}
+.lane.go .kid{left:calc(98% - 160px)}
+.lane .goal2:empty{display:none}
+.lane .goal2{position:absolute;right:2%;bottom:12px;width:70px;height:70px;background:var(--card);border:3px solid var(--line);border-radius:16px;display:flex;align-items:center;justify-content:center}
+.lane .goal2 svg.i{width:46px;height:46px}
+.lane .bub{position:absolute;top:8px;left:96px;background:var(--card);border:3px solid var(--ink);border-radius:14px;padding:2px 12px;font-weight:900;font-size:19px;white-space:nowrap;opacity:0;transition:opacity .3s}
+.lane.go .bub{opacity:1;left:auto;right:calc(2% + 84px)}
+.lane.ask .bub{opacity:1}
+.stage .msg{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.6;min-height:3.2em}
+.stage .msg .k{font-weight:900}
+.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.day{background:var(--card);border:3px solid var(--line);border-radius:14px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.day.now{border-color:var(--sea)}
+.day .dn{font-weight:900;font-size:19px;line-height:1.3;white-space:nowrap}
+.chip{width:40px;height:40px;border-radius:12px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;background:#F4F6F2;color:#9AA19C}
+.chip svg.i{width:26px;height:26px}
+.chip.auto{background:var(--lit);border-color:#C99A1E;color:var(--ink)}
+.chip.did{background:#DCE8F0;border-color:var(--sea);color:var(--ink)}
+.chip.skip{background:#E3E6E0;border-color:#9AA19C;color:var(--muted)}
+.chip.cur{outline:3px solid var(--ink);outline-offset:1px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0;font-size:19px;color:var(--muted);font-weight:700}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:22px;height:22px;border-radius:7px;border:2px solid}
+.legend .a{background:var(--lit);border-color:#C99A1E}.legend .d{background:#DCE8F0;border-color:var(--sea)}.legend .s{background:#E3E6E0;border-color:#9AA19C}
+.ov{position:fixed;inset:0;background:rgba(31,42,46,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.dlg{background:var(--card);border-radius:22px;border:3px solid var(--ink);padding:clamp(14px,3vw,24px);max-width:620px;width:100%;display:flex;flex-direction:column;gap:12px;max-height:100%;overflow-y:auto}
+.dlg .why{color:var(--rust);font-weight:700}
+
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+.sum td:first-child{color:var(--muted);font-weight:700;width:40%}
+.sum td b{font-size:1.1em}
+.sum .sub{display:block;font-size:19px;font-weight:700;color:var(--muted)}
+.big3{display:flex;flex-direction:column;gap:10px}
+.big3 .s3{display:flex;gap:10px;align-items:center;background:var(--warm);border-radius:16px;padding:10px 14px;font-size:clamp(22px,3.4vw,30px);font-weight:900;line-height:1.5}
+.big3 svg.bulb{width:36px;height:44px}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.x{color:var(--sea)}.ec dt.e{color:var(--good)}.ec dt.c{color:var(--rust)}
+@media (prefers-reduced-motion:reduce){.w.on{animation:none}.bulb.flick .glass,.bulb.flick .rays{animation:none}.lane .kid{transition:none}}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .board .bh{flex-direction:column;align-items:flex-start;gap:2px}
+  .pc{padding:8px 10px}
+  .say .av{width:60px;height:60px}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0}
+  .sum td:first-child{width:auto}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .ctr div{flex-wrap:wrap;gap:4px 8px}
+  .chip{width:34px;height:34px}
+  .chip svg.i{width:22px;height:22px}
+  .lane .kid,.lane .kid .av{width:66px;height:66px}
+  .lane.go .kid{left:calc(98% - 140px)}
+  .lane .goal2{width:60px;height:60px}
+  .lane .bub{left:78px}
+  .lane.go .bub{right:calc(2% + 70px)}
+  .sent svg.bulb{width:42px;height:50px}
+  .play.wk .slot .sl{display:none}
+  .play.wk .slot{justify-content:space-between}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"plug_plug": "<path d=\"M9 2.5v4.6M15 2.5v4.6\"/><path d=\"M5.8 7.1h12.4v3.8a6.2 6.2 0 0 1-12.4 0z\" fill=\"#F3D27A\"/><path d=\"M12 17.1v4.4\"/>", "plug_socket": "<rect x=\"3.2\" y=\"3.2\" width=\"17.6\" height=\"17.6\" rx=\"4.4\" fill=\"#DCE8F0\"/><circle cx=\"12\" cy=\"12\" r=\"5.6\" fill=\"#FBFCF9\"/><path d=\"M10 10.4v3.2M14 10.4v3.2\"/>", "plug_alarm": "<circle cx=\"12\" cy=\"13.2\" r=\"7.6\" fill=\"#F6E3D6\"/><path d=\"M12 9.2v4l2.6 1.6\"/><path d=\"M3.4 6.6l3.2-2.8M20.6 6.6l-3.2-2.8\"/><path d=\"M7.2 19.8l-1.6 1.9M16.8 19.8l1.6 1.9\"/>", "plug_bottle": "<rect x=\"9\" y=\"2.4\" width=\"6\" height=\"3\" rx=\"1\" fill=\"#FBFCF9\"/><path d=\"M8.2 5.4h7.6l1.2 3v11.2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8.4z\" fill=\"#DCE8F0\"/><path d=\"M7 11.2h10\"/><path d=\"M10 14.6q1-1 2 0t2 0\"/>", "plug_play": "<circle cx=\"12\" cy=\"12\" r=\"9.2\" fill=\"#DCEBD5\"/><path d=\"M10 8.2v7.6l6-3.8z\" fill=\"#FBFCF9\"/>", "plug_board": "<rect x=\"2.4\" y=\"8\" width=\"17.2\" height=\"8\" rx=\"2.6\" fill=\"#FBF4E2\"/><path d=\"M6.2 10.8v2.4M8.4 10.8v2.4M12.6 10.8v2.4M14.8 10.8v2.4\"/><path d=\"M19.6 12h1.4a1.6 1.6 0 0 1 1.6 1.6v4.2\"/>", "plug_unplug": "<path d=\"M6.2 2.8v3.4M10.6 2.8v3.4\"/><path d=\"M3.6 6.2h9.6v2.6a4.8 4.8 0 0 1-9.6 0z\" fill=\"#F3D27A\"/><path d=\"M8.4 13.6v2.4\"/><rect x=\"10.8\" y=\"14.4\" width=\"10\" height=\"7\" rx=\"2.2\" fill=\"#DCE8F0\"/><path d=\"M14.2 17.2v1.4M17.4 17.2v1.4\"/>", "pencil": "<path d=\"M4 20l1-4.2L15.4 5.4a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19z\" fill=\"#F3E3BE\"/><path d=\"M13.6 7.2l3.2 3.2\"/>", "openbook": "<path d=\"M12 6.4C9.6 4.6 6.4 4.1 2.8 4.6v13.8c3.6-.5 6.8 0 9.2 1.8 2.4-1.8 5.6-2.3 9.2-1.8V4.6c-3.6-.5-6.8 0-9.2 1.8z\" fill=\"#DCE8F0\"/><path d=\"M12 6.4v13.8\"/><path d=\"M5.8 8.6h3.4M5.8 11.6h3.4M5.8 14.6h2.2M14.8 8.6h3.4M14.8 11.6h3.4M14.8 14.6h2.2\"/>", "schoolbag": "<path d=\"M5.6 9.6a6.4 6.4 0 0 1 12.8 0v10a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2z\" fill=\"#F3E3BE\"/><path d=\"M9.4 4.4a2.6 2.6 0 0 1 5.2 0\"/><rect x=\"8.4\" y=\"13.6\" width=\"7.2\" height=\"4.8\" rx=\"1.2\" fill=\"#FBF4E2\"/>", "movie": "<rect x=\"2.5\" y=\"3.8\" width=\"19\" height=\"13.4\" rx=\"2.2\" fill=\"#DCE8F0\"/><path d=\"M10 7.8v5.4l4.6-2.7z\" fill=\"#FBFCF9\"/><path d=\"M12 17.2v3.4M7.8 20.6h8.4\"/>", "heart": "<path d=\"M12 20.2s-7.8-4.7-7.8-10.4A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.8 2.5c0 5.7-7.8 10.4-7.8 10.4z\" fill=\"#F2B8A0\"/>", "think": "<path d=\"M7.2 16.6a3.9 3.9 0 0 1-.7-7.7 5.4 5.4 0 0 1 10.4-1.3 4.4 4.4 0 0 1 .6 9z\" fill=\"#EEF0EC\"/><circle cx=\"6.2\" cy=\"19.4\" r=\"1.2\" fill=\"#EEF0EC\"/><circle cx=\"3.6\" cy=\"21.4\" r=\".6\" fill=\"currentColor\"/>", "week": "<path d=\"M3 9.5V6.7a2.2 2.2 0 0 1 2.2-2.2h13.6A2.2 2.2 0 0 1 21 6.7v2.8z\" fill=\"#DCE8F0\"/><path d=\"M3 9.5h18v8.8a2.2 2.2 0 0 1-2.2 2.2H5.2A2.2 2.2 0 0 1 3 18.3z\" fill=\"#FBFCF9\"/><path d=\"M7.5 2.6v3.6M16.5 2.6v3.6\"/><rect x=\"5.8\" y=\"12.4\" width=\"12.4\" height=\"4.6\" rx=\"1.3\" fill=\"#F3D27A\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"8.8\" fill=\"#DCE8F0\"/><path d=\"M12 6.8v5.4l3.6 2.2\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>", "x": "<path d=\"M7 7l10 10M17 7L7 17\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"kidB": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#2F7D4F\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19.5 24 Q20 12.5 32 13 Q44 12.5 44.5 24 Q38 17 26 19 Q22 20 19.5 24 Z\" fill=\"#3A2A1C\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='plugcard-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function lt(k){return '<span class="lt">'+k+'</span>'}
+function bulb(state){
+  return '<svg class="bulb'+(state?' '+state:'')+'" viewBox="0 0 40 48" aria-hidden="true"><g class="rays" stroke="#E0A82E" stroke-width="3" stroke-linecap="round"><path d="M20 0.5v4M5 7l3 3M35 7l-3 3M0.5 20h4M35.5 20h4"/></g><path class="glass" d="M13.5 34c0-3-6.5-6-6.5-13a13 13 0 0 1 26 0c0 7-6.5 10-6.5 13z"/><path d="M14 38.5h12M15.5 43h9" stroke="#1F2A2E" stroke-width="2.6" stroke-linecap="round"/><path d="M16 25l4 4 4-4M20 29v5" stroke="#1F2A2E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+var NAME='小澄';
+
+/* ---------- inline feedback ---------- */
+function fbk(){var f=el('div','fbk');f.setAttribute('role','status');f.hidden=true;return f}
+function setFb(f,state,html,scroll){
+  if(!html){f.hidden=true;f.innerHTML='';return}
+  f.hidden=false;f.innerHTML=bulb(state);f.append(el('p',null,html));
+  if(scroll)requestAnimationFrame(function(){try{f.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}});
+}
+/* ---------- wires ---------- */
+var curWires=null;
+function setWires(fn){curWires=fn;requestAnimationFrame(function(){if(curWires===fn)fn()})}
+window.addEventListener('resize',function(){if(curWires)curWires()});
+try{document.fonts.ready.then(function(){if(curWires)curWires()})}catch(e){}
+function drawWires(play,pairs){
+  var svg=play.querySelector('svg.wires');if(!svg)return;
+  var pr=play.getBoundingClientRect(),h='';
+  pairs.forEach(function(p){
+    if(!p[0]||!p[1])return;
+    var a=p[0].getBoundingClientRect(),b=p[1].getBoundingClientRect();if(!a.width||!b.width)return;
+    var x1=a.left+a.width/2-pr.left,y1=a.top+a.height/2-pr.top,x2=b.left+b.width/2-pr.left,y2=b.top+b.height/2-pr.top;
+    var dx=Math.max(26,(x2-x1)*.6);
+    h+='<path class="w '+p[2]+'" d="M'+x1.toFixed(1)+' '+y1.toFixed(1)+'C'+(x1+dx).toFixed(1)+' '+y1.toFixed(1)+' '+(x2-dx).toFixed(1)+' '+y2.toFixed(1)+' '+x2.toFixed(1)+' '+y2.toFixed(1)+'"/>';
+  });
+  svg.setAttribute('viewBox','0 0 '+Math.max(1,pr.width).toFixed(1)+' '+Math.max(1,pr.height).toFixed(1));
+  svg.innerHTML=h;
+}
+
+/* ---------- drag (or tap) ---------- */
+function dnd(card,zonesFn,onDrop,onTap){
+  var sx=0,sy=0,down=false,dragging=false,ghost=null,moved=false,hot=null;
+  function hit(x,y){var zs=zonesFn();for(var i=0;i<zs.length;i++){var r=zs[i].getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return zs[i]}return null}
+  function setHot(z){if(hot&&hot!==z)hot.classList.remove('over');hot=z;if(z)z.classList.add('over')}
+  card.addEventListener('pointerdown',function(e){if(e.button>0)return;if(e.target.closest('.unp'))return;down=true;dragging=false;sx=e.clientX;sy=e.clientY;try{card.setPointerCapture(e.pointerId)}catch(_){}});
+  card.addEventListener('pointermove',function(e){
+    if(!down)return;
+    if(!dragging&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8){
+      dragging=true;var r=card.getBoundingClientRect();ghost=card.cloneNode(true);ghost.classList.add('ghost');ghost.classList.remove('sel','used','lit','dim');ghost.style.width=r.width+'px';ghost.style.left=r.left+'px';ghost.style.top=r.top+'px';ghost._dx=sx-r.left;ghost._dy=sy-r.top;document.body.appendChild(ghost);
+    }
+    if(dragging){ghost.style.left=(e.clientX-ghost._dx)+'px';ghost.style.top=(e.clientY-ghost._dy)+'px';setHot(hit(e.clientX,e.clientY));e.preventDefault()}
+  });
+  function end(e,cancel){
+    if(!down)return;down=false;
+    if(dragging){moved=true;var z=cancel?null:hit(e.clientX,e.clientY);if(ghost){ghost.remove();ghost=null}setHot(null);dragging=false;if(z)onDrop(z)}
+  }
+  card.addEventListener('pointerup',function(e){end(e,false)});
+  card.addEventListener('pointercancel',function(e){end(e,true)});
+  card.addEventListener('click',function(e){if(e.target.closest('.unp'))return;if(moved){moved=false;return}onTap()});
+  card.addEventListener('keydown',function(e){if(e.target!==card)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();onTap()}});
+}
+function asButton(d,label){d.setAttribute('role','button');d.tabIndex=0;if(label)d.setAttribute('aria-label',label)}
+
+/* ---------- data ---------- */
+var L1={id:'l1',kind:'if',cs:'第 1 關',title:'哪個「如果」比較好？',
+  goal:ic('pencil')+'<span>目標：<b>每天練習寫字</b>。下面四個「如果」，哪些是時候一到、一看就知道的？</span>',
+  boards:{g:{n:'好用的如果',s:'時候到了，一看就知道'},v:{n:'太模糊的如果',s:'先收在這裡，不接燈'}},
+  items:[
+   {k:'A',t:'有空的時候',ok:0,g:'燈泡閃了一下，沒有亮。「有空」什麼時候會出現？看不出來。每天都可能覺得自己沒空，時候就一直不會到。',v:'「有空」什麼時候會出現？看不出來，所以先收在這裡。'},
+   {k:'B',t:'晚餐碗洗好、回到書桌的時候',ok:1,g:'燈亮了！碗洗好、坐回書桌，是每天都會發生、自己看得到的一刻，時候到了一看就知道。',v:'這一個其實看得出來：洗好碗、坐回書桌，那一刻很清楚。可以按「拔掉」，插到「好用的如果」試試看。'},
+   {k:'C',t:'心情好的時候',ok:0,g:'燈泡閃了一下，沒有亮。心情看不到，也每天不一樣，很難說哪一刻才算「心情好」。',v:'心情看不到、也說不準什麼時候會好，所以先收在這裡。'},
+   {k:'D',t:'每天晚上 7 點鬧鐘響的時候',ok:1,g:'燈亮了！有固定的時間，還有鬧鐘的聲音提醒，時候到了一聽就知道。',v:'這一個其實很清楚：晚上 7 點、鬧鐘一響就知道。可以按「拔掉」，插到「好用的如果」試試看。'}
+  ]};
+var L2={id:'l2',kind:'do',cs:'第 2 關',title:'哪個「就」比較好？',
+  goal:ic('plug_alarm')+'<span>目標還是<b>每天練習寫字</b>，「如果」已經定好了：每天晚上 7 點鬧鐘響的時候。鬧鐘一響，手要馬上做什麼？</span>',
+  boards:{g:{n:'好用的就',s:'小小的，馬上做得到'},v:{n:'太大、太模糊的就',s:'先收在這裡，不接燈'}},
+  items:[
+   {k:'A',t:'我就好好努力',ok:0,g:'燈泡閃了一下，沒有亮。鬧鐘響了，要「好好努力」，手要先做什麼？看不出來。',v:'「好好努力」是很好的願望，可是第一步要做什麼看不出來，所以先收在這裡。'},
+   {k:'B',t:'我就打開作業簿寫第一行',ok:1,g:'燈亮了！這件事很小、馬上做得到，一坐下就知道手要做什麼。寫完第一行，常常就會繼續寫下去。',v:'這一個其實很小、馬上做得到。可以按「拔掉」，插到「好用的就」試試看。'},
+   {k:'C',t:'我就變成很用功的人',ok:0,g:'燈泡閃了一下，沒有亮。「變成很用功的人」太大了，不是一下子做得到的事，鬧鐘響的那一刻，不知道要從哪裡開始。',v:'「變成很用功的人」太大了，一下子做不到，所以先收在這裡。'},
+   {k:'D',t:'我就把手機放到客廳',ok:1,g:'燈亮了！這件事很小，十秒鐘就做得到；先把最會讓人分心的東西移開，寫字就比較容易開始。',v:'這一個其實很小、十秒鐘就做得到。可以按「拔掉」，插到「好用的就」試試看。'}
+  ]};
+var SIT=[
+  {id:'A',icon:'movie',goalIc:'openbook',short:'回家',title:'放學回家，好想先看影片',
+   story:NAME+'每天放學回到家，第一件事就是點開影片，一看就停不下來，作業常常拖到快睡覺才寫。',
+   ifs:[{t:'一進家門、把書包放到椅子上的時候',ok:1},{t:'等我覺得可以開始的時候',ok:0},{t:'手指想點開影片的那一刻',ok:1}],
+   dos:[{t:'下定決心再也不看影片',ok:0},{t:'先把作業簿拿出來，寫第一題',ok:1},{t:'把平板拿去客廳充電',ok:1}],
+   doBtn:'先寫作業'},
+  {id:'B',icon:'schoolbag',goalIc:'schoolbag',short:'書包',title:'整理書包老是忘記',
+   story:NAME+'的書包總是早上出門前才匆匆忙忙整理，常常到了學校才發現，課本或要交的東西忘在家裡。',
+   ifs:[{t:'想到的時候',ok:0},{t:'晚上刷完牙、走出浴室的時候',ok:1},{t:'爸媽在聯絡簿簽完名的時候',ok:1}],
+   dos:[{t:'照著聯絡簿，把明天要用的課本放進書包',ok:1},{t:'當一個不會忘東忘西的人',ok:0},{t:'把明天要帶的東西，一樣一樣放到書包旁邊',ok:1}],
+   doBtn:'現在整理書包'},
+  {id:'C',icon:'plug_bottle',goalIc:'plug_bottle',short:'喝水',title:'想多喝一點水',
+   story:NAME+'在學校常常一整天都忘了喝水，放學的時候，水壺裡的水幾乎還是滿的。',
+   ifs:[{t:'下課鐘一響的時候',ok:1},{t:'每次上完廁所、洗好手的時候',ok:1},{t:'方便的時候',ok:0}],
+   dos:[{t:'把水壺拿出來，放在桌上',ok:1},{t:'喝三大口水',ok:1},{t:'變成一個很健康的人',ok:0}],
+   doBtn:'現在去喝水'}
+];
+var SBY={};SIT.forEach(function(s){SBY[s.id]=s});
+var WR={id:'W',icon:'pencil',goalIc:'pencil',short:'寫字',doBtn:'現在就寫'};
+var DAYS=['星期一','星期二','星期三','星期四','星期五'];
+var EV=[
+ {d:0,s:'C',w:'第二節下課',ctx:'第二節下課了，同學在走廊叫你一起去玩。',tm:['先跟同學去玩','等口渴再說']},
+ {d:0,s:'A',w:'放學回到家',ctx:'放學回到家，平板就放在沙發上。',tm:['先看一支影片就好','先躺一下再說']},
+ {d:0,s:'W',w:'晚上 7 點',ctx:'晚上 7 點，該練習寫字了。電視正在播卡通。',tm:['卡通看完再說','今天好累，明天再寫']},
+ {d:1,s:'C',w:'第一節下課',ctx:'上完體育課回到教室，大家都在聊天。',tm:['先聊完天再說','等一下再喝']},
+ {d:1,s:'A',w:'放學回到家',ctx:'放學回到家，同學傳來一支好笑的影片。',tm:['先看這一支就好','先吃點心再說']},
+ {d:1,s:'B',w:'晚上睡覺前',ctx:'快要睡覺了，書包還攤在地上。',tm:['明天早上再整理','先玩一下再說']},
+ {d:2,s:'C',w:'第三節下課',ctx:'第三節下課，大家圍在一起看漫畫。',tm:['先把漫畫看完','等口渴再說']},
+ {d:2,s:'W',w:'晚上 7 點',ctx:'晚上 7 點，該練習寫字了。同學傳訊息約你打電動。',tm:['先打一場就好','明天再多寫一點']},
+ {d:2,s:'B',w:'晚上睡覺前',ctx:'快要睡覺了，明天美勞課要帶彩色筆。',tm:['明天早上再整理','應該不會忘吧']},
+ {d:3,s:'C',w:'第二節下課',ctx:'第二節下課，外面在下雨，大家都留在教室。',tm:['先趴著休息','等一下再喝']},
+ {d:3,s:'A',w:'放學回到家',ctx:'放學回到家，弟弟正在看你最喜歡的節目。',tm:['一起看一下就好','先躺一下再說']},
+ {d:3,s:'B',w:'晚上睡覺前',ctx:'快要睡覺了，你好想再看一下漫畫。',tm:['明天早上再整理','先看完這一回']},
+ {d:4,s:'C',w:'第一節下課',ctx:'第一節下課，你急著去福利社。',tm:['先去福利社','等口渴再說']},
+ {d:4,s:'A',w:'放學回到家',ctx:'星期五放學回到家，心情特別輕鬆。',tm:['今天先玩，週末再寫','先看一支影片就好']},
+ {d:4,s:'W',w:'晚上 7 點',ctx:'晚上 7 點，該練習寫字了。明天就放假了。',tm:['明天放假，今天先休息','等一下再寫']}
+];
+var VAL={
+ A:{n:'回家先寫功課，不要拖到睡前',ic:'openbook',x:'如果一進家門、放下書包，就拿出作業簿寫第一題。',e:'晚上會多出輕鬆的時間，也不用一直掛心「還沒寫」。',c:'回到家常常有點累，「就」要夠小，例如只寫第一題，不是「全部寫完」。'},
+ B:{n:'照顧身體：多喝水、早點睡',ic:'plug_bottle',x:'如果下課鐘一響，就喝三大口水。',e:'身體的小習慣每天都用得到，做久了，自己就會記得。',c:'效果要慢慢才看得出來，一兩天看不到變化，要有耐心。'},
+ C:{n:'每天練一點：寫字、樂器或運動',ic:'pencil',x:'如果晚上 7 點鬧鐘響了，就打開作業簿寫第一行。',e:'練習最怕三天打魚、兩天曬網；固定的時候一到就練，比較容易天天都有。',c:'時間要真的固定；遇到出去玩、生病的日子，要先想好怎麼辦。'},
+ D:{n:'照顧心情：生氣或難過時，先停一下',ic:'heart',x:'如果我想對同學大聲吼，就先深呼吸三次。',e:'情緒來得很快，事先想好的一個小動作，可以幫你先停一下，不用當下才想辦法。',c:'心情的「如果」比較難看到，要先找出自己生氣前的信號，例如握拳、臉發熱。'}
+};
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',l1:{place:{},first:{}},l2:{place:{},first:{}},l3:{},l3i:0,wk:{plug:[],started:false,i:0,res:[],wait:false,done:false},val:null}}
+var st=load();if(!st||!st.step||!st.wk)st=fresh();
+var timer=null;
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function head(cs,title){app.append(el('p','case',cs));app.append(el('h2',null,title))}
+function pairOk(sid){var c=st.l3[sid];if(!c)return {i:0,d:0};var s=SBY[sid];return {i:s.ifs[c.i].ok,d:s.dos[c.d].ok}}
+function sentence(sid){var c=st.l3[sid],s=SBY[sid];return '如果'+s.ifs[c.i].t+'，就'+s.dos[c.d].t+'。'}
+function l3msg(sid){
+  var c=st.l3[sid],s=SBY[sid],f=s.ifs[c.i],d=s.dos[c.d];
+  if(f.ok&&d.ok)return '燈亮了！「如果」看得到，「就」小小的、馬上做得到。時候一到，就能直接去做。';
+  var m='燈泡閃了一下，沒有亮。';
+  if(!f.ok)m+='「'+f.t+'」什麼時候會出現？看不出來，時候到了，也沒有東西提醒你。';
+  if(!d.ok)m+='「'+d.t+'」是很好的願望，可是太大了，時候到了，不知道手要先做什麼。';
+  return m+'可以拔掉重插，也可以先這樣，繼續往下。';
+}
+
+/* ---------- intro ---------- */
+function intro(){
+  app.append(el('h1',null,'如果就插頭'));
+  var c=el('div','card');
+  var say=el('div','say');say.innerHTML=av('kidB');say.append(el('p','lead','五年13班的'+NAME+'，每天都說：「<b>等一下</b>就寫。」可是「等一下」好像一直沒有來。'));
+  c.append(say);
+  c.append(el('p','lead',NAME+'不是不想做。只是每次時候到了，都要重新下一次決心：「要寫了嗎？還是再看一下？」想著想著，就又拖過去了。'));
+  c.append(el('p','lead','今天要做一種<b>「如果……就……」插頭</b>：事先把「什麼時候、在哪裡、看到什麼」和「我要做的一件小事」接在一起。時候一到，燈就自己亮，人就自動去做。'));
+  app.append(c);
+  var demo=el('div','card');
+  demo.append(el('h3',null,'像這樣：把「如果」插頭接到「就」插座，燈泡就亮了。'));
+  var play=el('div','play');play.innerHTML='<svg class="wires" aria-hidden="true"></svg>';
+  var L=el('div','col'),R=el('div','col');
+  var p=el('div','pc plug lit','<span class="hd"><span class="tag">'+ic('plug_plug')+'如果</span></span><span class="tx">每天晚上 7 點鬧鐘響的時候</span><span class="jack"></span>');p.style.cursor='default';
+  var s=el('div','pc sock lit','<span class="hd"><span class="tag">'+ic('plug_socket')+'就</span></span><span class="tx">打開作業簿寫第一行</span><span class="jack l"></span>');s.style.cursor='default';
+  L.append(p);R.append(s);play.append(L,R);
+  var bl=el('div','sent');bl.innerHTML=bulb('on');bl.append(el('p','','<span class="ki">如果</span>每天晚上 7 點鬧鐘響的時候，<span class="kd">就</span>打開作業簿寫第一行。'));
+  demo.append(play,bl);
+  demo.append(el('p','note','好的「如果」要<b>具體</b>：有時間、有地點，或是看得到、聽得到的信號。好的「就」要<b>小</b>：馬上做得到。'));
+  app.append(demo);
+  app.append(button('開始第 1 關','btn',function(){go('l1')}));
+  setWires(function(){drawWires(play,[[p.querySelector('.jack'),s.querySelector('.jack'),'on']])});
+}
+
+/* ---------- levels 1–2: sort cards into two boards ---------- */
+function sortPage(cfg){
+  var S=st[cfg.id];var sel=null,justK=null;
+  head(cfg.cs,cfg.title);
+  app.append(el('div','goal',cfg.goal));
+  var hint=el('p','hint');app.append(hint);
+  var play=el('div','play');play.innerHTML='<svg class="wires" aria-hidden="true"></svg>';
+  var L=el('div','col'),R=el('div','col');play.append(L,R);app.append(play);
+  var fb=fbk();app.append(fb);
+  var cnt=el('p','cnt');app.append(cnt);
+  var nx=button('下一關','btn',function(){if(Object.keys(S.place).length<4)return;go(cfg.id==='l1'?'l2':'l3')});app.append(nx);
+  var cards={},boards={};
+  cfg.items.forEach(function(it){
+    var isIf=cfg.kind==='if';
+    var c=el('div','pc '+(isIf?'plug':'sock'));asButton(c,(isIf?'如果：':'')+it.t);c.setAttribute('data-k',it.k);
+    c.innerHTML='<span class="hd">'+lt(it.k)+'<span class="tag">'+(isIf?ic('plug_plug')+'如果':ic('plug_socket'))+'</span></span><span class="tx">'+it.t+'</span><span class="wh"></span><span class="jack"></span>';
+    dnd(c,function(){return [boards.g,boards.v]},function(z){place(it.k,z.getAttribute('data-b'))},function(){sel=sel===it.k?null:it.k;upd()});
+    cards[it.k]=c;L.appendChild(c);
+  });
+  ['g','v'].forEach(function(b){
+    var B=cfg.boards[b];var d=el('div','board'+(b==='v'?' vb':''));d.setAttribute('data-b',b);asButton(d,'電源板：'+B.n);
+    d.innerHTML='<div class="bh">'+(b==='g'?bulb(''):ic('plug_board'))+'<span><span class="bn">'+B.n+'</span><span class="bs">'+B.s+'</span></span></div><div class="slots"></div>';
+    d.addEventListener('click',function(){if(sel)place(sel,b)});
+    d.addEventListener('keydown',function(e){if(e.target===d&&(e.key==='Enter'||e.key===' ')){e.preventDefault();if(sel)place(sel,b)}});
+    boards[b]=d;R.appendChild(d);
+  });
+  function itm(k){return cfg.items.filter(function(x){return x.k===k})[0]}
+  function place(k,b){
+    S.place[k]=b;if(!S.first[k])S.first[k]=b;S.last=k;sel=null;justK=k;save(st);upd(true);
+  }
+  function unplug(k){delete S.place[k];if(S.last===k)S.last=null;sel=null;justK=null;save(st);upd()}
+  function upd(scroll){
+    var pairs=[];var gLit=false;
+    var lk=S.last&&S.place[S.last]?S.last:null;
+    if(lk){var li=itm(lk),lb=S.place[lk];setFb(fb,lb==='g'?(li.ok?'on':(justK===lk?'flick':'')):'',lt(lk)+' '+(lb==='g'?li.g:li.v),scroll)}else setFb(fb,'','');
+    cfg.items.forEach(function(it){
+      var c=cards[it.k],b=S.place[it.k];
+      c.classList.toggle('sel',sel===it.k);c.classList.toggle('used',!!b);c.setAttribute('aria-pressed',sel===it.k?'true':'false');
+      var wh=c.querySelector('.wh');wh.innerHTML='';
+      if(b){wh.append(el('span',null,'插在：'+cfg.boards[b].n));var u=button(ic('plug_unplug')+'拔掉','unp',function(e){e.stopPropagation();unplug(it.k)});u.setAttribute('aria-label','拔掉 '+it.k);wh.append(u)}
+    });
+    ['g','v'].forEach(function(b){
+      var sl=boards[b].querySelector('.slots');sl.innerHTML='';
+      boards[b].classList.toggle('ready',!!sel);
+      cfg.items.forEach(function(it){
+        if(S.place[it.k]!==b)return;
+        var lit=b==='g'&&it.ok;if(lit)gLit=true;
+        var s=el('div','slot'+(lit?' lit':''),'<span class="jack"></span>'+lt(it.k)+(b==='g'?bulb(lit?'on':(justK===it.k?'flick':'')):'<span class="sl">收好了</span>'));
+        sl.appendChild(s);
+        pairs.push([cards[it.k].querySelector('.jack'),s.querySelector('.jack'),b==='g'?(it.ok?'on':''):'off']);
+      });
+      sl.appendChild(el('div','slot empty','<span class="jack"></span>插這裡'));
+    });
+    var hb=boards.g.querySelector('.bh svg.bulb');hb.classList.toggle('on',gLit);
+    var n=Object.keys(S.place).length;
+    cnt.textContent='已經插好 '+n+'／4 張';
+    nx.disabled=n<4;
+    hint.innerHTML=sel?ic('chev')+'現在點一下右邊的一塊電源板，把 '+sel+' 插上去。':ic('chev')+'按住左邊的卡片，拖到右邊的電源板；也可以先點卡片，再點電源板。';
+    justK=null;
+    setWires(function(){drawWires(play,pairs)});
+  }
+  upd();
+}
+
+/* ---------- level 3: connect one if-plug to one then-socket ---------- */
+function l3Page(){
+  var s=SIT[st.l3i];var sel=null;
+  head('第 3 關　接成一句（情境 '+(st.l3i+1)+'／3）',s.title);
+  var c=el('div','card');var say=el('div','say');say.innerHTML=av('kidB');say.append(el('p','lead',s.story));c.append(say);app.append(c);
+  var hint=el('p','hint');app.append(hint);
+  var play=el('div','play');play.innerHTML='<svg class="wires" aria-hidden="true"></svg>';
+  var L=el('div','col'),R=el('div','col');play.append(L,R);app.append(play);
+  var sc=el('div','card');var sent=el('div','sent');var why=el('p','why');var unb=el('div');sc.append(sent,why,unb);app.append(sc);
+  var nx=button(st.l3i<2?'下一個情境':'下一關：一週模擬','btn',function(){if(!st.l3[s.id])return;if(st.l3i<2){st.l3i++;go('l3')}else go('wk')});app.append(nx);
+  var P=[],Q=[];
+  s.ifs.forEach(function(f,i){
+    var d=el('div','pc plug');asButton(d,'如果：'+f.t);d.setAttribute('data-i',i);
+    d.innerHTML='<span class="hd"><span class="tag">'+ic('plug_plug')+'如果</span></span><span class="tx">'+f.t+'</span><span class="jack"></span>';
+    dnd(d,function(){return Q},function(z){connect(i,+z.getAttribute('data-d'))},function(){tap('i',i)});
+    P.push(d);L.appendChild(d);
+  });
+  s.dos.forEach(function(f,i){
+    var d=el('div','pc sock');asButton(d,'就：'+f.t);d.setAttribute('data-d',i);
+    d.innerHTML='<span class="hd"><span class="tag">'+ic('plug_socket')+'就</span></span><span class="tx">'+f.t+'</span><span class="jack l"></span>';
+    d.addEventListener('click',function(){tap('d',i)});
+    d.addEventListener('keydown',function(e){if(e.target===d&&(e.key==='Enter'||e.key===' ')){e.preventDefault();tap('d',i)}});
+    d.style.cursor='pointer';
+    Q.push(d);R.appendChild(d);
+  });
+  function tap(t,i){
+    if(sel&&sel.t!==t){var a=t==='i'?i:sel.i,b=t==='d'?i:sel.i;connect(a,b);return}
+    sel=(sel&&sel.t===t&&sel.i===i)?null:{t:t,i:i};upd(false);
+  }
+  function connect(i,d){st.l3[s.id]={i:i,d:d};sel=null;save(st);upd(true);requestAnimationFrame(function(){try{sc.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}})}
+  function upd(fresh){
+    var C=st.l3[s.id],q=C?pairOk(s.id):null,good=q&&q.i&&q.d;
+    P.forEach(function(d,i){var on=C&&C.i===i;d.classList.toggle('sel',!!(sel&&sel.t==='i'&&sel.i===i));d.classList.toggle('lit',!!(on&&good));d.classList.toggle('dim',!!(on&&!good));d.classList.toggle('ready',!!(sel&&sel.t==='d'))});
+    Q.forEach(function(d,i){var on=C&&C.d===i;d.classList.toggle('sel',!!(sel&&sel.t==='d'&&sel.i===i));d.classList.toggle('lit',!!(on&&good));d.classList.toggle('dim',!!(on&&!good));d.classList.toggle('ready',!!(sel&&sel.t==='i'))});
+    sent.innerHTML=bulb(C?(good?'on':(fresh?'flick':'')):'');
+    if(C)sent.append(el('p',null,'<span class="ki">如果</span>'+s.ifs[C.i].t+'，<span class="kd">就</span>'+s.dos[C.d].t+'。'));
+    else sent.append(el('p',null,'<span class="ki">如果</span><u>　　　　</u>，<span class="kd">就</span><u>　　　　</u>。'));
+    why.textContent=C?l3msg(s.id):'還沒接上。';
+    unb.innerHTML='';if(C)unb.append(button(ic('plug_unplug')+'拔掉重插','btn soft',function(){delete st.l3[s.id];save(st);upd(false)}));
+    nx.disabled=!C;
+    hint.innerHTML=ic('chev')+(sel?(sel.t==='i'?'現在點一張右邊的「就」插座。':'現在點一張左邊的「如果」插頭。'):'把左邊一個「如果」插頭拖到右邊一個「就」插座；也可以先點插頭，再點插座。');
+    setWires(function(){drawWires(play,C?[[P[C.i].querySelector('.jack'),Q[C.d].querySelector('.jack'),good?'on':'']]:[])});
+  }
+  upd(false);
+}
+
+/* ---------- level 4: my week ---------- */
+function wkPage(){
+  var W=st.wk;
+  head('第 4 關　一週模擬',W.started?'看看你的一週：有插頭的，時候到了燈就自己亮。':'把你接好的三句，插到「我的一週」電源板上。');
+  if(!W.started)wkPlug(W);else wkPlay(W);
+}
+function wkPlug(W){
+  var sel=null;
+  var hint=el('p','hint');app.append(hint);
+  var play=el('div','play wk');play.innerHTML='<svg class="wires" aria-hidden="true"></svg>';
+  var L=el('div','col'),R=el('div','col');play.append(L,R);app.append(play);
+  var cards={};
+  SIT.forEach(function(s){
+    var d=el('div','pc plug');asButton(d,sentence(s.id));
+    d.innerHTML='<span class="hd"><span class="tag">'+ic(s.icon)+s.short+'</span></span><span class="tx">'+sentence(s.id)+'</span><span class="wh"></span><span class="jack"></span>';
+    dnd(d,function(){return [board]},function(){plug(s.id)},function(){sel=sel===s.id?null:s.id;upd()});
+    cards[s.id]=d;L.appendChild(d);
+  });
+  var board=el('div','board');asButton(board,'電源板：我的一週');
+  board.innerHTML='<div class="bh">'+ic('week')+'<span><span class="bn">我的一週</span><span class="bs">星期一到星期五</span></span></div><div class="slots"></div>';
+  board.addEventListener('click',function(){if(sel)plug(sel)});
+  board.addEventListener('keydown',function(e){if(e.target===board&&(e.key==='Enter'||e.key===' ')){e.preventDefault();if(sel)plug(sel)}});
+  R.appendChild(board);
+  app.appendChild(el('div','wkout',ic('pencil')+'<span>練習寫字：第 1、2 關只挑了「如果」和「就」，還沒接成一句，沒有插頭。</span>'));
+  var fb=fbk();app.append(fb);
+  var nx=button(ic('plug_play')+'播放一週','btn',function(){if(W.plug.length<3)return;W.started=true;W.i=0;W.res=[];W.wait=false;W.done=false;save(st);autoStart=true;render();try{window.scrollTo(0,0)}catch(e){}});
+  app.append(nx);
+  function plug(id){if(W.plug.indexOf(id)<0)W.plug.push(id);W.last=id;sel=null;save(st);upd(true)}
+  function unplug(id){W.plug=W.plug.filter(function(x){return x!==id});if(W.last===id)W.last=null;sel=null;save(st);upd()}
+  function upd(scroll){
+    if(W.last&&W.plug.indexOf(W.last)>=0){var q=pairOk(W.last),s0=SBY[W.last];setFb(fb,q.i&&q.d?'on':'','「'+s0.short+'」'+(q.i&&q.d?'插好了。這一句的「如果」看得到、「就」做得到，時候一到，燈會自己亮。':'插好了。不過這一句的'+(!q.i?'「如果」太模糊':'「就」太大')+'，等一下時候到了，燈可能亮不起來。'),scroll)}else setFb(fb,'','');
+    var pairs=[];var sl=board.querySelector('.slots');sl.innerHTML='';
+    board.classList.toggle('ready',!!sel);
+    SIT.forEach(function(s){
+      var c=cards[s.id],on=W.plug.indexOf(s.id)>=0;
+      c.classList.toggle('sel',sel===s.id);c.classList.toggle('used',on);
+      var wh=c.querySelector('.wh');wh.innerHTML='';
+      if(on){wh.append(el('span',null,'插在：我的一週'));wh.append(button(ic('plug_unplug')+'拔掉','unp',function(e){e.stopPropagation();unplug(s.id)}))}
+    });
+    W.plug.forEach(function(id){
+      var s=SBY[id],q=pairOk(id),g=q.i&&q.d;
+      var d=el('div','slot'+(g?' lit':''),'<span class="jack"></span>'+ic(s.icon)+'<span class="sl">'+s.short+'</span>'+bulb(g?'on':''));
+      sl.appendChild(d);pairs.push([cards[id].querySelector('.jack'),d.querySelector('.jack'),g?'on':'']);
+    });
+    if(W.plug.length<3)sl.appendChild(el('div','slot empty','<span class="jack"></span>插這裡'));
+    nx.disabled=W.plug.length<3;
+    hint.innerHTML=ic('chev')+(sel?'現在點一下右邊的「我的一週」電源板。':'把三張句子卡拖到右邊的電源板；也可以先點卡片，再點電源板。');
+    setWires(function(){drawWires(play,pairs)});
+  }
+  upd();
+}
+var autoStart=false;
+function qual(sid){if(sid==='W')return 'none';var q=pairOk(sid);return q.i&&q.d?'auto':(!q.i?'noif':'nodo')}
+function sOf(sid){return sid==='W'?WR:SBY[sid]}
+function wkPlay(W){
+  var ctr=el('div','ctr');
+  ctr.innerHTML='<div class="c1">'+bulb('on')+'<span>燈泡自動亮</span><b id="nA">0</b></div><div class="c2">'+ic('think')+'<span>自己重新決定</span><b id="nD">0</b></div>';
+  app.append(ctr);
+  var stage=el('div','stage');
+  stage.innerHTML='<div class="top"><span class="when"></span>'+bulb('')+'</div><div class="lane"><div class="flr"></div><div class="goal2"></div><div class="kid">'+av('kidB')+'</div><div class="bub"></div></div><p class="msg"></p>';
+  app.append(stage);
+  var days=el('div','days');var chips=[];
+  DAYS.forEach(function(dn,di){var d=el('div','day');d.append(el('span','dn',dn));EV.forEach(function(e,i){if(e.d!==di)return;var c=el('span','chip',ic(sOf(e.s).icon));d.append(c);chips[i]=c});days.append(d)});
+  app.append(days);
+  app.append(el('p','legend','<span><i class="a"></i>燈自動亮</span><span><i class="d"></i>自己決定，做了</span><span><i class="s"></i>自己決定，先沒做</span>'));
+  var ctl=el('div','stack');app.append(ctl);
+  var fin=el('div','stack');app.append(fin);
+  var when=stage.querySelector('.when'),sb=stage.querySelector('.top svg.bulb'),lane=stage.querySelector('.lane'),g2=stage.querySelector('.goal2'),bub=stage.querySelector('.bub'),msg=stage.querySelector('.msg');
+  var dayEls=days.querySelectorAll('.day');
+  function counts(){var a=0,d=0,k=0;W.res.forEach(function(r){if(r==='auto')a++;else{d++;if(r==='did')k++}});return {a:a,d:d,k:k}}
+  function paintChips(cur){
+    EV.forEach(function(e,i){var r=W.res[i];chips[i].className='chip'+(r?' '+r:'')+(i===cur?' cur':'');chips[i].setAttribute('aria-label',DAYS[e.d]+e.w+'：'+(r==='auto'?'燈自動亮':r==='did'?'自己決定，做了':r==='skip'?'自己決定，先沒做':'還沒到'))});
+    dayEls.forEach(function(d,di){d.classList.toggle('now',cur!=null&&EV[cur]&&EV[cur].d===di)});
+    var c=counts();app.querySelector('#nA').textContent=c.a;app.querySelector('#nD').textContent=c.d;
+  }
+  function show(i,mode){
+    var e=EV[i],s=sOf(e.s);
+    when.textContent=DAYS[e.d]+'・'+e.w;
+    g2.innerHTML=ic(s.goalIc);
+    sb.setAttribute('class','bulb'+(mode==='auto'?' on':mode==='nodo'?' flick':''));
+    lane.className='lane'+(mode==='auto'||mode==='did'?' go':(mode==='ask'?' ask':''));
+    bub.textContent=mode==='auto'?'沒有猶豫，直接做':mode==='did'?'做了':mode==='skip'?'等一下再說':mode==='ask'?'要做嗎？':'';
+    if(mode==='auto'){msg.innerHTML='<span class="k">'+sentence(e.s)+'</span>　燈一亮，'+NAME+'就去做了。'}
+    else if(mode==='did'){msg.innerHTML='做了。不過這一次，是停下來想一想、自己用力決定的。'}
+    else if(mode==='skip'){msg.innerHTML='這一次先沒做。下一次時候到了，還要再決定一次。'}
+    else msg.innerHTML=e.ctx;
+  }
+  function idle(){
+    when.textContent=W.i>0?'暫停在'+DAYS[EV[Math.min(W.i,EV.length)-1].d]:'還沒開始';
+    sb.setAttribute('class','bulb');lane.className='lane';bub.textContent='';g2.innerHTML='';
+    msg.textContent=W.i>0?'按「繼續播放」，接著看下去。':'按「播放一週」，看看星期一到星期五會發生什麼事。';
+  }
+  function stepNext(){
+    timer=null;
+    if(W.i>=EV.length){W.done=true;save(st);finish();return}
+    var e=EV[W.i],q=qual(e.s);
+    paintChips(W.i);
+    if(q==='auto'){
+      var i0=W.i;W.res[i0]='auto';W.i++;save(st);show(i0,'auto');paintChips(i0);
+      timer=setTimeout(stepNext,1900);
+    }else{W.wait=true;save(st);ask()}
+  }
+  function ask(){
+    var e=EV[W.i],s=sOf(e.s),q=qual(e.s);
+    show(W.i,q==='nodo'?'nodo':'ask');lane.className='lane ask';bub.textContent='要做嗎？';paintChips(W.i);
+    var ov=el('div','ov');var dl=el('div','dlg');dl.setAttribute('role','dialog');dl.setAttribute('aria-modal','true');dl.setAttribute('aria-label','要做嗎？');
+    dl.append(el('p','case',DAYS[e.d]+'・'+e.w));
+    dl.append(el('h2',null,'要做嗎？'));
+    dl.append(el('p','lead',e.ctx));
+    var why=q==='none'?'練習寫字沒有接成一句，沒有插頭，燈不會自己亮，要自己決定。':
+      q==='noif'?'你的插頭是「如果'+s.ifs[st.l3[e.s].i].t+'」。現在算是嗎？說不準，燈泡沒有亮，要自己決定。':
+      '燈亮了，可是「'+s.dos[st.l3[e.s].d].t+'」要從哪裡開始？手不知道要先做什麼，要自己決定。';
+    dl.append(el('p','why',why));
+    var o=el('div','opts');
+    [[s.doBtn,'did',s.goalIc],[e.tm[0],'skip','think'],[e.tm[1],'skip','think']].forEach(function(x){o.append(button(ic(x[2])+'<span>'+x[0]+'</span>','btn alt',function(){choose(x[1],ov)}))});
+    dl.append(o);ov.append(dl);app.append(ov);
+    try{o.querySelector('button').focus({preventScroll:true})}catch(_){}
+  }
+  function choose(r,ov){
+    var i=W.i;W.res[i]=r;W.i++;W.wait=false;save(st);ov.remove();
+    show(i,r);paintChips(i);
+    timer=setTimeout(function(){paintChips(W.i);timer=setTimeout(stepNext,500)},1500);
+  }
+  function start(){ctl.innerHTML='';ctl.append(el('p','hint',ic('clock')+'播放中……'));stepNext()}
+  function finish(){
+    paintChips(null);idle();when.textContent='一週結束了';msg.textContent='星期一到星期五都播完了。';
+    ctl.innerHTML='';var c=counts();
+    var card=el('div','card');
+    card.append(el('h3',null,'這一週，燈泡自動亮了 '+c.a+' 次；你停下來自己決定了 '+c.d+' 次，其中做了 '+c.k+' 次。'));
+    card.append(el('p','note','插好插頭的句子，時候一到就直接做，不用想。沒有插頭的練習寫字，每一次都要停下來，和卡通、電動、「明天再說」拉扯一次，比較累，也比較容易說「等一下」。'));
+    var bad=SIT.filter(function(s){return qual(s.id)!=='auto'});
+    if(bad.length)card.append(el('p','note warm','你接的「'+bad.map(function(s){return s.short}).join('」「')+'」這一句，燈沒辦法自己亮：'+bad.map(function(s){return qual(s.id)==='noif'?'「如果」太模糊，看不出時候到了沒有':'「就」太大，不知道第一步做什麼'}).join('；')+'。'));
+    fin.innerHTML='';fin.append(card);
+    fin.append(button('下一步','btn',function(){go('val')}));
+  }
+  if(W.done){finish();return}
+  paintChips(W.wait?W.i:null);
+  if(W.wait){ctl.append(el('p','hint',ic('clock')+'播放中……'));ask();return}
+  if(autoStart){autoStart=false;start();return}
+  idle();
+  ctl.append(button(ic('plug_play')+(W.i>0?'繼續播放':'播放一週'),'btn',start));
+}
+
+/* ---------- value question ---------- */
+function valPage(){
+  head('最後一題','你最想用「如果……就……」來幫自己做哪一件事？');
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。選好以後，會看到一個例句、這樣做的作用，和要注意的地方。'));
+  var o=el('div','opts');var bs={};var fb=el('div');
+  Object.keys(VAL).forEach(function(k){var b=button(ic(VAL[k].ic)+lt(k)+'<span>'+VAL[k].n+'</span>','btn alt'+(st.val===k?' pick':''),function(){st.val=k;save(st);upd()});b.setAttribute('data-v',k);bs[k]=b;o.appendChild(b)});
+  var nx=button('下一步','btn',function(){if(st.val)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    Object.keys(bs).forEach(function(k){bs[k].classList.toggle('pick',st.val===k);bs[k].setAttribute('aria-pressed',st.val===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.val;
+    if(st.val){var m=VAL[st.val];var c=el('div','card');c.append(el('h3',null,lt(st.val)+' '+m.n));c.append(el('dl','ec','<dt class="x">例句</dt><dd>'+m.x+'</dd><dt class="e">作用</dt><dd>'+m.e+'</dd><dt class="c">要注意</dt><dd>'+m.c+'</dd>'));fb.appendChild(c)}
+  }
+  upd();
+}
+
+/* ---------- end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  function cnt(cfg){var S=st[cfg.id];var r=cfg.items.filter(function(it){return it.ok&&S.first[it.k]==='g'}).length,m=cfg.items.filter(function(it){return !it.ok&&S.first[it.k]==='g'}).length;return r+' 個（共 2 個）<span class="sub">'+(cfg.kind==='if'?'太模糊的「如果」':'太大、太模糊的「就」')+'，第一次插進「好用的」：'+m+' 個</span>'}
+  var W=st.wk,a=0,d=0,k=0;W.res.forEach(function(r){if(r==='auto')a++;else{d++;if(r==='did')k++}});
+  var c=el('div','card');var tb=el('table','sum');
+  var rows=[
+    ['第 1 關：挑對的具體「如果」',cnt(L1)],
+    ['第 2 關：挑對的小而具體的「就」',cnt(L2)],
+    ['一週模擬：燈泡自動亮了',a+' 次'],
+    ['一週模擬：自己重新決定',d+' 次（其中做了 '+k+' 次）'],
+    ['最想用「如果……就……」幫自己',lt(st.val)+' '+VAL[st.val].n]
+  ];
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);
+  c.append(el('p','hint','第 1、2 關算的是你第一次插的位置。'));
+  app.append(c);
+  var c2=el('div','card');c2.append(el('h3',null,'你接的三句「如果……就……」'));
+  var b3=el('div','big3');
+  SIT.forEach(function(s){var q=pairOk(s.id);b3.append(el('div','s3',bulb(q.i&&q.d?'on':'')+'<span>'+sentence(s.id)+'</span>'))});
+  c2.append(b3);app.append(c2);
+  app.append(el('p','note warm','老師等一下會請大家舉手：第 1、2 關各挑對幾個？一週裡燈泡自動亮了幾次？最想用「如果……就……」幫自己做哪一件事？'));
+}
+
+function render(){
+  if(timer){clearTimeout(timer);timer=null}
+  curWires=null;
+  app.innerHTML='';
+  var s=st.step;
+  if(s==='intro')intro();
+  else if(s==='l1')sortPage(L1);
+  else if(s==='l2')sortPage(L2);
+  else if(s==='l3'&&st.l3i>=0&&st.l3i<3)l3Page();
+  else if(s==='wk'&&SIT.every(function(x){return st.l3[x.id]}))wkPage();
+  else if(s==='val')valPage();
+  else if(s==='end'&&st.val&&st.wk.done)endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

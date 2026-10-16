@@ -1,0 +1,98 @@
+<title>大家在想什麼？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: a story (you just misread a word while reporting) → first guess how many classmates are thinking about it → tap 12 classmate cards to reveal their thought bubbles → count. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF1EF; --card:#FBFCFA; --ink:#1F2A2E; --muted:#56605C; --line:#D2D9D5;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:920px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.p{font:inherit;text-align:left;border:3px solid var(--line);border-radius:18px;background:var(--card);padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:8px;color:var(--ink);min-height:150px}
+.p .who{display:flex;align-items:center;gap:10px;font-size:clamp(18px,2.5vw,23px);font-weight:900}
+.p .av{width:40px;height:40px;border-radius:50%;flex:none}
+.p .bub{font-size:clamp(16px,2.2vw,20px);line-height:1.5;background:#F1F2EC;border-radius:14px;padding:8px 10px;color:var(--muted)}
+.p.open .bub{color:var(--ink);background:var(--note)}
+.p.you{border-color:var(--rust)} .p.you .bub{background:#F6E4DC}
+.p:focus-visible,.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn.alt[aria-pressed="true"]{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{background:#A7B0AE;cursor:default}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:clamp(18px,2.6vw,24px);font-weight:700;color:var(--muted);margin:0}
+.top b{color:var(--ink)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.7vw,25px);line-height:1.7;margin:0}
+.big{font-size:clamp(56px,11vw,100px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea);font-variant-numeric:tabular-nums}
+@media (max-width:620px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.opts{grid-template-columns:repeat(2,1fr)}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='thoughts-spotlight-v1';
+var P=[
+ {n:'小安',c:'#2F6F9E',t:'糟糕，等一下就輪到我報告了，我好緊張……'},
+ {n:'阿哲',c:'#C0612B',t:'中午的營養午餐，好像有炸雞腿！'},
+ {n:'佳佳',c:'#3E8A5A',t:'我的頭髮今天翹起來了，大家會不會覺得很奇怪？'},
+ {n:'宇翔',c:'#8A5BA8',t:'放學要去打球，不知道會不會下雨。'},
+ {n:'美美',c:'#B58A1F',t:'我剛剛好像也把一個字念錯了，好丟臉……'},
+ {n:'志豪',c:'#4C7C7C',t:'咦？他剛剛是不是念錯一個字？……算了，好睏喔。',you:true},
+ {n:'小芳',c:'#9B4E6E',t:'我的鉛筆盒跑到哪裡去了？'},
+ {n:'阿明',c:'#5A7D5A',t:'昨天的卡通結局，到底是什麼意思？'},
+ {n:'小琪',c:'#A8441A',t:'我等一下要問老師什麼問題？我忘記了……'},
+ {n:'家豪',c:'#205E86',t:'肚子好餓，還有多久才下課？'},
+ {n:'思妤',c:'#7A5A3A',t:'我的報告好像寫太短了，老師會不會說話？'},
+ {n:'柏宇',c:'#56605C',t:'窗外那隻鳥是什麼鳥？是黑面琵鷺嗎？'}
+];
+var G=['0～1 個','2～4 個','5～8 個','9～12 個'];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{step:0,guess:null,open:[]};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','你剛剛上台報告。念到一半，你不小心把「蚵仔煎」念成了「蚵仔麵」，台下有人笑了一下。你的臉一下子變得好燙。'),el('p','lead','現在你走回座位，全班有 12 位同學。'));
+  var h=el('h2',null,'你覺得，現在有幾位同學正在想你念錯字這件事？');
+  var g=el('div','opts');var bs=[];var go=el('button','btn','看看大家在想什麼');go.type='button';go.disabled=true;
+  G.forEach(function(t,k){var b=el('button','btn alt',t);b.type='button';b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){st.guess=k;bs.forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');go.disabled=false});bs.push(b);g.appendChild(b)});
+  go.addEventListener('click',function(){st.step=1;save(st);room()});
+  app.append(el('h1',null,'大家在想什麼？'),c,h,g,go);
+}
+function room(){
+  app.innerHTML='';
+  var top=el('p','top');var g=el('div','grid');var fin=el('div');
+  function draw(){
+    top.innerHTML='<span>點一點每位同學，看看他心裡在想什麼</span><span>已經看了 <b>'+st.open.length+'</b> / 12 位</span>';
+    g.innerHTML='';
+    P.forEach(function(p,k){var o=st.open.indexOf(k)>=0;var b=el('button','p'+(o?' open':'')+(o&&p.you?' you':''));b.type='button';
+      var w=el('div','who');var av=el('span','av');av.style.background=p.c;w.append(av,el('span',null,p.n));
+      b.append(w,el('div','bub',o?p.t:'（點我看看）'));b.addEventListener('click',function(){if(st.open.indexOf(k)<0){st.open.push(k);save(st);draw();if(st.open.length===P.length)done()}});g.appendChild(b)});
+  }
+  function done(){if(fin.childNodes.length)return;var nx=el('button','btn','看結果');nx.type='button';nx.addEventListener('click',function(){st.step=2;save(st);end()});fin.appendChild(nx);nx.scrollIntoView({behavior:'smooth',block:'end'})}
+  app.append(top,g,fin);draw();if(st.open.length===P.length)done();
+}
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','12 位同學裡，真正想到你念錯字的有'),el('p','big','1 位'),el('p','note','而且志豪只想了一下，就去想「好睏喔」了。<br>其他同學都在想自己的事：自己的報告、自己的頭髮、午餐、下課要做什麼。<br>還有人跟你一樣，擔心自己剛剛也出糗了。'));
+  c.appendChild(el('p','lead','你一開始猜的是：'+(st.guess!=null?G[st.guess]:'—')));
+  app.append(el('h2',null,'看完了！請停在這一頁，等其他同學。'),c);
+}
+var S=[intro,room,end];(S[st.step]||intro)();
+})();
+</script>

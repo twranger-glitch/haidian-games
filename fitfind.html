@@ -1,0 +1,418 @@
+<title>幫產品找主人</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story → knock on doors (product card in the middle, six people around it; tap a person to knock, a speech bubble answers; need 2 "yes" to go on) → same product, different people (who said yes / no and what they share) → pick the line that wins over 阿珊 (feedback, any pick continues) → design a Haidian souvenir: item + who it is for + what it does for them, live sentence (no right answer) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC; --mint:#E6F2E9;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,3vw,26px);font-weight:900;margin:0;line-height:1.4}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.alt:disabled{opacity:1}
+.btn.alt.dim{opacity:.55}
+.btn:focus-visible,.who:focus-visible,.item:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.letter{display:inline-block;min-width:1.4em;font-weight:900;color:var(--sea);flex:none}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note.mint{background:var(--mint)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+svg.av{display:block;flex:none}
+
+/* product */
+.prod{align-items:center;text-align:center;border-color:var(--sea);background:#F4F8FA}
+.prod .pic svg{width:clamp(96px,16vw,140px);height:clamp(96px,16vw,140px);color:var(--ink)}
+.prod h3{font-size:clamp(24px,3.4vw,30px)}
+.prod p{margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.prod .price{font-weight:900;color:var(--rust);font-size:clamp(22px,3vw,28px)}
+.prod .price small{font-size:19px;color:var(--muted);font-weight:700;display:block}
+
+/* ring of people */
+.ring{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1fr);grid-template-areas:"a p b" "c p d" "e p f";gap:12px;align-items:start}
+.ring .prod{grid-area:p;align-self:center}
+.door{display:flex;flex-direction:column;gap:8px;min-width:0}
+.who{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:20px;padding:12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;cursor:pointer;width:100%;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .15s,background .15s}
+.who svg.av{width:clamp(60px,8vw,76px);height:clamp(60px,8vw,76px)}
+.who .nm{font-weight:900;font-size:clamp(21px,2.8vw,25px);line-height:1.3}
+.who .sit{font-size:clamp(19px,2.2vw,20px);color:var(--muted);line-height:1.5}
+.who.yes{border-color:var(--good);background:var(--mint)}
+.who.no{border-color:#AEB6B1}
+.who.knock{animation:knock .45s ease-in-out}
+@keyframes knock{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.tag{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;font-size:clamp(16px,1.9vw,18px);font-weight:900;padding:2px 10px 2px 6px;border-radius:999px;line-height:1.5}
+.tag.yes{background:var(--good);color:#fff}
+.tag.no{background:#DDE2DE;color:var(--muted)}
+.knocking{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(251,252,249,.92);border-radius:17px;font-weight:900;font-size:clamp(22px,3vw,28px);color:var(--sea)}
+.knocking svg.i{width:1.6em;height:1.6em}
+.bub{position:relative;background:#fff;border:3px solid var(--line);border-radius:18px;padding:10px 14px;font-size:clamp(19px,2.3vw,21px);line-height:1.6;margin-top:6px}
+.bub::before{content:"";position:absolute;top:-12px;left:50%;margin-left:-10px;border:10px solid transparent;border-top:0;border-bottom:12px solid var(--line)}
+.bub::after{content:"";position:absolute;top:-8px;left:50%;margin-left:-7px;border:7px solid transparent;border-top:0;border-bottom:9px solid #fff}
+.bub.yes{border-color:var(--good)}
+.bub.yes::before{border-bottom-color:var(--good)}
+.bub.new{animation:pop .3s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.status{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 18px}
+.status p{margin:0;font-size:clamp(19px,2.6vw,24px);font-weight:700}
+.status b{font-size:1.2em;font-variant-numeric:tabular-nums}
+.pips{display:flex;gap:8px}
+.pip{width:clamp(34px,5vw,42px);height:clamp(34px,5vw,42px);border-radius:50%;border:3px dashed #AEB6B1;display:flex;align-items:center;justify-content:center;color:#fff}
+.pip.on{border:3px solid var(--good);background:var(--good)}
+.pip svg.i{width:1.3em;height:1.3em}
+.need{margin:0;font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:700}
+
+/* compare */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cols .card h3{display:flex;align-items:center;gap:8px}
+.mini{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:2px solid var(--line)}
+.mini:last-child{border-bottom:0}
+.mini svg.av{width:52px;height:52px}
+.mini p{margin:0;font-size:clamp(19px,2.3vw,21px);line-height:1.5}
+.mini .skip{color:var(--muted);font-size:19px;font-weight:700}
+
+/* pitch */
+.say{display:flex;gap:14px;align-items:flex-start}
+.say svg.av{width:clamp(64px,10vw,84px);height:clamp(64px,10vw,84px)}
+.say .bub{margin-top:8px;flex:1}
+.say .bub::before{top:18px;left:-12px;margin:0;border:10px solid transparent;border-left:0;border-right:12px solid var(--line)}
+.say .bub::after{top:21px;left:-8px;margin:0;border:7px solid transparent;border-left:0;border-right:9px solid #fff}
+.opts{display:flex;flex-direction:column;gap:10px}
+.fb{border-left:8px solid var(--gold)}
+.fb.ok{border-left-color:var(--good)}
+
+/* design */
+.items{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.item{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;cursor:pointer;touch-action:manipulation}
+.item svg.i{width:clamp(52px,7vw,64px);height:clamp(52px,7vw,64px)}
+.item .nm{font-weight:900;font-size:clamp(19px,2.3vw,21px);line-height:1.35}
+.item .ds{font-size:clamp(19px,2vw,19px);color:var(--muted);line-height:1.45}
+.item.pick{border-color:var(--gold);background:var(--warm)}
+.aud{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aud .btn.alt svg.i{width:1.6em;height:1.6em}
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec .q{margin:0;font-weight:900;font-size:clamp(21px,3vw,26px)}
+.wait{margin:0;color:var(--muted);font-size:clamp(19px,2.4vw,22px)}
+.sent{background:var(--warm);border:3px solid var(--gold);border-radius:20px;padding:clamp(14px,3vw,22px);font-size:clamp(22px,3.2vw,30px);font-weight:700;line-height:1.8;margin:0}
+.slot{display:inline-block;min-width:4.5em;border-bottom:3px solid var(--gold);color:var(--rust);font-weight:900;padding:0 4px;line-height:1.4}
+.slot.empty{color:#B5A27A;font-weight:700}
+
+/* end */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:12px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700;width:34%}
+
+@media (max-width:700px){
+  .ring{grid-template-columns:1fr;grid-template-areas:"p" "a" "b" "c" "d" "e" "f"}
+  .who{flex-direction:row;text-align:left;align-items:center;gap:12px;padding:10px 12px}
+  .who .txt{flex:1;min-width:0;padding-right:4px}
+  .who .nm{padding-right:104px}
+  .who:not(.yes):not(.no) .nm{padding-right:0}
+  .bub::before{left:46px}.bub::after{left:46px}
+  .items{grid-template-columns:1fr 1fr}
+  .cols{grid-template-columns:1fr}
+  .prod{flex-direction:row;text-align:left;gap:14px}
+  .prod .pic svg{width:88px;height:88px}
+  td:first-child{width:40%}
+}
+@media (max-width:620px){.wrap{padding-inline:16px}.aud{grid-template-columns:1fr}td,td:first-child{display:block;width:auto}td:first-child{border-bottom:0;padding-bottom:2px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={
+stand:'<path d="M3 7Q7.2 5.3 11.5 7V14Q7.2 12.3 3 14Z" fill="#F6EBD2"/><path d="M12.5 7Q16.8 5.3 21 7V14Q16.8 12.3 12.5 14Z" fill="#F6EBD2"/><path d="M14.2 3.6Q17.4 1.4 20 4.2"/><path d="M20.4 1.8l-.3 2.6-2.5-.4"/><path d="M2.5 15.2h19"/><path d="M12 15.2v5.8M8.5 21h7"/><rect x="16.6" y="18.4" width="5.2" height="3" rx="1" fill="#DCE8F0"/><path d="M12 17.6q3.4 0 5.3.8"/>',
+door:'<rect x="5" y="2.5" width="12" height="19" rx="1.6" fill="#F3E3BE"/><path d="M3 21.5h16"/><circle cx="14" cy="12.5" r="1" fill="currentColor"/><path d="M19.6 7.5l1.9-1.2M19.9 10.5h2.2M19.6 13.5l1.9 1.2"/>',
+check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+x:'<path d="M7 7l10 10M17 7L7 17"/>',
+spoon:'<circle cx="5.2" cy="4.8" r="2.4" fill="#FBF4E2"/><path d="M6.4 6.9l1.6 4.6"/><path d="M3.6 14.8Q5 11.6 9.6 11.8Q13.4 12 14.6 14.6Q13.4 18 8.8 18Q4.6 18 3.6 14.8Z" fill="#FBFCF9"/><path d="M13.6 13.2Q15.4 11.6 15.6 9.6"/><circle cx="16.4" cy="8" r="2" fill="#FBFCF9"/><path d="M18.2 8.6l2.2 3.4"/><ellipse cx="21" cy="13.3" rx="1.3" ry="1.7" fill="#3A4448" transform="rotate(-30 21 13.3)"/><path d="M8 18v3.6M10.8 17.8v3.8"/>',
+fish:'<path d="M6 2.5h12v19l-6-3.8-6 3.8z" fill="#DCE8F0"/><path d="M7.8 10.2Q11 6.4 14.6 10.2Q11 14 7.8 10.2Z" fill="#FBFCF9"/><path d="M14.6 10.2l2-1.8v3.6z" fill="#FBFCF9"/><circle cx="9.6" cy="9.8" r=".6" fill="currentColor"/>',
+card:'<rect x="2.5" y="5" width="19" height="14" rx="2" fill="#FBFCF9"/><path d="M4.6 17V12.4Q4.6 7.8 9.4 7.8Q14.2 7.8 14.2 12.4V17Z" fill="#CFE3C4"/><path d="M7.2 17v-3.6Q7.2 10.8 9.4 10.8Q11.6 10.8 11.6 13.4V17"/><path d="M3.8 17h11.6"/><rect x="16.4" y="7.4" width="3.2" height="3.6" rx=".6" fill="#F3E3BE"/><path d="M16.4 14h3.2M16.4 16.4h3.2"/>',
+salt:'<path d="M3.5 16.5L9.4 6.6L12.6 11L15 8.2L20.5 16.5Z" fill="#FBFCF9"/><path d="M8 9.1l1.4 1.2 1.3-1.2"/><rect x="2.8" y="16.2" width="18.4" height="4.6" rx="1.4" fill="#F2B8A0"/>',
+camera:'<rect x="2.8" y="7" width="18.4" height="12.6" rx="2.6" fill="#DCE8F0"/><path d="M8.4 7l1.4-2.5h4.4L15.6 7"/><circle cx="12" cy="13.2" r="3.6" fill="#FBFCF9"/><path d="M17.6 10h.01"/>',
+bag:'<path d="M5.6 9.6a6.4 6.4 0 0 1 12.8 0v10a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2z" fill="#F3E3BE"/><path d="M9.4 4.4a2.6 2.6 0 0 1 5.2 0"/><rect x="8.4" y="13.6" width="7.2" height="4.8" rx="1.2" fill="#FBF4E2"/>',
+home:'<path d="M3.8 11.2L12 4l8.2 7.2V20a1.2 1.2 0 0 1-1.2 1.2H5a1.2 1.2 0 0 1-1.2-1.2z" fill="#F6E3D6"/><path d="M10 21.2v-5.4h4v5.4"/><path d="M2.5 12.4L12 4l9.5 8.4"/>',
+badge:'<rect x="5" y="4.6" width="14" height="17" rx="2" fill="#FBF4E2"/><path d="M9.6 4.6V2.6h4.8v2"/><circle cx="12" cy="11" r="2.4" fill="#DCE8F0"/><path d="M8.4 17.2Q12 12.8 15.6 17.2"/>'
+};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+/* colored avatars, 64x64, same base as icons.py AV */
+function _av(skin,hair,shirt,extra){return '<circle cx="32" cy="32" r="31" fill="#EEF1EC"/><path d="M12 64 Q13 44 32 44 Q51 44 52 64 Z" fill="'+shirt+'"/><circle cx="32" cy="27" r="13" fill="'+skin+'"/>'+hair+'<circle cx="27.5" cy="28" r="1.8" fill="#1F2A2E"/><circle cx="36.5" cy="28" r="1.8" fill="#1F2A2E"/><path d="M27.5 33 Q32 36.5 36.5 33" fill="none" stroke="#1F2A2E" stroke-width="2" stroke-linecap="round"/>'+(extra||'')}
+var AVI={
+ming:_av('#F2CFAE','<path d="M19 25 Q19 12 32 13 Q45 12 45 25 Q40 18 32 18.5 Q24 18 19 25 Z" fill="#2B2118"/>','#205E86','<rect x="22" y="50" width="20" height="12" rx="1.5" fill="#FBF4E2" stroke="#1F2A2E" stroke-width="1.5"/><path d="M32 50v12" stroke="#1F2A2E" stroke-width="1.5"/><path d="M25 54h4M35 54h4" stroke="#9AA39E" stroke-width="1.3" stroke-linecap="round"/>'),
+shan:_av('#F2CFAE','<path d="M18 36 Q15 12 32 12.5 Q49 12 46 36 Q44 22 40 19 Q32 22 22 19.5 Q19 24 18 36 Z" fill="#2B2118"/>','#7A4E9C','<g transform="rotate(-38 18 52)"><ellipse cx="18" cy="47" rx="5" ry="4.2" fill="#B8692E" stroke="#1F2A2E" stroke-width="1.4"/><ellipse cx="18" cy="55" rx="6.2" ry="5.2" fill="#B8692E" stroke="#1F2A2E" stroke-width="1.4"/><path d="M18 51.5v6" stroke="#1F2A2E" stroke-width="1.2"/><path d="M18 43v-9" stroke="#1F2A2E" stroke-width="2" stroke-linecap="round"/></g><path d="M8 58 L36 42" stroke="#56605C" stroke-width="1.6" stroke-linecap="round"/>'),
+ama:_av('#F2CFAE','<circle cx="32" cy="12.5" r="5" fill="#C9CCD1"/><path d="M19 27 Q19 13 32 14 Q45 13 45 27 Q41 19 32 19.5 Q23 19 19 27 Z" fill="#C9CCD1"/>','#A8441A','<circle cx="27.5" cy="28" r="3.6" fill="none" stroke="#56605C" stroke-width="1.5"/><circle cx="36.5" cy="28" r="3.6" fill="none" stroke="#56605C" stroke-width="1.5"/><path d="M31.1 28h1.8" stroke="#56605C" stroke-width="1.5"/><path d="M23 49 Q32 47 41 49 L42 64 L22 64 Z" fill="#FBFCF9" stroke="#C9CCD1" stroke-width="1.2"/><circle cx="27" cy="55" r="1.6" fill="#E6DCC6"/><circle cx="35" cy="58" r="2" fill="#E6DCC6"/><circle cx="31" cy="61" r="1.3" fill="#E6DCC6"/><circle cx="23" cy="34" r="1.5" fill="#FBFCF9"/>'),
+kai:_av('#E9BE96','<path d="M19 25 Q19 12 32 13 Q45 12 45 25 Q40 18 32 18.5 Q24 18 19 25 Z" fill="#3A2A1C"/>','#2F7D4F','<path d="M24 45 L42 58" stroke="#56605C" stroke-width="2" stroke-linecap="round"/><rect x="13" y="52" width="20" height="8.5" rx="4.2" fill="#FBFCF9" stroke="#9AA39E" stroke-width="1.5"/><path d="M18 52.5v7.5M23 52.5v7.5" stroke="#D4D9D2" stroke-width="1.2"/>'),
+bike:_av('#E3B48C','<path d="M18 24.5 Q17 11.5 32 11 Q45 10.8 47.5 21.5 Q47.6 23.6 45.5 24.5 Z" fill="#2F9C95" stroke="#1F2A2E" stroke-width="1.4" stroke-linejoin="round"/><path d="M25 15.5l3 4M32 13.6v5M38.5 14.6l-2 4.4M43.5 17.5l-3 3" stroke="#E8F4F2" stroke-width="1.6" stroke-linecap="round"/><path d="M20 24.5l-1.5 6M44.5 24.5l1.5 6" stroke="#1F2A2E" stroke-width="1.3" stroke-linecap="round"/>','#D9822B'),
+teen:_av('#F2CFAE','<path d="M18.5 31 Q17 12 32 12.5 Q47 12 45.5 31 Q44 21 39 19 Q30 22 23 19 Q20 22 18.5 31 Z" fill="#5A3A22"/>','#56605C','<rect x="20" y="47" width="24" height="16" rx="2.2" fill="#2C3A40"/><rect x="22.5" y="49.5" width="19" height="11" rx="1" fill="#DCE8F0"/>')
+};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='fitfind-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,knocked:[],pitch:null,item:null,aud:null,sol:null};
+if(!st.knocked)st.knocked=[];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* people: area, avatar, name, situation, needs?, reply, short reason */
+var PEOPLE=[
+ {id:'ming',area:'a',name:'小明',sit:'五年13班的學生，上課要看課本。',yes:false,say:'我用手翻就好啦，600 元太貴了。',why:'上課用手翻課本就好，600 元太貴。'},
+ {id:'shan',area:'b',name:'阿珊',sit:'每天放學練小提琴，兩手都在拉琴，沒有手可以翻譜。',yes:true,say:'太好了！練琴的時候我最怕翻譜，每次停下來翻，曲子就斷掉了。',why:'兩手都在拉琴，沒有手翻譜。'},
+ {id:'ama',area:'c',name:'阿嬤',sit:'在廚房一邊煮菜一邊看食譜，手上沾滿麵粉。',yes:true,say:'這個好！我手上都是麵粉，一翻食譜，書就變得髒兮兮。用腳踩一下就翻頁，真方便。',why:'手上沾滿麵粉，不想弄髒食譜。'},
+ {id:'kai',area:'d',name:'阿凱',sit:'右手骨折打了石膏，只剩左手可以用。',yes:true,say:'我正需要這個！現在左手要壓著書，就沒有手可以翻頁了。',why:'右手打石膏，一隻手沒辦法壓書又翻頁。'},
+ {id:'bike',area:'e',name:'騎車的遊客',sit:'放假來四草騎腳踏車，沿路看風景。',yes:false,say:'我騎車的時候在看風景，不會看書啦。而且這個架子太大，放不進我的背包。',why:'騎車在看風景，不看書，也帶不走。'},
+ {id:'teen',area:'f',name:'國中生小婷',sit:'每天都用平板看電子書和上網。',yes:false,say:'我都在平板上看，手指滑一下就換頁了，用不到夾書的架子。',why:'在平板上看書，滑一下就換頁。'}
+];
+function person(id){for(var i=0;i<PEOPLE.length;i++)if(PEOPLE[i].id===id)return PEOPLE[i];return null}
+function found(){return PEOPLE.filter(function(p){return p.yes&&st.knocked.indexOf(p.id)>=0})}
+var NEED=2;
+
+var PITCH=[
+ ['A','功能超多，還會發光！'],
+ ['B','練琴不用停下來翻譜。'],
+ ['C','現在買有打折。']
+];
+var PFB=[
+ '會發光的翻頁架很特別，可是阿珊練琴時最煩惱的，是拉到一半得停下來翻譜。發光這個功能，幫不上她這件事。',
+ '你說到阿珊真正的問題了。她最煩惱的就是拉到一半要停下來翻譜，曲子因此斷掉。聽到這句話，她馬上就知道這個東西能幫她什麼。',
+ '打折讓價錢便宜一點，可是這句話沒有說到阿珊為什麼需要它。如果她不知道這個東西能幫她什麼，再便宜也不一定會想買。'
+];
+
+var ITEMS=[
+ {id:'spoon',ic:'spoon',name:'黑面琵鷺鑰匙圈',ds:'每年冬天飛來台江的黑面琵鷺',
+  sol:['把來過台江的回憶帶回家','一眼就找到自己的鑰匙','認識每年冬天飛來台江的黑面琵鷺']},
+ {id:'fish',ic:'fish',name:'虱目魚造型書籤',ds:'安南魚塭養的虱目魚',
+  sol:['看書時不會忘記讀到哪一頁','認識安南魚塭養的虱目魚','送朋友一份有台南味道的小禮物']},
+ {id:'card',ic:'card',name:'四草綠色隧道明信片',ds:'坐竹筏穿過的紅樹林隧道',
+  sol:['寄一張家鄉的風景給遠方的親友','把坐竹筏穿過綠色隧道的回憶留下來','在牆上貼一張好看的風景，每天看了心情好']},
+ {id:'salt',ic:'salt',name:'鹽山造型橡皮擦',ds:'七股鹽山的白色小山',
+  sol:['寫錯字的時候，有一個可愛的橡皮擦可以用','知道七股的鹽是在鹽田裡曬出來的','送朋友一份便宜又實用的小禮物']}
+];
+var AUD=[['camera','四草的遊客'],['bag','海佃的同學'],['home','住在安南的阿公阿嬤'],['badge','來學校參觀的客人']];
+function item(id){for(var i=0;i<ITEMS.length;i++)if(ITEMS[i].id===id)return ITEMS[i];return null}
+
+function productCard(){
+  var c=el('div','card prod');
+  c.append(el('div','pic',ic('stand')));
+  var t=el('div');
+  t.append(el('h3',null,'自動翻頁架'),el('p',null,'把書夾好，用腳踩一下踏板，就會自動翻到下一頁。'),el('p','price','600 元<small>（假設的價錢）</small>'));
+  c.appendChild(t);
+  return c;
+}
+
+/* ---------- step 0: story ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','台南有一家小工廠，做出了一個新東西：<b>自動翻頁架</b>。'),
+           el('p','lead','把書或樂譜夾在架子上，用腳踩一下踏板，書就會自己翻到下一頁，手完全不用碰。'),
+           el('p','lead','老闆請你幫忙：帶著這個翻頁架，去敲大家的門，問問看誰會想要它。'));
+  var n=el('p','note','今天一共有三關：<br>第一關，拿翻頁架去敲門，找出誰需要它。<br>第二關，想一句話，打動一位需要它的人。<br>第三關，換你幫海佃設計一個小東西，想想它是給誰的。');
+  app.append(el('h1',null,'幫產品找主人'),productCard(),c,n,button('開始敲門','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: knock ---------- */
+var anim=null;
+function knock(){
+  app.innerHTML='';
+  app.append(el('p','case','第一關　拿產品去敲門'),
+    el('h2',null,'點一個人，就是拿翻頁架去敲他家的門。誰會想要它呢？'),
+    el('p','lead','門可以敲很多扇，每個人都會告訴你他的想法。至少找到 <b>2 位</b>需要的人，才能進到下一關。'));
+  var ring=el('div','ring');
+  ring.appendChild(productCard());
+  PEOPLE.forEach(function(p){
+    var d=el('div','door');d.style.gridArea=p.area;
+    var done=st.knocked.indexOf(p.id)>=0;
+    var b=el('button','who'+(done?(p.yes?' yes':' no'):''));b.type='button';
+    b.setAttribute('aria-label','敲'+p.name+'的門');
+    var tx=el('div','txt');tx.append(el('div','nm',p.name),el('div','sit',p.sit));
+    b.innerHTML=av(p.id);b.appendChild(tx);
+    if(done)b.appendChild(el('span','tag '+(p.yes?'yes':'no'),p.yes?ic('check')+'需要':ic('x')+'不需要'));
+    b.addEventListener('click',function(){
+      if(anim)return;
+      if(st.knocked.indexOf(p.id)>=0)return;
+      b.classList.add('knock');
+      b.appendChild(el('div','knocking',ic('door')+'叩叩叩'));
+      anim=p.id;
+      setTimeout(function(){
+        st.knocked.push(p.id);save(st);
+        var y=window.scrollY;knock();try{window.scrollTo(0,y)}catch(e){}
+        anim=null;
+      },650);
+    });
+    d.appendChild(b);
+    if(done)d.appendChild(el('div','bub'+(p.yes?' yes':'')+(st.knocked[st.knocked.length-1]===p.id&&anim===p.id?' new':''),'<b>'+p.name+'：</b>「'+p.say+'」'));
+    ring.appendChild(d);
+  });
+  app.appendChild(ring);
+  var f=found().length;
+  var s=el('div','card');
+  var row=el('div','status');
+  row.appendChild(el('p',null,'你敲了 <b>'+st.knocked.length+'</b> 扇門，找到 <b>'+f+'</b> 位需要的人'));
+  var pips=el('div','pips');
+  for(var i=0;i<NEED;i++)pips.appendChild(el('span','pip'+(i<f?' on':''),i<f?ic('check'):''));
+  row.appendChild(pips);
+  s.appendChild(row);
+  if(f<NEED)s.appendChild(el('p','need','再敲敲看，還要找到 '+(NEED-f)+' 位需要的人。'));
+  else if(st.knocked.length<PEOPLE.length)s.appendChild(el('p','need','已經可以往下走了。還沒敲的門，也可以再去敲敲看。'));
+  var nx=button('下一步','btn',function(){if(found().length>=NEED)go(2)});
+  nx.disabled=f<NEED;
+  app.append(s,nx);
+}
+
+/* ---------- step 2: same product, different people ---------- */
+function compare(){
+  app.innerHTML='';
+  var cols=el('div','cols');
+  var yes=el('div','card'),no=el('div','card');
+  yes.appendChild(el('h3',null,'<span style="color:var(--good)">'+ic('check')+'</span>說「需要」的人'));
+  no.appendChild(el('h3',null,'<span style="color:var(--muted)">'+ic('x')+'</span>說「不需要」的人'));
+  PEOPLE.forEach(function(p){
+    var k=st.knocked.indexOf(p.id)>=0;
+    var m=el('div','mini');m.innerHTML=av(p.id);
+    m.appendChild(el('p',null,'<b>'+p.name+'</b>：'+p.why+(k?'':'<br><span class="skip">（這扇門你沒有敲）</span>')));
+    (p.yes?yes:no).appendChild(m);
+  });
+  cols.append(yes,no);
+  app.append(el('p','case','第一關　敲完門了'),
+    el('h2',null,'同一個翻頁架，有人說「太貴了」，有人說「太好了」。'),
+    el('p','lead','你一共敲了 <b>'+st.knocked.length+'</b> 扇門。來看看大家怎麼說：'),
+    cols,
+    el('p','note warm','說「需要」的三個人，有一個共同點：<b>他們的手正在忙，或是不方便用手。</b>'),
+    el('p','note','翻頁架一模一樣，價錢也一樣是 600 元。拿去給小明，他嫌太貴；拿去給阿珊，她說太好了。<br>東西沒有變，變的是「拿給誰」。先想清楚這個東西最適合誰，再把它交到對的人手上，這就叫做<b>定位</b>。'),
+    button('進入第二關','btn',function(){go(3)}));
+}
+
+/* ---------- step 3: pitch to 阿珊 ---------- */
+function pitch(){
+  app.innerHTML='';
+  var p=person('shan');
+  var say=el('div','say');say.innerHTML=av('shan');
+  say.appendChild(el('div','bub','<b>阿珊</b>每天放學都要練一個小時小提琴。她兩手都在拉琴，曲子拉到一半，就得停下來翻譜。'));
+  var g=el('div','opts');
+  var chosen=st.pitch;
+  PITCH.forEach(function(o,k){
+    var b=button('<span class="letter">'+o[0]+'</span><span>「'+o[1]+'」</span>','btn alt'+(chosen===k?' pick':'')+(chosen!=null&&chosen!==k?' dim':''),function(){
+      if(st.pitch!=null)return;st.pitch=k;save(st);pitch();
+    });
+    if(chosen!=null)b.disabled=true;
+    g.appendChild(b);
+  });
+  app.append(el('p','case','第二關　說到她心裡'),
+    el('h2',null,'你要去向阿珊介紹翻頁架。哪一句話最能打動她？'),say,g);
+  if(chosen!=null){
+    var fb=el('div','card fb'+(chosen===1?' ok':''));
+    fb.appendChild(el('p','lead',PFB[chosen]));
+    if(chosen!==1)fb.appendChild(el('p','lead','最能打動阿珊的是 <b>B「練琴不用停下來翻譜。」</b>因為它說到她真正的問題。'));
+    else fb.appendChild(el('p','lead','介紹東西的時候，先想想對方最煩惱什麼，比把所有功能都說一遍更有用。'));
+    app.append(fb,button('進入第三關','btn',function(){go(4)}));
+  }else{
+    app.appendChild(el('p','wait','選一句就會看到說明。選哪一句都可以繼續往下。'));
+  }
+}
+
+/* ---------- step 4: design ---------- */
+function sentence(html){
+  var it=item(st.item);
+  function slot(v){return v?'<span class="slot">'+v+'</span>':'<span class="slot empty">＿＿＿</span>'}
+  var a=st.aud!=null?AUD[st.aud][1]:null;
+  var s=(it&&st.sol!=null)?it.sol[st.sol]:null;
+  if(!html)return '我的'+(it?it.name:'＿＿')+'，是給'+(a||'＿＿')+'，讓他們'+(s||'＿＿')+'。';
+  return '我的'+slot(it&&it.name)+'，是給'+slot(a)+'，讓他們'+slot(s)+'。';
+}
+function design(){
+  var y=window.scrollY;
+  app.innerHTML='';
+  app.append(el('p','case','第三關　換你來設計'),
+    el('h2',null,'幫海佃設計一個文創小物，想想它是給誰的。'),
+    el('p','lead','這一題<b>沒有標準答案</b>。三個都選好，下面就會組成一句話；想換，隨時點別的就可以改。'));
+  /* 1 item */
+  var s1=el('div','card sec');s1.appendChild(el('p','q','1. 你想做哪一個小東西？'));
+  var g1=el('div','items');
+  ITEMS.forEach(function(it){
+    var b=el('button','item'+(st.item===it.id?' pick':''));b.type='button';
+    b.innerHTML=ic(it.ic)+'<span class="nm">'+it.name+'</span><span class="ds">'+it.ds+'</span>';
+    b.setAttribute('aria-pressed',st.item===it.id?'true':'false');
+    b.addEventListener('click',function(){if(st.item!==it.id){st.item=it.id;st.sol=null;save(st);design()}});
+    g1.appendChild(b);
+  });
+  s1.appendChild(g1);
+  /* 2 audience */
+  var s2=el('div','card sec');s2.appendChild(el('p','q','2. 它主要是給誰的？'));
+  var g2=el('div','aud');
+  AUD.forEach(function(a,k){
+    var b=button(ic(a[0])+'<span>'+a[1]+'</span>','btn alt'+(st.aud===k?' pick':''),function(){st.aud=k;save(st);design()});
+    b.setAttribute('aria-pressed',st.aud===k?'true':'false');
+    g2.appendChild(b);
+  });
+  s2.appendChild(g2);
+  /* 3 what it does */
+  var s3=el('div','card sec');s3.appendChild(el('p','q','3. 它能幫對方做到什麼事？'));
+  var it=item(st.item);
+  if(!it)s3.appendChild(el('p','wait','先在第 1 題選一個小東西，這裡就會出現選項。'));
+  else{
+    var g3=el('div','opts');
+    it.sol.forEach(function(t,k){
+      var b=button('<span>讓他們'+t+'</span>','btn alt'+(st.sol===k?' pick':''),function(){st.sol=k;save(st);design()});
+      b.setAttribute('aria-pressed',st.sol===k?'true':'false');
+      g3.appendChild(b);
+    });
+    s3.appendChild(g3);
+  }
+  var ok=!!it&&st.aud!=null&&st.sol!=null;
+  var sc=el('div','card sec');sc.append(el('p','q','你的一句話'),el('p','sent',sentence(true)));
+  if(ok)sc.appendChild(el('p','note','想一想：如果把它拿去給另一群人，他們也會一樣想要嗎？'));
+  var nx=button('就是這一句，完成','btn go',function(){if(item(st.item)&&st.aud!=null&&st.sol!=null)go(5)});
+  nx.disabled=!ok;
+  app.append(s1,s2,s3,sc,nx);
+  if(!ok)app.appendChild(el('p','wait','三題都選好，才能按「完成」。'));
+  try{window.scrollTo(0,y)}catch(e){}
+}
+
+/* ---------- step 5: end ---------- */
+function end(){
+  app.innerHTML='';
+  var f=found();
+  var t=el('table');
+  var pk=st.pitch!=null?PITCH[st.pitch]:null;
+  [['第一關：找到需要的人',f.length?'<b>'+f.map(function(p){return p.name}).join('、')+'</b>（'+f.length+' 位）':'—'],
+   ['第一關：一共敲了幾扇門','<b>'+st.knocked.length+'</b> 扇'],
+   ['第二關：選給阿珊的話',pk?'<b>'+pk[0]+'</b>「'+pk[1]+'」':'—'],
+   ['第三關：我的一句話','<b>'+sentence(false)+'</b>']].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  if(st.step>=2&&found().length<NEED)st.step=1;
+  if(st.step>=4&&st.pitch==null)st.step=3;
+  if(st.step>=5&&!(item(st.item)&&st.aud!=null&&st.sol!=null))st.step=4;
+  var S=[intro,knock,compare,pitch,design,end];
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

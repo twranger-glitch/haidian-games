@@ -1,0 +1,352 @@
+<title>魚丸湯一顆接一顆</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: temple-front milkfish ball soup (10 balls, imagined) → for each ball, turn a round "happiness knob" (-3..10, drag around the circle or use +/- buttons) → record → eat another or stop (belly meter fills on the side) → grandma offers cold mung bean soup (yes/no, rate with the knob) → SVG bar chart of each ball + soup bar + cumulative line → one no-right-answer question (why stop) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --ball:#D98E3F; --bean:#3F8F5E;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;min-width:0}
+svg.pic{width:100%;max-height:220px;height:auto}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.ghost{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn.small{font-size:clamp(19px,2.4vw,21px);font-weight:700;padding:10px 14px}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible,.knob:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* stage: main column + belly on the side */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:16px;align-items:start}
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.side{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;position:sticky;top:12px}
+.side .lbl{font-size:clamp(19px,2.4vw,22px);font-weight:900;margin:0}
+.side .sub{font-size:19px;color:var(--muted);margin:0;text-align:center;line-height:1.4}
+.belly{position:relative;width:112px;height:128px;border:4px solid #8C6A3A;border-radius:48% 48% 46% 46%/40% 40% 60% 60%;background:#FFF7EA;overflow:hidden}
+.belly .f1,.belly .f2{position:absolute;left:0;right:0;bottom:0;transition:height .5s ease}
+.belly .f1{background:#F3C98B}
+.belly .f2{background:#9FD0A9}
+.belly .navel{position:absolute;left:50%;top:58%;width:12px;height:8px;margin-left:-6px;border-bottom:3px solid #8C6A3A;border-radius:0 0 50% 50%}
+.belly .blush{position:absolute;top:26%;width:16px;height:9px;border-radius:50%;background:#F2A7A0;opacity:.8}
+.belly .blush.l{left:16%}.belly .blush.r{right:16%}
+.belly .face{position:absolute;left:50%;top:20%;width:34px;margin-left:-17px;height:20px}
+.belly .face::before,.belly .face::after{content:"";position:absolute;top:0;width:6px;height:6px;border-radius:50%;background:#1F2A2E}
+.belly .face::before{left:4px}.belly .face::after{right:4px}
+.belly .mouth{position:absolute;left:50%;top:30%;width:14px;height:7px;margin-left:-7px;border-bottom:3px solid #1F2A2E;border-radius:0 0 50% 50%}
+/* knob */
+.knobbox{display:flex;flex-direction:column;align-items:center;gap:6px}
+.knob{width:min(300px,78vw);height:auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;border-radius:50%}
+.knob.drag{cursor:grabbing}
+.knob .rot{transform-box:view-box;transform-origin:150px 150px}
+.knob .rot.ease{transition:transform .18s ease}
+.readout{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.readout svg{width:72px;height:72px;flex:none}
+.score{font-size:clamp(46px,8vw,72px);font-weight:900;color:var(--rust);margin:0;line-height:1.1;font-variant-numeric:tabular-nums}
+.score small{font-size:.4em;color:var(--muted);margin-left:4px}
+.feel{font-size:clamp(21px,3vw,27px);font-weight:900;margin:0}
+.pm{display:flex;align-items:center;justify-content:center;gap:18px}
+.pm .btn{width:68px;height:68px;padding:0;border-radius:50%;font-size:34px;background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.pm span{font-size:19px;color:var(--muted)}
+.hint{font-size:19px;color:var(--muted);margin:0;text-align:center}
+/* chart */
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:19px;margin:0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:18px;height:18px;border-radius:4px}
+.legend i.ln{height:4px;border-radius:2px;background:var(--sea);position:relative}
+svg.chart{width:100%;height:auto;display:block}
+.say{font-size:clamp(19px,2.7vw,25px);font-weight:700;margin:0;line-height:1.7}
+.say b{color:var(--rust)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 6px;border-bottom:2px solid var(--line);vertical-align:middle}
+td.n{text-align:right;font-weight:900;color:var(--rust)}
+@media (max-width:620px){
+  .stage{grid-template-columns:1fr}
+  .side{order:-1;flex-direction:row;justify-content:center;gap:14px;padding:8px 12px;position:static}
+  .belly{width:62px;height:72px;border-width:3px}
+  .belly .face{transform:scale(.6);top:14%}
+  .belly .mouth{transform:scale(.6);top:26%}
+  .belly .blush{width:10px;height:6px}
+  .side .txt{display:flex;flex-direction:column}
+  .side .sub{text-align:left}
+  .two{grid-template-columns:1fr}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='soup-v1';
+var MAX=10,LO=-3,HI=10,SPAN=135;
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{p:'intro',s:[],cur:0,drink:null,soup:null,why:null};
+if(!st.s)st.s=[];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button',cls||'btn',t);b.type='button';if(fn)b.addEventListener('click',fn);return b}
+function go(p){st.p=p;save(st);render();window.scrollTo(0,0)}
+function feel(v){
+  if(v<0)return '有點不舒服';
+  if(v===0)return '一點都不開心';
+  if(v<=2)return '只有一點點開心';
+  if(v<=4)return '有一點開心';
+  if(v===5)return '還可以';
+  if(v<=7)return '開心';
+  if(v<=9)return '很開心';
+  return '超開心';
+}
+function face(v){
+  var neg=v<0,fill=neg?'#CFE3C6':'#F6D365';
+  var k=(v*2.2-4).toFixed(1);
+  var s='<svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="32" fill="'+fill+'" stroke="#8C6A3A" stroke-width="3"/>';
+  if(v>=9){s+='<path d="M22 30 q5 -7 10 0 M40 30 q5 -7 10 0" stroke="#1F2A2E" stroke-width="3.5" fill="none" stroke-linecap="round"/>'}
+  else{s+='<circle cx="26" cy="29" r="3.6" fill="#1F2A2E"/><circle cx="46" cy="29" r="3.6" fill="#1F2A2E"/>'}
+  if(neg){s+='<path d="M20 22 l9 3 M52 22 l-9 3" stroke="#1F2A2E" stroke-width="3" stroke-linecap="round"/><path d="M56 30 q4 7 0 10 q-4 -3 0 -10z" fill="#7BB8DA"/>'}
+  s+='<path d="M22 48 Q36 '+(48+ +k)+' 50 48" stroke="#1F2A2E" stroke-width="3.5" fill="none" stroke-linecap="round"/>';
+  if(v>=6)s+='<ellipse cx="17" cy="42" rx="5" ry="3" fill="#F2A7A0"/><ellipse cx="55" cy="42" rx="5" ry="3" fill="#F2A7A0"/>';
+  return s+'</svg>';
+}
+/* bowl picture: remaining fish balls */
+var SPOTS=[[250,92],[285,88],[320,92],[355,96],[230,104],[268,108],[305,110],[342,110],[378,104],[300,82]];
+function bowlSVG(left,green){
+  var s='<svg class="pic" viewBox="0 0 600 220" role="img" aria-label="'+(green?'一碗冰涼的綠豆湯':'一碗虱目魚丸湯，裡面還有 '+left+' 顆魚丸')+'"><rect width="600" height="220" rx="16" fill="#F4EEE2"/>';
+  s+='<rect x="60" y="176" width="480" height="18" rx="6" fill="#C9B48F"/>';
+  s+='<path d="M170 96 Q172 180 300 182 Q428 180 430 96 Z" fill="#FFFFFF" stroke="#8C6A3A" stroke-width="5"/>';
+  s+='<path d="M200 150 Q300 168 400 150" stroke="#205E86" stroke-width="4" fill="none" opacity=".5"/>';
+  s+='<ellipse cx="300" cy="96" rx="130" ry="30" fill="'+(green?'#BFDDB0':'#F1E3C2')+'" stroke="#8C6A3A" stroke-width="5"/>';
+  if(green){
+    [[250,92],[280,100],[318,90],[350,100],[300,106],[230,98],[372,92],[262,84],[336,84]].forEach(function(p){s+='<ellipse cx="'+p[0]+'" cy="'+p[1]+'" rx="6" ry="4" fill="#4E8A3E"/>'});
+    s+='<rect x="268" y="74" width="26" height="22" rx="5" fill="#E6F3F8" stroke="#9AC6DA" stroke-width="3" transform="rotate(-12 281 85)"/><rect x="318" y="80" width="22" height="20" rx="5" fill="#E6F3F8" stroke="#9AC6DA" stroke-width="3" transform="rotate(10 329 90)"/>';
+    s+='<path d="M120 60 q8 -10 0 -20 M140 64 q8 -10 0 -20" stroke="#9AC6DA" stroke-width="4" fill="none" stroke-linecap="round"/><text x="96" y="94" font-size="24" font-weight="900" fill="#205E86">冰涼</text>';
+  }else{
+    for(var i=0;i<left;i++){var p=SPOTS[i];s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="15" fill="#FFFDF7" stroke="#C9B48F" stroke-width="3"/><circle cx="'+(p[0]-5)+'" cy="'+(p[1]-5)+'" r="4" fill="#fff"/>'}
+    [[240,86],[330,102],[290,98],[360,88],[260,96]].forEach(function(p){s+='<rect x="'+p[0]+'" y="'+p[1]+'" width="8" height="5" rx="2" fill="#5FA052"/>'});
+    s+='<path d="M268 58 q-8 -12 0 -24 M300 54 q-8 -12 0 -24 M332 58 q-8 -12 0 -24" stroke="#9AA7AD" stroke-width="4" fill="none" stroke-linecap="round"/>';
+  }
+  return s+'</svg>';
+}
+/* belly meter */
+function side(){
+  var n=st.s.length,soup=st.drink&&st.soup!=null?1:(st.p==='soup'?1:0);
+  var a=el('aside','side');a.setAttribute('aria-label','肚子');
+  var b=el('div','belly');
+  var h1=Math.round(n/MAX*82),h2=h1+(soup?12:0);
+  b.innerHTML='<div class="f2" style="height:'+h2+'%"></div><div class="f1" style="height:'+h1+'%"></div><div class="face"></div><div class="mouth"></div><div class="blush l"></div><div class="blush r"></div><div class="navel"></div>';
+  var t=el('div','txt');t.append(el('p','lbl','肚子'),el('p','sub','吃了 '+n+' 顆'+(soup?'<br>＋綠豆湯':'')));
+  a.append(b,t);return a;
+}
+function stage(nodes){var g=el('div','stage');var m=el('div','main');nodes.forEach(function(x){m.appendChild(x)});g.append(m,side());app.appendChild(g)}
+
+/* happiness knob */
+function angleOf(v){return -SPAN+(v-LO)/(HI-LO)*2*SPAN}
+function pt(a,r){var t=a*Math.PI/180;return [150+r*Math.sin(t),150-r*Math.cos(t)]}
+function arc(a0,a1,r){var p0=pt(a0,r),p1=pt(a1,r);var large=Math.abs(a1-a0)>180?1:0;var sw=a1>a0?1:0;return 'M'+p0[0].toFixed(1)+' '+p0[1].toFixed(1)+' A'+r+' '+r+' 0 '+large+' '+sw+' '+p1[0].toFixed(1)+' '+p1[1].toFixed(1)}
+function knob(init,onChange){
+  var v=init,ang=angleOf(v),dragging=false;
+  var box=el('div','knobbox');
+  var s='<svg class="knob" viewBox="0 0 300 300" role="slider" tabindex="0" aria-label="開心旋鈕，從負 3 到 10" aria-valuemin="-3" aria-valuemax="10">';
+  s+='<path d="'+arc(-SPAN,SPAN,104)+'" stroke="#E3E6E0" stroke-width="14" fill="none" stroke-linecap="round"/>';
+  s+='<path class="neg" d="'+arc(-SPAN,angleOf(0),104)+'" stroke="#E9C9B8" stroke-width="14" fill="none" stroke-linecap="round"/>';
+  s+='<path class="val" d="" stroke="#B7862B" stroke-width="14" fill="none" stroke-linecap="round"/>';
+  for(var i=LO;i<=HI;i++){var a=angleOf(i),p0=pt(a,92),p1=pt(a,i%5===0||i===LO?80:85);s+='<line x1="'+p0[0].toFixed(1)+'" y1="'+p0[1].toFixed(1)+'" x2="'+p1[0].toFixed(1)+'" y2="'+p1[1].toFixed(1)+'" stroke="#8C9590" stroke-width="'+(i%5===0||i===LO?4:2)+'" stroke-linecap="round"/>'}
+  [[LO,'-3'],[0,'0'],[5,'5'],[10,'10']].forEach(function(x){var p=pt(angleOf(x[0]),132);s+='<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+7).toFixed(1)+'" text-anchor="middle" font-size="22" font-weight="900" fill="#56605C">'+x[1]+'</text>'});
+  s+='<g class="rot"><circle cx="150" cy="150" r="72" fill="#FBFCF9" stroke="#8C6A3A" stroke-width="5"/>';
+  for(var j=0;j<24;j++){var q0=pt(j*15,62),q1=pt(j*15,69);s+='<line x1="'+q0[0].toFixed(1)+'" y1="'+q0[1].toFixed(1)+'" x2="'+q1[0].toFixed(1)+'" y2="'+q1[1].toFixed(1)+'" stroke="#D4C6AE" stroke-width="3"/>'}
+  s+='<circle cx="150" cy="150" r="48" fill="#F4EEE2"/><rect x="144" y="86" width="12" height="52" rx="6" fill="#A8441A"/><circle cx="150" cy="94" r="9" fill="#A8441A"/></g>';
+  s+='<text x="150" y="270" text-anchor="middle" font-size="19" fill="#56605C">轉轉看</text></svg>';
+  box.innerHTML=s;
+  var svg=box.firstChild,rot=svg.querySelector('.rot'),val=svg.querySelector('.val');
+  var ro=el('div','readout');var fc=el('div');var sc=el('p','score');var fl=el('p','feel');var txt=el('div');txt.append(sc,fl);ro.append(fc,txt);
+  var pm=el('div','pm');var minus=btn('－','btn',function(){set(v-1,true)});minus.setAttribute('aria-label','減 1 分');var plus=btn('＋','btn',function(){set(v+1,true)});plus.setAttribute('aria-label','加 1 分');
+  pm.append(minus,el('span',null,'也可以按按鈕'),plus);
+  box.append(ro,pm);
+  function draw(){
+    rot.style.transform='rotate('+ang.toFixed(1)+'deg)';
+    var z=angleOf(0);
+    val.setAttribute('d',Math.abs(ang-z)<0.5?'':(ang>z?arc(z,ang,104):arc(ang,z,104)));
+    val.setAttribute('stroke',v<0?'#A8441A':'#B7862B');
+    sc.innerHTML=v+'<small>分</small>';fl.textContent=feel(v);fc.innerHTML=face(v);
+    svg.setAttribute('aria-valuenow',v);svg.setAttribute('aria-valuetext',v+' 分，'+feel(v));
+    minus.disabled=v<=LO;plus.disabled=v>=HI;
+  }
+  function set(nv,ease){nv=Math.max(LO,Math.min(HI,nv));var ch=nv!==v;v=nv;ang=angleOf(v);rot.classList.toggle('ease',!!ease);draw();if(ch||ease)onChange(v)}
+  function fromEvent(e){
+    var r=svg.getBoundingClientRect();var x=(e.clientX-r.left)/r.width*300-150,y=(e.clientY-r.top)/r.height*300-150;
+    if(x*x+y*y<18*18)return;
+    var a=Math.atan2(x,-y)*180/Math.PI;
+    if(a>SPAN||a<-SPAN)a=ang>0?SPAN:-SPAN;
+    ang=a;var nv=Math.round(LO+(a+SPAN)/(2*SPAN)*(HI-LO));var ch=nv!==v;v=nv;
+    rot.classList.remove('ease');draw();if(ch)onChange(v,true);
+  }
+  svg.addEventListener('pointerdown',function(e){dragging=true;svg.classList.add('drag');try{svg.setPointerCapture(e.pointerId)}catch(_){}fromEvent(e);e.preventDefault()});
+  svg.addEventListener('pointermove',function(e){if(dragging)fromEvent(e)});
+  function end(){if(!dragging)return;dragging=false;svg.classList.remove('drag');set(v,true)}
+  svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);svg.addEventListener('lostpointercapture',end);
+  svg.addEventListener('keydown',function(e){
+    if(e.key==='ArrowUp'||e.key==='ArrowRight'){set(v+1,true);e.preventDefault()}
+    else if(e.key==='ArrowDown'||e.key==='ArrowLeft'){set(v-1,true);e.preventDefault()}
+    else if(e.key==='Home'){set(LO,true);e.preventDefault()}else if(e.key==='End'){set(HI,true);e.preventDefault()}
+  });
+  draw();
+  return box;
+}
+var saveT=null;
+function curChanged(v,live){st.cur=v;clearTimeout(saveT);if(live)saveT=setTimeout(function(){save(st)},250);else save(st)}
+
+/* pages */
+function intro(){
+  var c=el('div','card');c.innerHTML=bowlSVG(10,false);
+  c.append(
+    el('p','lead','今天放學，你的肚子有點餓，走到安南區的廟口。賣虱目魚丸湯的阿嬤認得你，笑咪咪地端給你一大碗：「來，今天給你多放一點！」碗裡一共有 10 顆魚丸。'),
+    el('p','lead','每吃一顆，你就轉一下「開心旋鈕」，記下吃這一顆有多開心。想吃幾顆就吃幾顆，吃飽了隨時可以停。'),
+    el('p','note warm','這是想像的遊戲，不是真的吃。請在心裡想像那碗熱湯，照你真正的感覺轉就好，沒有對錯。'));
+  app.append(el('h1',null,'魚丸湯一顆接一顆'),c,btn('拿起湯匙，開始','btn',function(){st.cur=0;go('rate')}));
+}
+function ratePage(){
+  var n=st.s.length+1;
+  var cs=el('p','case','第 '+n+' 顆魚丸');
+  var c=el('div','card');c.innerHTML=bowlSVG(MAX-n,false);
+  c.appendChild(el('p','lead',n===1?'熱騰騰的湯，阿嬤剛煮好的魚丸。你舀起第 1 顆，吹一吹，咬下去……':'你舀起第 '+n+' 顆魚丸，咬下去……'));
+  var h=el('h2',null,'吃第 '+n+' 顆的時候，你有多開心？');
+  var hint=el('p','hint','用手指按住旋鈕，像轉收音機一樣轉到你的感覺。');
+  var k=knob(st.cur,curChanged);
+  var ok=btn('記下來','btn',function(){st.s.push(st.cur);go('ask')});
+  stage([cs,c,h,hint,k,ok]);
+}
+function askPage(){
+  var n=st.s.length,x=st.s[n-1];
+  var cs=el('p','case','第 '+n+' 顆魚丸，記好了');
+  var c=el('div','card');c.innerHTML=bowlSVG(MAX-n,false);
+  var nodes=[cs,c];
+  if(n>=MAX){
+    c.append(el('p','note','你給第 '+n+' 顆打了 '+x+' 分。碗裡的 10 顆魚丸，全部吃完了！'));
+    nodes.push(btn('放下湯匙','btn',function(){go('offer')}));
+  }else{
+    c.append(el('p','note','你給第 '+n+' 顆打了 '+x+' 分。碗裡還有 '+(MAX-n)+' 顆魚丸。'));
+    var two=el('div','two');
+    two.append(btn('再吃一顆','btn',function(){st.cur=0;go('rate')}),btn('我吃飽了','btn ghost',function(){go('offer')}));
+    nodes.push(el('h2',null,'還要吃下一顆嗎？'),two);
+  }
+  nodes.push(btn('剛剛轉錯了，重轉第 '+n+' 顆','btn ghost small',function(){st.cur=st.s.pop();go('rate')}));
+  stage(nodes);
+}
+function offerPage(){
+  var n=st.s.length;
+  var c=el('div','card');c.innerHTML=bowlSVG(0,true);
+  c.append(el('p','lead',(n>=MAX?'阿嬤看你把 10 顆魚丸都吃完了，':'阿嬤看你放下湯匙，')+'從冰箱端來一碗冰涼的綠豆湯，笑著問你：'),
+    el('p','note warm','「天氣熱，要不要喝一點綠豆湯？」'));
+  var two=el('div','two');
+  two.append(btn('要，喝一點','btn',function(){st.drink=true;st.cur=0;go('soup')}),btn('不要，謝謝阿嬤','btn ghost',function(){st.drink=false;st.soup=null;go('chart')}));
+  stage([el('p','case','阿嬤又端來一碗'),c,el('h2',null,'要喝綠豆湯嗎？'),two]);
+}
+function soupPage(){
+  var c=el('div','card');c.innerHTML=bowlSVG(0,true);
+  c.appendChild(el('p','lead','你舀起一口冰涼的綠豆湯，喝下去……'));
+  var k=knob(st.cur,curChanged);
+  var ok=btn('記下來','btn',function(){st.soup=st.cur;go('chart')});
+  stage([el('p','case','綠豆湯'),c,el('h2',null,'喝綠豆湯的時候，你有多開心？'),el('p','hint','用手指按住旋鈕，轉到你的感覺。'),k,ok]);
+}
+/* chart */
+function nice(x){var L=[1,2,3,4,5,6,8,10,12,15,20,25,30];for(var i=0;i<L.length;i++)if(L[i]>=x)return L[i];return Math.ceil(x)}
+function chartSVG(){
+  var narrow=window.innerWidth<620;
+  var W=narrow?400:600,H=narrow?330:340,pl=narrow?34:44,pr=narrow?40:52,pt_=26,pb=narrow?52:46;
+  var items=st.s.map(function(v,i){return {v:v,lab:String(i+1),soup:false}});
+  if(st.drink&&st.soup!=null)items.push({v:st.soup,lab:'綠豆湯',soup:true});
+  var cum=[],t=0;items.forEach(function(it){t+=it.v;cum.push(t)});
+  var mx=Math.max.apply(null,cum.concat([0])),mn=Math.min.apply(null,cum.concat([0]));
+  var k=nice(Math.max(1,mx/10,-mn/3));
+  var pw=W-pl-pr,ph=H-pt_-pb;
+  function Y(v){return pt_+(HI-v)/(HI-LO)*ph}
+  var sw=pw/items.length,bw=Math.min(narrow?26:40,sw*.62);
+  var fs=narrow?17:18;
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="每一顆魚丸的開心分數長條圖，和加起來的開心折線">';
+  [LO,0,5,10].forEach(function(g){var y=Y(g).toFixed(1);
+    s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y+'" y2="'+y+'" stroke="'+(g===0?'#56605C':'#E1E4DE')+'" stroke-width="'+(g===0?2.5:1.5)+'"/>';
+    s+='<text x="'+(pl-6)+'" y="'+(+y+6)+'" text-anchor="end" font-size="'+fs+'" fill="#8A5A1E" font-weight="700">'+g+'</text>';
+    if(g>=0)s+='<text x="'+(W-pr+6)+'" y="'+(+y+6)+'" font-size="'+fs+'" fill="#205E86" font-weight="700">'+(g*k)+'</text>';
+  });
+  var vl='';
+  items.forEach(function(it,i){
+    var cx=pl+sw*(i+.5),y0=Y(0),y1=Y(it.v),top=Math.min(y0,y1),h=Math.max(Math.abs(y1-y0),it.v===0?0:2);
+    s+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="4" fill="'+(it.soup?'#3F8F5E':'#D98E3F')+'"/>';
+    var ly=it.v<0?y1+fs+2:y1-6;
+    vl+='<text x="'+cx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="'+fs+'" font-weight="900" stroke="#FBFCF9" stroke-width="5" paint-order="stroke" fill="'+(it.soup?'#2D6B45':'#8A5A1E')+'">'+it.v+'</text>';
+    if(it.soup&&narrow){s+='<text x="'+cx.toFixed(1)+'" y="'+(H-pb+22)+'" text-anchor="middle" font-size="16" font-weight="700" fill="#2D6B45">綠豆</text><text x="'+cx.toFixed(1)+'" y="'+(H-pb+40)+'" text-anchor="middle" font-size="16" font-weight="700" fill="#2D6B45">湯</text>'}
+    else s+='<text x="'+cx.toFixed(1)+'" y="'+(H-pb+24)+'" text-anchor="middle" font-size="'+(it.soup?16:fs)+'" font-weight="700" fill="'+(it.soup?'#2D6B45':'#1F2A2E')+'">'+it.lab+'</text>';
+  });
+  var pts=cum.map(function(c,i){return (pl+sw*(i+.5)).toFixed(1)+','+Y(c/k).toFixed(1)});
+  if(pts.length>1)s+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#205E86" stroke-width="3.5" stroke-linejoin="round"/>';
+  pts.forEach(function(p){var a=p.split(',');s+='<circle cx="'+a[0]+'" cy="'+a[1]+'" r="5.5" fill="#FBFCF9" stroke="#205E86" stroke-width="3"/>'});
+  return s+vl+'</svg>';
+}
+function legend(){
+  var l=el('div','legend');
+  l.innerHTML='<span><i style="background:#D98E3F"></i>每一顆魚丸有多開心（左邊的數字）</span>'+(st.drink&&st.soup!=null?'<span><i style="background:#3F8F5E"></i>綠豆湯</span>':'')+'<span><i class="ln"></i>加起來的開心（右邊的數字）</span>';
+  return l;
+}
+function describe(){
+  var n=st.s.length,f=st.s[0],l=st.s[n-1],tot=st.s.reduce(function(a,b){return a+b},0)+(st.drink&&st.soup!=null?st.soup:0);
+  var t=n===1?'你吃了 <b>1</b> 顆魚丸，這一顆是 <b>'+f+'</b> 分。':'你吃了 <b>'+n+'</b> 顆魚丸。第 1 顆是 <b>'+f+'</b> 分，最後一顆（第 '+n+' 顆）是 <b>'+l+'</b> 分。';
+  if(st.drink&&st.soup!=null)t+='綠豆湯是 <b>'+st.soup+'</b> 分。';else t+='你沒有喝綠豆湯。';
+  t+='全部加起來是 <b>'+tot+'</b> 分。';
+  return el('p','say',t);
+}
+function chartPage(){
+  var c=el('div','card');c.innerHTML=chartSVG();c.prepend(legend());c.appendChild(describe());
+  app.append(el('p','case','你的開心紀錄'),el('h2',null,'這是你今天這一碗的開心圖'),c,btn('下一步：想一想','btn',function(){go('why')}));
+}
+var WHY=['吃飽了','不好吃了','吃膩了，想換口味','其實還想吃'];
+function whyOpts(){return st.s.length>=MAX?WHY.concat(['碗裡的魚丸吃完了']):WHY}
+function whyPage(){
+  var n=st.s.length;
+  app.append(el('p','case','想一想'),el('h2',null,'為什麼你停在第 '+n+' 顆？'),el('p','lead','選最接近你心裡想法的一個，沒有對錯。'));
+  var g=el('div','opts'),fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(i){
+    Array.prototype.forEach.call(g.children,function(x,j){x.classList.toggle('pick',j===i)});
+    fb.innerHTML='';fb.append(el('p','note','記下來了。等一下老師會問問大家，每個人停下來的理由可能都不一樣。<br><span style="font-size:.85em;color:var(--muted)">想換一個也可以，直接點別的選項。</span>'),btn('看看我的紀錄','btn',function(){go('end')}));
+  }
+  whyOpts().forEach(function(t,i){g.appendChild(btn(t,'btn alt',function(){st.why=i;save(st);show(i);fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})}))});
+  app.append(g,fb);
+  if(st.why!=null)show(st.why);
+}
+function endPage(){
+  var n=st.s.length,f=st.s[0],l=st.s[n-1],had=st.drink&&st.soup!=null;
+  var cmp=!had?'沒有喝':(st.soup>l?'比較高':st.soup===l?'一樣':'比較低');
+  var rows=[['吃了幾顆魚丸',n+' 顆'],['第 1 顆的分數',f+' 分'],['最後一顆（第 '+n+' 顆）的分數',l+' 分'],
+    ['有沒有喝綠豆湯',had?'有，'+st.soup+' 分':'沒有'],['綠豆湯和最後一顆魚丸比',cmp],['停下來的原因',st.why==null?'—':whyOpts()[st.why]]];
+  var c=el('div','card');var t=el('table');rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});c.appendChild(t);
+  var g=el('div','card');g.innerHTML=chartSVG();g.prepend(legend());
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,g);
+}
+function render(){
+  app.innerHTML='';
+  var p=st.p;
+  if(p!=='intro'&&p!=='rate'&&!st.s.length)p=st.p='intro';
+  if(p==='rate')ratePage();else if(p==='ask')askPage();else if(p==='offer')offerPage();else if(p==='soup')soupPage();
+  else if(p==='chart')chartPage();else if(p==='why')whyPage();else if(p==='end')endPage();else intro();
+}
+var wasNarrow=window.innerWidth<620;
+window.addEventListener('resize',function(){var nw=window.innerWidth<620;if(nw!==wasNarrow){wasNarrow=nw;if(st.p==='chart'||st.p==='end')render()}});
+render();
+})();
+</script>

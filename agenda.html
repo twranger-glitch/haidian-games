@@ -1,0 +1,584 @@
+<title>班長排順序</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: class meeting story + three option cards → three preference groups (9/8/8) + guess → agenda board (drag or tap three option cards into
+   "match 1: _ vs _ / match 2: winner vs _"), press 開會表決, raised hands animate match by match → repeat until all three arrangements tried →
+   compare (three winners + cycle diagram) → mission: make 寫卡片 win → what to do about the agenda setter (all options ok, effect/cost) → summary. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.small{font-size:clamp(19px,2.4vw,21px);padding:10px 14px;text-align:center;justify-content:center}
+.btn.go{background:var(--rust)}
+.btn:focus-visible,.tok:focus-visible,.slot:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1 1 220px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.6em;height:1.6em}
+/* option colors */
+.oX{--oc:#A8441A;--of:#F6DCCF}.oY{--oc:#205E86;--of:#DCE8F0}.oZ{--oc:#2F7D4F;--of:#DCEBD5}
+.onm{font-weight:900;color:var(--oc);white-space:nowrap}
+.onm svg.i{color:var(--ink)}
+/* intro options */
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.opt{background:var(--card);border:3px solid var(--oc);border-radius:20px;padding:14px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.opt svg.i{width:64px;height:64px}
+.opt h3{margin:0;font-size:clamp(22px,3.2vw,28px);color:var(--oc)}
+.opt p{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);line-height:1.55}
+/* groups */
+.grp3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.gcard{background:var(--card);border:3px solid var(--gc);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.g0{--gc:#A8441A;--gf:#F6DCCF}.g1{--gc:#205E86;--gf:#DCE8F0}.g2{--gc:#2F7D4F;--gf:#DCEBD5}
+.gcard h3{margin:0;font-size:clamp(22px,3vw,27px);display:flex;align-items:center;gap:8px;color:var(--gc)}
+.gcard h3 small{font-size:.8em;color:var(--ink)}
+.dots{display:flex;flex-wrap:wrap;gap:2px}
+.dots svg{width:22px;height:22px}
+.gcard ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:clamp(19px,2.4vw,22px)}
+.gcard li{display:flex;align-items:center;gap:6px}
+.gcard li .rk{display:inline-block;min-width:3.6em;color:var(--muted);font-weight:700}
+/* agenda board */
+.board{background:#F4ECD8;border:3px solid #CDB98A;border-radius:22px;padding:clamp(14px,3vw,22px);display:flex;flex-direction:column;gap:14px}
+.board .bt{margin:0;font-size:clamp(21px,3vw,27px);font-weight:900;display:flex;align-items:center;gap:8px}
+.mrow{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.mrow .lab{font-weight:900;font-size:clamp(19px,2.7vw,24px);white-space:nowrap}
+.mslots{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
+.mslots .vs{font-weight:900;color:var(--muted);flex:none;font-size:clamp(19px,2.6vw,23px)}
+.slot{flex:1 1 0;min-width:0;min-height:68px;border:3px dashed #B9A777;border-radius:16px;background:#FBF7EC;display:flex;align-items:center;justify-content:center;padding:4px;color:#8C7A4C;font-weight:700;font-size:clamp(19px,2.4vw,21px);transition:background .12s,border-color .12s}
+.slot.over{background:var(--warm);border-color:var(--gold);border-style:solid}
+.slot.fixed{border-style:solid;border-color:#CDB98A;background:#EFE5CC;color:var(--ink);font-weight:900;text-align:center;line-height:1.3}
+.slot .tok{width:100%}
+.tray{border:3px dashed var(--line);border-radius:18px;padding:10px;display:flex;gap:10px;flex-wrap:wrap;min-height:86px;align-items:center;justify-content:center;transition:background .12s}
+.tray.over{background:var(--note)}
+.tray .empty{color:var(--muted);font-size:clamp(19px,2.4vw,21px)}
+.tok{font:inherit;font-size:clamp(19px,2.6vw,23px);font-weight:900;color:var(--oc);background:var(--of);border:3px solid var(--oc);border-radius:14px;padding:8px 10px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;min-height:56px;white-space:nowrap}
+.tray .tok{flex:0 1 auto;min-width:130px}
+.tok svg.i{width:1.5em;height:1.5em;color:var(--ink)}
+.tok .grip{width:.9em;height:.9em;color:var(--muted);opacity:.7}
+.tok.dragging{opacity:.3}
+.ghost{position:fixed;left:0;top:0;z-index:50;pointer-events:none;box-shadow:0 10px 24px rgba(0,0,0,.22);transform:translate(-50%,-50%) rotate(-3deg);cursor:grabbing}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted)}
+/* matches */
+.match{gap:10px}
+.match .mh{margin:0;font-size:clamp(21px,3vw,26px);font-weight:900}
+.match .mh .tag2{color:var(--sea)}
+.vsgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.col{border:3px solid var(--line);border-radius:18px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);transition:border-color .3s,background .3s,opacity .3s}
+.col .ct{font-size:clamp(20px,2.8vw,25px);font-weight:900;color:var(--oc);display:flex;align-items:center;gap:6px}
+.col .ct svg.i{width:1.5em;height:1.5em;color:var(--ink)}
+.col .cnt{font-size:clamp(38px,6.5vw,56px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.col .cnt small{font-size:.4em;margin-left:3px;color:var(--muted)}
+.hands{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;min-height:56px;align-content:flex-start}
+.hands svg{width:26px;height:26px;transition:transform .25s,opacity .25s}
+.hands svg.pre{opacity:0;transform:translateY(14px) scale(.6)}
+.col .res{font-weight:900;font-size:clamp(19px,2.6vw,23px);display:flex;align-items:center;gap:6px;min-height:1.6em}
+.col.win{border-color:var(--gold);background:var(--warm)}
+.col.win .res{color:#7A5A16}
+.col.lose{opacity:.55}
+.col.lose .res{color:var(--muted)}
+.col .res.pre{visibility:hidden}
+ul.gl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:clamp(19px,2.4vw,22px)}
+ul.gl li{display:block;border-radius:12px;padding:4px 8px;transition:background .2s}
+ul.gl li.on{background:var(--warm)}
+ul.gl li b.gn{color:var(--gc)}
+ul.gl svg.hh{width:24px;height:24px;vertical-align:-5px;margin-right:6px}
+.match.pre{display:none}
+.final{background:var(--warm);border:3px solid var(--gold);border-radius:22px;padding:16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.final.pre{display:none}
+.final .k{margin:0;font-size:clamp(19px,2.6vw,24px);font-weight:700;color:var(--muted)}
+.final .v{margin:0;font-size:clamp(34px,6vw,52px);font-weight:900;display:flex;align-items:center;gap:10px;line-height:1.2}
+.final .v svg.i{width:1.3em;height:1.3em}
+/* record */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--muted);font-weight:700}
+td.w{white-space:nowrap}
+td.todo{color:var(--muted)}
+.rec td:first-child{white-space:nowrap;font-weight:700;color:var(--muted)}
+.cyc{display:flex;justify-content:center}
+.cyc svg{width:100%;max-width:440px;height:auto}
+.big{font-size:clamp(40px,8vw,72px);font-weight:900;text-align:center;color:var(--good);margin:0;line-height:1.2}
+.big svg.i{color:var(--ink)}
+.why{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px;font-size:clamp(19px,2.6vw,24px);line-height:1.65}
+.eff{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.65}
+.eff dt{font-weight:900;white-space:nowrap}
+.eff dt.a{color:var(--good)}.eff dt.c{color:var(--rust)}
+.eff dd{margin:0}
+.sum td:first-child{color:var(--muted);font-weight:700;width:38%}
+@media (max-width:700px){
+  .three,.grp3{grid-template-columns:1fr}
+  .opt{flex-direction:row;text-align:left;align-items:center;gap:12px}
+  .opt svg.i{width:52px;height:52px}
+  .mrow{grid-template-columns:1fr;gap:6px}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .tok{padding:6px 6px;gap:4px}
+  .tok .grip{display:none}
+  .tray .tok{min-width:0;flex:1 1 0}
+  .mslots{gap:6px}
+  .hands svg{width:22px;height:22px}
+  th,td{padding:8px 4px}
+  .sum td:first-child{width:40%}
+}
+@media (prefers-reduced-motion:reduce){.hands svg,.col,ul.gl li{transition:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"dodgeball": "<path d=\"M1.8 8.6h3.4M1.2 12h3.2M1.8 15.4h3.4\"/><circle cx=\"14\" cy=\"12\" r=\"8\" fill=\"#F6DCCF\"/><path d=\"M8.4 6.4q4.6 5.6 0 11.2M19.6 6.4q-4.6 5.6 0 11.2\"/><path d=\"M6 12h16\"/>", "movie": "<rect x=\"2.5\" y=\"3.8\" width=\"19\" height=\"13.4\" rx=\"2.2\" fill=\"#DCE8F0\"/><path d=\"M10 7.8v5.4l4.6-2.7z\" fill=\"#FBFCF9\"/><path d=\"M12 17.2v3.4M7.8 20.6h8.4\"/>", "card": "<rect x=\"3\" y=\"3.5\" width=\"14.4\" height=\"17\" rx=\"2\" fill=\"#DCEBD5\"/><path d=\"M10.2 13.6s-3.5-2-3.5-4.5a1.75 1.75 0 0 1 3.5-.6 1.75 1.75 0 0 1 3.5.6c0 2.5-3.5 4.5-3.5 4.5z\" fill=\"#FBFCF9\"/><path d=\"M6.6 17h4.6\"/><path d=\"M14.6 21l.6-2.8 5-5a1.4 1.4 0 0 1 2 2l-5 5z\" fill=\"#F3E3BE\"/>", "hand": "<path d=\"M8.4 21.5v-3.8L5.3 14.3a1.45 1.45 0 0 1 2.1-2l1.3 1.2V6a1.35 1.35 0 0 1 2.7 0v5.2V4.6a1.35 1.35 0 0 1 2.7 0v6.6V5.6a1.35 1.35 0 0 1 2.7 0v6.2-3.4a1.35 1.35 0 0 1 2.7 0v6.8c0 2.8-.9 4.6-2.3 6.3z\" fill=\"#F6E3D6\"/>", "people": "<circle cx=\"9\" cy=\"7.6\" r=\"3.4\" fill=\"#F6E3D6\"/><path d=\"M2.6 20.5c.4-4 2.8-6.3 6.4-6.3s6 2.3 6.4 6.3z\" fill=\"#F6E3D6\"/><path d=\"M15.4 4.6a3 3 0 0 1 0 6\"/><path d=\"M17.2 14.4c2.6.6 4 2.6 4.3 6.1h-2.8\"/>", "clipboard": "<rect x=\"4.2\" y=\"4\" width=\"15.6\" height=\"17.6\" rx=\"2\" fill=\"#F3E3BE\"/><rect x=\"8.4\" y=\"2.4\" width=\"7.2\" height=\"3.6\" rx=\"1.1\" fill=\"#FBFCF9\"/><path d=\"M7.8 10.4h1.4M11.6 10.4h4.6M7.8 14h1.4M11.6 14h4.6M7.8 17.6h1.4M11.6 17.6h3\"/>", "crown": "<path d=\"M3.2 7.6l4.6 4.2L12 5l4.2 6.8 4.6-4.2-1.7 10.6H4.9z\" fill=\"#F3D27A\"/><path d=\"M4.9 21h14.2\"/>", "lots": "<path d=\"M9.2 10.2L7.6 2.8M12 10.2V2.2M14.8 10.2l1.8-6.6\"/><path d=\"M5.6 10.2h12.8l-1.3 10.2a1.6 1.6 0 0 1-1.6 1.4H8.5a1.6 1.6 0 0 1-1.6-1.4z\" fill=\"#F3E3BE\"/><path d=\"M6.4 14.6h11.2\"/><path d=\"M7.6 2.8l.5 2.2M12 2.2v2.3M16.6 3.6L16 5.8\" stroke=\"#C0532C\" stroke-width=\"2.4\"/>", "ballotbox": "<rect x=\"7.6\" y=\"2.4\" width=\"8.8\" height=\"10\" rx=\"1.2\" fill=\"#FBFCF9\"/><path d=\"M10.2 7.6l1.4 1.4 2.4-2.8\"/><rect x=\"3.2\" y=\"11\" width=\"17.6\" height=\"10.6\" rx=\"1.8\" fill=\"#DCE8F0\"/><path d=\"M6.8 11h10.4\"/><path d=\"M9.4 15.6h5.2\"/>", "podium": "<rect x=\"8.8\" y=\"6.6\" width=\"6.4\" height=\"14.4\" rx=\"1\" fill=\"#F3D27A\"/><rect x=\"2.6\" y=\"11\" width=\"6.2\" height=\"10\" rx=\"1\" fill=\"#DCE8F0\"/><rect x=\"15.2\" y=\"13.8\" width=\"6.2\" height=\"7.2\" rx=\"1\" fill=\"#F6DCCF\"/><path d=\"M11.2 10.6l1-.8v4.6\"/><path d=\"M1.6 21h20.8\"/>", "talk": "<path d=\"M2.8 5.6a2.2 2.2 0 0 1 2.2-2.2h8.6a2.2 2.2 0 0 1 2.2 2.2v4.6a2.2 2.2 0 0 1-2.2 2.2H8.4L4.8 15.2v-2.9a2.2 2.2 0 0 1-2-2.1z\" fill=\"#DCE8F0\"/><path d=\"M18.6 8.6h.4a2.2 2.2 0 0 1 2.2 2.2v4.4a2.2 2.2 0 0 1-2 2.2v2.8l-3.6-2.8h-4.2a2.2 2.2 0 0 1-2.2-2.2\" fill=\"#F6DCCF\"/>", "grip": "<circle cx=\"9\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/>", "x": "<path d=\"M7 7l10 10M17 7L7 17\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "equal3": "<rect x=\"3\" y=\"7\" width=\"4.6\" height=\"11\" rx=\"1.2\" fill=\"#DCE8F0\"/><rect x=\"9.7\" y=\"7\" width=\"4.6\" height=\"11\" rx=\"1.2\" fill=\"#DCE8F0\"/><rect x=\"16.4\" y=\"7\" width=\"4.6\" height=\"11\" rx=\"1.2\" fill=\"#DCE8F0\"/><path d=\"M2.5 21h19\"/>"};
+function ic(k,cls){return '<svg class="i'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+function hand(fill,cls){return '<svg class="'+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="#1F2A2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI.hand.replace('#F6E3D6',fill)+'</svg>'}
+function person(fill){return '<svg viewBox="0 0 24 24" fill="none" stroke="#1F2A2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7.6" r="3.6" fill="'+fill+'"/><path d="M5 21c.5-4.4 3.1-6.8 7-6.8s6.5 2.4 7 6.8z" fill="'+fill+'"/></svg>'}
+
+var app=document.getElementById('app');
+var KEY='agenda-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){return {step:0,guess:null,board:[null,null,null],runs:[],mBoard:[null,null,null],mTries:[],mReveal:false,feel:null}}
+var st=load()||fresh();
+var F=fresh();for(var kk in F){if(!(kk in st))st[kk]=F[kk]}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var timers=[];
+function clearTimers(){timers.forEach(clearTimeout);timers=[]}
+var animateNext=false;
+function go(n){clearTimers();st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* ---------- data ---------- */
+var O={X:{name:'躲避球',full:'打躲避球',ic:'dodgeball',desc:'到操場打一節課的躲避球。'},
+       Y:{name:'看影片',full:'看影片',ic:'movie',desc:'在教室裡，全班一起看一部影片。'},
+       Z:{name:'寫卡片',full:'寫卡片',ic:'card',desc:'寫卡片給快要畢業的六年級學長姐。'}};
+var KEYS=['X','Y','Z'];
+var GR=[{name:'第一群',n:9,r:['X','Y','Z'],c:'#A8441A',f:'#EDB49B'},
+        {name:'第二群',n:8,r:['Y','Z','X'],c:'#205E86',f:'#A9CBE3'},
+        {name:'第三群',n:8,r:['Z','X','Y'],c:'#2F7D4F',f:'#AED6B8'}];
+var GUESS=[['X','打躲避球'],['Y','看影片'],['Z','寫卡片'],['?','看不出來，三個好像差不多']];
+var FEEL=[
+ {ic:'lots',t:'抽籤決定順序',a:'誰也不能偷偷安排順序，三個選項的機會一樣大。',c:'結果交給運氣：抽到不同的籤，贏家就不一樣。輸的那一邊可能會覺得「只是籤運不好」，心裡不太服氣。'},
+ {ic:'ballotbox',t:'全班一起決定順序',a:'排順序的權力回到大家手上，不是班長一個人說了算。',c:'要先為「怎麼排」再表決一次，大家可能為了順序吵起來；而且每個人都會想把自己最喜歡的留到最後。'},
+ {ic:'podium',t:'三個一起比（排序給分）',a:'三個選項同時上場，沒有誰先誰後；每個人第二、第三喜歡的，也會被算進去。',c:'投票前要先講好怎麼給分，換一種算法，贏家可能就不同。這個班如果第一喜歡給 3 分、第二給 2 分、第三給 1 分，三個選項只差 1、2 分，非常接近。'},
+ {ic:'talk',t:'先討論到大家都能接受',a:'大家說出理由，也許能找到兩全的辦法，例如這週打躲避球、下週再寫卡片，覺得不公平的人會少一點。',c:'很花時間，一節班會可能講不完；比較會說話、比較大聲的人，影響力可能會比較大。'}];
+
+function rank(g,k){return g.r.indexOf(k)}
+/* one pairwise vote: every group raises hands for whichever of a,b it ranks higher */
+function match(a,b){
+  var va=0,vb=0,gs=[];
+  GR.forEach(function(g,i){var to=rank(g,a)<rank(g,b)?a:b;if(to===a)va+=g.n;else vb+=g.n;gs.push({g:i,to:to})});
+  return {a:a,b:b,va:va,vb:vb,w:va>vb?a:b,l:va>vb?b:a,gs:gs};
+}
+/* board = [first match left, first match right, waits for second match] */
+function runAgenda(bd){var m1=match(bd[0],bd[1]);var m2=match(m1.w,bd[2]);return {m1:m1,m2:m2,w:m2.w}}
+window.agendaCalc={match:match,runAgenda:runAgenda};
+
+function onm(k,noIcon){return '<span class="onm o'+k+'">'+(noIcon?'':ic(O[k].ic)+' ')+O[k].name+'</span>'}
+function descr(bd){return '先比 '+onm(bd[0],1)+' 和 '+onm(bd[1],1)+'，最後才比 '+onm(bd[2],1)}
+function descrPlain(bd){return '先比'+O[bd[0]].name+'和'+O[bd[1]].name+'，最後才比'+O[bd[2]].name}
+
+/* ---------- step 0: story ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','五年13班有 <b>25 位同學</b>。老師說，這個星期五的最後一節課，可以由全班自己決定要做什麼。'),
+           el('p','lead','班會上，大家提出了三個選項：'));
+  var t=el('div','three');
+  KEYS.forEach(function(k){var o=el('div','opt o'+k);o.innerHTML=ic(O[k].ic);var d=el('div');d.append(el('h3',null,O[k].full),el('p',null,O[k].desc));o.appendChild(d);t.appendChild(o)});
+  var n=el('p','note','班長說：「三個一起投票太亂了，我們<b>一次只比兩個</b>。兩個先比，輸的淘汰，贏的再和第三個比。」<br>比賽的順序，由班長來排。');
+  app.append(el('h1',null,'班長排順序'),c,t,n,button('開始','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: groups + guess ---------- */
+function groups(){
+  app.innerHTML='';
+  var lead=el('p','lead','每個人心裡，都把三個選項排了先後。全班剛好分成三群，同一群的人想法一樣：');
+  var g3=el('div','grp3');
+  GR.forEach(function(g,i){
+    var c=el('div','gcard g'+i);
+    c.appendChild(el('h3',null,ic('people')+g.name+' <small>'+g.n+' 人</small>'));
+    var d=el('div','dots');for(var j=0;j<g.n;j++)d.insertAdjacentHTML('beforeend',person(g.f));c.appendChild(d);
+    var ol=el('ol');
+    g.r.forEach(function(k,r){ol.appendChild(el('li',null,'<span class="rk">第 '+(r+1)+' 喜歡</span>'+onm(k)))});
+    c.appendChild(ol);g3.appendChild(c);
+  });
+  var h=el('h2',null,'你猜，全班最想要哪一個？');
+  var l=el('p','lead','先猜猜看，選哪一個都可以。等一下開會表決，你就知道了。');
+  var g=el('div','opts');
+  var nx=button('我猜好了，去排順序','btn',function(){if(st.guess==null)return;go(2)});
+  nx.disabled=st.guess==null;
+  GUESS.forEach(function(o){
+    var b=button((o[0]!=='?'?ic(O[o[0]].ic):ic('equal3'))+'<span>'+o[1]+'</span>','btn alt'+(st.guess===o[0]?' pick':''),function(){
+      st.guess=o[0];save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;
+    });
+    g.appendChild(b);
+  });
+  app.append(el('p','case','全班的想法'),lead,g3,h,l,g,nx);
+}
+
+/* ---------- agenda board with drag + tap ---------- */
+function boardUI(bd,onChange){
+  var wrap=el('div','opts');
+  var board=el('div','board');
+  var tray=el('div','tray');tray.setAttribute('aria-label','選項牌');
+  var slots=[];
+  function tokEl(k){
+    var b=el('button','tok o'+k,ic('grip','grip')+ic(O[k].ic)+'<span>'+O[k].name+'</span>');b.type='button';b.dataset.k=k;
+    var where=bd.indexOf(k);
+    b.setAttribute('aria-label',O[k].name+(where<0?'：點一下放進下一個空格':'：點一下拿回來'));
+    attachDrag(b,k);
+    return b;
+  }
+  function draw(){
+    board.innerHTML='';slots=[];
+    board.appendChild(el('p','bt',ic('clipboard')+'班會議程板'));
+    function slot(i){
+      var s=el('div','slot');s.dataset.i=i;
+      if(bd[i])s.appendChild(tokEl(bd[i]));else s.textContent='放一張牌';
+      slots.push(s);return s;
+    }
+    var r1=el('div','mrow');var ms1=el('div','mslots');ms1.append(slot(0),el('span','vs','對'),slot(1));r1.append(el('span','lab','第一場：'),ms1);
+    var r2=el('div','mrow');var ms2=el('div','mslots');ms2.append(el('div','slot fixed','第一場的贏家'),el('span','vs','對'),slot(2));r2.append(el('span','lab','第二場：'),ms2);
+    board.append(r1,r2);
+    tray.innerHTML='';
+    var left=KEYS.filter(function(k){return bd.indexOf(k)<0});
+    if(left.length)left.forEach(function(k){tray.appendChild(tokEl(k))});
+    else tray.appendChild(el('span','empty','三張牌都排好了'));
+  }
+  function place(k,i){
+    var from=bd.indexOf(k);
+    if(i<0){if(from>=0)bd[from]=null}
+    else{
+      var occ=bd[i];
+      if(from>=0)bd[from]=null;
+      if(occ&&occ!==k&&from>=0)bd[from]=occ;
+      bd[i]=k;
+    }
+    draw();onChange();
+  }
+  function tap(k){
+    var from=bd.indexOf(k);
+    if(from>=0)place(k,-1);
+    else{var e=bd.indexOf(null);if(e>=0)place(k,e)}
+  }
+  var suppress=null;
+  function attachDrag(b,k){
+    var sx=0,sy=0,dragging=false,ghost=null,pid=null,over=null;
+    b.addEventListener('pointerdown',function(ev){
+      if(ev.button!==undefined&&ev.button!==0)return;
+      pid=ev.pointerId;sx=ev.clientX;sy=ev.clientY;dragging=false;
+      try{b.setPointerCapture(pid)}catch(e){}
+    });
+    b.addEventListener('pointermove',function(ev){
+      if(pid!==ev.pointerId)return;
+      var dx=ev.clientX-sx,dy=ev.clientY-sy;
+      if(!dragging&&dx*dx+dy*dy>36){
+        dragging=true;
+        ghost=b.cloneNode(true);ghost.classList.add('ghost');ghost.style.width=b.offsetWidth+'px';document.body.appendChild(ghost);
+        b.classList.add('dragging');
+      }
+      if(dragging){
+        ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';
+        var t=target(ev.clientX,ev.clientY);
+        if(over&&over!==t)over.classList.remove('over');
+        if(t)t.classList.add('over');over=t;
+        ev.preventDefault();
+      }
+    });
+    function end(ev,cancel){
+      if(pid!==ev.pointerId)return;
+      pid=null;
+      if(!dragging)return;
+      dragging=false;suppress=k;setTimeout(function(){if(suppress===k)suppress=null},350);
+      if(ghost){ghost.remove();ghost=null}
+      b.classList.remove('dragging');
+      if(over)over.classList.remove('over');
+      var t=cancel?null:target(ev.clientX,ev.clientY);over=null;
+      if(!t){draw();return}
+      if(t===tray)place(k,-1);else place(k,+t.dataset.i);
+    }
+    b.addEventListener('pointerup',function(ev){end(ev,false)});
+    b.addEventListener('pointercancel',function(ev){end(ev,true)});
+    b.addEventListener('click',function(){if(suppress===k)return;tap(k)});
+  }
+  function target(x,y){
+    var e=document.elementFromPoint(x,y);if(!e)return null;
+    var s=e.closest('.slot');if(s&&!s.classList.contains('fixed'))return s;
+    if(e.closest('.tray'))return tray;
+    return null;
+  }
+  draw();
+  wrap.append(board,el('p','case','選項牌'),tray,el('p','hint','用手指或滑鼠把牌拖進空格。也可以用點的：依序點三張牌，會照順序放進空格；點格子裡的牌，可以拿回來重排。'));
+  return wrap;
+}
+
+/* ---------- vote animation ---------- */
+function matchBlock(m,title,anim){
+  var c=el('div','card match'+(anim?' pre':''));
+  c.appendChild(el('p','mh','<span class="tag2">'+title+'</span>'+onm(m.a,1)+' 對 '+onm(m.b,1)));
+  var g=el('div','vsgrid');
+  var cols={};
+  [m.a,m.b].forEach(function(k){
+    var v=k===m.a?m.va:m.vb;
+    var col=el('div','col o'+k+(anim?'':(k===m.w?' win':' lose')));
+    col.append(el('div','ct',ic(O[k].ic)+O[k].name));
+    var cnt=el('div','cnt',(anim?0:v)+'<small>票</small>');col.appendChild(cnt);
+    var hs=el('div','hands');col.appendChild(hs);
+    var res=el('div','res'+(anim?' pre':''),k===m.w?ic('crown')+'贏了':ic('x')+'淘汰');col.appendChild(res);
+    cols[k]={col:col,cnt:cnt,hs:hs,res:res,n:0};
+    g.appendChild(col);
+  });
+  var ul=el('ul','gl');var lis=[];
+  m.gs.forEach(function(x){
+    var gr=GR[x.g];
+    var li=el('li','g'+x.g,hand(gr.f,'hh')+'<b class="gn">'+gr.name+'</b>（'+gr.n+' 人）比較喜歡'+onm(x.to,1)+'，舉手給它');
+    ul.appendChild(li);lis.push(li);
+    for(var j=0;j<gr.n;j++)cols[x.to].hs.insertAdjacentHTML('beforeend',hand(gr.f,anim?'pre':''));
+  });
+  c.append(g,ul);
+  return {el:c,cols:cols,lis:lis,m:m};
+}
+function playBlock(B,t0,speed){
+  var t=t0;
+  timers.push(setTimeout(function(){B.el.classList.remove('pre');try{B.el.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){}},t));
+  t+=500*speed;
+  B.m.gs.forEach(function(x,gi){
+    var gr=GR[x.g],cc=B.cols[x.to];
+    timers.push(setTimeout(function(){B.lis.forEach(function(l){l.classList.remove('on')});B.lis[gi].classList.add('on')},t));
+    t+=250*speed;
+    for(var j=0;j<gr.n;j++){(function(){
+      timers.push(setTimeout(function(){
+        var h=cc.hs.querySelector('svg.pre');if(h)h.classList.remove('pre');
+        cc.n++;cc.cnt.innerHTML=cc.n+'<small>票</small>';
+      },t));t+=70*speed;
+    })()}
+    t+=380*speed;
+  });
+  timers.push(setTimeout(function(){
+    B.lis.forEach(function(l){l.classList.remove('on')});
+    [B.m.a,B.m.b].forEach(function(k){var cc=B.cols[k];cc.col.classList.add(k===B.m.w?'win':'lose');cc.res.classList.remove('pre')});
+  },t));
+  return t+600*speed;
+}
+function voteView(bd,anim,after){
+  var R=runAgenda(bd);
+  var box=el('div','opts');
+  var b1=matchBlock(R.m1,'第一場：',anim),b2=matchBlock(R.m2,'第二場：',anim);
+  var fin=el('div','final'+(anim?' pre':''));
+  fin.append(el('p','k','最後贏的是'),el('p','v o'+R.w,ic(O[R.w].ic)+'<span class="onm">'+O[R.w].name+'</span>'));
+  box.append(b1.el,b2.el,fin);
+  box.dataset.done=anim?'0':'1';
+  if(anim){
+    var speed=1;try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)speed=.35}catch(e){}
+    var t=playBlock(b1,200,speed);t=playBlock(b2,t,speed);
+    timers.push(setTimeout(function(){fin.classList.remove('pre');box.dataset.done='1';try{fin.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){};if(after)after()},t));
+  }
+  return box;
+}
+
+/* ---------- record of arrangements ---------- */
+function recordCard(){
+  var c=el('div','card');
+  c.appendChild(el('p','case','排法紀錄'));
+  var t=el('table','rec');
+  for(var i=0;i<3;i++){
+    var r=st.runs[i],tr=el('tr');
+    tr.appendChild(el('td',null,'第 '+(i+1)+' 種'));
+    if(r){tr.appendChild(el('td',null,descr(r)));tr.appendChild(el('td','w',ic('crown')+' '+onm(runAgenda(r).w,1)+' 贏'))}
+    else{var td=el('td','todo','還沒試');td.colSpan=2;tr.appendChild(td)}
+    t.appendChild(tr);
+  }
+  c.appendChild(t);return c;
+}
+
+/* ---------- step 2: explore board ---------- */
+function explore(){
+  app.innerHTML='';
+  var n=st.runs.length;
+  var msg=el('div','opts');
+  var btn=button('開會表決','btn go',function(){
+    if(st.board.indexOf(null)>=0)return;
+    var dup=st.runs.some(function(r){return r[2]===st.board[2]});
+    if(dup){
+      var tried=st.runs.map(function(r){return r[2]});
+      var rest=KEYS.filter(function(k){return tried.indexOf(k)<0}).map(function(k){return '「'+O[k].name+'」'}).join('、');
+      msg.innerHTML='';
+      msg.appendChild(el('p','note warm','這種排法剛剛試過了：一樣是「'+O[st.board[2]].name+'」留到第二場。第一場的兩張牌左右對調，結果不會變，因為比的還是同樣兩個。換一張牌留到第二場試試看，還沒留過的是'+rest+'。'));
+      try{msg.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){}
+      return;
+    }
+    st.runs.push(st.board.slice());st.board=[null,null,null];animateNext=true;go(3);
+  });
+  function upd(){save(st);btn.disabled=st.board.indexOf(null)>=0;msg.innerHTML=''}
+  var bu=boardUI(st.board,upd);
+  btn.disabled=st.board.indexOf(null)>=0;
+  app.append(el('p','case','第 '+(n+1)+' 次開會（三種排法都要試）'),
+    el('h2',null,n===0?'你來排順序：哪兩個先比？哪一個留到第二場？':'換一種排法，再開一次會'),
+    el('p','lead',n===0?'把三張選項牌拖進議程板的空格，排好以後按「開會表決」。全班的想法不會變，大家都照自己心裡的先後舉手。':'全班 25 個人的想法一樣不變，只有順序換了。這次換一張牌留到第二場。'),
+    bu,btn,msg);
+  if(n>0)app.appendChild(recordCard());
+}
+
+/* ---------- step 3: explore result ---------- */
+function exploreResult(){
+  app.innerHTML='';
+  var r=st.runs[st.runs.length-1];var n=st.runs.length;
+  var anim=animateNext;animateNext=false;
+  var tail=el('div','opts');
+  var nx=n<3?button('換一種排法再試（還有 '+(3-n)+' 種）','btn',function(){go(2)}):button('比一比三種排法','btn',function(){go(4)});
+  tail.append(recordCard(),nx);
+  app.append(el('p','case','第 '+n+' 次開會的結果'),el('h2',null,'議程：'+descr(r)),voteView(r,anim),tail);
+}
+
+/* ---------- cycle diagram ---------- */
+function cycleSVG(){
+  var P={X:[160,74],Y:[268,232],Z:[52,232]};
+  function node(k){var p=P[k];var fill={X:'#F6DCCF',Y:'#DCE8F0',Z:'#DCEBD5'}[k],col={X:'#A8441A',Y:'#205E86',Z:'#2F7D4F'}[k];
+    return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="38" fill="#FBFCF9" stroke="'+col+'" stroke-width="3"/>'+
+      '<g transform="translate('+(p[0]-17)+','+(p[1]-25)+') scale(1.42)" fill="none" stroke="#1F2A2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[O[k].ic]+'</g>'+
+      '<text x="'+p[0]+'" y="'+(k==='X'?p[1]-48:p[1]+64)+'" text-anchor="middle" font-size="19" font-weight="900" fill="'+col+'">'+O[k].name+'</text>'}
+  function arrow(a,b,lab,lx,ly){var p=P[a],q=P[b];var dx=q[0]-p[0],dy=q[1]-p[1],d=Math.sqrt(dx*dx+dy*dy),ux=dx/d,uy=dy/d;
+    var x1=p[0]+ux*46,y1=p[1]+uy*46,x2=q[0]-ux*48,y2=q[1]-uy*48;
+    return '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="#B7862B" stroke-width="4" stroke-linecap="round" marker-end="url(#ah)"/>'+
+      '<text x="'+lx+'" y="'+ly+'" text-anchor="middle" font-size="20" font-weight="900" fill="#1F2A2E">'+lab+'</text>'}
+  var mXY=match('X','Y'),mYZ=match('Y','Z'),mZX=match('Z','X');
+  return '<svg viewBox="0 0 320 304" role="img" aria-label="三個選項兩兩比：躲避球贏看影片，看影片贏寫卡片，寫卡片又贏躲避球"><defs><marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="#B7862B"/></marker></defs>'+
+    arrow('X','Y',mXY.va+' 比 '+mXY.vb,262,146)+arrow('Y','Z',mYZ.va+' 比 '+mYZ.vb,160,220)+arrow('Z','X',mZX.va+' 比 '+mZX.vb,58,146)+
+    node('X')+node('Y')+node('Z')+'</svg>';
+}
+
+/* ---------- step 4: compare ---------- */
+function compare(){
+  app.innerHTML='';
+  var c=el('div','card');
+  var t=el('table','rec');
+  t.innerHTML='<thead><tr><th></th><th>排法</th><th>最後贏的</th></tr></thead>';
+  st.runs.forEach(function(r,i){var tr=el('tr');tr.append(el('td',null,'第 '+(i+1)+' 種'),el('td',null,descr(r)),el('td','w',ic('crown')+' '+onm(runAgenda(r).w,1)));t.appendChild(tr)});
+  c.appendChild(t);
+  var d=el('div','card');
+  d.append(el('p','lead','把三個選項兩兩比一比（箭頭從贏的指向輸的）：'),el('div','cyc',cycleSVG()));
+  var mXY=match('X','Y'),mYZ=match('Y','Z'),mZX=match('Z','X');
+  d.appendChild(el('p','note','躲避球 '+mXY.va+' 比 '+mXY.vb+' 贏看影片，看影片 '+mYZ.va+' 比 '+mYZ.vb+' 贏寫卡片，寫卡片又 '+mZX.va+' 比 '+mZX.vb+' 贏躲避球。三個選項<b>繞成一圈</b>，沒有一個能同時贏過另外兩個。'));
+  var e=el('div','card');
+  e.append(el('p','lead','你發現了嗎？每一次最後贏的，都是<b>留到第二場才上場</b>的那一個。因為第一場的贏家，剛好是它打得贏的對手。'),
+    el('p','lead','全班 25 個人的想法從頭到尾都沒有變，變的只有比賽的順序。所以，<b>排順序的人</b>其實很有影響力。'));
+  var gs=st.guess;
+  var gtxt=gs==='?'?'你一開始覺得「看不出來，三個好像差不多」。':'你一開始猜全班最想要「'+(O[gs]?O[gs].name:'')+'」。';
+  e.appendChild(el('p','note warm',gtxt+'在這個班，每一個選項一對一的時候都會贏一次、也會輸一次；最後誰贏，要看怎麼排。'));
+  app.append(el('p','case','三種排法，比一比'),el('h2',null,'同一群人、同樣的想法，三個不同的贏家'),c,d,e,button('下一步：班長的任務','btn',function(){go(5)}));
+}
+
+/* ---------- step 5: mission board ---------- */
+function mission(){
+  app.innerHTML='';
+  var btn=button('開會表決','btn go',function(){
+    if(st.mBoard.indexOf(null)>=0)return;
+    st.mTries.push(st.mBoard.slice());st.mReveal=false;animateNext=true;go(6);
+  });
+  function upd(){save(st);btn.disabled=st.mBoard.indexOf(null)>=0}
+  var bu=boardUI(st.mBoard,upd);
+  btn.disabled=st.mBoard.indexOf(null)>=0;
+  app.append(el('p','case','班長的任務'+(st.mTries.length?'（第 '+(st.mTries.length+1)+' 次）':'')),
+    el('h2',null,'你是班長，你最想要「寫卡片」。要怎麼排，寫卡片才會贏？'),
+    el('p','lead','全班的想法和剛才一模一樣。排好以後按「開會表決」，看看是不是你想的那樣。'),bu,btn);
+}
+
+/* ---------- step 6: mission result ---------- */
+function missionResult(){
+  app.innerHTML='';
+  var bd=st.mTries[st.mTries.length-1];var R=runAgenda(bd);var ok=R.w==='Z';
+  var anim=animateNext;animateNext=false;
+  var tail=el('div','opts');
+  if(ok){
+    var c=el('div','card');
+    c.append(el('p','big',ic('card')+' 寫卡片贏了'),
+      el('p','lead','你讓 '+onm(bd[0],1)+' 和 '+onm(bd[1],1)+' 先比，'+onm(R.m1.w,1)+' '+Math.max(R.m1.va,R.m1.vb)+' 比 '+Math.min(R.m1.va,R.m1.vb)+' 贏了；第二場，寫卡片再以 '+Math.max(R.m2.va,R.m2.vb)+' 比 '+Math.min(R.m2.va,R.m2.vb)+' 打敗它。'),
+      el('p','lead','全班的想法一點都沒變，只是順序是你排的。'));
+    tail.append(c,button('下一步','btn',function(){go(7)}));
+  }else{
+    var c2=el('div','card');
+    c2.append(el('p','lead','這次最後贏的是「'+O[R.w].name+'」，不是寫卡片。'),
+      el('p','note warm','想一想：寫卡片一對一的時候，打得贏哪一個？要讓那一個在第一場先贏，寫卡片留到第二場再上場。'));
+    if(st.mReveal)c2.appendChild(el('p','note','參考排法：第一場 '+onm('X',1)+' 對 '+onm('Y',1)+'，躲避球會贏；第二場寫卡片再對躲避球，寫卡片 16 比 9 贏。'));
+    var rb=el('div','row-btns');
+    rb.appendChild(button('再排一次','btn',function(){st.mBoard=[null,null,null];go(5)}));
+    if(!st.mReveal)rb.appendChild(button('看參考排法','btn alt small',function(){st.mReveal=true;save(st);render()}));
+    else rb.appendChild(button('下一步','btn alt small',function(){go(7)}));
+    tail.append(c2,rb);
+  }
+  app.append(el('p','case','班長的任務：結果'),el('h2',null,'議程：'+descr(bd)),voteView(bd,anim),tail);
+}
+
+/* ---------- step 7: what should we do ---------- */
+function feel(){
+  app.innerHTML='';
+  var g=el('div','opts');var info=el('div','opts');
+  var nx=button('下一步','btn',function(){if(st.feel==null)return;go(8)});nx.disabled=st.feel==null;
+  function show(){
+    info.innerHTML='';if(st.feel==null)return;
+    var f=FEEL[st.feel];var c=el('div','card');
+    var dl=el('dl','eff');dl.append(el('dt','a','作用'),el('dd',null,f.a),el('dt','c','代價'),el('dd',null,f.c));
+    c.append(el('p','lead','你選了「<b>'+f.t+'</b>」。'),dl,el('p','hint','每一種辦法都有人支持，也都有代價。等一下全班一起討論。'));
+    info.appendChild(c);
+  }
+  FEEL.forEach(function(f,i){
+    var b=button(ic(f.ic)+'<span>'+f.t+'</span>','btn alt'+(st.feel===i?' pick':''),function(){
+      st.feel=i;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;show();
+    });
+    g.appendChild(b);
+  });
+  show();
+  app.append(el('p','case','你覺得呢？'),el('h2',null,'排順序的人可以決定結果，你覺得怎麼辦比較好？'),el('p','lead','選一個你最贊成的。沒有標準答案，選哪一個都可以。'),g,info,nx);
+}
+
+/* ---------- step 8: end ---------- */
+function end(){
+  app.innerHTML='';
+  var gs=st.guess;
+  var rows=[['一開始我猜全班最想要',gs==='?'?'看不出來，三個好像差不多':(O[gs]?onm(gs):'—')]];
+  st.runs.forEach(function(r,i){rows.push(['第 '+(i+1)+' 種排法',descr(r)+'<br>→ '+onm(runAgenda(r).w)+' 贏'])});
+  var last=st.mTries[st.mTries.length-1],ok=last&&runAgenda(last).w==='Z';
+  var okIdx=-1;st.mTries.forEach(function(b,i){if(okIdx<0&&runAgenda(b).w==='Z')okIdx=i});
+  rows.push(['讓寫卡片贏的排法',ok?descr(last)+'<br>'+(okIdx===0?'（第 1 次就排出來）':'（第 '+(okIdx+1)+' 次排出來）'):'還沒排出來（看了參考排法）']);
+  rows.push(['我覺得怎麼辦比較好',st.feel!=null?ic(FEEL[st.feel].ic)+' '+FEEL[st.feel].t:'—']);
+  var t=el('table','sum');
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var S=[intro,groups,explore,exploreResult,compare,mission,missionResult,feel,end];
+  if(st.step>=2&&st.guess==null)st.step=1;
+  if(st.step===3&&!st.runs.length)st.step=2;
+  if(st.step>=4&&st.runs.length<3)st.step=st.runs.length?3:2;
+  if(st.step>=6&&!st.mTries.length)st.step=5;
+  if(st.step>=7&&!(st.mTries.some(function(b){return runAgenda(b).w==='Z'})||st.mReveal))st.step=6;
+  if(st.step>=8&&st.feel==null)st.step=7;
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

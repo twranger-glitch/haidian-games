@@ -1,0 +1,281 @@
+<title>腳踏車拼拼看</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: opening (bikes on the way to school) → rate how well you understand it (1–7 gears) → build a bike in three parts (frame, pedals, chain) by dragging or tapping option cards, no feedback during building → see your bike → rate again → side-by-side with the real bike, each part marked 一樣／不一樣 with one sentence why → who would you need to build one from scratch (multi-select, no right answer) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+svg.bike{width:100%;height:auto;display:block}
+.stage{background:var(--card);border:3px dashed var(--line);border-radius:22px;padding:8px;transition:border-color .15s,background .15s}
+.stage.over{border-color:var(--gold);background:#FBF1DC}
+.picks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.pc{font:inherit;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:6px 6px 4px;cursor:grab;display:flex;flex-direction:column;align-items:center;gap:2px;touch-action:none;user-select:none;-webkit-user-select:none;color:var(--ink)}
+.pc svg{width:100%;height:auto;display:block;pointer-events:none}
+.pc span{font-size:clamp(19px,2.6vw,23px);font-weight:900;pointer-events:none}
+.pc.pick{border-color:var(--gold);background:#FBF1DC}
+.ghost{position:fixed;z-index:9;pointer-events:none;width:150px;opacity:.85;transform:translate(-50%,-50%);background:var(--card);border:3px solid var(--gold);border-radius:14px;padding:4px}
+.ghost svg{width:100%;height:auto;display:block}
+.gears{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.gr{font:inherit;background:transparent;border:3px solid transparent;border-radius:14px;padding:4px 0 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;color:var(--ink)}
+.gr svg{width:100%;max-width:64px;height:auto;display:block}
+.gr span{font-size:clamp(19px,2.6vw,24px);font-weight:900}
+.gr.pick{border-color:var(--gold);background:#FBF1DC}
+.count{font-size:clamp(46px,9vw,80px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums;line-height:1.2}
+.scale{display:flex;justify-content:space-between;font-size:clamp(19px,2.4vw,21px);color:var(--muted);font-weight:700;margin:0;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.pc:focus-visible,.gr:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two h3{font-size:clamp(19px,2.6vw,24px);margin:0 0 4px;text-align:center}
+.part{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--line);padding-top:12px}
+.part:first-child{border-top:0;padding-top:0}
+.part .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.part b{font-size:clamp(21px,3vw,27px)}
+.tag{display:inline-block;font-weight:900;font-size:clamp(19px,2.6vw,23px);padding:2px 14px;border-radius:999px;border:3px solid var(--sea);color:var(--sea);background:var(--note)}
+.tag.diff{border-color:var(--gold);color:#7A5A16;background:#FBF1DC}
+.part p{margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.65}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.n{text-align:right;font-weight:900}
+@media (max-width:620px){.picks{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"box": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3.5\" fill=\"#FBFCF9\"/>", "boxon": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3.5\" fill=\"#DCE8F0\"/><path d=\"M8 12.3l2.8 2.8L16.2 9.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='bike-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuf(){var a=[0,1,2,3];for(var i=3;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
+var st=load()||{step:0,r1:null,r2:null,ord:[shuf(),shuf(),shuf()],pick:[null,null,null],help:[]};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,f,cls){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',f);return b}
+function go(n){st.step=n;save(st);render();window.scrollTo(0,0)}
+
+/* ---------- drawing ---------- */
+var R={x:150,y:240},F={x:450,y:240},WR=80;           // rear axle, front axle, wheel radius
+var SEAT={x:228,y:112},BAR={x:420,y:100};
+var S={x:238,y:138},BB={x:292,y:252},H={x:404,y:136},HB={x:414,y:172};
+var PED=[BB,F,R,{x:236,y:178}];                         // 0 = correct
+var INK='#1F2A2E',FR='#205E86',PD='#A8441A',CH='#3B3B3B';
+function L(a,b,c,w){return '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round"/>'}
+function wheels(faint){
+  var c=faint?'#9AA39E':INK,s='';
+  [R,F].forEach(function(p){s+='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+WR+'" fill="none" stroke="'+c+'" stroke-width="12"/><circle cx="'+p.x+'" cy="'+p.y+'" r="'+(WR-12)+'" fill="none" stroke="#C9CFC9" stroke-width="2"/><circle cx="'+p.x+'" cy="'+p.y+'" r="7" fill="'+c+'"/>';
+    for(var k=0;k<8;k++){var a=k*Math.PI/4;s+='<line x1="'+p.x+'" y1="'+p.y+'" x2="'+(p.x+Math.cos(a)*(WR-8)).toFixed(1)+'" y2="'+(p.y+Math.sin(a)*(WR-8)).toFixed(1)+'" stroke="#C9CFC9" stroke-width="2"/>'}});
+  return s;
+}
+function seatBar(hint){
+  var d=hint?' stroke-dasharray="8 6" fill="none" stroke="#56605C" stroke-width="4"':' fill="'+INK+'"';
+  var s='<path d="M'+(SEAT.x-34)+' '+(SEAT.y-8)+' Q'+SEAT.x+' '+(SEAT.y-22)+' '+(SEAT.x+30)+' '+(SEAT.y-6)+' Q'+(SEAT.x+6)+' '+(SEAT.y+8)+' '+(SEAT.x-30)+' '+(SEAT.y+4)+' Z"'+d+'/>';
+  s+='<path d="M'+(BAR.x-40)+' '+(BAR.y-14)+' Q'+(BAR.x-10)+' '+(BAR.y+4)+' '+BAR.x+' '+BAR.y+' Q'+(BAR.x+14)+' '+(BAR.y-4)+' '+(BAR.x+34)+' '+(BAR.y-20)+'" fill="none" stroke="'+(hint?'#56605C':INK)+'" stroke-width="'+(hint?5:9)+'" stroke-linecap="round"'+(hint?' stroke-dasharray="8 6"':'')+'/>';
+  if(hint){s+='<text x="'+SEAT.x+'" y="'+(SEAT.y-30)+'" text-anchor="middle" font-size="24" font-weight="700" fill="#56605C">座墊</text><text x="'+(BAR.x-4)+'" y="'+(BAR.y-30)+'" text-anchor="middle" font-size="24" font-weight="700" fill="#56605C">龍頭</text>'+
+    '<text x="'+R.x+'" y="'+(R.y+WR+32)+'" text-anchor="middle" font-size="24" font-weight="700" fill="#56605C">後輪</text><text x="'+F.x+'" y="'+(F.y+WR+32)+'" text-anchor="middle" font-size="24" font-weight="700" fill="#56605C">前輪</text>'}
+  return s;
+}
+function frame(i){
+  var w=12,c=FR,s='';
+  if(i===0){ // diamond frame + fork
+    s=L(SEAT,S,c,8)+L(S,BB,c,w)+L(BB,R,c,w-2)+L(R,S,c,w-2)+L(S,H,c,w)+L(HB,BB,c,w)+L(H,HB,c,w+2)+L(HB,F,c,9)+L(H,BAR,c,8);
+  }else if(i===1){ // box clamps both wheels, front wheel boxed in
+    var a={x:R.x,y:138},b={x:F.x+WR+10,y:138},cpt={x:F.x+WR+10,y:F.y},d={x:SEAT.x,y:138},e={x:BAR.x,y:138},f={x:F.x,y:138};
+    s=L(a,b,c,w)+L(R,cpt,c,w)+L(a,R,c,w)+L(f,F,c,w)+L(b,cpt,c,w)+L(SEAT,d,c,8)+L(BAR,e,c,8);
+  }else if(i===2){ // front half only, not connected to rear wheel
+    s=L(SEAT,S,c,8)+L(S,BB,c,w)+L(S,H,c,w)+L(HB,BB,c,w)+L(H,HB,c,w+2)+L(HB,F,c,9)+L(H,BAR,c,8);
+  }else{ // only a post under the seat
+    var p={x:S.x+4,y:206};s=L(SEAT,p,c,w)+L({x:p.x-26,y:p.y},{x:p.x+26,y:p.y},c,w);
+  }
+  return s;
+}
+function pedal(i){
+  var p=PED[i],s='<circle cx="'+p.x+'" cy="'+p.y+'" r="24" fill="#F6E3D9" stroke="'+PD+'" stroke-width="6"/>';
+  for(var k=0;k<12;k++){var a=k*Math.PI/6;s+='<circle cx="'+(p.x+Math.cos(a)*27).toFixed(1)+'" cy="'+(p.y+Math.sin(a)*27).toFixed(1)+'" r="3.4" fill="'+PD+'"/>'}
+  var u={x:p.x+14,y:p.y-32},v={x:p.x-14,y:p.y+32};
+  s+=L(p,u,PD,9)+L(p,v,PD,9)+'<rect x="'+(u.x-18)+'" y="'+(u.y-6)+'" width="36" height="12" rx="4" fill="'+INK+'"/><rect x="'+(v.x-18)+'" y="'+(v.y-6)+'" width="36" height="12" rx="4" fill="'+INK+'"/><circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="'+INK+'"/>';
+  return s;
+}
+function cog(p,r){var s='<circle cx="'+p.x+'" cy="'+p.y+'" r="'+r+'" fill="#E2E5E1" stroke="'+CH+'" stroke-width="4"/>';return s}
+function belt(p1,r1,p2,r2){
+  var dx=p2.x-p1.x,dy=p2.y-p1.y,d=Math.sqrt(dx*dx+dy*dy);
+  var dash=' fill="none" stroke="'+CH+'" stroke-width="6" stroke-dasharray="9 5"';
+  if(d<Math.abs(r1-r2)+4){var r=Math.max(r1,r2)+3;return '<circle cx="'+p1.x+'" cy="'+p1.y+'" r="'+r+'"'+dash+'/>'}
+  var th=Math.atan2(dy,dx),al=Math.acos((r1-r2)/d),s='';
+  [1,-1].forEach(function(sg){var a=th+sg*al;s+='<line x1="'+(p1.x+r1*Math.cos(a)).toFixed(1)+'" y1="'+(p1.y+r1*Math.sin(a)).toFixed(1)+'" x2="'+(p2.x+r2*Math.cos(a)).toFixed(1)+'" y2="'+(p2.y+r2*Math.sin(a)).toFixed(1)+'"'+dash+'/>'});
+  // wrap arcs: far side of each circle
+  function arc(p,r,a1,a2,big){return '<path d="M'+(p.x+r*Math.cos(a1)).toFixed(1)+' '+(p.y+r*Math.sin(a1)).toFixed(1)+' A'+r+' '+r+' 0 '+big+' 1 '+(p.x+r*Math.cos(a2)).toFixed(1)+' '+(p.y+r*Math.sin(a2)).toFixed(1)+'"'+dash+'/>'}
+  s+=arc(p1,r1,th+al,th-al+2*Math.PI,al<Math.PI/2?1:0);
+  s+=arc(p2,r2,th-al,th+al,al<Math.PI/2?0:1);
+  return s;
+}
+function chain(i,pi){
+  var P=PED[pi==null?0:pi],s='';
+  if(i===0){s=cog(R,13)+belt(P,30,R,15)}
+  else if(i===1){s=belt(F,WR+8,F,WR+8)}
+  else if(i===2){s=cog(R,13)+cog(F,13)+belt(F,15,R,15)}
+  else{s=cog(F,13)+belt(P,30,F,15)}
+  return s;
+}
+function bikeSVG(parts,opt){
+  opt=opt||{};
+  var s='<svg class="bike" viewBox="0 '+(opt.hint?40:50)+' 600 '+(opt.hint?345:300)+'" role="img" aria-label="'+(opt.label||'腳踏車')+'">';
+  s+=wheels(opt.faint);
+  if(parts[2]!=null)s+=chain(parts[2],parts[1]);
+  if(parts[0]!=null)s+=frame(parts[0]);
+  s+=seatBar(opt.hint&&parts[0]==null);
+  if(parts[1]!=null)s+=pedal(parts[1]);
+  if(opt.hint&&parts[0]!=null)s+=seatBar(true).replace(/<path[^>]*\/>/g,'');
+  return s+'</svg>';
+}
+
+/* ---------- content ---------- */
+var PART=[{n:'車架',q:'① 車架要長什麼樣子？'},{n:'踏板',q:'② 踏板要裝在哪裡？'},{n:'鏈條',q:'③ 鏈條要怎麼繞？'}];
+var LBL=['A','B','C','D'];
+var WHY=[
+ '車架像一個菱形，把座墊、踏板和後輪連在一起，前面接著前叉。前叉跟著龍頭轉，前輪才可以左右轉彎；如果車架把前輪框死，就沒辦法轉彎了。',
+ '踏板裝在兩個輪子中間、車架下方。人坐在座墊上，腳往下就踩得到，也不會踢到輪子。很久以前真的有腳踏車把踏板裝在前輪上，可是一邊踩一邊轉彎很難騎。',
+ '鏈條繞著踏板的大齒輪和後輪的小齒輪。腳一踩，大齒輪轉，鏈條就拉著後輪轉，把車子往前推；前輪負責轉彎，所以不接鏈條。'
+];
+var HELP=['做鏈條的工廠','做輪胎的工廠','會設計的人','腳踏車店師傅','都不用，我自己就會'];
+var SELF=HELP.length-1;
+
+function gearIcon(on){
+  var s='<svg viewBox="0 0 60 60" aria-hidden="true"><path d="',n=8,r1=27,r2=20,pts=[];
+  for(var k=0;k<n*4;k++){var a=k*Math.PI*2/(n*4),r=(k%4<2)?r1:r2;pts.push((30+r*Math.cos(a)).toFixed(1)+' '+(30+r*Math.sin(a)).toFixed(1))}
+  s+='M'+pts.join(' L')+' Z" fill="'+(on?'#205E86':'#FBFCF9')+'" stroke="'+(on?'#205E86':'#9AA39E')+'" stroke-width="3"/><circle cx="30" cy="30" r="8" fill="'+(on?'#FBFCF9':'#EEF0EC')+'" stroke="'+(on?'#FBFCF9':'#9AA39E')+'" stroke-width="3"/></svg>';
+  return s;
+}
+
+/* ---------- screens ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.innerHTML=bikeSVG([null,null,null],{hint:true,label:'只剩兩個輪子、座墊和龍頭位置的腳踏車'});
+  c.append(el('p','lead','每天早上，安南區的大街小巷裡，有好多同學騎著腳踏車上學。走進校門，車棚裡也停著一排一排的腳踏車。'),
+           el('p','lead','腳踏車，你每天都看得到。今天，我們要從兩個輪子開始，把一台腳踏車拼出來。'));
+  app.append(el('h1',null,'腳踏車拼拼看'),c,btn('開始',function(){go(1)}));
+}
+function rate(which){
+  app.innerHTML='';
+  var k=which===1?'r1':'r2';
+  var h=el('h2',null,which===1?'你覺得你有多懂「腳踏車是怎麼讓輪子轉起來的」？':'拼完以後，再想一次：你覺得你有多懂「腳踏車是怎麼讓輪子轉起來的」？');
+  var c=el('div','card');
+  var g=el('div','gears');g.setAttribute('role','group');g.setAttribute('aria-label','1 到 7 個齒輪');
+  var out=el('p','count',st[k]?st[k]+' 個齒輪':'點一個齒輪');
+  var nx=btn('下一步',function(){go(which===1?2:7)});nx.disabled=!st[k];
+  function draw(){g.innerHTML='';for(var i=1;i<=7;i++)(function(i){var b=el('button','gr'+(st[k]===i?' pick':''),gearIcon(st[k]&&i<=st[k])+'<span>'+i+'</span>');b.type='button';b.setAttribute('aria-label',i+' 分');
+    b.addEventListener('click',function(){st[k]=i;save(st);out.textContent=i+' 個齒輪';nx.disabled=false;draw()});g.appendChild(b)})(i)}
+  draw();
+  var sc=el('p','scale');sc.append(el('span',null,'1：完全不懂'),el('span',null,'7：非常懂'));
+  c.append(out,g,sc);
+  app.append(el('p','case',which===1?'先想一想':'再想一次'),h,el('p','lead','沒有對錯，憑你現在的感覺選就好。'),c,nx);
+}
+function build(part){
+  app.innerHTML='';
+  var cur=st.pick.slice();
+  var stage=el('div','stage');
+  function drawStage(){var p=st.pick.slice();for(var j=part+1;j<3;j++)p[j]=null;stage.innerHTML=bikeSVG(p,{hint:true,label:'拼到一半的腳踏車'})}
+  drawStage();
+  var row=el('div','picks');
+  var nx=btn(part<2?'好了，下一個部分':'好了，看看我拼的腳踏車',function(){go(3+part)});nx.disabled=st.pick[part]==null;
+  var tip=el('p','lead',st.pick[part]==null?'還沒放上去。':'已經放上去了。想換的話，再拖另一張就好。');
+  function choose(id){st.pick[part]=id;save(st);drawStage();nx.disabled=false;tip.textContent='已經放上去了。想換的話，再拖另一張就好。';
+    Array.prototype.forEach.call(row.children,function(x){x.classList.toggle('pick',+x.dataset.id===id)})}
+  st.ord[part].forEach(function(id,k){
+    var p=[null,null,null];p[part]=id;if(part===2)p[1]=st.pick[1];
+    var thumb=bikeSVG(p,{faint:true,label:PART[part].n+' '+LBL[k]});
+    var b=el('button','pc'+(st.pick[part]===id?' pick':''),thumb+'<span>'+LBL[k]+'</span>');b.type='button';b.dataset.id=id;
+    b.setAttribute('aria-label',PART[part].n+' '+LBL[k]);
+    var sx,sy,ghost=null,moved=false;
+    b.addEventListener('pointerdown',function(e){sx=e.clientX;sy=e.clientY;moved=false;try{b.setPointerCapture(e.pointerId)}catch(_){}});
+    b.addEventListener('pointermove',function(e){if(sx==null)return;
+      if(!ghost&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>10){ghost=el('div','ghost',thumb);document.body.appendChild(ghost);moved=true}
+      if(ghost){ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';var r=stage.getBoundingClientRect();stage.classList.toggle('over',e.clientX>r.left&&e.clientX<r.right&&e.clientY>r.top&&e.clientY<r.bottom)}});
+    function end(e){if(ghost){var r=stage.getBoundingClientRect();if(e&&e.clientX>r.left&&e.clientX<r.right&&e.clientY>r.top&&e.clientY<r.bottom)choose(id);ghost.remove();ghost=null}stage.classList.remove('over');sx=null}
+    b.addEventListener('pointerup',end);b.addEventListener('pointercancel',function(){end(null)});
+    b.addEventListener('click',function(){if(moved){moved=false;return}choose(id)});
+    row.appendChild(b);
+  });
+  app.append(el('p','case','第 '+(part+1)+' 個部分，共 3 個部分'),el('h2',null,PART[part].q),
+    el('p','lead','從下面 4 張卡片選一張，拖到腳踏車上（直接點卡片也可以）。'),stage,row,tip,nx);
+}
+function built(){
+  app.innerHTML='';
+  var c=el('div','card');c.innerHTML=bikeSVG(st.pick,{label:'你拼好的腳踏車'});
+  app.append(el('p','case','拼好了'),el('h2',null,'這是你拼好的腳踏車！'),c,el('p','lead','仔細看一看：如果真的騎上去，用力踩踏板，會發生什麼事？'),btn('下一步',function(){go(6)}));
+}
+function same(i){return st.pick[i]===0}
+function reveal(){
+  app.innerHTML='';
+  var two=el('div','two');
+  var a=el('div','card');a.append(el('h3',null,'你拼的腳踏車'));a.insertAdjacentHTML('beforeend',bikeSVG(st.pick,{label:'你拼的腳踏車'}));
+  var b=el('div','card');b.append(el('h3',null,'真正的腳踏車'));b.insertAdjacentHTML('beforeend',bikeSVG([0,0,0],{label:'真正的腳踏車'}));
+  two.append(a,b);
+  var c=el('div','card');
+  PART.forEach(function(p,i){var d=el('div','part');var r=el('div','row');r.append(el('b',null,p.n),el('span','tag'+(same(i)?'':' diff'),same(i)?'一樣':'不一樣'));
+    d.append(r,el('p',null,WHY[i]));c.appendChild(d)});
+  app.append(el('p','case','對照看看'),el('h2',null,'把你的腳踏車和真正的腳踏車放在一起比一比。'),two,c,btn('下一步',function(){go(8)}));
+}
+function help(){
+  app.innerHTML='';
+  var g=el('div','opts');
+  var nx=btn('選好了',function(){go(9)});nx.disabled=!st.help.length;
+  function draw(){g.innerHTML='';HELP.forEach(function(t,i){var on=st.help.indexOf(i)>=0;var b=btn((on?ic('boxon'):ic('box'))+' '+t,function(){
+      if(on){st.help=st.help.filter(function(x){return x!==i})}
+      else if(i===SELF){st.help=[SELF]}
+      else{st.help=st.help.filter(function(x){return x!==SELF});st.help.push(i)}
+      st.help.sort();save(st);nx.disabled=!st.help.length;draw()},'btn alt'+(on?' pick':''));b.setAttribute('aria-pressed',on);g.appendChild(b)})}
+  draw();
+  app.append(el('p','case','最後一題'),el('h2',null,'如果要你自己從零開始，做出一台真的能騎的腳踏車，你需要誰幫忙？'),
+    el('p','lead','可以選好幾個。沒有對錯，選你真的會去找的。'),g,nx);
+}
+function endPage(){
+  app.innerHTML='';
+  var n=[0,1,2].filter(same).length;
+  var dv=st.r2-st.r1,chg=dv<0?'下降了 '+(-dv)+' 分':dv>0?'上升了 '+dv+' 分':'沒有變';
+  var t=el('table');
+  [['第一次自評',st.r1+' 個齒輪'],['車架',same(0)?'一樣':'不一樣'],['踏板',same(1)?'一樣':'不一樣'],['鏈條',same(2)?'一樣':'不一樣'],
+   ['和真正的腳踏車一樣的部分','共 '+n+' 個'],['第二次自評',st.r2+' 個齒輪'],['自評有沒有下降',chg],
+   ['最後一題選了',st.help.map(function(i){return HELP[i]}).join('、')]].forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.innerHTML=bikeSVG(st.pick,{label:'你拼的腳踏車'});c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+function render(){
+  var s=st.step;
+  if(s===0)intro();else if(s===1)rate(1);else if(s>=2&&s<=4)build(s-2);else if(s===5)built();
+  else if(s===6)rate(2);else if(s===7)reveal();else if(s===8)help();else endPage();
+}
+// guard against skipped data after reload
+if(st.step>=2&&st.r1==null)st.step=1;
+for(var q=0;q<3;q++){if(st.step>q+2&&st.pick[q]==null){st.step=q+2;break}}
+if(st.step>=7&&st.r2==null)st.step=6;
+if(st.step>=9&&!st.help.length)st.step=8;
+render();
+})();
+</script>

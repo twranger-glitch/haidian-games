@@ -1,0 +1,350 @@
+<title>安南市集換換看</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: Saturday market in Annan with six stalls. Round 1: carry one milkfish and try to trade, item for item, until you get slippers (drag the item in your hand onto a stall, or tap a stall and press the button). Round 2: same stalls, but everyone takes "Haidian coins" — sell first, then buy. Then a side-by-side table, two no-wrong-answer questions, and a summary for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-padding-bottom:200px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:960px;margin:0 auto;padding-inline:20px;padding-block:24px 0;display:flex;flex-direction:column;gap:16px}
+.wrap::after{content:"";height:20px;flex:none}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+svg.pic{width:100%;max-height:260px;height:auto}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.small{font-size:clamp(19px,2.4vw,21px);padding:8px 14px;align-self:flex-start}
+.btn:focus-visible,.stall:focus-visible,.hand:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.big{font-size:clamp(46px,9vw,84px);font-weight:900;line-height:1.15;margin:0;text-align:center;color:var(--sea)}
+.big.no{color:var(--rust)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:700}
+td.k{color:var(--muted);font-weight:700}
+td.n{font-weight:900;font-variant-numeric:tabular-nums}
+
+/* ---- market ---- */
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.banner{background:var(--warm);border:3px solid var(--gold);border-radius:16px;padding:10px 16px;font-size:clamp(19px,2.6vw,23px);font-weight:900;margin:0;text-align:center}
+.market{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stall{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:6px;cursor:pointer;position:relative;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.stall.sel{border-color:var(--sea)}
+.stall.over{border-color:var(--gold);background:var(--warm)}
+.stall.done{background:#EEF6F0}
+.bub{position:relative;background:var(--note);border-radius:14px;padding:8px 10px;font-size:clamp(19px,2.3vw,21px);line-height:1.45;min-height:3.4em}
+.bub::after{content:"";position:absolute;left:50%;bottom:-10px;margin-left:-10px;border:10px solid transparent;border-bottom:0;border-top-color:var(--note)}
+.bub .w{display:block;color:var(--muted)}
+.bub .w.ask{font-size:.9em}
+.bub .w.say{color:var(--rust);font-weight:700}
+.bub .w.yes{color:var(--good);font-weight:700}
+.stall svg{width:100%;height:auto;max-height:118px;display:block;margin-top:6px}
+.sname{font-weight:900;text-align:center;font-size:clamp(19px,2.4vw,22px);margin:0}
+.price{align-self:center;background:#FFF;border:2px solid var(--gold);border-radius:10px;padding:0 8px;font-weight:900;font-size:19px;color:#7A5A12}
+.stall .btn{font-size:clamp(19px,2.3vw,21px);padding:10px 10px}
+.person{transform-origin:80px 90px}
+.stall.shake .person{animation:shake .5s ease-in-out}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-7deg)}40%{transform:rotate(7deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(5deg)}}
+.stall.yay{animation:pop .45s ease-out}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.stall.shake .person,.stall.yay{animation:none}}
+
+.bar{position:sticky;bottom:0;z-index:5;background:var(--card);border:3px solid var(--sea);border-radius:20px 20px 0 0;padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 -6px 18px rgba(31,42,46,.12)}
+.row{display:flex;align-items:center;gap:12px}
+.hand{flex:none;width:92px;height:68px;border:3px dashed var(--gold);border-radius:14px;background:var(--warm);display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.hand svg{width:76px;height:52px}
+.hinfo{flex:1;min-width:0}
+.hinfo .h{margin:0;font-size:clamp(19px,2.5vw,23px);font-weight:900;line-height:1.35}
+.hinfo .s{margin:0;font-size:19px;color:var(--muted);font-variant-numeric:tabular-nums}
+.msg{margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.5;background:var(--note);border-radius:12px;padding:6px 12px}
+.msg.ok{background:#E3F1E7}
+.ghost{position:fixed;z-index:20;width:92px;height:64px;pointer-events:none;transform:translate(-50%,-60%);filter:drop-shadow(0 6px 8px rgba(0,0,0,.25))}
+@media (max-width:700px){.market{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stall{padding:8px}.hand{width:80px;height:60px}.hand svg{width:66px;height:46px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='barter-v1';
+var LIMIT=180, GIVEUP=60;
+
+/* ---------- things ---------- */
+var I={
+ fish:{n:'一尾虱目魚',s:'虱目魚'}, oy:{n:'一籃蚵仔',s:'蚵仔'}, ra:{n:'一包菜脯',s:'菜脯'}, eg:{n:'一盒鹹蛋',s:'鹹蛋'},
+ sl:{n:'一雙拖鞋',s:'拖鞋'}, me:{n:'一顆西瓜',s:'西瓜'}, no:{n:'一包米粉',s:'米粉'}, coin:{n:'50 海佃幣',s:'海佃幣'}
+};
+var S=[
+ {id:'oy',name:'賣蚵阿伯',has:'oy',want:'ra',hair:'cap',shirt:'#5B8DB8',aw:'#2F7D4F'},
+ {id:'ra',name:'菜脯阿姨',has:'ra',want:'eg',hair:'bun',shirt:'#C9655A',aw:'#B7862B'},
+ {id:'eg',name:'鹹蛋大姊',has:'eg',want:'fish',hair:'pony',shirt:'#8E6BB0',aw:'#205E86'},
+ {id:'sl',name:'拖鞋老闆',has:'sl',want:'oy',hair:'short',shirt:'#3E8E8A',aw:'#A8441A'},
+ {id:'me',name:'西瓜伯',has:'me',want:'sl',hair:'hat',shirt:'#D9A23F',aw:'#3E8E41'},
+ {id:'no',name:'米粉嬸',has:'no',want:'me',hair:'curly',shirt:'#6F8F4E',aw:'#8E6BB0'}
+];
+var BY={};S.forEach(function(s){BY[s.id]=s});
+var G={
+ fish:'<ellipse cx="27" cy="21" rx="22" ry="9" fill="#A9BECD" stroke="#56718A" stroke-width="2"/><path d="M47 21 L59 10 L59 32 Z" fill="#8AA3B6" stroke="#56718A" stroke-width="2"/><circle cx="13" cy="19" r="2.2" fill="#1F2A2E"/><path d="M18 25 q10 4 20 0" stroke="#E9EEF2" stroke-width="2" fill="none"/><path d="M26 12 l4 -5 l4 5" fill="#8AA3B6"/>',
+ oy:'<ellipse cx="16" cy="15" rx="9" ry="6" fill="#B4AFA4" stroke="#6F6B62" stroke-width="1.5"/><ellipse cx="30" cy="12" rx="9" ry="6" fill="#C4BFB4" stroke="#6F6B62" stroke-width="1.5"/><ellipse cx="44" cy="15" rx="9" ry="6" fill="#B4AFA4" stroke="#6F6B62" stroke-width="1.5"/><path d="M5 18 H55 L49 39 H11 Z" fill="#B98A4E" stroke="#7E5A2C" stroke-width="2"/><path d="M9 25 H51 M10 32 H50" stroke="#7E5A2C" stroke-width="1.5"/>',
+ ra:'<rect x="10" y="7" width="40" height="32" rx="5" fill="#F5EFD9" stroke="#B7862B" stroke-width="2"/><rect x="24" y="2" width="12" height="7" rx="2" fill="#A8441A"/><g fill="#C99A3C"><rect x="15" y="14" width="14" height="5" rx="2.5" transform="rotate(-15 22 16)"/><rect x="31" y="15" width="14" height="5" rx="2.5" transform="rotate(12 38 17)"/><rect x="16" y="25" width="14" height="5" rx="2.5" transform="rotate(10 23 27)"/><rect x="31" y="27" width="14" height="5" rx="2.5" transform="rotate(-12 38 29)"/></g>',
+ eg:'<ellipse cx="16" cy="16" rx="7" ry="9" fill="#DCE8EE" stroke="#7A93A0" stroke-width="1.5"/><ellipse cx="30" cy="15" rx="7" ry="9" fill="#DCE8EE" stroke="#7A93A0" stroke-width="1.5"/><ellipse cx="44" cy="16" rx="7" ry="9" fill="#DCE8EE" stroke="#7A93A0" stroke-width="1.5"/><rect x="4" y="20" width="52" height="19" rx="3" fill="#E9D9B5" stroke="#8E6A3A" stroke-width="2"/><path d="M8 29 H52" stroke="#8E6A3A" stroke-width="1.5" stroke-dasharray="4 3"/>',
+ sl:'<rect x="7" y="4" width="20" height="34" rx="10" fill="#2E86C1" stroke="#1B5E8A" stroke-width="2"/><path d="M9 15 q8 9 16 0" stroke="#F2C94C" stroke-width="4" fill="none"/><rect x="33" y="4" width="20" height="34" rx="10" fill="#2E86C1" stroke="#1B5E8A" stroke-width="2"/><path d="M35 15 q8 9 16 0" stroke="#F2C94C" stroke-width="4" fill="none"/>',
+ me:'<circle cx="30" cy="21" r="18" fill="#4A9A4D" stroke="#245C27" stroke-width="2"/><path d="M30 3 q-9 18 0 36 M30 3 q9 18 0 36 M21 6 q-12 15 -2 31 M39 6 q12 15 2 31" stroke="#245C27" stroke-width="2.5" fill="none"/><path d="M30 3 l2 -3" stroke="#7E5A2C" stroke-width="2"/>',
+ no:'<rect x="9" y="5" width="42" height="34" rx="6" fill="#FAFAF6" stroke="#9AA5A0" stroke-width="2"/><path d="M13 13 q4 -3 8 0 t8 0 t8 0 t8 0 M13 20 q4 -3 8 0 t8 0 t8 0 t8 0 M13 27 q4 -3 8 0 t8 0 t8 0 t8 0" stroke="#C9C3B0" stroke-width="2" fill="none"/><rect x="20" y="30" width="20" height="7" rx="2" fill="#C9655A"/>',
+ coin:'<circle cx="30" cy="20" r="18" fill="#F2C94C" stroke="#B7862B" stroke-width="3"/><circle cx="30" cy="20" r="13" fill="none" stroke="#D9A93A" stroke-width="1.5"/><text x="30" y="26" text-anchor="middle" font-size="16" font-weight="900" fill="#7A5A12" font-family="Noto Sans TC,sans-serif">50</text>'
+};
+function itemSvg(k){return '<svg viewBox="0 0 60 42" aria-hidden="true">'+G[k]+'</svg>'}
+var HAIR={
+ cap:'<path d="M64 40 q16 -16 32 0 Z" fill="#3B5E8C"/><rect x="62" y="38" width="38" height="5" rx="2" fill="#2C4A70"/>',
+ bun:'<path d="M65 46 q15 -22 30 0 q-15 -8 -30 0 Z" fill="#2B2118"/><circle cx="80" cy="28" r="7" fill="#2B2118"/>',
+ pony:'<path d="M65 47 q15 -24 30 0 q-15 -9 -30 0 Z" fill="#4A2E1C"/><path d="M95 42 q10 6 4 22" stroke="#4A2E1C" stroke-width="6" fill="none" stroke-linecap="round"/>',
+ short:'<path d="M65 46 q15 -22 30 0 q-6 -6 -15 -6 q-9 0 -15 6 Z" fill="#1F2A2E"/>',
+ hat:'<ellipse cx="80" cy="38" rx="26" ry="5" fill="#E2C46C" stroke="#B7862B" stroke-width="1.5"/><path d="M68 38 q12 -18 24 0 Z" fill="#E2C46C" stroke="#B7862B" stroke-width="1.5"/>',
+ curly:'<g fill="#5A5A5A"><circle cx="68" cy="40" r="5"/><circle cx="74" cy="34" r="5"/><circle cx="81" cy="32" r="5"/><circle cx="88" cy="34" r="5"/><circle cx="93" cy="40" r="5"/></g>'
+};
+function stallSvg(s,item){
+  var st='';for(var x=0;x<160;x+=20){st+='<rect x="'+x+'" y="0" width="10" height="20" fill="'+s.aw+'"/>'}
+  var sc='';for(var x2=10;x2<160;x2+=20){sc+='<circle cx="'+x2+'" cy="20" r="10" fill="'+(x2%40===10?s.aw:'#FFFFFF')+'"/>'}
+  return '<svg viewBox="0 0 160 124" aria-hidden="true"><rect x="10" y="20" width="6" height="104" fill="#8E6A3A"/><rect x="144" y="20" width="6" height="104" fill="#8E6A3A"/>'+
+   '<rect x="0" y="0" width="160" height="20" fill="#FFFFFF"/>'+st+sc+
+   '<g class="person"><path d="M58 98 q0 -26 22 -26 q22 0 22 26 Z" fill="'+s.shirt+'"/><circle cx="80" cy="52" r="15" fill="#F2CFAE"/>'+HAIR[s.hair]+
+   '<circle cx="74" cy="53" r="2" fill="#1F2A2E"/><circle cx="86" cy="53" r="2" fill="#1F2A2E"/><path d="M75 59 q5 4 10 0" stroke="#1F2A2E" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>'+
+   '<rect x="12" y="92" width="136" height="32" rx="3" fill="#C9A36B" stroke="#8E6A3A" stroke-width="2"/>'+
+   '<g transform="translate(46 64) scale(1.15)">'+G[item]+'</g></svg>';
+}
+var INTRO_PIC='<svg class="pic" viewBox="0 0 600 260" role="img" aria-label="一個小朋友抱著一尾虱目魚，心裡想著一雙新拖鞋"><rect width="600" height="260" rx="16" fill="#EAF1EC"/>'+
+ '<path d="M150 250 q0 -70 60 -70 q60 0 60 70 Z" fill="#205E86"/><circle cx="210" cy="130" r="38" fill="#F2CFAE"/><path d="M172 124 q38 -52 76 0 q-38 -16 -76 0 Z" fill="#1F2A2E"/><circle cx="197" cy="134" r="4" fill="#1F2A2E"/><circle cx="223" cy="134" r="4" fill="#1F2A2E"/><path d="M200 148 q10 7 20 0" stroke="#1F2A2E" stroke-width="3" fill="none"/>'+
+ '<g transform="translate(150 186) scale(2)">'+G.fish+'</g>'+
+ '<circle cx="300" cy="96" r="8" fill="#FFFFFF" stroke="#D4D9D2" stroke-width="2"/><circle cx="324" cy="72" r="12" fill="#FFFFFF" stroke="#D4D9D2" stroke-width="2"/>'+
+ '<ellipse cx="450" cy="78" rx="120" ry="62" fill="#FFFFFF" stroke="#D4D9D2" stroke-width="3"/><g transform="translate(390 40) scale(2)">'+G.sl+'</g></svg>';
+
+/* ---------- state ---------- */
+function rint(n){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function clearHash(){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+if(location.hash==='#reset'){save(null);clearHash()}
+function shuffle(){var a=S.map(function(s){return s.id});for(var i=a.length-1;i>0;i--){var j=rint(i+1);var t=a[i];a[i]=a[j];a[j]=t}return a}
+var st=load();
+if(!st||typeof st.stage!=='number'||!Array.isArray(st.ord)||st.ord.length!==6){st={stage:0,ord:shuffle(),r1:null,r2:null,q1:null,q2:null};save(st)}
+function newRound(){var r={t0:Date.now(),hold:'fish',tries:0,done:false,ok:false,secs:null,has:{},got:{},asked:{},say:{},msg:''};S.forEach(function(s){r.has[s.id]=s.has});return r}
+var sel=null, fx=null;
+function R(){return st.stage<=2?st.r1:st.r2}
+function round(){return st.stage<=2?1:2}
+function elapsed(r){return r.done?r.secs:Math.min(LIMIT,Math.max(0,Math.floor((Date.now()-r.t0)/1000)))}
+function mmss(t){return Math.floor(t/60)+':'+('0'+(t%60)).slice(-2)}
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.stage=n;sel=null;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* ---------- pages ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.innerHTML=INTRO_PIC;
+  c.append(el('p','lead','星期六早上，安南區的市集好熱鬧。你家養虱目魚，今天你帶著<b>一尾虱目魚</b>來市集，想換到<b>一雙新拖鞋</b>。'),
+    el('p','lead','市集裡有 6 個攤位。每個攤位的人頭上都有一個泡泡，寫著他有什麼東西。想知道他「想要什麼」，要點他的攤位問問看。'));
+  var c2=el('div','card');
+  c2.append(el('h2',null,'第一輪：拿東西直接換東西'),
+   el('p','lead','把你手上的東西<b>拖到攤位上</b>，或是<b>點攤位，再按「拿這個跟他換」</b>。對方想要你的東西，就會跟你交換；不想要，就會搖頭。'),
+   el('p','lead','會計時，也會記下你試了幾次。最多 3 分鐘，換不到也沒關係。'));
+  app.append(el('h1',null,'安南市集換換看'),c,c2,
+   el('p','lead','故事裡的人、東西和錢都是假設的。'),
+   btn('開始第一輪',null,function(){st.r1=newRound();go(1)}));
+}
+function intro2(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','case','第二輪'),el('h2',null,'同一個市集，多了一個新規定'),
+   el('p','lead','市集的大家約好了：今天<b>全市集都收「海佃幣」</b>（一種假想的錢）。每一樣東西都標了價錢，都是 <b>50 海佃幣</b>。'),
+   el('p','lead','每一個攤位都<b>願意用海佃幣買你的東西</b>，也<b>願意把他的東西賣給你</b>。'),
+   el('p','lead','攤位、老闆、東西都和第一輪一樣。你還是帶著一尾虱目魚，目標還是一雙拖鞋。操作也一樣：拖到攤位上，或點攤位再按按鈕。'));
+  app.append(c,btn('開始第二輪',null,function(){st.r2=newRound();go(4)}));
+}
+function result1(){
+  var r=st.r1;app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','第一輪，你'),el('p','big'+(r.ok?'':' no'),r.ok?'換到拖鞋了！':'沒有換到'));
+  var t=el('table');[['試著交換',r.tries+' 次'],['用了',r.secs+' 秒']].forEach(function(x){var tr=el('tr');tr.append(el('td','k',x[0]),el('td','n',x[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  c.appendChild(el('p','note'+(r.ok?'':' warm'),r.ok?'你一路換過去，終於拿到拖鞋了。想一想：剛剛哪一步最花時間？':'沒有換到也沒關係，第一輪本來就不容易。想一想：剛剛卡在哪裡？'));
+  app.append(el('p','case','第一輪結束'),c,btn('看看第二輪',null,function(){go(3)}));
+}
+function compare(){
+  app.innerHTML='';var a=st.r1,b=st.r2;
+  var t=el('table');var hr=el('tr');hr.append(el('th',null,''),el('th',null,'第一輪<br>拿東西換'),el('th',null,'第二輪<br>用海佃幣'));t.appendChild(hr);
+  [['換到拖鞋了嗎',a.ok?'換到了':'沒有換到',b.ok?'換到了':'沒有換到'],['試了幾次',a.tries+' 次',b.tries+' 次'],['用了幾秒',a.secs+' 秒',b.secs+' 秒']].forEach(function(x){
+    var tr=el('tr');tr.append(el('td','k',x[0]),el('td','n',x[1]),el('td','n',x[2]));t.appendChild(tr)});
+  var c=el('div','card');c.append(t,el('p','note','攤位一樣、老闆一樣、東西也一樣。兩輪到底差在哪裡？'));
+  app.append(el('h2',null,'兩輪比一比'),c,btn('回答兩個問題',null,function(){go(6)}));
+}
+var Q=[
+ {q:'第一輪，你覺得最難的地方是？',o:[
+  ['要一攤一攤問','每一攤都要問過，才知道對方想要什麼。攤位一多，光是問就很花力氣。'],
+  ['對方剛好不要我的東西','我有的東西，對方不一定想要；要剛好「我要你的、你也要我的」，才換得成。'],
+  ['要換好幾次才換得到','想要的東西換不到，只好先換成別人想要的東西，繞了好幾圈才到。'],
+  ['其實不難','你很快就找到路了！想一想：如果市集有 30 攤、100 攤，還會這麼快嗎？']]},
+ {q:'第二輪變簡單了，你覺得是因為？',o:[
+  ['大家都收海佃幣','每一攤都收同一種錢，你不用再找「剛好想要虱目魚的人」，先賣掉、再去買就好。'],
+  ['東西變多了','其實第二輪的攤位和東西，跟第一輪一模一樣，一樣都沒有多。變的是：大家都收同一種錢。'],
+  ['攤位老闆變好心了','其實老闆還是同樣那幾位，想要的東西也沒變。變的是：大家都收同一種錢。']]}
+];
+function ask(k){
+  app.innerHTML='';var q=Q[k];var key=k?'q2':'q1';
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(i){
+    Array.prototype.forEach.call(g.children,function(x,j){x.classList.toggle('pick',j===i)});fb.innerHTML='';
+    fb.append(el('p','note',q.o[i][1]+'<br><span style="font-size:.85em;color:var(--muted)">想換一個也可以，直接點別的選項。</span>'),
+      btn(k?'看看我的結果':'下一題',null,function(){go(k?8:7)}));
+  }
+  q.o.forEach(function(x,i){g.appendChild(btn(x[0],'alt',function(){st[key]=i;save(st);show(i);try{fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})}catch(e){}}))});
+  app.append(el('p','case','第 '+(k+1)+' 題，共 2 題'),el('h2',null,q.q),el('p','lead','沒有對錯，選你最同意的。'),g,fb);
+  if(st[key]!=null)show(st[key]);
+}
+function end(){
+  app.innerHTML='';var a=st.r1,b=st.r2;
+  function tb(title,rows){var c=el('div','card');c.appendChild(el('p','case',title));var t=el('table');rows.forEach(function(x){var tr=el('tr');tr.append(el('td','k',x[0]),el('td','n',x[1]));t.appendChild(tr)});c.appendChild(t);return c}
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),
+   tb('第一輪：拿東西換',[['換到了嗎',a.ok?'換到了':'沒有換到'],['試了幾次',a.tries+' 次'],['用了幾秒',a.secs+' 秒']]),
+   tb('第二輪：用海佃幣',[['試了幾次',b.tries+' 次'],['用了幾秒',b.secs+' 秒']]),
+   tb('兩個問題',[['最難的地方',st.q1!=null?Q[0].o[st.q1][0]:'—'],['變簡單是因為',st.q2!=null?Q[1].o[st.q2][0]:'—']]));
+}
+/* ---------- market ---------- */
+function bubble(s,r,rd){
+  var has=r.has[s.id],h='我有<b>'+I[has].n+'</b>';
+  if(rd===1){
+    if(r.got[s.id])h+='<span class="w yes">我換到想要的了，謝謝！</span>';
+    else if(r.say[s.id])h+='<span class="w say">'+r.say[s.id]+'</span>';
+    else if(r.asked[s.id])h+='<span class="w">我想要<b>'+I[s.want].n+'</b></span>';
+    else h+='<span class="w ask">我想要……？（點我問問看）</span>';
+  }else{
+    if(r.say[s.id])h+='<span class="w yes">'+r.say[s.id]+'</span>';
+    else if(sel===s.id)h+='<span class="w">賣東西給我、跟我買，都可以！</span>';
+    else h+='<span class="w ask">（點我看看）</span>';
+  }
+  return h;
+}
+function actLabel(s,r,rd){
+  if(rd===1)return '拿這個跟'+s.name+'換';
+  if(r.hold==='coin')return '用 50 海佃幣跟'+s.name+'買'+I[s.has].s;
+  return '把'+I[r.hold].s+'賣給'+s.name;
+}
+function play(){
+  var r=R(),rd=round();
+  if(!r){r=newRound();if(rd===1)st.r1=r;else st.r2=r;save(st)}
+  if(!r.done&&elapsed(r)>=LIMIT){finish(r,false);return}
+  app.innerHTML='';
+  var top=el('div','top');
+  top.appendChild(el('p','case',rd===1?'第一輪：拿東西直接換東西':'第二輪：用海佃幣'));
+  var gu=btn('我放棄','alt small',function(){if(!r.done)finish(r,false)});gu.id='gu';gu.hidden=r.done||elapsed(r)<GIVEUP;top.appendChild(gu);
+  app.appendChild(top);
+  app.appendChild(el('h2',null,'目標：換到<span style="color:var(--rust)">一雙拖鞋</span>'));
+  if(rd===2)app.appendChild(el('p','banner','今天全市集都收海佃幣！每樣東西都是 50 海佃幣。'));
+  var m=el('div','market');var selBtn=null;
+  st.ord.forEach(function(id){
+    var s=BY[id];var d=el('div','stall'+(sel===id?' sel':'')+(rd===1&&r.got[id]?' done':''));d.dataset.s=id;d.tabIndex=0;d.setAttribute('role','group');d.setAttribute('aria-label',s.name);
+    d.appendChild(el('div','bub',bubble(s,r,rd)));
+    var pic=el('div');pic.innerHTML=stallSvg(s,r.has[id]);d.appendChild(pic.firstChild);
+    d.appendChild(el('p','sname',s.name));
+    if(rd===2)d.appendChild(el('span','price','一樣 50 海佃幣'));
+    if(sel===id&&!r.done){var b=btn(actLabel(s,r,rd),null,function(e){e.stopPropagation();attempt(id)});d.appendChild(b);selBtn=b}
+    d.addEventListener('click',function(){if(r.done)return;sel=id;if(rd===1&&!r.asked[id]){r.asked[id]=true;save(st)}play()});
+    d.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target===d){e.preventDefault();d.click()}});
+    m.appendChild(d);
+  });
+  app.appendChild(m);
+  var bar=el('div','bar');var row=el('div','row');
+  var hd=el('div','hand',itemSvg(r.hold));hd.setAttribute('aria-label','你手上的東西：'+I[r.hold].n+'。可以拖到攤位上。');hd.tabIndex=-1;
+  var info=el('div','hinfo');info.append(el('p','h','你的手上：'+I[r.hold].n),el('p','s','<span id="tm">時間 '+mmss(elapsed(r))+'</span>　試了 '+r.tries+' 次'));
+  row.append(hd,info);bar.appendChild(row);
+  if(r.done){
+    bar.appendChild(el('p','msg ok',r.msg));
+    bar.appendChild(btn(rd===1?'看第一輪的結果':'看兩輪比一比',null,function(){go(rd===1?2:5)}));
+  }else{
+    bar.appendChild(el('p','msg',r.msg||(rd===1?'把你手上的東西拖到攤位上，或點一個攤位問問看。':'把你手上的東西拖到攤位上，或點一個攤位。')));
+    drag(hd,r);
+  }
+  app.appendChild(bar);
+  if(selBtn){try{selBtn.scrollIntoView({block:'nearest'})}catch(e){}}
+  if(fx){var t=m.querySelector('[data-s="'+fx[0]+'"]');if(t){t.classList.add(fx[1]);}fx=null}
+}
+function finish(r,ok){
+  r.secs=elapsed(r);r.done=true;r.ok=ok;sel=null;save(st);
+  if(ok)play();else go(round()===1?2:5);
+}
+function attempt(id){
+  var r=R(),rd=round(),s=BY[id];if(r.done)return;
+  r.tries++;
+  if(rd===1){
+    r.asked[id]=true;
+    if(r.got[id]){r.msg=s.name+'說：「我已經換到想要的東西了，不用再換了。」';fx=[id,'shake']}
+    else if(r.hold===s.want){
+      var give=r.hold,get=r.has[id];r.has[id]=give;r.hold=get;r.got[id]=true;r.say={};
+      r.msg='換成功了！你用'+I[give].n+'，跟'+s.name+'換到'+I[get].n+'。';fx=[id,'yay'];
+    }else{
+      r.say[id]='我不需要'+I[r.hold].s+'，我想要'+I[s.want].n+'。';
+      r.msg=s.name+'搖搖頭：「'+r.say[id]+'」';fx=[id,'shake'];
+    }
+  }else{
+    if(r.hold==='coin'){r.hold=s.has;r.say[id]='謝謝光臨！';r.msg='你用 50 海佃幣，跟'+s.name+'買到'+I[s.has].n+'。'}
+    else{var g=r.hold;r.hold='coin';r.say[id]='好啊，你的'+I[g].s+'我收了！';r.msg=s.name+'用 50 海佃幣買了你的'+I[g].s+'。現在你手上有 50 海佃幣。'}
+    fx=[id,'yay'];
+  }
+  sel=null;
+  if(r.hold==='sl'){r.msg=r.msg.replace(/。$/,'，任務完成！');finish(r,true);return}
+  save(st);play();
+}
+function drag(hd,r){
+  var start=null,ghost=null,over=null,pid=null;
+  function stallAt(x,y){var e=document.elementFromPoint(x,y);return e&&e.closest?e.closest('.stall'):null}
+  function setOver(s){if(over===s)return;if(over)over.classList.remove('over');over=s;if(over)over.classList.add('over')}
+  hd.addEventListener('pointerdown',function(e){if(e.button>0)return;start={x:e.clientX,y:e.clientY};pid=e.pointerId;try{hd.setPointerCapture(pid)}catch(_){}e.preventDefault()});
+  hd.addEventListener('pointermove',function(e){
+    if(!start||e.pointerId!==pid)return;
+    if(!ghost){if(Math.abs(e.clientX-start.x)+Math.abs(e.clientY-start.y)<8)return;ghost=el('div','ghost',itemSvg(r.hold));document.body.appendChild(ghost)}
+    ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
+    if(e.clientY<60)window.scrollBy(0,-14);else if(e.clientY>window.innerHeight-24)window.scrollBy(0,10);
+    setOver(stallAt(e.clientX,e.clientY));
+  });
+  function up(e){
+    if(!start||e.pointerId!==pid)return;
+    var moved=!!ghost,target=moved?stallAt(e.clientX,e.clientY):null;
+    if(ghost){ghost.remove();ghost=null}setOver(null);start=null;
+    if(target&&e.type==='pointerup')attempt(target.dataset.s);
+    else if(!moved&&e.type==='pointerup'){r.msg='按住它，拖到一個攤位上；或是點一個攤位，再按下面的按鈕。';save(st);play()}
+  }
+  hd.addEventListener('pointerup',up);hd.addEventListener('pointercancel',up);
+}
+function tick(){
+  if(st.stage!==1&&st.stage!==4)return;var r=R();if(!r||r.done)return;
+  var t=elapsed(r);var tm=document.getElementById('tm');if(tm)tm.textContent='時間 '+mmss(t);
+  var gu=document.getElementById('gu');if(gu&&t>=GIVEUP)gu.hidden=false;
+  if(t>=LIMIT)finish(r,false);
+}
+setInterval(tick,500);
+function render(){
+  var P={0:intro,1:play,2:result1,3:intro2,4:play,5:compare,6:function(){ask(0)},7:function(){ask(1)},8:end};
+  if((st.stage===2||st.stage===1)&&!st.r1)st.stage=0;
+  if(st.stage>=4&&!st.r2)st.stage=st.r1?3:0;
+  if(st.stage>=5&&st.r2&&!st.r2.done)st.stage=4;
+  (P[st.stage]||intro)();
+}
+render();
+})();
+</script>

@@ -1,0 +1,169 @@
+<title>竹筏岔路口</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FAF7F2; --card:#FFFFFF; --ink:#1E242B; --coral:#D95D39; --teal:#2A6F68; --muted:#475569;
+  --line:#E3DED7; --lc:#FFF5F2; --lt:#F0F7F6; --dark:#1E242B; --gold:#C99A2E; --lg:#FBF3DD;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,46px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.8vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--coral);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.7vw,24px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.card.c{background:var(--lc);border-color:#F2D3C7}
+.card.t{background:var(--lt);border-color:#CFE3E0}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--coral);color:#fff;cursor:pointer;line-height:1.45;-webkit-tap-highlight-color:transparent}
+.btn.teal{background:var(--teal)}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--coral);background:var(--lc)}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--lt);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.5vw,23px);line-height:1.7;margin:0}
+.note.c{background:var(--lc)}
+.hint{margin:0;font-size:19px;color:var(--muted);font-weight:700}
+svg.i{width:1.3em;height:1.3em;vertical-align:-0.28em;flex:none;display:inline-block}
+.prog{display:flex;gap:6px}
+.prog i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.prog i.on{background:var(--coral)}
+table.sum{width:100%;border-collapse:collapse;font-size:clamp(19px,2.5vw,22px)}
+table.sum td{border-top:2px solid var(--line);padding:10px 6px;vertical-align:top}
+table.sum td.k{font-weight:900;color:var(--muted);width:40%}
+.bigdone{font-size:clamp(24px,4vw,34px)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 流程：介紹 → 4 題（得、失、得、失）：把竹筏拖進左邊「一定會」或右邊「賭一把」的水道（也可點水道）→ 阿水伯的選擇（沒有標準答案）→ 總結 */
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:12px;padding:2px 12px;font-weight:900;font-size:19px;align-self:flex-start}
+.tag.g{background:var(--lt);color:var(--teal);border:2px solid var(--teal)}
+.tag.l{background:var(--lc);color:var(--coral);border:2px solid var(--coral)}
+.river{position:relative;width:100%;max-width:640px;align-self:center;user-select:none;-webkit-user-select:none}
+.river svg.map{width:100%;height:auto;display:block}
+.lane{position:absolute;top:2%;width:47%;height:46%;border:0;background:transparent;cursor:pointer;padding:0;font:inherit;-webkit-tap-highlight-color:transparent}
+.lane.a{left:1%}.lane.b{right:1%}
+.lane.over{outline:4px dashed var(--gold);outline-offset:-6px;border-radius:20px}
+.raft{position:absolute;width:22%;left:39%;top:66%;touch-action:none;cursor:grab;transition:left .6s ease,top .6s ease}
+.raft.drag{transition:none;cursor:grabbing}
+.raft svg{width:100%;height:auto;display:block}
+.chs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ch{border-radius:18px;padding:12px 14px;font-size:clamp(19px,2.4vw,22px);line-height:1.55;display:block}
+.ch b.h{display:block;font-size:clamp(20px,2.8vw,25px);margin-bottom:4px}
+.lbl{position:absolute;top:26%;margin:0;font-weight:900;font-size:clamp(19px,3vw,26px);pointer-events:none;background:rgba(255,255,255,.85);border-radius:10px;padding:0 10px}
+.lbl.a{left:13%;color:var(--teal)}.lbl.b{right:13%;color:var(--coral)}
+.ch.a{background:var(--lt);border:3px solid var(--teal)}
+.ch.a b.h{color:var(--teal)}
+.ch.b{background:var(--lc);border:3px solid var(--coral)}
+.ch.b b.h{color:var(--coral)}
+.ch.on{box-shadow:0 0 0 5px var(--gold)}
+@media (max-width:520px){.chs{grid-template-columns:1fr}}
+</style>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+"use strict";
+var KEY='u2b-forkraft-v1';
+var app=document.getElementById('app');
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+if(location.hash==='#reset'){try{localStorage.removeItem(KEY)}catch(e){}}
+var st=load()||{s:0,pick:[null,null,null,null],word:null};
+var Q=[
+ {k:'g',story:'阿水伯的稻子收成了。米店老闆說：「現在就賣給我，我一定付你 3000 元。」阿水伯也可以先把稻穀放在自己的倉庫，等過年前米價比較好的時候再賣。可是倉庫如果淹水，稻穀受潮發霉，就賣不掉了。',
+  a:'<b class="h">一定會</b>現在就賣給米店，<b>一定</b>可以拿到 3000 元。',b:'<b class="h">賭一把</b>先放倉庫，過年前再賣：有八成的機會拿到 4000 元，有兩成的機會稻穀發霉，一毛錢也拿不到。'},
+ {k:'l',story:'阿水伯海邊的田一年比一年鹹。如果現在就把田挖成魚塭，挖魚塭要花一筆錢。如果再種一季稻子，可能剛好下大雨，把鹽分沖淡；也可能鹽分太多，稻子全部枯死。',
+  a:'<b class="h">一定會</b>現在就挖魚塭，<b>一定</b>會損失 3000 元。',b:'<b class="h">賭一把</b>再種一季稻子：有八成的機會損失 4000 元，有兩成的機會一點也不損失。'},
+ {k:'g',story:'阿水伯魚塭裡的虱目魚可以賣了。魚販說：「今天整池賣給我，我一定付你 2000 元。」阿水伯也可以把魚再養一個月，等魚長大一點再賣。可是冬天如果來了寒流，魚可能會被凍死。',
+  a:'<b class="h">一定會</b>今天就整池賣給魚販，<b>一定</b>可以拿到 2000 元。',b:'<b class="h">賭一把</b>再養一個月：有一半的機會拿到 4000 元，有一半的機會遇到寒流，一毛錢也拿不到。'},
+ {k:'l',story:'颱風快來了，阿水伯發現魚塭的堤防有一段變得很薄。如果現在就請人來補，要付一筆工錢。如果先不補，颱風可能剛好轉向；也可能把堤防沖破，讓魚全部跑掉。',
+  a:'<b class="h">一定會</b>現在就請人補堤防，<b>一定</b>要付 2000 元。',b:'<b class="h">賭一把</b>先不補：有一半的機會損失 4000 元，有一半的機會一點也不損失。'}
+];
+function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
+function btn(t,c,f){var b=el('button','btn'+(c?' '+c:''),t);b.type='button';b.addEventListener('click',f);return b}
+function go(n){st.s=n;save();render();window.scrollTo(0,0)}
+function prog(){var p=el('div','prog');for(var i=0;i<5;i++)p.appendChild(el('i',i<st.s?'on':''));return p}
+var RAFT='<svg viewBox="0 0 120 90" aria-hidden="true" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="56" width="104" height="22" rx="10" fill="#FFF5F2" stroke="#D95D39"/><path d="M34 56v22M60 56v22M86 56v22" stroke="#D95D39"/><path d="M80 6 L52 86" stroke="#475569"/><circle cx="56" cy="20" r="9" fill="#FFFFFF" stroke="#1E242B"/><path d="M56 29v27M56 38l16-8" stroke="#1E242B"/></svg>';
+function map(){return '<svg class="map" viewBox="0 0 640 420" aria-label="河道分成左右兩條：左邊通往一定會的結果，右邊通往賭一把" fill="none" stroke-linecap="round" stroke-linejoin="round">'+
+ '<rect x="0" y="0" width="640" height="420" rx="24" fill="#EFE8DA"/>'+
+ '<path d="M250 420 C250 330 240 300 200 250 C160 200 60 170 20 20 L300 20 C300 120 300 220 320 250 C340 220 340 120 340 20 L620 20 C580 170 480 200 440 250 C400 300 390 330 390 420 Z" fill="#CFE3E0" stroke="#2A6F68" stroke-width="5"/>'+
+ '<path d="M110 70 c14 -8 28 8 42 0 M470 70 c14 -8 28 8 42 0 M290 360 c14 -8 28 8 42 0" stroke="#2A6F68" stroke-width="4"/>'+
+ '<path d="M320 250 L320 210" stroke="#475569" stroke-width="5"/><rect x="290" y="180" width="60" height="34" rx="6" fill="#FFFFFF" stroke="#475569" stroke-width="4"/>'+
+ '<circle cx="160" cy="70" r="30" fill="#F0F7F6" stroke="#2A6F68" stroke-width="5"/><path d="M146 70 l10 10 l18 -20" stroke="#2A6F68" stroke-width="5"/>'+
+ '<circle cx="480" cy="70" r="30" fill="#FFF5F2" stroke="#D95D39" stroke-width="5"/><path d="M470 62 a10 10 0 1 1 14 9 c-4 2 -4 5 -4 8 M480 90 v1" stroke="#D95D39" stroke-width="5"/>'+
+ '</svg>'}
+function render(){app.innerHTML='';
+ if(st.s===0)return intro();
+ app.appendChild(prog());
+ if(st.s>=1&&st.s<=4)return q(st.s-1);
+ if(st.s===5)return word();
+ return end();
+}
+function intro(){
+ app.append(el('p','kick','活動三・線上小遊戲'),el('h1',null,'竹筏岔路口'));
+ var c=el('div','card');c.innerHTML='<div style="max-width:200px;align-self:center">'+RAFT+'</div>';
+ c.append(el('p','lead','住在海邊的阿水伯，今年要做 4 個決定。你要撐著竹筏陪他走一趟。每遇到一個決定，河道就會分成兩條：'),
+  el('p','lead','<b style="color:var(--teal)">左邊的水道是「一定會」</b>：選這條路，結果一定會發生，不用碰運氣。<br><b style="color:var(--coral)">右邊的水道是「賭一把」</b>：選這條路，結果要看運氣。'),
+  el('p','lead','有的題目問的是<b>「可以得到多少錢」</b>，有的題目問的是<b>「可能失去多少錢」</b>，請先看清楚。題目裡的錢都是假設的數字，每一題也都沒有標準答案。'));
+ app.append(c,btn('撐竹筏出發','',function(){go(1)}));
+}
+function q(i){var x=Q[i];var p=st.pick[i];
+ app.append(el('p','kick','第 '+(i+1)+' 個岔路口（一共有 4 個）'));
+ app.appendChild(el('span','tag '+x.k,x.k==='g'?'這一題問的是：可以得到多少錢':'這一題問的是：可能失去多少錢'));
+ app.appendChild(el('p','lead',x.story));
+ var chs=el('div','chs');var ca=el('div','ch a'+(p==='a'?' on':''),x.a);var cb=el('div','ch b'+(p==='b'?' on':''),x.b);chs.append(ca,cb);app.appendChild(chs);
+ app.appendChild(el('h2',null,'請把竹筏拖進你想走的水道，也可以直接點那一條水道。'));
+ var rv=el('div','river');rv.innerHTML=map();
+ var la=el('button','lane a');la.type='button';la.setAttribute('aria-label','走左邊：一定會');
+ var lb=el('button','lane b');lb.type='button';lb.setAttribute('aria-label','走右邊：賭一把');
+ var rf=el('div','raft',RAFT);rv.append(la,lb,el('p','lbl a','一定會'),el('p','lbl b','賭一把'),rf);app.appendChild(rv);
+ var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';app.appendChild(fb);
+ function place(w){if(w==='a'){rf.style.left='17%';rf.style.top='40%'}else if(w==='b'){rf.style.left='61%';rf.style.top='40%'}else{rf.style.left='39%';rf.style.top='66%'}}
+ function choose(w){st.pick[i]=w;save();place(w);ca.classList.toggle('on',w==='a');cb.classList.toggle('on',w==='b');show()}
+ function show(){fb.innerHTML='';var w=st.pick[i];if(!w)return;
+  var m=(w==='a')?(x.k==='g'?'你選了穩穩地拿到錢。可以得到錢的時候，很多人都喜歡這樣選。':'你選了接受一定會發生的損失。這其實不容易做到，因為「一定會賠錢」的感覺很不好受。')
+   :(x.k==='g'?'你選了賭一把，希望可以拿到更多錢。':'你選了賭一把，希望可以一點都不損失。可能會失去錢的時候，很多人都會這樣選。');
+  fb.appendChild(el('p','note'+(w==='b'?' c':''),m+'<br><span style="font-size:.85em;color:var(--muted)">如果想改，可以把竹筏拖到另一條水道。</span>'));
+  fb.appendChild(btn(i<3?'下一個岔路口':'回到岸上','',function(){go(st.s+1)}))}
+ la.addEventListener('click',function(){choose('a')});lb.addEventListener('click',function(){choose('b')});
+ var drag=null;
+ rf.addEventListener('pointerdown',function(e){var r=rv.getBoundingClientRect(),f=rf.getBoundingClientRect();drag={dx:e.clientX-f.left,dy:e.clientY-f.top,r:r};rf.classList.add('drag');rf.setPointerCapture(e.pointerId);e.preventDefault()});
+ rf.addEventListener('pointermove',function(e){if(!drag)return;var r=drag.r;var x0=(e.clientX-drag.dx-r.left)/r.width*100,y0=(e.clientY-drag.dy-r.top)/r.height*100;
+  x0=Math.max(0,Math.min(78,x0));y0=Math.max(0,Math.min(80,y0));rf.style.left=x0+'%';rf.style.top=y0+'%';
+  var cx=(e.clientX-r.left)/r.width;var cy=(e.clientY-r.top)/r.height;la.classList.toggle('over',cy<0.55&&cx<0.5);lb.classList.toggle('over',cy<0.55&&cx>=0.5)});
+ function up(e){if(!drag)return;var r=drag.r;drag=null;rf.classList.remove('drag');la.classList.remove('over');lb.classList.remove('over');
+  var cx=(e.clientX-r.left)/r.width,cy=(e.clientY-r.top)/r.height;
+  if(cy<0.6){choose(cx<0.5?'a':'b')}else place(st.pick[i])}
+ rf.addEventListener('pointerup',up);rf.addEventListener('pointercancel',function(){drag=null;rf.classList.remove('drag');place(st.pick[i])});
+ place(p);show();
+}
+function word(){
+ app.append(el('p','kick','回到岸上：這一題沒有標準答案'),el('h2',null,'阿水伯最後決定先不挖魚塭，要再種一季稻子看看。你最想對他說下面哪一句話？'));
+ var W=[['hard','我懂，要接受「一定會賠錢」真的很難。','這句話說出了阿水伯的心情。一個人覺得自己被了解，比較願意靜下來再想一想。'],
+  ['count','先算算看：如果再種一季，最多可能會賠多少錢？','這句話是請阿水伯先把最壞的情況想清楚，再決定要不要賭。'],
+  ['ask','去問問隔壁已經改養魚的鄰居，看看他們怎麼說。','這句話讓阿水伯多聽聽別人的經驗，不要只靠自己的感覺做決定。'],
+  ['luck','再撐撐看，說不定明年就會變好了。','這句話給了阿水伯希望，可是也可能讓他賠得更多。等一下，全班可以聊聊這一句話。']];
+ var o=el('div','opts');W.forEach(function(x){o.appendChild(btn(x[1],'alt'+(st.word===x[0]?' pick':''),function(){st.word=x[0];save();render()}))});app.appendChild(o);
+ if(st.word){var x=W.filter(function(w){return w[0]===st.word})[0];app.appendChild(el('p','note',x[2]+'<br><span style="font-size:.85em;color:var(--muted)">如果想換答案，可以直接點另一句話。</span>'));app.appendChild(btn('看看我的結果','',function(){go(6)}))}
+}
+function end(){
+ var gs=[0,2].filter(function(i){return st.pick[i]==='a'}).length;var lb=[1,3].filter(function(i){return st.pick[i]==='b'}).length;
+ app.appendChild(el('h2','bigdone','做完了！請停在這一頁，等其他同學。'));
+ var c=el('div','card');var t=el('table','sum');
+ [['可以得到錢的題目','第 1 題和第 3 題，我選「一定會」的有 <b>'+gs+'</b> 題（一共 2 題）'],['可能失去錢的題目','第 2 題和第 4 題，我選「賭一把」的有 <b>'+lb+'</b> 題（一共 2 題）'],
+  ['四個岔路口我選的路',st.pick.map(function(p,i){return '第 '+(i+1)+' 題：'+(p==='a'?'一定會':p==='b'?'賭一把':'—')}).join('、')],
+  ['我想對阿水伯說',{hard:'要接受一定會賠錢真的很難',count:'先算算看最多可能會賠多少',ask:'去問問已經改養魚的鄰居',luck:'再撐撐看，說不定明年會變好'}[st.word]||'—']].forEach(function(r){
+  var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,r[1]));t.appendChild(tr)});
+ c.appendChild(t);app.appendChild(c);
+ app.appendChild(el('p','hint','等一下老師會問兩個問題。第一個：可以得到錢的兩題，都選了「一定會」的人，請舉手。第二個：可能失去錢的兩題，都選了「賭一把」的人，請舉手。'));
+}
+render();
+})();
+</script>

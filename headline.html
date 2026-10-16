@@ -1,0 +1,205 @@
+<title>頭條對決</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: six rounds of two "accident cards" styled as newspaper clippings (one sensational headline, one plain everyday note). Tap the one you think happens more often → the "real life" side flips open with two bars and a sentence on why we guess wrong. Then a score page, then one open question about bike insurance, then the summary page. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --paper:#F7F3E8; --news:#B3261E;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default}
+.btn:focus-visible,.clip:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+
+/* newspaper clippings */
+.duel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.clip{font:inherit;color:var(--ink);text-align:left;cursor:pointer;background:var(--paper);border:3px solid #CFC6AE;border-radius:6px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 3px 0 #D9D0B8;position:relative;min-width:0}
+.clip:disabled{cursor:default}
+.clip .mast{display:flex;justify-content:space-between;gap:8px;border-bottom:3px double #8F866F;padding-bottom:4px;font-size:clamp(15px,1.9vw,17px);color:#6B634F;font-weight:700;letter-spacing:1px}
+.clip.loud .tag{align-self:flex-start;background:var(--news);color:#fff;font-weight:900;font-size:clamp(17px,2.2vw,20px);padding:2px 12px;border-radius:4px;letter-spacing:3px}
+.clip.loud .hd{font-size:clamp(26px,4.4vw,40px);font-weight:900;line-height:1.3;margin:0;color:#1A1A1A;text-wrap:balance}
+.clip.loud .sub{font-size:clamp(19px,2.3vw,21px);margin:0;color:#4A4536}
+.clip.quiet{background:#FDFCF7;border-style:dashed}
+.clip.quiet .tag{align-self:flex-start;color:#6B634F;font-weight:700;font-size:clamp(16px,2vw,18px);border:2px solid #CFC6AE;padding:0 10px;border-radius:4px}
+.clip.quiet .hd{font-size:clamp(21px,2.9vw,26px);font-weight:500;line-height:1.5;margin:0}
+.clip.quiet .sub{font-size:clamp(19px,2.2vw,20px);margin:0;color:var(--muted)}
+.clip.pick{border-color:var(--gold);border-style:solid;box-shadow:0 0 0 4px #F2DDAA}
+.clip .yours{position:absolute;top:-14px;right:10px;background:var(--gold);color:#fff;font-weight:900;font-size:17px;padding:0 10px;border-radius:999px}
+.clip.dim{opacity:.55}
+/* real-life side */
+.real{background:var(--card);border:3px solid var(--good);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px;animation:flip .45s ease-out}
+@keyframes flip{from{transform:perspective(800px) rotateX(-70deg);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.real{animation:none}}
+.real .ttl{font-size:clamp(19px,2.4vw,22px);font-weight:900;color:var(--good);letter-spacing:2px;margin:0}
+.bar{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
+.bar .lb{font-size:clamp(19px,2.4vw,22px);font-weight:700;margin:0}
+.bar .lb small{font-weight:900;margin-left:8px;font-size:.9em}
+.track{height:28px;background:#E4E8E2;border-radius:999px;overflow:hidden}
+.fill{height:100%;border-radius:999px}
+.fill.big{width:100%;background:var(--good)}
+.fill.tiny{width:4%;min-width:14px;background:var(--news)}
+.verdict{font-size:clamp(21px,3vw,27px);font-weight:900;margin:0;line-height:1.5}
+.score{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.big{font-size:clamp(46px,9vw,80px);font-weight:900;margin:0;line-height:1.1;font-variant-numeric:tabular-nums}
+.big small{font-size:.4em;font-weight:700;color:var(--muted)}
+.dots{display:flex;gap:8px;flex-wrap:wrap}
+.dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:17px;color:#fff}
+.opts{display:flex;flex-direction:column;gap:10px}
+@media (max-width:620px){.duel,.score{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='headline-duel-v1';
+/* loud = dramatic headline (rare), quiet = everyday accident (common) */
+var R=[
+ {loud:{tag:'號外',hd:'海邊驚魂！戲水遭鯊魚咬傷',sub:'目擊者：「海面突然出現背鰭……」'},
+  quiet:{tag:'生活小記',hd:'經過巷口時，被鄰居家的狗咬了一口',sub:'去診所擦藥、打針，隔天照常上學。'},
+  short:['被鯊魚咬','被狗咬'],
+  why:'鯊魚咬人的新聞會上電視、還會被拍成電影，畫面又可怕，所以一下子就想得起來。被狗咬太常見了，常見到不會上新聞，大家也很少拿出來講。'},
+ {loud:{tag:'快訊',hd:'晴天霹靂！操場上遭雷擊',sub:'午後雷陣雨，一道閃電劈下……'},
+  quiet:{tag:'生活小記',hd:'騎腳踏車轉彎太快，跌倒擦傷膝蓋',sub:'在安南區的巷子裡，貼了兩片 OK 繃。'},
+  short:['被雷打到','騎腳踏車跌倒受傷'],
+  why:'被雷打到聽起來像電影情節，又亮又響，一想就有畫面。騎車跌倒幾乎每個人都經歷過，正因為太普通，我們反而不覺得它是「意外」。'},
+ {loud:{tag:'號外',hd:'放學路上驚魂！學童被陌生人帶走',sub:'全台家長看了都緊張。'},
+  quiet:{tag:'生活小記',hd:'走在路邊時，被一台機車擦撞到手臂',sub:'沒有人行道的路段，騎士停下來道歉。'},
+  short:['被陌生人帶走','走路被機車擦撞'],
+  why:'這種新聞讓人很害怕，會被一直轉傳、一直討論，所以感覺好像常常發生。被機車擦撞每天都在很多路口發生，卻很少有人特別報導。'},
+ {loud:{tag:'快訊',hd:'誤食毒菇！全家深夜送急診',sub:'醫師提醒：野外的菇不要亂採。'},
+  quiet:{tag:'生活小記',hd:'便當放太久才吃，下午肚子痛、拉肚子',sub:'請假在家休息一天就好了。'},
+  short:['吃到有毒的野菇','吃壞肚子'],
+  why:'「毒菇」兩個字本身就很嚇人，新聞又會配上可怕的照片。吃壞肚子大家都有過，因為太平常，不會有人去報導它。'},
+ {loud:{tag:'號外',hd:'草叢竄出毒蛇！孩童腳踝被咬',sub:'山區、田邊都要小心。'},
+  quiet:{tag:'生活小記',hd:'打翻剛煮好的熱湯，手被燙出水泡',sub:'在廚房沖了很久的冷水。'},
+  short:['被蛇咬','被燙傷'],
+  why:'蛇會讓很多人一想到就起雞皮疙瘩，這種「好可怕」的感覺讓它很好記。燙傷常常發生在家裡廚房，平凡到大家忘了它其實很常見。'},
+ {loud:{tag:'快訊',hd:'空中驚魂！飛機出事震驚各國',sub:'各國電視台連續好幾天報導。'},
+  quiet:{tag:'生活小記',hd:'坐車時發生小擦撞，額頭撞到前座',sub:'等紅燈時被後面的車輕輕碰了一下。'},
+  short:['搭飛機出事','坐車發生小車禍'],
+  why:'飛機出事時，全世界的新聞都會報好幾天，畫面一直重播，所以印象特別深。坐車的小擦撞天天都有，太多了，多到新聞根本報不完。'}
+];
+var BIKE=[
+ {k:'steal',t:'被偷',fb:'你想到的是「腳踏車停在外面，一轉身就不見了」。這種事在身邊常常聽到，一次就損失整台車。選它的人，是在想「哪一種最常發生、損失也不小」。'},
+ {k:'typhoon',t:'被颱風吹壞',fb:'台南每年夏天都有颱風，颱風過後的畫面也很容易想起來。選它的人，是在想「最近印象最深的是哪一種」。也可以想一想：颱風來之前把車牽進屋裡，是不是也能保護它？'},
+ {k:'fall',t:'騎車跌倒',fb:'騎車跌倒最常發生在小朋友身上，剛剛的遊戲也看到了。選它的人，是在想「哪一種最可能真的遇到」。不過跌倒常常只是小擦傷，值不值得為小事保險，全班可以一起討論。'},
+ {k:'lightning',t:'被雷打到',fb:'被雷打到很嚇人，畫面也很鮮明。選它的人，是在想「哪一種最可怕」。可以想一想：這個選擇，是因為它常發生，還是因為它最容易讓人想起來？'}
+];
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(!st||!st.side){st={phase:'intro',i:0,stage:0,pick:[],side:R.map(function(){return rnd(2)}),bike:null}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function go(){save(st);render();window.scrollTo(0,0)}
+function right(){return st.pick.filter(function(p){return p==='quiet'}).length}
+function fooled(){return st.pick.filter(function(p){return p==='loud'}).length}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','打開報紙或手機，常常會看到很嚇人的意外新聞。可是，新聞上常看到的，就是生活中常發生的嗎？'),
+    el('p','lead','接下來有 6 回合「頭條對決」。每一回合有兩張意外卡，請你點選：<b style="color:var(--ink)">哪一個比較常發生在台灣小學生身上？</b>'),
+    el('p','lead','點完以後，會翻開「真實生活」給你看。猜錯沒關係，也不會扣分。'));
+  var b=el('button','btn','開始對決');b.type='button';b.addEventListener('click',function(){st.phase='duel';st.i=0;st.stage=0;go()});
+  app.append(el('h1',null,'頭條對決'),c,b);
+}
+function clipEl(kind,d,idx){
+  var b=el('button','clip '+kind);b.type='button';
+  b.append(el('div','mast','<span>海佃日報</span><span>第 '+(idx+1)+' 回合</span>'),el('span','tag',d.tag),el('p','hd',d.hd),el('p','sub',d.sub));
+  return b;
+}
+function duel(){
+  var r=R[st.i];app.innerHTML='';
+  app.append(el('p','case','第 '+(st.i+1)+' 回合，共 6 回合'),el('h2',null,'你覺得哪一個比較常發生在台灣小學生身上？'));
+  var g=el('div','duel');var order=st.side[st.i]?['quiet','loud']:['loud','quiet'];
+  var picked=st.pick[st.i];
+  order.forEach(function(k){
+    var c=clipEl(k,r[k],st.i);
+    if(st.stage===1){c.disabled=true;if(k===picked){c.classList.add('pick');c.appendChild(el('span','yours','你選的'))}else c.classList.add('dim')}
+    else c.addEventListener('click',function(){st.pick[st.i]=k;st.stage=1;save(st);render()});
+    c.setAttribute('aria-label',r[k].hd);
+    g.appendChild(c);
+  });
+  app.appendChild(g);
+  if(st.stage===1){
+    var ok=picked==='quiet';
+    var rv=el('div','real');
+    rv.append(el('p','ttl','翻開「真實生活」'),
+      el('p','verdict',ok?'你選對了！「'+r.short[1]+'」常見很多。':'這一回合，頭條比較搶眼。其實「'+r.short[1]+'」常見很多。'));
+    var b1=el('div','bar');b1.append(el('p','lb',r.short[1]+'<small style="color:var(--good)">常見很多</small>'));var t1=el('div','track');t1.appendChild(el('div','fill big'));b1.appendChild(t1);
+    var b2=el('div','bar');b2.append(el('p','lb',r.short[0]+'<small style="color:var(--news)">很少見</small>'));var t2=el('div','track');t2.appendChild(el('div','fill tiny'));b2.appendChild(t2);
+    rv.append(b1,b2,el('p','note warm','<b>為什麼我們會猜錯？</b><br>'+r.why));
+    var nx=el('button','btn',st.i<R.length-1?'下一回合':'看看我的對決結果');nx.type='button';
+    nx.addEventListener('click',function(){if(st.i<R.length-1){st.i++;st.stage=0}else{st.phase='score'}go()});
+    app.append(rv,nx);
+    rv.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+}
+function dots(){
+  var d=el('div','dots');st.pick.forEach(function(p,k){var x=el('span','dot',String(k+1));x.style.background=p==='quiet'?'var(--good)':'var(--news)';x.title=p==='quiet'?'選中比較常見的':'被頭條騙到';d.appendChild(x)});return d;
+}
+function score(){
+  app.innerHTML='';
+  var s=el('div','score');
+  var a=el('div','card');a.append(el('p','case','選中「比較常見」的'),el('p','big',right()+' <small>回合／共 6 回合</small>'));
+  var b=el('div','card');b.append(el('p','case','被「新聞頭條」騙到'),el('p','big',fooled()+' <small>次</small>'));
+  s.append(a,b);
+  var lg=el('p','lead','<span style="color:var(--good);font-weight:900"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="currentColor"/></svg></span> 選中常見的　<span style="color:var(--news);font-weight:900"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="currentColor"/></svg></span> 被頭條騙到');
+  var n=el('p','note','我們判斷一件事「常不常發生」，常常不是去數它發生幾次，而是看它<b>容易不容易想起來</b>。新聞常報的、很嚇人的、畫面很鮮明的事，一下子就浮現在腦海裡，所以我們會以為它很常發生；平凡的小意外，反而被我們忘記了。');
+  var n2=el('p','note warm','這也會影響大人買保險。例如大水過後，很多人才急著去買保險；過了幾年沒再淹水，記憶變淡了，又有人把保險退掉。');
+  var nx=el('button','btn','最後一題');nx.type='button';nx.addEventListener('click',function(){st.phase='bike';go()});
+  app.append(el('h2',null,'6 回合對決結束了！'),s,dots(),lg,n,n2,nx);
+}
+function bike(){
+  app.innerHTML='';
+  app.append(el('p','case','最後一題：這一題沒有標準答案'),el('h2',null,'如果要替家裡的腳踏車買保險，你最想保哪一種？'),
+    el('p','lead','只能選一種。每一種都可以選，選了以後會說明這個選擇在想什麼；想換也可以直接點別的。'));
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(k){
+    Array.prototype.forEach.call(g.children,function(x){x.classList.toggle('pick',x.dataset.k===k)});
+    var o=BIKE.filter(function(x){return x.k===k})[0];fb.innerHTML='';
+    var nx=el('button','btn','看我的摘要');nx.type='button';nx.addEventListener('click',function(){st.phase='end';go()});
+    fb.append(el('p','note',o.fb),nx);
+  }
+  BIKE.forEach(function(o){var b=el('button','btn alt',o.t);b.type='button';b.dataset.k=o.k;b.addEventListener('click',function(){st.bike=o.k;save(st);show(o.k);fb.lastChild.scrollIntoView({behavior:'smooth',block:'end'})});g.appendChild(b)});
+  app.append(g,fb);
+  if(st.bike)show(st.bike);
+}
+function end(){
+  app.innerHTML='';
+  var o=BIKE.filter(function(x){return x.k===st.bike})[0];
+  var t=el('table');
+  [['選中比較常見的',right()+' 回合（共 6 回合）'],['被新聞頭條騙到',fooled()+' 次'],['最想替腳踏車保',o?'<b>'+o.t+'</b>':'—']].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.append(t,dots());
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,
+    el('p','lead','等一下老師會請大家舉手：你答對幾回合？被頭條騙了幾次？最想保哪一種？'));
+}
+function render(){
+  if(st.phase==='duel')duel();else if(st.phase==='score')score();else if(st.phase==='bike')bike();else if(st.phase==='end')end();else intro();
+}
+render();
+})();
+</script>

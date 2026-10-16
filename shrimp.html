@@ -1,0 +1,314 @@
+<title>安南釣蝦場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro story (Sunday at a shrimp-fishing pond in Annan, paid with your own pocket money) → fishing screen (pond with bobber, big "pull" button, bucket, "go home" button; top-right corner shows either a ticking fare meter or a quiet "already paid" box) → three no-right-answer questions → summary page. Secret groups: red pays 10 per game minute with a jumping meter; white pays 150 up front. Game minute = 6 real seconds, max 15 minutes. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --water:#5E9DB8; --water2:#4A8AA6; --shrimp:#E0794C;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.gtag{display:inline-block;border-radius:999px;padding:2px 14px;font-size:clamp(15px,2vw,18px);font-weight:700;letter-spacing:1px;color:#fff;align-self:flex-start}
+.gtag.red{background:#C8352B}.gtag.white{background:#FFFFFF;color:var(--ink);border:2px solid #B9C0B8}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;touch-action:manipulation}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.small{font-size:clamp(16px,2.1vw,19px);color:var(--muted);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap} td.v{font-weight:900;text-align:right}
+
+/* fishing screen */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+.tip{font-size:clamp(19px,2.7vw,25px);font-weight:700;margin:0;line-height:1.5}
+.meter{position:relative;width:clamp(150px,30vw,250px);background:#1F2A2E;color:#fff;border-radius:18px;padding:10px 14px;border:4px solid #C8352B;text-align:center}
+.meter .lb{font-size:clamp(15px,2vw,18px);font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;color:#FFD9CF}
+.meter .dot{width:10px;height:10px;border-radius:50%;background:#FF5A3C;animation:blink 1s steps(2) infinite}
+.meter.stop .dot{animation:none;background:#888}
+.meter .amt{display:block;white-space:nowrap;font-size:clamp(40px,7vw,64px);font-weight:900;line-height:1.1;color:#FF7A5C;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.meter .amt small{font-size:.45em;color:#FFD9CF;margin-left:4px}
+.meter .rate{font-size:clamp(14px,1.9vw,17px);color:#E9E2DA}
+.meter .amt.jump{animation:jump .55s ease-out}
+.meter .plus{position:absolute;right:-8px;top:-18px;background:#C8352B;border-radius:12px;padding:0 8px;line-height:1.3;font-size:clamp(20px,3vw,28px);font-weight:900;color:#FFE08A;pointer-events:none;animation:rise 1s ease-out forwards}
+@keyframes blink{50%{opacity:.15}}
+@keyframes jump{0%{transform:scale(1.45);color:#FFE08A}60%{transform:scale(.95)}100%{transform:scale(1)}}
+@keyframes rise{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-34px)}}
+.paid{width:clamp(150px,30vw,250px);background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.paid b{font-size:clamp(17px,2.3vw,21px);font-weight:700;color:var(--muted);line-height:1.45}
+.bar{height:8px;border-radius:4px;background:#E2E6E0;overflow:hidden}
+.bar i{display:block;height:100%;background:#A9BFB0;border-radius:4px;transition:width .3s linear}
+.paid .rem{font-size:clamp(14px,1.9vw,17px);color:var(--muted)}
+
+.pond{position:relative;border-radius:22px;overflow:hidden;border:3px solid var(--line);background:#DCE7E4}
+.pond svg{display:block;width:100%;height:clamp(230px,42vw,370px)}
+#bob{transition:transform .18s ease-in}
+#bob.dip{transform:translateY(46px)}
+.rip{opacity:0}
+.dipping .rip{animation:ripple 1s ease-out infinite}
+.dipping .rip.r2{animation-delay:.35s}
+@keyframes ripple{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(1.6)}}
+.rip{transform-box:fill-box;transform-origin:center}
+.swim{animation:swim 7s ease-in-out infinite alternate}
+.swim.s2{animation-duration:9s;animation-delay:-3s}
+@keyframes swim{from{transform:translateX(0)}to{transform:translateX(60px)}}
+.msg{min-height:1.6em;font-size:clamp(20px,3vw,27px);font-weight:900;text-align:center;margin:0}
+.msg.ok{color:var(--good)} .msg.miss{color:var(--muted)}
+.pull{font-size:clamp(30px,5.4vw,46px);padding:18px;background:var(--rust)}
+.pause{position:absolute;inset:0;background:rgba(251,252,249,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:14px;text-align:center}
+.pause p{margin:0;font-size:clamp(19px,2.7vw,25px);font-weight:700}
+
+.bucketcard{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center}
+.bucket{position:relative;width:clamp(120px,24vw,170px);height:clamp(96px,18vw,130px);margin-top:18px}
+.bucket .body{position:absolute;inset:0;background:linear-gradient(#7FA7C9,#5B87AE);clip-path:polygon(0 0,100% 0,88% 100%,12% 100%);border-radius:4px}
+.bucket .rim{position:absolute;left:-4px;right:-4px;top:-6px;height:12px;border-radius:6px;background:#3F6C92}
+.bucket .handle{position:absolute;left:12%;right:12%;top:-30px;height:44px;border:4px solid #56605C;border-bottom:0;border-radius:50% 50% 0 0}
+.bucket .in{position:absolute;left:16%;right:16%;top:10px;bottom:8px;display:flex;flex-wrap:wrap-reverse;align-content:flex-start;justify-content:center;gap:1px;overflow:hidden}
+.bucket .in svg{width:clamp(22px,4vw,30px);height:auto}
+.bcount{font-size:clamp(22px,3.3vw,30px);font-weight:900;margin:0}
+.bcount .n{color:var(--rust);font-variant-numeric:tabular-nums}
+.newshrimp{animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(2) rotate(-20deg)}100%{transform:scale(1)}}
+.confirm{display:flex;flex-direction:column;gap:10px}
+.sm-shrimp{width:44px;height:auto;vertical-align:middle}
+@media (max-width:620px){table.sum,table.sum tbody,table.sum tr,table.sum td{display:block}table.sum td.k{border-bottom:0;padding-bottom:0;white-space:normal}table.sum td.v{text-align:left;padding-top:2px}.top{gap:8px}.meter,.paid{width:156px;padding:8px 10px}.meter .amt{font-size:40px}.bucketcard{gap:10px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='shrimp-v1';
+var GN={red:'紅組',white:'白組'};
+var MIN=6000, MAXT=90000, DIP=1100, PRICE=10, FULL=150;
+var Q=[
+ {q:'釣蝦的時候，你覺得輕鬆嗎？',o:['很輕鬆','普通','有點緊張'],f:[
+  '你玩的時候心情很放鬆，可以專心看浮標、享受釣蝦。',
+  '你玩的時候不算緊張，也不算完全放鬆，心裡有一點點別的事。',
+  '你玩的時候，心裡好像有什麼在催你。等一下可以想一想：是什麼讓你覺得緊張？']},
+ {q:'釣的時候，你有沒有一直注意右上角？',o:['常常看','偶爾看','幾乎沒看'],f:[
+  '右上角常常把你的眼睛拉過去，看浮標的時間就少了一些。',
+  '你大部分時間在看浮標，偶爾才抬頭看一下右上角。',
+  '你的注意力幾乎都放在浮標和蝦子上，右上角對你來說不太重要。']},
+ {q:'下次再來，你想選哪一種？',o:['算時間（釣多久付多久）','包台（就算可能比較貴）','都可以'],f:[
+  '這樣選的好處是：釣多久付多久，早點回家就少付一點。要注意的是：每多釣一分鐘，就多一筆錢。',
+  '這樣選的好處是：一進門就付完了，接下來想釣多久都行。要注意的是：如果很快就想回家，先付的錢不會退。',
+  '你覺得兩種付法差不多，要看那天有多少時間、心情怎麼樣再決定。']}
+];
+
+function rint(n){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function rgap(){return 2000+rint(3001)}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function clearHash(){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(g){return {g:g,stage:0,el:0,n:0,nd:0,early:false,ans:[]}}
+var h=location.hash;
+if(h==='#reset'){save(null);clearHash()}
+var st=load();
+if(h==='#red'||h==='#white'){var want=h.slice(1);if(!st||st.g!==want){st=null}clearHash();if(!st){st=fresh(want);save(st)}}
+if(!st||!GN[st.g]){st=fresh(rint(2)?'white':'red');save(st)}
+if(!st.ans)st.ans=[];
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function gtag(){return el('span','gtag '+st.g,'你是'+GN[st.g])}
+function cost(){return st.g==='white'?FULL:Math.min(FULL,PRICE*(Math.floor(st.el/MIN)+1))}
+function gtime(ms){var s=Math.round(Math.min(ms,MAXT)/100);var m=Math.floor(s/60),r=s%60;return m+' 分'+(r?' '+r+' 秒':'鐘')}
+
+var SHRIMP='<svg viewBox="0 0 44 30" aria-hidden="true"><path d="M8 7 Q1 1 3 -1 M9 6 Q6 -2 12 -1" fill="none" stroke="#A8441A" stroke-width="1.3"/><path d="M6 9 C14 1 31 3 34 13 C36 20 31 25 24 24 L25 19 C29 19 30 16 28 12 C24 7 15 7 9 13 Z" fill="#E0794C"/><path d="M15 6 L17 14 M21 5 L22 13 M27 7 L25 14" stroke="#B85A33" stroke-width="1.2"/><path d="M24 23 L18 29 L28 27 Z" fill="#C8603A"/><circle cx="10" cy="9" r="1.6" fill="#1F2A2E"/><path d="M12 14 l-3 5 M16 13 l-2 6 M20 13 l-1 6" stroke="#B85A33" stroke-width="1.1"/></svg>';
+function pondSVG(){
+  var sh=function(x,y,s,c){return '<g class="swim '+c+'" opacity=".35"><g transform="translate('+x+' '+y+') scale('+s+')"><path d="M6 9 C14 1 31 3 34 13 C36 20 31 25 24 24 L25 19 C29 19 30 16 28 12 C24 7 15 7 9 13 Z" fill="#1F4B5E"/><path d="M24 23 L18 29 L28 27 Z" fill="#1F4B5E"/><path d="M7 9 Q-6 2 -4 -4 M8 8 Q2 -4 8 -6" fill="none" stroke="#1F4B5E" stroke-width="1.4"/><path d="M13 13 l-3 6 M18 12 l-2 7 M23 13 l-1 6" stroke="#1F4B5E" stroke-width="1.3"/></g></g>'};
+  return '<svg viewBox="0 0 600 270" preserveAspectRatio="xMidYMid slice" role="img" aria-label="蝦池和浮標">'+
+   '<rect x="0" y="0" width="600" height="80" fill="#DCE7E4"/>'+
+   '<rect x="0" y="70" width="600" height="14" fill="#A9B1AA"/>'+
+   
+   '<g id="bob"><path d="M300 -80 V64" stroke="#56605C" stroke-width="1.6"/><path d="M300 62 V92" stroke="#1F2A2E" stroke-width="4"/><circle cx="300" cy="104" r="16" fill="#C8352B"/><path d="M284 104 A16 16 0 0 0 316 104 Z" fill="#FFFFFF"/><path d="M300 120 V138" stroke="#1F2A2E" stroke-width="3"/></g>'+
+   '<rect x="0" y="104" width="600" height="166" fill="#5E9DB8" opacity=".78"/>'+
+   '<path d="M0 104 Q30 98 60 104 T120 104 T180 104 T240 104 T300 104 T360 104 T420 104 T480 104 T540 104 T600 104" fill="none" stroke="#DDF0F6" stroke-width="2.5"/>'+
+   '<ellipse class="rip" cx="300" cy="106" rx="34" ry="7" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>'+
+   '<ellipse class="rip r2" cx="300" cy="106" rx="34" ry="7" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>'+
+   sh(70,170,1.6,'')+sh(420,210,1.3,'s2')+sh(180,225,1.1,'s2')+sh(470,150,1.0,'')+
+   '<path d="M0 255 Q150 245 300 255 T600 252 V270 H0 Z" fill="#3F7891"/>'+
+   '</svg>';
+}
+
+/* ---------- intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','星期天，家人帶你去安南區的釣蝦場。這一次，釣蝦的錢要用你自己存的零用錢來付。'));
+  if(st.g==='red'){
+    c.append(el('p','note warm','這家釣蝦場是<b>「算時間」</b>：每釣 1 分鐘 10 元，不滿 1 分鐘也算 1 分鐘，最多可以釣 15 分鐘（最多 150 元）。畫面右上角有一個跳錶，會告訴你現在要付多少錢。'));
+  }else{
+    c.append(el('p','note warm','這家釣蝦場是<b>「包台」</b>：一進門先付 150 元，接下來 15 分鐘內隨便釣。你已經在門口付好錢了。'));
+  }
+  c.append(el('p','lead','遊戲裡的 1 分鐘，是真實的 6 秒，所以 15 分鐘大約是真實的 1 分半。你釣夠了，隨時可以按「收竿回家」；時間到了也會自動結束。'),
+           el('p','small','（價錢都是假設的。）'));
+  var how=el('div','card');
+  how.append(el('h2',null,'怎麼釣？'),
+    el('p','lead','看著池子裡的浮標。浮標「咻」地沉下去的時候，馬上按「拉竿！」，就能釣到一隻蝦。太早或太晚按，蝦子會跑掉，不過沒關係，再等下一次就好。'));
+  app.append(el('h1',null,'安南釣蝦場'),gtag(),c,how,
+    btn('進去釣蝦',null,function(){st.stage=1;st.nd=rgap();save(st);fishing(true)}));
+}
+
+/* ---------- fishing ---------- */
+var running=false,timer=null,last=0,R={},lastMin=-1,msgT=null;
+function fishing(auto){
+  app.innerHTML='';R={};
+  var cs=el('p','case');cs.append(el('span',null,'安南釣蝦場'),gtag());
+  var top=el('div','top');
+  var tip=el('p','tip','浮標沉下去的時候，就按「拉竿！」');
+  var corner;
+  if(st.g==='red'){
+    corner=el('div','meter');corner.setAttribute('aria-label','跳錶');
+    corner.innerHTML='<span class="lb"><span class="dot"></span>計費中</span><span class="amt"><span class="v"></span><small>元</small></span><span class="rate">每 1 分鐘 10 元</span>';
+    R.amt=corner.querySelector('.amt');R.v=corner.querySelector('.v');
+  }else{
+    corner=el('div','paid');
+    corner.innerHTML='<b>已包台，15 分鐘內隨便釣</b><span class="bar"><i></i></span><span class="rem"></span>';
+    R.bar=corner.querySelector('i');R.rem=corner.querySelector('.rem');
+  }
+  R.corner=corner;
+  top.append(tip,corner);
+  var pond=el('div','pond');pond.innerHTML=pondSVG();R.pond=pond;R.bob=pond.querySelector('#bob');
+  R.msg=el('p','msg','');
+  R.pull=btn('拉竿！','pull',pull);
+  var bc=el('div','card bucketcard');
+  var bk=el('div','bucket','<span class="handle"></span><span class="body"></span><span class="rim"></span><span class="in"></span>');
+  R.in=bk.querySelector('.in');
+  var bt=el('div');R.count=el('p','bcount','');bt.append(R.count,el('p','small','釣到的蝦會放進桶子。'));
+  bc.append(bk,bt);
+  R.ctrl=el('div','confirm');
+  R.home=btn('收竿回家','alt',askHome);
+  R.ctrl.append(R.home);
+  app.append(cs,top,pond,R.msg,R.pull,bc,R.ctrl);
+  fillBucket(false);update(true);
+  if(auto)start();
+  else if(!running)showPause(st.el>0?'剛剛暫停了。你已經釣了 '+gtime(st.el)+'，桶子裡有 '+st.n+' 隻蝦。':'準備好了嗎？');
+}
+function fillBucket(anim){
+  R.in.innerHTML='';var k=Math.min(st.n,24);
+  for(var i=0;i<k;i++){var s=el('span',null,SHRIMP);s.style.display='inline-flex';if(anim&&i===k-1)s.className='newshrimp';R.in.appendChild(s)}
+  R.count.innerHTML='桶子裡有 <span class="n">'+st.n+'</span> 隻蝦';
+}
+function showPause(text){
+  if(R.pause)R.pause.remove();
+  var p=el('div','pause');p.append(el('p',null,text),btn('繼續釣',null,function(){p.remove();R.pause=null;R.ctrl.innerHTML='';R.ctrl.append(R.home);start()}));
+  R.pond.appendChild(p);R.pause=p;R.pull.disabled=true;R.home.disabled=false;
+}
+function start(){
+  if(running)return;running=true;
+  if(st.el>=st.nd)st.nd=st.el+rgap();
+  if(R.pull)R.pull.disabled=false;
+  if(R.corner)R.corner.classList.remove('stop');
+  last=performance.now();timer=setInterval(tick,100);
+}
+function stop(){running=false;clearInterval(timer);timer=null;save(st);if(R.corner)R.corner.classList.add('stop');setDip(false)}
+function dipping(){return running&&st.el>=st.nd&&st.el<st.nd+DIP}
+function setDip(on){if(!R.bob)return;R.bob.classList.toggle('dip',on);R.pond.classList.toggle('dipping',on)}
+function tick(){
+  var now=performance.now();var d=Math.min(now-last,400);last=now;
+  st.el+=d;
+  if(st.el>=st.nd+DIP)st.nd=st.el+rgap();
+  if(st.el>=MAXT){st.el=MAXT;finishFishing(false);return}
+  setDip(dipping());update(false);
+  if(Math.floor(st.el/1000)!==Math.floor((st.el-d)/1000))save(st);
+}
+function update(first){
+  if(st.g==='red'){
+    var m=Math.floor(st.el/MIN);
+    R.v.textContent=cost();
+    if(!first&&m!==lastMin&&lastMin>=0&&cost()<=FULL&&m<15){
+      R.amt.classList.remove('jump');void R.amt.offsetWidth;R.amt.classList.add('jump');
+      var pl=el('span','plus','+10');R.corner.appendChild(pl);setTimeout(function(){pl.remove()},1000);
+    }
+    lastMin=m;
+  }else{
+    var left=Math.max(0,MAXT-st.el);
+    R.bar.style.width=(left/MAXT*100).toFixed(1)+'%';
+    R.rem.textContent='剩下大約 '+Math.ceil(left/MIN)+' 分鐘';
+  }
+}
+function say(t,cls){R.msg.className='msg '+cls;R.msg.textContent=t;clearTimeout(msgT);msgT=setTimeout(function(){if(R.msg)R.msg.textContent=''},1400)}
+function pull(){
+  if(!running)return;
+  if(dipping()){st.n++;st.nd=st.el+rgap();setDip(false);fillBucket(true);say('釣到一隻蝦！','ok');save(st)}
+  else say('蝦子跑掉了，再等浮標沉下去。','miss');
+}
+function askHome(){
+  stop();
+  R.ctrl.innerHTML='';
+  R.ctrl.append(el('p','tip','真的要收竿回家了嗎？'));
+  var r=el('div','row2');
+  r.append(btn('對，收竿回家',null,function(){finishFishing(true)}),btn('再釣一下','alt',function(){R.ctrl.innerHTML='';R.ctrl.append(R.home);if(R.pause)return;start()}));
+  R.ctrl.append(r);R.pull.disabled=true;
+}
+function finishFishing(early){
+  stop();st.early=early;st.paid=cost();st.stage=2;save(st);render();window.scrollTo(0,0);
+}
+
+/* ---------- questions ---------- */
+function question(){
+  var qi=st.stage-2,q=Q[qi];app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'第 '+(qi+1)+' 題，共 3 題'),gtag());
+  app.append(cs);
+  if(qi===0){
+    app.append(el('p','note',(st.early?'你提早收竿回家了。':'時間到了，釣蝦結束。')+'你釣了 '+gtime(st.el)+'（遊戲時間），釣到 '+st.n+' 隻蝦，一共付了 '+st.paid+' 元。'));
+  }
+  app.append(el('h2',null,q.q));
+  var g=el('div','opts'),fb=el('div','opts');
+  q.o.forEach(function(t,k){
+    var b=btn(t,'alt',function(){st.ans[qi]=k;save(st);show()});g.appendChild(b);
+  });
+  function show(){
+    Array.prototype.forEach.call(g.children,function(x,k){x.classList.toggle('pick',st.ans[qi]===k)});
+    fb.innerHTML='';if(st.ans[qi]==null)return;
+    fb.append(el('p','note',q.f[st.ans[qi]]+'<br><span style="font-size:.85em;color:var(--muted)">這一題沒有對錯。想換也可以，直接點別的選項。</span>'),
+      btn(qi<2?'下一題':'看看我的紀錄',null,function(){st.stage++;save(st);render();window.scrollTo(0,0)}));
+  }
+  app.append(g,fb);
+  if(qi>0)app.append(btn('回上一題','alt',function(){st.stage--;save(st);render()}));
+  show();
+}
+
+/* ---------- end ---------- */
+function finish(){
+  app.innerHTML='';
+  var t=el('table','sum');
+  function row(k,v){var tr=el('tr');tr.append(el('td','k',k),el('td','v',v));t.appendChild(tr)}
+  row('你的組別',GN[st.g]+'（'+(st.g==='red'?'算時間':'包台')+'）');
+  row('釣了多久',gtime(st.el)+'（遊戲時間）');
+  row('有沒有提早收竿',st.early?'有，提早回家':'沒有，釣到時間到');
+  row('釣到幾隻蝦',st.n+' 隻');
+  row('一共付了',(st.paid!=null?st.paid:cost())+' 元');
+  Q.forEach(function(q,k){row((k+1)+'. '+q.q,st.ans[k]!=null?q.o[st.ans[k]]:'—')});
+  t.querySelectorAll('tr').forEach(function(tr,i){if(i>=5){tr.firstChild.style.whiteSpace='normal';tr.firstChild.style.fontWeight='500';tr.firstChild.style.color='var(--ink)'}});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),gtag(),c);
+}
+
+document.addEventListener('visibilitychange',function(){if(document.hidden&&running){stop();showPause('剛剛暫停了。你已經釣了 '+gtime(st.el)+'，桶子裡有 '+st.n+' 隻蝦。')}});
+window.addEventListener('pagehide',function(){save(st)});
+window.addEventListener('hashchange',function(){var x=location.hash;if(x==='#reset'||x==='#red'||x==='#white')location.reload()});
+function render(){if(st.stage<=0)intro();else if(st.stage===1)fishing();else if(st.stage<=4)question();else finish()}
+render();
+})();
+</script>

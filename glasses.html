@@ -1,0 +1,150 @@
+<title>歸零再選一次</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{--bg:#FAF7F2;--card:#FFFFFF;--ink:#1E242B;--co:#D95D39;--te:#2A6F68;--mu:#475569;--ln:#E3DED7;--col:#FFF5F2;--tel:#F0F7F6;
+--font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(28px,5vw,46px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--co);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.6vw,24px);margin:0;color:var(--mu)}
+.card{background:var(--card);border:2px solid var(--ln);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.card p{margin:0;font-size:clamp(19px,2.6vw,23px)}
+.btn{font:inherit;font-size:clamp(19px,2.7vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--co);color:#fff;cursor:pointer;line-height:1.45}
+.btn.te{background:var(--te)}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--ln);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px;width:100%}
+.btn.alt.pick{border-color:var(--te);background:var(--tel)}
+.btn:focus-visible{outline:4px solid var(--te);outline-offset:3px}
+.tag{display:inline-flex;align-items:center;gap:8px;font-weight:900;border-radius:999px;padding:4px 14px;font-size:19px}
+.tag.red{background:var(--col);color:var(--co)} .tag.blue{background:var(--tel);color:var(--te)}
+.tickets{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.tickets{grid-template-columns:1fr}}
+.ticket{font:inherit;text-align:left;cursor:pointer;background:var(--card);border:3px dashed var(--ln);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:8px;color:var(--ink);transition:transform .25s}
+.ticket b{font-size:clamp(20px,2.8vw,24px)}
+.ticket .price{font-size:clamp(22px,3.4vw,30px);font-weight:900;color:var(--co)}
+.ticket .free{font-size:clamp(20px,3vw,26px);font-weight:900;color:var(--te)}
+.ticket.pick{border-style:solid;border-color:var(--te);background:var(--tel);transform:translateY(-4px)}
+.ticket svg{width:56px;height:56px}
+.bag{display:flex;align-items:center;gap:14px;background:var(--tel);border-radius:18px;padding:12px 16px}
+.bag svg{width:64px;height:64px;flex:none}
+.past{position:relative;background:var(--col);border-radius:14px;padding:10px 14px;font-weight:700;color:var(--co);overflow:hidden}
+.past .fog{position:absolute;inset:0;background:#F0F7F6;display:flex;align-items:center;gap:10px;padding:0 14px;color:var(--te);font-weight:900;transform:translateY(-105%);transition:transform .6s ease}
+.on .past .fog{transform:translateY(0)}
+.past .fog svg{width:34px;height:34px;flex:none;color:var(--te)}
+.now{background:var(--tel);border-radius:14px;padding:10px 14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.prog{font-weight:700;color:var(--mu);margin:0}
+.def{background:var(--tel);border:2px solid #CFE3E0;border-radius:20px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:8px}
+.def p{margin:0;font-size:clamp(19px,2.6vw,23px)}
+.def b{color:var(--te)}
+.zero{font:inherit;display:flex;align-items:center;justify-content:center;gap:14px;margin:6px auto;cursor:pointer;background:var(--card);color:var(--te);border:3px solid var(--te);border-radius:999px;padding:12px 34px 12px 22px;font-size:clamp(22px,3.4vw,30px);font-weight:900;line-height:1.3}
+.zero svg{width:clamp(44px,7vw,60px);height:clamp(44px,7vw,60px);flex:none;transition:transform .7s ease}
+.zero.done{background:var(--te);color:#fff;cursor:default}
+.zero.done svg{transform:rotate(-360deg)}
+.zero:focus-visible{outline:4px solid var(--co);outline-offset:3px}
+.sum{display:flex;flex-direction:column;gap:10px}
+.sum .row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:2px solid var(--ln);padding:8px 0;font-size:clamp(19px,2.6vw,23px)}
+.sum .row b{color:var(--co);font-size:clamp(22px,3vw,28px);white-space:nowrap}
+.mini{font-size:19px;color:var(--mu);margin:0}
+.ic{width:1.3em;height:1.3em;vertical-align:-.3em;flex:none}
+.hide{display:none}
+.chg{font-weight:900;color:var(--te)}
+</style>
+<div class="wrap" id="app"></div>
+<script>
+var KEY='u2c-glasses-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function fresh(){var h=location.hash;var g=h==='#red'?'red':h==='#blue'?'blue':(rnd(2)?'red':'blue');return {g:g,step:0,ticket:null,a1:[null,null,null,null],a2:[null,null,null,null],worn:false}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(!st||(location.hash==='#red'||location.hash==='#blue')&&st.step===0){st=fresh();save(st)}
+
+var IC={
+ zero:'<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M38.5 17.5 A16 16 0 1 0 40 28" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M40.5 8.5 L39 18.5 L29 17" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="24" cy="24" rx="5.5" ry="8" fill="none" stroke="currentColor" stroke-width="4"/></svg>',
+ boat:'<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M8 36 L52 36 L46 46 L14 46 Z" fill="#FFF5F2" stroke="#D95D39" stroke-width="4" stroke-linejoin="round"/><path d="M22 36 L22 22 L38 22 L38 36" fill="none" stroke="#1E242B" stroke-width="4" stroke-linejoin="round"/><path d="M6 52 Q16 48 26 52 T46 52 T56 52" fill="none" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/></svg>',
+ raft:'<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M12 14 Q30 4 48 14" fill="none" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/><path d="M14 16 L14 30 M46 16 L46 30 M30 9 L30 26" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/><rect x="10" y="34" width="40" height="10" rx="5" fill="#F0F7F6" stroke="#2A6F68" stroke-width="4"/><path d="M6 52 Q16 48 26 52 T46 52 T56 52" fill="none" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/></svg>',
+ bag:'<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 22 L50 22 L50 54 Q50 58 46 58 L18 58 Q14 58 14 54 Z" fill="#F0F7F6" stroke="#2A6F68" stroke-width="4" stroke-linejoin="round"/><path d="M22 22 Q22 8 32 8 Q42 8 42 22" fill="none" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/><path d="M22 36 L42 36" stroke="#D95D39" stroke-width="4" stroke-linecap="round"/></svg>',
+ stone:'<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 10 Q20 4 34 10" fill="none" stroke="#2A6F68" stroke-width="4" stroke-linecap="round"/><path d="M12 34 Q10 24 20 22 Q30 20 32 28 Q33 34 26 35 Z" fill="#D95D39" stroke="#1E242B" stroke-width="3" stroke-linejoin="round"/></svg>',
+ red:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="#D95D39"/></svg>',
+ blue:'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" fill="#2A6F68"/></svg>'
+};
+var CASES=[
+ {who:'阿傑在夾娃娃機店',past:'阿傑已經投了 50 元，娃娃還是沒有夾起來。',now:'這台機器的爪子很鬆，剛剛連續五次都夾不起來。他的口袋裡只剩下 10 元，本來打算放學後買一瓶飲料。',go:'再投 10 元，繼續夾',stop:'不夾了，留著 10 元買飲料'},
+ {who:'小美和她的新鞋',past:'小美已經花了很多零用錢，買了這雙新鞋。',now:'可是她每次穿這雙鞋，腳都會磨破皮。明天校外教學要走很遠的路，家裡還有一雙舊的、很好走的鞋。',go:'明天還是穿新鞋',stop:'明天換穿舊的好走的鞋'},
+ {who:'阿凱和一本很厚的小說',past:'阿凱已經花了三個星期，才讀完這本厚小說的前半本。',now:'可是後半本越來越無聊，他每次打開就想睡覺。剛好圖書館來了一本他很想看的新書。',go:'硬著頭皮讀完這本',stop:'先換成那本想看的新書'},
+ {who:'小安在吃到飽餐廳',past:'小安的家人已經付了吃到飽餐廳的錢。',now:'小安已經吃得很飽了，再吃下去肚子會痛。而且晚上他還要去上游泳課。',go:'再拿一盤，把錢吃回本',stop:'不吃了，休息一下'}
+];
+function tag(){return st.g==='red'?'<span class="tag red">'+IC.red+'你是紅組</span>':'<span class="tag blue">'+IC.blue+'你是藍組</span>'}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var app=document.getElementById('app');
+function render(){
+ var s=st.step,h='';
+ if(s===0){
+  h='<p class="kick">UNIT 2 第 3 課・活動一</p><h1>歸零再選一次</h1>'+
+  '<p class="lead">這個遊戲分成三個部分。第一部分，你要從兩場週末的活動裡選一場。第二部分，你要幫四位同學決定，要繼續做下去，還是停下來。第三部分，你要按下「歸零」按鈕，把已經花掉、拿不回來的東西先放一邊，再決定一次。</p>'+
+  '<div class="card"><p>平板已經偷偷幫你分好組了：'+tag()+'</p><p class="mini">請不要告訴旁邊的同學你是哪一組。等一下，老師會揭曉兩組有什麼不一樣。</p></div>'+
+  '<button class="btn" onclick="go(1)">開始</button>';
+ } else if(s===1){
+  var red=st.g==='red';
+  h='<p class="kick">第一部分・週末的活動票 '+tag()+'</p>'+
+  '<h2>'+(red?'上個月，你花 400 元買了「七股潟湖搭膠筏」的票。後來你又花 150 元，買了「四草綠色隧道坐竹筏」的票。':'學校舉辦抽獎，你一次抽中了兩張票：「七股潟湖搭膠筏」和「四草綠色隧道坐竹筏」。兩張票都是免費送的。')+'</h2>'+
+  '<div class="card"><p>你想了想，覺得<b>四草綠色隧道坐竹筏比較好玩</b>。</p><p>後來你才發現，兩場活動都在<b>同一個星期六下午</b>。票不能退，也不能送給別人，所以你只能去其中一場。</p></div>'+
+  '<p class="lead">你要去哪一場呢？請點一下那一張票，把它放進背包。</p><div class="tickets">'+
+  tk('a',IC.boat,'七股潟湖搭膠筏',red?'<span class="price">400 元</span>':'<span class="free">抽獎送的</span>')+
+  tk('b',IC.raft,'四草綠色隧道坐竹筏',red?'<span class="price">150 元</span>':'<span class="free">抽獎送的</span>')+'</div>'+
+  '<div class="bag">'+IC.bag+'<p style="margin:0;font-weight:700">'+(st.ticket?'背包裡放的是：'+(st.ticket==='a'?'七股潟湖搭膠筏':'四草綠色隧道坐竹筏'):'背包還是空的。')+'</p></div>'+
+  '<button class="btn" '+(st.ticket?'':'disabled')+' onclick="go(2)">決定好了，到下一步</button>';
+ } else if(s>=2&&s<=5){
+  var k=s-2,c=CASES[k];
+  h='<p class="kick">第二部分・幫同學做決定</p><p class="prog">第 '+(k+1)+' 件，共 4 件</p><h2>'+c.who+'</h2>'+
+  '<div class="card"><div class="past">'+c.past+'</div><div class="now">'+c.now+'</div></div>'+
+  '<p class="lead">如果你是這位同學，你會怎麼做？這裡沒有標準答案，兩個選擇都可以選。</p>'+
+  '<div class="two">'+opt('a1',k,'go',c.go)+opt('a1',k,'stop',c.stop)+'</div>'+
+  '<button class="btn" '+(st.a1[k]?'':'disabled')+' onclick="go('+(s+1)+')">下一件</button>';
+ } else if(s===6){
+  h='<p class="kick">第三部分・歸零，再決定一次</p><h2>剛才那四件事，現在換一種方法再想一次。</h2>'+
+  '<div class="def"><p><b>歸零思考：</b>假設今天才第一次遇到這件事。已經花掉、拿不回來的先不算，只問：「從現在開始，哪一個選擇比較好？」</p></div>'+
+  '<p class="lead">請按下面的「歸零」按鈕。按下以後，每件事裡「已經花掉、拿不回來」的那一行會被遮起來，你只會看到從現在開始的情形。</p>'+
+  '<button class="zero'+(st.worn?' done':'')+'" aria-pressed="'+(!!st.worn)+'" onclick="wear()">'+IC.zero+'<span>'+(st.worn?'已經歸零':'歸零')+'</span></button>'+
+  '<p class="lead" style="text-align:center;font-weight:700">'+(st.worn?'已經歸零了。接下來，請只看從現在開始的情形。':'還沒有歸零，請按一下上面的「歸零」。')+'</p>'+
+  '<button class="btn te" '+(st.worn?'':'disabled')+' onclick="go(7)">從現在開始算，再看一次這四件事</button>';
+ } else if(s===7){
+  h='<p class="kick">第三部分・歸零以後，再決定一次</p><p class="lead">每一件事裡，「已經花掉、拿不回來」的那一行已經遮起來，先不算了。請只看從現在開始的情形，每一件都再選一次。你可以選得和剛才一樣，也可以改變。</p>';
+  for(var i=0;i<4;i++){var c2=CASES[i];
+   h+='<div class="card on"><h2>'+c2.who+'</h2><div class="past">'+c2.past+'<div class="fog">'+IC.zero+'已經花掉、拿不回來，先不算</div></div><div class="now">'+c2.now+'</div>'+
+   '<div class="two">'+opt('a2',i,'go',c2.go)+opt('a2',i,'stop',c2.stop)+'</div>'+
+   (st.a2[i]&&st.a2[i]!==st.a1[i]?'<p class="chg">你改變了這一件的決定。</p>':'')+'</div>';}
+  var done=st.a2.every(function(x){return x});
+  h+='<button class="btn" '+(done?'':'disabled')+' onclick="go(8)">四件都選好了，看結果</button>';
+ } else {
+  var g1=st.a1.filter(function(x){return x==='go'}).length,g2=st.a2.filter(function(x){return x==='go'}).length;
+  var ch=0;for(var j=0;j<4;j++)if(st.a1[j]!==st.a2[j])ch++;
+  h='<h1>做完了！請停在這一頁，等其他同學。</h1>'+
+  '<div class="card sum">'+
+  '<div class="row"><span>你的組別</span><b>'+(st.g==='red'?IC.red+'紅組':IC.blue+'藍組')+'</b></div>'+
+  '<div class="row"><span>第一題：星期六下午，你選了哪一場活動？</span><b>'+(st.ticket==='a'?'七股潟湖搭膠筏':'四草綠色隧道坐竹筏')+'</b></div>'+
+  '<div class="row"><span>第二題：按下「歸零」、再決定一次以後，你改變了幾個決定？</span><b>'+ch+' 個</b></div>'+
+  '<div class="row"><span>第一次決定的時候，你選「繼續」的有幾件？</span><b>'+g1+' 件</b></div>'+
+  '<div class="row"><span>歸零以後，你選「繼續」的有幾件？</span><b>'+g2+' 件</b></div></div>'+
+  '<p class="lead">等一下，老師會先請紅組舉手，再請藍組舉手。請你想一想：第一次做選擇的時候，你有沒有想到那些已經花掉、拿不回來的東西？</p>'+
+  '<p class="mini">（老師要換下一班之前，在網址後面加上 #reset，就可以重新開始。）</p>';
+ }
+ app.innerHTML=h;
+}
+function tk(id,icon,name,priceHtml){return '<button class="ticket'+(st.ticket===id?' pick':'')+'" onclick="pickT(\''+id+'\')" aria-pressed="'+(st.ticket===id)+'">'+icon+'<b>'+name+'</b>'+priceHtml+'<span class="mini">星期六下午</span></button>'}
+function pickT(id){st.ticket=id;save(st);render()}
+function opt(arr,k,v,label){var on=st[arr][k]===v;return '<button class="btn alt'+(on?' pick':'')+'" aria-pressed="'+on+'" onclick="pick(\''+arr+'\','+k+',\''+v+'\')">'+label+'</button>'}
+function pick(arr,k,v){st[arr][k]=v;save(st);render()}
+function wear(){st.worn=true;save(st);render()}
+window.addEventListener('hashchange',function(){if((location.hash==='#red'||location.hash==='#blue')&&st.step===0){st=fresh();save(st);render();return}if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render()}});
+render();
+</script>

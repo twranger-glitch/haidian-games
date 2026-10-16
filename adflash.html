@@ -1,0 +1,333 @@
+<title>廣告快閃</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: weekend at a big store in Annan with 300 dollars → round 1: eight flashy ad cards, 4 seconds each, cart or not → round 2 "next day": the same items as plain white cards, no timer, re-decide each cart item → compare totals → which ad trick pulled hardest → summary for a show of hands. No right answers. Single light classroom look on purpose; only the ad cards are loud. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:20px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default;opacity:.55}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.4vw,22px)}
+td,th{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top;text-align:left}
+th{color:var(--muted);font-size:.9em}
+td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+td.n{white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+
+/* cart bar */
+.cart{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:8px 14px;font-size:clamp(19px,2.6vw,24px);font-weight:700}
+.cart svg{width:40px;height:40px;flex:none}
+.cart .sum{font-weight:900;font-variant-numeric:tabular-nums}
+.cart .bud{margin-left:auto;color:var(--muted);white-space:nowrap}
+.cart .ov{flex-basis:100%;color:var(--rust);font-weight:900}
+.cart.over{border-color:var(--rust);background:#FBEDE6}
+.timer{height:16px;border-radius:99px;background:var(--line);overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--rust);border-radius:99px}
+
+/* the loud ad card */
+.ad{position:relative;overflow:hidden;border-radius:26px;padding:clamp(16px,3vw,26px);color:#fff;display:grid;grid-template-columns:minmax(0,1fr);gap:8px;justify-items:center;text-align:center;min-height:0;border:4px solid #fff;box-shadow:0 8px 0 rgba(0,0,0,.12)}
+.ad .pic{position:relative;width:clamp(120px,24vw,180px);height:clamp(120px,24vw,180px)}
+.ad .pic>svg{width:100%;height:100%}
+.ad .slogan{font-size:clamp(30px,6vw,52px);font-weight:900;line-height:1.25;margin:0;text-shadow:0 3px 0 rgba(0,0,0,.18);text-wrap:balance}
+.ad .sub{font-size:clamp(19px,3vw,27px);font-weight:900;margin:0;text-wrap:balance}
+.ad .nm{font-size:clamp(19px,2.6vw,23px);font-weight:700;margin:0;opacity:.95}
+.ad .price{position:absolute;right:12px;top:12px;background:#FFE14D;color:#7A2E00;font-weight:900;font-size:clamp(22px,3.6vw,32px);border-radius:99px;padding:4px 16px;transform:rotate(8deg);box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.ad .boom{position:absolute;left:10px;top:10px;background:#fff;color:#C2185B;font-weight:900;font-size:clamp(20px,3.2vw,30px);border-radius:16px;padding:2px 12px;transform:rotate(-8deg)}
+.ad .spark{position:absolute;width:30px;height:30px}
+.ad .mascot{display:flex;align-items:center;gap:8px;justify-content:center}
+.ad .mascot svg{width:clamp(70px,12vw,96px);height:clamp(70px,12vw,96px);flex:none}
+.ad .bubble{background:#fff;color:#1F2A2E;border-radius:18px;padding:6px 14px;font-weight:900;font-size:clamp(19px,2.8vw,25px);text-align:left}
+@media (min-width:700px){
+  .ad{grid-template-columns:auto minmax(0,1fr);text-align:left;justify-items:start;align-items:center;column-gap:22px}
+  .ad .pic{grid-row:1/span 4}
+}
+.decide{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px}
+.btn.buy{background:var(--rust);font-size:clamp(22px,3.4vw,30px);padding:16px 12px}
+.btn.skip{background:var(--card);color:var(--ink);border:3px solid var(--line);font-size:clamp(22px,3.4vw,30px);padding:16px 12px}
+.flash{font-size:clamp(23px,3.8vw,32px);font-weight:900;text-align:center;margin:0;min-height:1.5em}
+
+/* plain card */
+.plain{background:#fff;border:2px solid var(--line);border-radius:14px;padding:clamp(16px,3vw,26px);display:flex;flex-direction:column;gap:6px}
+.plain .pn{font-size:clamp(25px,4vw,34px);font-weight:900;margin:0}
+.plain .pp{font-size:clamp(23px,3.4vw,30px);font-weight:700;margin:0;color:var(--ink)}
+.plain .pd{font-size:clamp(19px,2.7vw,25px);margin:0;color:var(--muted)}
+
+.big3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--note);border-radius:16px;padding:12px;text-align:center}
+.stat b{display:block;font-size:clamp(28px,5vw,44px);font-weight:900;font-variant-numeric:tabular-nums;color:var(--sea);line-height:1.3}
+.stat span{font-size:clamp(17px,2.3vw,21px);color:var(--muted);font-weight:700}
+.stat.r b{color:var(--rust)}
+@media (max-width:620px){
+  .big3{grid-template-columns:1fr}
+  td.k{white-space:normal;width:48%}
+  .rt tr:first-child{display:none}
+  .rt tr{display:block;border-bottom:2px solid var(--line);padding:8px 0}
+  .rt td{display:block;border:0;padding:2px 4px;width:auto}
+  .rt td:nth-child(2)::before{content:"廣告招數：";color:var(--muted);font-weight:700}
+  .rt td:nth-child(3)::before{content:"隔天你選：";color:var(--muted);font-weight:400}
+}
+
+/* motion: only on the ad cards, gentle (no strobing) */
+@keyframes pop{0%{transform:scale(.6) rotate(-4deg);opacity:0}60%{transform:scale(1.04) rotate(1deg);opacity:1}100%{transform:none}}
+@keyframes wob{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(-3deg) scale(1.12)}}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes shine{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.ad{animation:pop .45s ease-out both}
+.ad .boom{animation:wob .9s ease-in-out infinite}
+.ad .spark{animation:twinkle 1.1s ease-in-out infinite}
+.ad .pic>svg{animation:bob 1.2s ease-in-out infinite}
+.ad::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);background-size:200% 100%;animation:shine 1.6s linear infinite}
+@media (prefers-reduced-motion:reduce){
+  .ad,.ad .boom,.ad .spark,.ad .pic>svg,.ad::after{animation:none !important}
+  .ad::after{display:none}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='adflash-v1';
+var BUDGET=300;
+var SEC=/#slow\b/.test(location.hash)?8:4;
+/* t = 廣告招數：happy 好開心的畫面、wow 誇張形容詞、better 用了就變厲害／受歡迎、mascot 可愛角色代言、ding 音效閃光感 */
+var P=[
+ {ad:'閃電發光原子筆',p:85,boom:'叮！',s:'寫字會發光！',sub:'用了它，考試每一題都寫得超順！',bg:'linear-gradient(135deg,#FF7A00,#FFB300)',
+  pn:'原子筆（有小燈）',pd:'原子筆一支，筆身有一顆小燈，要裝鈕扣電池。',t:['better','ding']},
+ {ad:'超Q彈療癒史萊姆',p:60,boom:'啵～',s:'捏一下，煩惱全部飛走！',sub:'全世界最療癒、最Q彈！',bg:'linear-gradient(135deg,#00B894,#55E6C1)',
+  pn:'黏土玩具',pd:'黏土玩具一盒，打開以後放久了會變乾。',t:['wow','happy']},
+ {ad:'彩虹變色水壺',p:120,boom:'哇！',s:'喝一口，元氣爆發！',sub:'帶去學校，你就是全班最亮眼的人！',bg:'linear-gradient(135deg,#7B2FF7,#F107A3)',
+  pn:'變色水壺',pd:'塑膠水壺，容量 500 毫升；倒冷水時，壺身會變顏色。',t:['better','happy']},
+ {ad:'琵琵好運扭蛋',p:50,boom:'喀啦！',s:'',sub:'琵琵最愛的扭蛋，超級無敵可愛！',bg:'linear-gradient(135deg,#0091EA,#4FC3F7)',say:'轉一次，好運就跟著你喔！',
+  pn:'扭蛋',pd:'扭蛋一顆，裡面是一個小塑膠公仔，轉到哪一個不能自己選。',t:['mascot','wow']},
+ {ad:'閃電超跑遙控車',p:250,boom:'咻——',s:'全宇宙最快！',sub:'開出去，大家都會圍過來找你玩！',bg:'linear-gradient(135deg,#E53935,#FF7043)',
+  pn:'遙控車',pd:'遙控車一台，要裝 4 顆三號電池，電池要另外買。',t:['wow','better']},
+ {ad:'天才香香橡皮擦',p:35,boom:'叮咚！',s:'一擦就變聰明！',sub:'錯字通通消失，寫作業超輕鬆！',bg:'linear-gradient(135deg,#EC407A,#FF8A80)',
+  pn:'香味橡皮擦',pd:'橡皮擦一塊，有水果的香味。',t:['better','ding']},
+ {ad:'爆汁葡萄軟糖',p:65,boom:'啵啵！',s:'一口爆汁，開心到飛起來！',sub:'吃了就會一直笑！',bg:'linear-gradient(135deg,#8E24AA,#BA68C8)',
+  pn:'葡萄軟糖',pd:'軟糖一包，大約 20 顆。',t:['happy','wow']},
+ {ad:'電光超酷鴨舌帽',p:180,boom:'閃亮亮！',s:'戴上它，走到哪裡都被誇！',sub:'超有型、超帥、超可愛！',bg:'linear-gradient(135deg,#00897B,#26C6DA)',
+  pn:'鴨舌帽',pd:'棉質鴨舌帽一頂，可以遮太陽。',t:['better','wow']}
+];
+var TRICK={happy:'好開心的畫面',wow:'誇張的形容詞',better:'「用了就會變厲害、變受歡迎」',mascot:'可愛角色代言',ding:'「叮咚！」閃亮亮的感覺'};
+var R2={
+ want:{l:'還想要',fb:'冷靜下來還是想要，代表它對你真的有吸引力。可以再想一想：你願意用多少零用錢換它？'},
+ no:{l:'其實不太需要',fb:'廣告不見了，想要的感覺也變淡了。這種感覺很常見，很多人都有過。'},
+ need:{l:'需要（本來就缺的東西）',fb:'本來就缺的東西，買了會用得上。可以再想一想：一定要買廣告上的這一款嗎？'}
+};
+var WHY=[
+ ['happy','好開心的畫面（亮亮的顏色、笑咪咪、閃閃發光）','開心的畫面會讓我們以為：買了以後，也會一直這麼開心。'],
+ ['wow','誇張的形容詞（全宇宙最快、超療癒）','「最」「超」這些字聽起來很厲害，但它們很少告訴你東西本身到底怎麼樣。'],
+ ['better','「用了就會變厲害、變受歡迎」','這一招把東西和「我想變成的樣子」綁在一起。可是橡皮擦不會讓人變聰明，帽子也不會讓人交到朋友。'],
+ ['mascot','可愛角色代言（琵琵）','我們喜歡那個角色，就容易連帶喜歡它推薦的東西。'],
+ ['ding','「叮咚！」閃亮亮、蹦出來的感覺','突然跳出來、一直動的東西，很容易抓住眼睛，讓人來不及想。'],
+ ['none','好像都沒有，我是本來就想要那樣東西','也很正常。有些東西本來就是你喜歡的，廣告只是剛好出現。']
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(/#reset\b/.test(location.hash)){save(null)}
+var st=load()||{s:'intro',i:0,d1:[],j:0,d2:{},why:null};
+if(!st.d1)st.d1=[];if(!st.d2)st.d2={};
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(s){st.s=s;save(st);render();window.scrollTo(0,0)}
+function cartIdx(){var a=[];for(var k=0;k<P.length;k++)if(st.d1[k]===1)a.push(k);return a}
+function sumOf(a){return a.reduce(function(t,k){return t+P[k].p},0)}
+function kept(){return cartIdx().filter(function(k){return st.d2[k]==='want'||st.d2[k]==='need'})}
+
+var CART='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 7h6l4 18h18l4-13H11" fill="none" stroke="#205E86" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="15" cy="32" r="3" fill="#205E86"/><circle cx="29" cy="32" r="3" fill="#205E86"/></svg>';
+function cartBar(){
+  var a=cartIdx(),s=sumOf(a);
+  var c=el('div','cart'+(s>BUDGET?' over':''));c.innerHTML=CART;
+  c.append(el('span','sum','購物車 '+a.length+' 樣，共 '+s+' 元'),el('span','bud','零用錢 '+BUDGET+' 元'));
+  if(s>BUDGET)c.appendChild(el('span','ov','已經超過零用錢了。'));
+  return c;
+}
+var SPARK='<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M15 0 L18 12 L30 15 L18 18 L15 30 L12 18 L0 15 L12 12 Z" fill="#FFF59D"/></svg>';
+var PIC=[
+ '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="#fff" opacity=".25"/><g transform="rotate(-35 60 60)"><rect x="52" y="10" width="16" height="84" rx="7" fill="#1E88E5"/><rect x="52" y="28" width="16" height="10" fill="#FFEB3B"/><path d="M52 94 L60 112 L68 94Z" fill="#37474F"/><circle cx="60" cy="18" r="5" fill="#FFF59D"/></g><path d="M86 20 l6 -10 M96 32 l11 -4 M90 44 l10 4" stroke="#FFF59D" stroke-width="5" stroke-linecap="round"/></svg>',
+ '<svg viewBox="0 0 120 120"><path d="M14 92 C10 60 30 30 60 30 C92 30 112 58 106 92 Z" fill="#B9F6CA" stroke="#fff" stroke-width="4"/><circle cx="46" cy="64" r="7" fill="#1F2A2E"/><circle cx="76" cy="64" r="7" fill="#1F2A2E"/><circle cx="48" cy="61" r="2.5" fill="#fff"/><circle cx="78" cy="61" r="2.5" fill="#fff"/><path d="M48 78 Q61 92 74 78" stroke="#1F2A2E" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="34" cy="76" r="6" fill="#FF8A80" opacity=".8"/><circle cx="88" cy="76" r="6" fill="#FF8A80" opacity=".8"/></svg>',
+ '<svg viewBox="0 0 120 120"><rect x="44" y="8" width="32" height="16" rx="5" fill="#fff"/><rect x="34" y="22" width="52" height="92" rx="16" fill="#fff"/><clipPath id="cb"><rect x="38" y="30" width="44" height="80" rx="12"/></clipPath><g clip-path="url(#cb)"><rect x="38" y="30" width="44" height="14" fill="#FF5252"/><rect x="38" y="44" width="44" height="14" fill="#FFAB40"/><rect x="38" y="58" width="44" height="14" fill="#FFEB3B"/><rect x="38" y="72" width="44" height="14" fill="#69F0AE"/><rect x="38" y="86" width="44" height="14" fill="#40C4FF"/><rect x="38" y="100" width="44" height="12" fill="#B388FF"/></g><circle cx="52" cy="62" r="4" fill="#1F2A2E"/><circle cx="68" cy="62" r="4" fill="#1F2A2E"/><path d="M52 72 Q60 80 68 72" stroke="#1F2A2E" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+ '<svg viewBox="0 0 120 120"><circle cx="60" cy="62" r="46" fill="#fff"/><path d="M14 62 A46 46 0 0 1 106 62 Z" fill="#FF4081"/><rect x="12" y="58" width="96" height="8" fill="#F8BBD0"/><circle cx="60" cy="62" r="10" fill="#fff" stroke="#F8BBD0" stroke-width="4"/><circle cx="40" cy="36" r="6" fill="#fff" opacity=".7"/></svg>',
+ '<svg viewBox="0 0 120 120"><path d="M8 40 h22 M2 54 h24 M10 68 h18" stroke="#FFF59D" stroke-width="5" stroke-linecap="round"/><path d="M30 78 L38 56 Q42 48 52 48 L78 48 Q88 48 94 58 L110 64 Q116 66 116 74 L116 82 L30 82 Z" fill="#FFEB3B" stroke="#fff" stroke-width="3"/><path d="M50 52 L74 52 L82 62 L46 62Z" fill="#81D4FA"/><circle cx="48" cy="84" r="11" fill="#263238"/><circle cx="96" cy="84" r="11" fill="#263238"/><circle cx="48" cy="84" r="4" fill="#CFD8DC"/><circle cx="96" cy="84" r="4" fill="#CFD8DC"/></svg>',
+ '<svg viewBox="0 0 120 120"><g transform="rotate(-12 60 60)"><rect x="18" y="38" width="84" height="46" rx="10" fill="#fff"/><rect x="18" y="38" width="40" height="46" rx="10" fill="#FFCDD2"/><rect x="48" y="38" width="10" height="46" fill="#FFCDD2"/><text x="80" y="68" font-size="18" font-weight="900" text-anchor="middle" fill="#EC407A" font-family="sans-serif">A+</text></g><path d="M30 20 q4 -8 0 -14 M44 18 q4 -8 0 -14" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+ '<svg viewBox="0 0 120 120"><path d="M28 16 L92 16 L86 26 Q100 64 88 108 L32 108 Q20 64 34 26 Z" fill="#fff"/><path d="M28 16 L92 16 L86 26 L34 26Z" fill="#E1BEE7"/><circle cx="48" cy="56" r="11" fill="#7B1FA2"/><circle cx="72" cy="62" r="11" fill="#9C27B0"/><circle cx="58" cy="82" r="11" fill="#AB47BC"/><circle cx="45" cy="53" r="3" fill="#fff" opacity=".7"/><circle cx="69" cy="59" r="3" fill="#fff" opacity=".7"/></svg>',
+ '<svg viewBox="0 0 120 120"><path d="M20 76 Q20 30 62 30 Q100 30 100 76 Z" fill="#FFEB3B" stroke="#fff" stroke-width="4"/><path d="M60 34 L54 52 L64 52 L56 72" stroke="#E53935" stroke-width="5" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M14 76 L106 76 Q118 78 116 88 L60 88 Q24 88 14 76Z" fill="#fff"/><circle cx="62" cy="28" r="5" fill="#fff"/></svg>'
+];
+var PIPI='<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="56" cy="68" rx="30" ry="24" fill="#fff"/><circle cx="46" cy="40" r="20" fill="#fff"/><path d="M30 34 Q40 26 50 38 Q42 50 30 46 Z" fill="#1F2A2E"/><path d="M30 40 L6 44 Q0 46 2 52 Q6 58 12 54 L30 46 Z" fill="#1F2A2E"/><circle cx="42" cy="38" r="3.5" fill="#fff"/><circle cx="43" cy="38" r="1.8" fill="#1F2A2E"/><circle cx="54" cy="48" r="5" fill="#FF8A80" opacity=".8"/><path d="M60 24 q6 -10 14 -6 q-6 2 -8 10z" fill="#FFF59D"/><path d="M50 90 v8 M62 90 v8" stroke="#FFA726" stroke-width="4" stroke-linecap="round"/></svg>';
+
+var timer=null,raf=null,locked=false;
+function clearT(){if(timer){clearTimeout(timer);timer=null}if(raf){cancelAnimationFrame(raf);raf=null}}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','星期六下午，你和家人到安南區的大賣場買東西。你的口袋裡有 <b style="color:var(--ink)">300 元</b>，這是你一整個星期的零用錢。'),
+    el('p','lead','走過玩具和文具區的時候，一張又一張的廣告突然跳出來。每一張廣告，你只有 <b style="color:var(--ink)">'+SEC+' 秒</b>可以決定：「放進購物車」還是「不要」。時間到了還沒按，就算「不要」。'),
+    el('p','lead','購物車可以超過 300 元，先照你當下的感覺按就好。'));
+  app.append(el('p','case','第一輪・廣告快閃'),el('h1',null,'好想要！'),c,btn('準備好了，開始逛','',function(){st.i=0;st.d1=[];go('r1')}));
+}
+
+function r1(){
+  clearT();locked=false;
+  if(st.i>=P.length){go('night');return}
+  var q=P[st.i],k=st.i;app.innerHTML='';
+  var head=el('p','case','第一輪・第 '+(k+1)+' 張廣告，共 '+P.length+' 張');
+  var bar=cartBar();
+  var tm=el('div','timer');var ti=el('i');tm.appendChild(ti);tm.setAttribute('role','progressbar');tm.setAttribute('aria-label','剩下的時間');
+  var ad=el('div','ad');ad.style.background=q.bg;
+  var pic=el('div','pic');pic.innerHTML=PIC[k];
+  [[-8,-6,'0s'],[82,-4,'.35s'],[-4,78,'.7s'],[88,86,'.2s']].forEach(function(s){var sp=el('span','spark',SPARK);sp.style.left=s[0]+'%';sp.style.top=s[1]+'%';sp.style.animationDelay=s[2];pic.appendChild(sp)});
+  ad.appendChild(pic);
+  ad.appendChild(el('p','nm',q.ad));
+  if(q.say){var m=el('div','mascot');m.innerHTML=PIPI;m.appendChild(el('div','bubble','琵琵說：「'+q.say+'」'));ad.appendChild(m)}
+  else ad.appendChild(el('p','slogan',q.s.replace('，','，<br>')));
+  ad.appendChild(el('p','sub',q.sub));
+  ad.appendChild(el('span','price',q.p+' 元'));
+  ad.appendChild(el('span','boom',q.boom));
+  var fl=el('p','flash','');
+  var d=el('div','decide');
+  var bBuy=btn('放進購物車','buy',function(){decide(1)});
+  var bNo=btn('不要','skip',function(){decide(0)});
+  d.append(bBuy,bNo);
+  app.append(head,bar,tm,ad,d,fl);
+  var t0=performance.now(),dur=SEC*1000;
+  function tick(now){var left=Math.max(0,1-(now-t0)/dur);ti.style.width=(left*100).toFixed(1)+'%';if(left>0)raf=requestAnimationFrame(tick)}
+  raf=requestAnimationFrame(tick);
+  timer=setTimeout(function(){decide(-1)},dur);
+  function decide(v){
+    if(locked)return;locked=true;clearT();
+    bBuy.disabled=true;bNo.disabled=true;
+    st.d1[k]=v;st.i=k+1;save(st);
+    var s=sumOf(cartIdx());
+    if(v===1){fl.textContent='放進購物車了！';fl.style.color='var(--rust)'}
+    else if(v===0){fl.textContent='不要，下一張。';fl.style.color='var(--muted)'}
+    else{fl.textContent='時間到，這一張算「不要」。';fl.style.color='var(--muted)'}
+    bar.replaceWith(cartBar());
+    setTimeout(function(){if(st.s==='r1')render()},v===-1?1100:700);
+  }
+}
+
+function night(){
+  app.innerHTML='';
+  var a=cartIdx(),s=sumOf(a);
+  var c=el('div','card');
+  c.append(el('p','lead','第一輪結束了。你一共放了 <b style="color:var(--ink)">'+a.length+' 樣</b>，加起來 <b style="color:var(--ink)">'+s+' 元</b>'+(s>BUDGET?'，已經超過零用錢了。':'。')));
+  c.append(el('p','lead','賣場說：購物車可以先幫你保留到明天。'));
+  c.append(el('p','lead','第二天早上，你打開保留的購物車再看一次。這次沒有廣告、沒有音效，也沒有人催你，每一樣東西只剩下名稱、價格和一句平平淡淡的說明。'));
+  app.append(el('p','case','第二輪・隔天再看'),el('h1',null,'睡了一覺以後'),c);
+  if(!a.length){
+    app.append(el('p','note','你的購物車是空的，所以第二輪沒有東西要重新選。這也是一種選擇：廣告跳得再快，你都先說了「不要」。'),btn('看看結果','',function(){go('res')}));
+  }else{
+    app.append(btn('打開購物車','',function(){st.j=0;go('r2')}));
+  }
+}
+
+function r2(){
+  var a=cartIdx();
+  if(st.j>=a.length){go('res');return}
+  var k=a[st.j],q=P[k];app.innerHTML='';
+  var pc=el('div','plain');pc.append(el('p','pn',q.pn),el('p','pp',q.p+' 元'),el('p','pd',q.pd));
+  var h=el('h2',null,'現在再看一次，你覺得它是……');
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(key,scroll){
+    Array.prototype.forEach.call(g.children,function(x){x.classList.toggle('pick',x.dataset.k===key)});
+    fb.innerHTML='';
+    var nx=btn(st.j<a.length-1?'下一樣':'看看結果','',function(){st.j++;save(st);if(st.j>=a.length)go('res');else{render();window.scrollTo(0,0)}});
+    fb.append(el('p','note',R2[key].fb+'<br><span style="font-size:max(19px,.85em);color:var(--muted)">想換也可以，直接點別的選項。</span>'),nx);
+    if(scroll)nx.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  ['want','no','need'].forEach(function(key){
+    var b=btn(R2[key].l,'alt',function(){st.d2[k]=key;save(st);show(key,true)});b.dataset.k=key;g.appendChild(b);
+  });
+  var nav=[];
+  if(st.j>0)nav.push(btn('回上一樣','alt',function(){st.j--;save(st);render()}));
+  app.append(el('p','case','第二輪・第 '+(st.j+1)+' 樣，共 '+a.length+' 樣'),pc,h,g,fb);
+  nav.forEach(function(n){n.style.alignSelf='flex-start';n.style.fontSize='19px';n.style.padding='8px 14px';app.appendChild(n)});
+  if(st.d2[k])show(st.d2[k],false);
+}
+
+function nums(){
+  var a=cartIdx(),s1=sumOf(a),kp=kept(),s2=sumOf(kp);
+  var nw=a.filter(function(k){return st.d2[k]==='want'}),nn=a.filter(function(k){return st.d2[k]==='need'});
+  return {a:a,s1:s1,kp:kp,s2:s2,diff:s1-s2,nw:nw,nn:nn};
+}
+function res(){
+  app.innerHTML='';var n=nums();
+  var g=el('div','big3');
+  var x1=el('div','stat r');x1.append(el('b',null,n.s1+' 元'),el('span',null,'第一輪：'+n.a.length+' 樣'));
+  var x2=el('div','stat');x2.append(el('b',null,n.s2+' 元'),el('span',null,'第二輪留下：'+n.kp.length+' 樣'));
+  var x3=el('div','stat');x3.append(el('b',null,n.diff+' 元'),el('span',null,'中間差了'));
+  g.append(x1,x2,x3);
+  var c=el('div','card');c.appendChild(g);
+  if(n.a.length){
+    c.appendChild(el('p','lead','第二輪留下的 '+n.kp.length+' 樣裡，「還想要」有 '+n.nw.length+' 樣，「需要」有 '+n.nn.length+' 樣。'+(n.s2>BUDGET?'留下的東西加起來還是超過 300 元，接下來要想想先買哪幾樣。':'')));
+    var t=el('table','rt');t.innerHTML='<tr><th>東西</th><th>廣告用了什麼招數</th><th>隔天你選</th></tr>';
+    n.a.forEach(function(k){var tr=el('tr');tr.append(el('td','k',P[k].pn+'<br>'+P[k].p+' 元'),el('td',null,P[k].t.map(function(x){return TRICK[x]}).join('、')),el('td',null,'<b>'+(st.d2[k]?R2[st.d2[k]].l:'—')+'</b>'));t.appendChild(tr)});
+    c.appendChild(t);
+  }
+  var msg=n.a.length===0?'你第一輪就沒有放東西進購物車。等一下聽聽看，其他同學的兩輪差了多少。'
+    :n.diff===0?'你第二輪全部都留下來了。冷靜下來還是想要，或是本來就需要，都很正常。'
+    :'你的兩輪差了 '+n.diff+' 元。廣告和「好想要」的感覺在的時候，和隔天冷靜下來的時候，你的選擇不太一樣。';
+  app.append(el('p','case','結果'),el('h2',null,'兩輪比一比'),c,el('p','note',msg+'<br><span style="font-size:max(19px,.9em);color:var(--muted)">留得多或留得少，都沒有對錯。重點是看見：同一個你，在不同的時候想要的不一樣。</span>'),
+    btn('最後一題','',function(){go('why')}));
+}
+
+function why(){
+  app.innerHTML='';
+  var h=el('h2',null,'回頭想一想：第一輪的廣告裡，哪一招最讓你想按「放進購物車」？');
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(i,scroll){
+    Array.prototype.forEach.call(g.children,function(x,j){x.classList.toggle('pick',j===i)});
+    fb.innerHTML='';var nx=btn('完成','',function(){go('end')});
+    fb.append(el('p','note',WHY[i][2]),nx);if(scroll)nx.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  WHY.forEach(function(w,i){g.appendChild(btn(w[1],'alt',function(){st.why=w[0];save(st);show(i,true)}))});
+  app.append(el('p','case','最後一題・沒有標準答案'),h,g,fb);
+  WHY.forEach(function(w,i){if(st.why===w[0])show(i,false)});
+}
+
+function end(){
+  app.innerHTML='';var n=nums();
+  var t=el('table');
+  var w=null;WHY.forEach(function(x){if(x[0]===st.why)w=x[1]});
+  [['第一輪放進購物車',n.a.length+' 樣，'+n.s1+' 元'],
+   ['第一輪有沒有超過 300 元',n.s1>BUDGET?'有，超過了':'沒有'],
+   ['第二輪留下來',n.kp.length+' 樣，'+n.s2+' 元'],
+   ['留下的裡面','還想要 '+n.nw.length+' 樣、需要 '+n.nn.length+' 樣'],
+   ['兩輪差了',n.diff+' 元'],
+   ['最讓我心動的廣告招數',w||'—']
+  ].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,'<b>'+r[1]+'</b>'));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  clearT();
+  ({intro:intro,r1:r1,night:night,r2:r2,res:res,why:why,end:end}[st.s]||intro)();
+}
+render();
+})();
+</script>

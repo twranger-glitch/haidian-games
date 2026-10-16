@@ -1,0 +1,690 @@
+<title>敲開大石頭</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Flow: story → Tue/Wed/Thu nights (one big rock "做海報": start the poster or "明天再說" with three neutral options; starting only adds a tiny bit) → Thursday bedtime: sister hands over a small hammer, tap the rock (or drag the hammer) to knock off small concrete steps (at least 5 of 8, revealed in crypto-shuffled order) → drag to reorder, circle tonight's first stone → do that one → Fri/Sat: drag stones into tonight's basket (40 minutes), done stones become poster pieces → Monday: poster completion + big-rock nights vs small-stone nights → "where do you usually get stuck" (no right answer) → summary for a show of hands. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --stone:#E9E5DA; --stoneline:#8C8473;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4;display:flex;align-items:center;gap:8px}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:focus-visible,.grip:focus-visible,.stn:focus-visible,.hammer:focus-visible,.rockbtn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.7em;height:1.7em}
+.case svg.i{width:1.5em;height:1.5em}
+/* week strip */
+.week{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:0;padding:0;list-style:none}
+.wd{background:var(--card);border:3px solid var(--line);border-radius:14px;padding:4px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:0;font-weight:900;font-size:19px;line-height:1.4;color:var(--muted)}
+.wd svg.i{width:30px;height:30px}
+.wd .em{width:30px;height:30px;display:block}
+.wd.now{border-color:var(--gold);background:var(--warm);color:var(--ink)}
+.wd.past{opacity:.8}
+.wd.mon{border-style:dashed}
+/* scene */
+.sbox{position:relative;background:#F4EFE3;border:3px solid var(--line);border-radius:20px;overflow:hidden}
+.scene{width:100%;height:auto;display:block}
+.rk{transform-origin:300px 300px;transform:scale(var(--sc,1));transition:transform .35s}
+.rk .ck{transition:opacity .2s}
+.rk.wob{animation:wob .45s ease-in-out 3}
+@keyframes wob{25%{transform:scale(var(--sc,1)) rotate(-1.4deg)}75%{transform:scale(var(--sc,1)) rotate(1.4deg)}}
+.rk.hit{animation:hit .25s ease-out}
+@keyframes hit{30%{transform:scale(var(--sc,1)) translate(-5px,3px)}60%{transform:scale(var(--sc,1)) translate(4px,-2px)}}
+.rk.gone{transform:scale(0);opacity:0;transition:transform .45s,opacity .45s}
+.zsign{position:absolute;right:3%;top:5%;background:var(--card);border:3px solid var(--ink);border-radius:14px;padding:4px 12px;font-weight:900;font-size:clamp(19px,2.6vw,24px);display:flex;align-items:center;gap:8px;pointer-events:none;box-shadow:0 4px 0 rgba(31,42,46,.18);max-width:70%}
+.prog{margin:-6px 0 0;font-weight:900;font-size:clamp(19px,2.6vw,23px);display:flex;align-items:center;gap:8px}
+.prog b{color:var(--good)}
+.chip{position:absolute;left:3%;top:5%;background:rgba(251,252,249,.95);border:3px solid var(--line);border-radius:14px;padding:2px 12px;font-weight:900;font-size:19px;pointer-events:none}
+.chip b{color:var(--good)}
+.done-msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--card);border:3px solid var(--good);border-radius:16px;padding:8px 18px;font-weight:900;font-size:clamp(19px,3vw,28px);color:var(--good);white-space:nowrap;pointer-events:none}
+.rockhit{cursor:pointer}
+.hammer{position:absolute;right:1%;top:2%;width:24%;max-width:170px;aspect-ratio:1;background:none;border:0;padding:0;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transform-origin:88% 82%}
+.hammer svg{width:100%;height:100%;display:block}
+.hammer.swing{animation:swing .32s ease-in}
+@keyframes swing{35%{transform:rotate(22deg)}75%{transform:rotate(-34deg)}100%{transform:rotate(0)}}
+.hammer[disabled]{opacity:.35;cursor:default}
+.hghost{position:fixed;z-index:60;pointer-events:none;width:110px;height:110px;opacity:.95}
+.dust{position:absolute;width:12px;height:12px;border-radius:3px;background:#B9B19F;pointer-events:none;animation:dust .55s ease-out forwards}
+@keyframes dust{to{transform:translate(var(--dx),var(--dy)) rotate(160deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.rk,.rk.wob,.rk.hit,.hammer.swing,.dust,.stn.new,.pz.new{animation:none!important;transition:none!important}}
+/* choose */
+.choose{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px;align-items:stretch}
+.bigbtn{flex-direction:column;align-items:flex-start!important;justify-content:center;gap:4px!important}
+.bigbtn .bt{display:flex;align-items:center;gap:10px;font-weight:900;font-size:clamp(21px,2.9vw,26px)}
+.bigbtn .bs{font-size:19px;color:var(--muted);font-weight:500}
+.later{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.later h3{font-size:clamp(19px,2.6vw,23px)}
+.later .btn.alt{padding:10px 14px;font-size:clamp(19px,2.5vw,22px)}
+.bubble{position:relative;background:#FFFFFF;border:3px solid var(--ink);border-radius:26px;padding:12px 18px;font-weight:900;font-size:clamp(21px,3vw,27px)}
+.worries{display:flex;flex-wrap:wrap;gap:8px}
+.worries span{background:#EEF0EC;border-radius:12px;padding:2px 12px;font-size:19px;font-weight:700;color:var(--muted)}
+.worries span:nth-child(odd){transform:rotate(-2deg)}.worries span:nth-child(even){transform:rotate(2deg)}
+.say{display:flex;gap:14px;align-items:center}
+.say .av{width:76px;height:76px;flex:none}
+.say .sp{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px 16px;margin:0;font-size:clamp(19px,2.6vw,23px)}
+/* stones */
+.tray{display:flex;flex-wrap:wrap;gap:10px;min-height:64px;align-items:flex-start}
+.stn{font:inherit;color:var(--ink);display:inline-flex;align-items:center;gap:8px;background:var(--stone);border:3px solid var(--stoneline);border-radius:46% 54% 42% 58% / 58% 46% 54% 42%;padding:10px 20px;font-weight:700;font-size:19px;line-height:1.35;text-align:left;max-width:100%}
+.stn:nth-child(3n+2){border-radius:58% 42% 55% 45% / 45% 58% 42% 55%}
+.stn:nth-child(3n){border-radius:40% 60% 50% 50% / 52% 44% 56% 48%}
+.stn svg.i{width:30px;height:30px}
+.stn .m{font-weight:900;color:var(--sea);white-space:nowrap}
+.stn.new{animation:drop .55s ease-out both}
+@keyframes drop{0%{transform:translateY(-90px) rotate(-18deg);opacity:0}60%{transform:translateY(6px) rotate(4deg);opacity:1}100%{transform:none}}
+button.stn{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.stn.in{opacity:.35;border-style:dashed}
+.stn.ok{background:#DCEBD5;border-color:var(--good)}
+.sghost{position:fixed;z-index:50;pointer-events:none;opacity:.93;transform:rotate(-3deg);box-shadow:0 12px 26px rgba(31,42,46,.25)}
+/* order list */
+.olist{display:flex;flex-direction:column;gap:10px}
+.oitem{position:relative;display:flex;align-items:center;gap:10px;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:8px 10px}
+.oitem.drag{border-color:var(--sea);box-shadow:0 8px 18px rgba(31,42,46,.18);background:#F2F7FA}
+.oitem .no{font-weight:900;color:var(--muted);min-width:1.4em;text-align:center;flex:none}
+.oitem .sw{position:relative;flex:0 1 auto;min-width:0;display:flex}
+.oitem .sw .stn{min-width:0}
+.oitem .circ{margin-left:auto}
+.grip{flex:none;width:48px;height:56px;border-radius:12px;border:2px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;color:var(--muted);padding:0}
+.grip svg.i{width:30px;height:30px}
+.circ{font:inherit;flex:none;font-size:19px;font-weight:900;border-radius:14px;border:3px solid var(--rust);background:var(--card);color:var(--rust);padding:6px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;line-height:1.3}
+.circ svg.i{width:26px;height:26px}
+.oitem.first{border-color:var(--rust);background:#FDF3EE}
+.oitem.first .circ{background:var(--rust);color:#fff}
+.oitem .ring{position:absolute;inset:-9px -12px;pointer-events:none;display:none}
+.oitem.first .ring{display:block}
+.ring svg{width:100%;height:100%;display:block;overflow:visible}
+/* basket */
+.bk{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+.basket{background:#FBF4E2;border:4px dashed var(--gold);border-radius:22px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-height:200px;transition:box-shadow .2s}
+.basket.over{border-style:solid;border-color:var(--good);box-shadow:0 0 0 6px #CFE3C4}
+.basket h3 svg.i{width:40px;height:40px}
+.tbar{height:22px;border-radius:11px;background:#E3E6E0;position:relative;overflow:hidden}
+.tbar i{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:11px;transition:width .3s}
+.tnum{font-weight:900;font-size:19px;margin:0}
+.inb{display:flex;flex-wrap:wrap;gap:8px}
+.inb .stn{cursor:pointer}
+.empty{color:var(--muted);font-size:19px;margin:0}
+.msg{margin:0;font-weight:700;color:var(--rust);font-size:19px;min-height:0}
+.rockbtn{font:inherit;display:flex;align-items:center;gap:10px;background:var(--card);border:3px dashed var(--stoneline);border-radius:16px;padding:8px 14px;font-weight:700;font-size:19px;cursor:pointer;color:var(--ink);text-align:left}
+.rockbtn svg.i{width:40px;height:40px}
+/* poster */
+.pwrap{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:center}
+.poster{width:100%;height:auto;display:block}
+.poster text{font-family:var(--font)}
+.pz{opacity:0;transition:opacity .3s}
+.pz.on{opacity:1}
+.pz.on.new{animation:pop .7s ease-out both;animation-delay:var(--d,0s)}
+@keyframes pop{0%{opacity:0;transform:translateY(-14px)}60%{opacity:1}100%{opacity:1;transform:none}}
+.meter{display:flex;flex-direction:column;gap:6px}
+.meter .mt{font-weight:900;font-size:clamp(21px,3vw,28px)}
+.meter .mt b{color:var(--good)}
+.mbar{height:20px;border-radius:10px;background:#E3E6E0;position:relative;overflow:hidden}
+.mbar i{position:absolute;left:0;top:0;bottom:0;background:var(--good);border-radius:10px;transition:width .5s}
+.mbar i.b{background:#B9B19F}
+/* compare */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cmp .card{gap:6px}
+.cmp .big{border-color:#B9B19F}
+.cmp .small{border-color:var(--good)}
+.cmp .num{font-size:clamp(28px,4.6vw,40px);font-weight:900;line-height:1.2}
+.cmp .big .num{color:var(--muted)}
+.cmp .small .num{color:var(--good)}
+.cmp p{margin:0}
+.cmp h3 svg.i{width:40px;height:40px}
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+.sum td:first-child{color:var(--muted);font-weight:700;width:46%}
+.sum td b{font-size:1.1em}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.e{color:var(--sea)}.ec dt.c{color:var(--good)}
+@media (max-width:760px){
+  .choose,.bk,.cmp{grid-template-columns:minmax(0,1fr)}
+  .pwrap{grid-template-columns:minmax(0,1fr)}
+  .pwrap .poster{max-width:280px;margin:0 auto}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .wd svg.i,.wd .em{width:24px;height:24px}
+  .oitem{display:grid;grid-template-columns:44px auto minmax(0,1fr);grid-template-areas:"g n s" "g n c";gap:6px 8px;padding:8px}
+  .oitem .grip{grid-area:g;width:44px;align-self:center}
+  .oitem .no{grid-area:n;align-self:center}
+  .oitem .sw{grid-area:s;justify-self:start;max-width:100%}
+  .oitem .circ{grid-area:c;justify-self:end;margin-left:0}
+  .oitem .stn{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;padding:8px 16px}
+  .oitem .stn svg.i{grid-row:span 2}
+  .oitem .stn .m{grid-column:2}
+  .pwrap .poster{max-width:230px}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0;width:auto!important}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .say .av{width:60px;height:60px}
+  .zsign{padding:2px 10px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"rock_big": "<path d=\"M2.6 19.6l1.2-6.4 3.8-5.6 5-2.2 5 1.6 3 5 .8 7.6z\" fill=\"#D9D4C7\"/><path d=\"M7.6 7.6l2 4.6-2.4 3M17.6 6.6l-1.4 4.2 3.2 2.2\"/><path d=\"M1.6 19.6h20.8\"/>", "rock_pebble": "<path d=\"M3.2 16.4c0-3.4 3-5.8 6.8-5.8 3.2 0 5.2 1.6 5.2 4 0 2.8-2.6 4.4-6.2 4.4-3.6 0-5.8-.8-5.8-2.6z\" fill=\"#E4DFD2\"/><path d=\"M14.6 9.6c0-2.6 1.8-4.4 4-4.4 1.6 0 2.8 1.2 2.8 3 0 2.2-1.6 3.4-3.6 3.4-2 0-3.2-.6-3.2-2z\" fill=\"#E4DFD2\"/><path d=\"M6.4 14.2q1.4-1 3-.8\"/>", "rock_hammer": "<path d=\"M12.4 9.8l1.8 1.8-8.4 8.4a1.27 1.27 0 0 1-1.8-1.8z\" fill=\"#E8C795\"/><rect x=\"10.4\" y=\"6.6\" width=\"11\" height=\"5\" rx=\"1.2\" transform=\"rotate(45 15.9 9.1)\" fill=\"#C9D3DA\"/>", "rock_game": "<rect x=\"2.5\" y=\"7\" width=\"19\" height=\"10.5\" rx=\"5.25\" fill=\"#DCE8F0\"/><path d=\"M7.2 10.2v4.2M5.1 12.3h4.2\"/><circle cx=\"15.6\" cy=\"11\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"17.8\" cy=\"13.4\" r=\"1\" fill=\"currentColor\" stroke=\"none\"/>", "rock_basket": "<path d=\"M3 10.2h18l-1.7 9a1.8 1.8 0 0 1-1.8 1.5h-11a1.8 1.8 0 0 1-1.8-1.5z\" fill=\"#F3E3BE\"/><path d=\"M7.4 10.2l3.2-6.4M16.6 10.2l-3.2-6.4\"/><path d=\"M1.8 10.2h20.4\"/><path d=\"M8.6 13.6v4M12 13.6v4M15.4 13.6v4\"/>", "rock_map": "<path d=\"M2.8 6.2l5.6-2 7.2 2 5.6-2v13.6l-5.6 2-7.2-2-5.6 2z\" fill=\"#CFE3C4\"/><path d=\"M8.4 4.2v13.6M15.6 6.2v13.6\"/><path d=\"M4.6 14.2q2.6-1.2 4.6.4t4.8.2 5.4-1.6\" stroke-dasharray=\"1.6 2\"/>", "rock_ring": "<path d=\"M19.8 8.6C18.6 5.2 14.8 3.6 10.8 4.2 5.8 5 2.8 8.8 3.8 13c1 4 5.6 6.6 10.4 5.8 4.4-.8 7-4.2 6.2-8.2\"/><path d=\"M19.8 8.6l1.6-1.6\"/>", "rock_sun": "<circle cx=\"12\" cy=\"13.6\" r=\"4.4\" fill=\"#F3D27A\"/><path d=\"M12 4.6v2M4.8 7.6l1.4 1.4M19.2 7.6l-1.4 1.4M2.4 13.6h2.2M19.4 13.6h2.2\"/><path d=\"M2 20.6h20\"/>", "rock_river": "<path d=\"M2.6 7.6q3.2-2 6.4 0t6.4 0 6-0\"/><path d=\"M2.6 12.4q3.2-2 6.4 0t6.4 0 6 0\"/><path d=\"M3 21h18v-3.4q-4.5-1.8-9 0t-9 0z\" fill=\"#9CC3E0\"/>", "poster": "<rect x=\"3.5\" y=\"3\" width=\"13\" height=\"17\" rx=\"2\" fill=\"#F3E3BE\"/><path d=\"M6.5 8h7M6.5 11.5h4.5\"/><path d=\"M13.6 20.4l.6-3 6.3-6.3a1.6 1.6 0 0 1 2.3 2.3l-6.3 6.3z\" fill=\"#FBFCF9\"/>", "movie": "<rect x=\"2.5\" y=\"3.8\" width=\"19\" height=\"13.4\" rx=\"2.2\" fill=\"#DCE8F0\"/><path d=\"M10 7.8v5.4l4.6-2.7z\" fill=\"#FBFCF9\"/><path d=\"M12 17.2v3.4M7.8 20.6h8.4\"/>", "talk": "<path d=\"M2.8 5.6a2.2 2.2 0 0 1 2.2-2.2h8.6a2.2 2.2 0 0 1 2.2 2.2v4.6a2.2 2.2 0 0 1-2.2 2.2H8.4L4.8 15.2v-2.9a2.2 2.2 0 0 1-2-2.1z\" fill=\"#DCE8F0\"/><path d=\"M18.6 8.6h.4a2.2 2.2 0 0 1 2.2 2.2v4.4a2.2 2.2 0 0 1-2 2.2v2.8l-3.6-2.8h-4.2a2.2 2.2 0 0 1-2.2-2.2\" fill=\"#F6DCCF\"/>", "moon": "<path d=\"M19.5 14.8A8 8 0 1 1 9.2 4.5a6.4 6.4 0 0 0 10.3 10.3z\" fill=\"#DCE3F2\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"8.8\" fill=\"#DCE8F0\"/><path d=\"M12 6.8v5.4l3.6 2.2\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>", "grip": "<circle cx=\"9\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/>", "camera": "<rect x=\"2.8\" y=\"7\" width=\"18.4\" height=\"12.6\" rx=\"2.6\" fill=\"#DCE8F0\"/><path d=\"M8.4 7l1.4-2.5h4.4L15.6 7\"/><circle cx=\"12\" cy=\"13.2\" r=\"3.6\" fill=\"#FBFCF9\"/><path d=\"M17.6 10h.01\"/>", "pencil": "<path d=\"M4 20l1-4.2L15.4 5.4a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.2 19z\" fill=\"#F3E3BE\"/><path d=\"M13.6 7.2l3.2 3.2\"/>", "frame": "<path d=\"M8 4.6l4-2.6 4 2.6\"/><rect x=\"2.5\" y=\"4.6\" width=\"19\" height=\"15.4\" rx=\"1.6\" fill=\"#F3E3BE\"/><rect x=\"5.6\" y=\"7.6\" width=\"12.8\" height=\"9.4\" rx=\".6\" fill=\"#FBFCF9\"/><path d=\"M5.8 15.2l3.4-3.2 2.8 2.6 2-1.8 4.2 3.8\"/><circle cx=\"15\" cy=\"10.2\" r=\"1\"/>", "notes": "<rect x=\"2.6\" y=\"4.4\" width=\"11.6\" height=\"11.6\" rx=\"1.6\" fill=\"#F3E3BE\" transform=\"rotate(-9 8.4 10.2)\"/><rect x=\"8.6\" y=\"8.4\" width=\"12.8\" height=\"12.8\" rx=\"1.6\" fill=\"#FBF4E2\"/><path d=\"M11.6 12.6h6.8M11.6 15.6h6.8M11.6 18.4h3.8\"/>", "palette": "<path d=\"M12 3C6.8 3 2.8 6.9 2.8 11.8c0 4.7 3.6 8.6 8.2 8.6 1.6 0 2.4-.9 2.4-2.1 0-1.4-1.1-1.8-1.1-3 0-1.1.9-1.9 2.1-1.9h2.2c2.5 0 4.6-1.6 4.6-4.4C21.2 5.7 17 3 12 3z\" fill=\"#F3E3BE\"/><circle cx=\"7.4\" cy=\"11\" r=\"2\" fill=\"#9CC3E0\"/><circle cx=\"9.8\" cy=\"6.9\" r=\"2\" fill=\"#F2B8A0\"/><circle cx=\"14.6\" cy=\"6.6\" r=\"2\" fill=\"#F3D27A\"/><circle cx=\"7.8\" cy=\"15.6\" r=\"2\" fill=\"#CFE3C4\"/>", "magnify": "<circle cx=\"10\" cy=\"10\" r=\"6.4\" fill=\"#DCE8F0\"/><path d=\"M7 9a3.2 3.2 0 0 1 2.6-2.6\"/><path d=\"M15.4 15.4l5.4 5.4\" stroke-width=\"3.4\"/>", "think": "<path d=\"M7.2 16.6a3.9 3.9 0 0 1-.7-7.7 5.4 5.4 0 0 1 10.4-1.3 4.4 4.4 0 0 1 .6 9z\" fill=\"#EEF0EC\"/><circle cx=\"6.2\" cy=\"19.4\" r=\"1.2\" fill=\"#EEF0EC\"/><circle cx=\"3.6\" cy=\"21.4\" r=\".6\" fill=\"currentColor\"/>", "worry": "<circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"#F6E3A1\"/><path d=\"M7.6 9.8l2.4-1.2M16.4 9.8l-2.4-1.2\"/><circle cx=\"9.2\" cy=\"12.2\" r=\".9\" fill=\"currentColor\"/><circle cx=\"14.8\" cy=\"12.2\" r=\".9\" fill=\"currentColor\"/><path d=\"M8.6 16.6q1.1-1.2 2.3 0t2.3 0 2.3 0\"/>", "hourglass": "<path d=\"M5.5 2.8h13M5.5 21.2h13\"/><path d=\"M7.2 2.8c0 4.6 4.8 6 4.8 9.2s-4.8 4.6-4.8 9.2h9.6c0-4.6-4.8-6-4.8-9.2s4.8-4.6 4.8-9.2z\" fill=\"#FBF4E2\"/><path d=\"M9.4 7.2h5.2c-.7 1.3-1.6 2-2.6 2.8-1-.8-1.9-1.5-2.6-2.8z\" fill=\"#F3D27A\"/><path d=\"M8.4 20.4c.8-2.4 2.2-3.4 3.6-4.2 1.4.8 2.8 1.8 3.6 4.2z\" fill=\"#F3D27A\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"kidC": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#A8441A\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M18.5 30 Q17 12 32 12.5 Q47 12 45.5 30 Q44 20 32 19.5 Q20 20 18.5 30 Z\" fill=\"#5A3A22\"/><circle cx=\"47\" cy=\"22\" r=\"4.5\" fill=\"#5A3A22\"/><circle cx=\"44.2\" cy=\"19.6\" r=\"1.6\" fill=\"#E8A0A8\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='bigrock-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=rnd(i+1);var t=a[i];a[i]=a[j];a[j]=t}return a}
+
+/* ---------- data ---------- */
+var FREE=40,BIGP=5;
+var P={
+  river:{t:'選一條要介紹的河',m:5,p:5,ic:'rock_river'},
+  photo:{t:'拍或找 3 張照片',m:10,p:15,ic:'camera'},
+  title:{t:'寫一個標題',m:5,p:10,ic:'pencil'},
+  sketch:{t:'畫出版面草圖',m:10,p:10,ic:'frame'},
+  text:{t:'寫三句介紹',m:15,p:20,ic:'notes'},
+  color:{t:'上色',m:20,p:20,ic:'palette'},
+  map:{t:'畫一張小地圖：學校到河邊',m:10,p:10,ic:'rock_map'},
+  check:{t:'檢查錯字、寫上名字',m:5,p:10,ic:'magnify'}
+};
+var PK=Object.keys(P);
+var DAY=['二','三','四','五','六','一'];
+var OPT={
+  video:{n:'看一集卡通',ic:'movie',r:'你看了一集卡通，剛好演到最精彩的地方。'},
+  game:{n:'玩一局手機遊戲',ic:'rock_game',r:'你玩了幾局手機遊戲，終於破了一關。'},
+  chat:{n:'和朋友傳訊息聊天',ic:'talk',r:'你和朋友傳訊息，從今天的躲避球，一路聊到星期六要去哪裡玩。'}
+};
+var STORY=[
+  '星期二晚上。寫完功課、洗好澡，你有 <b>40 分鐘</b>的自由時間。書桌旁邊放著一捲空白的海報紙，離下星期一交海報，還有好幾天。',
+  '星期三晚上。今天放學前，老師提醒大家：「河川小海報，下星期一要交喔。」吃完晚飯，你一樣有 <b>40 分鐘</b>的自由時間。',
+  '星期四晚上。班上的群組裡，有同學說他已經選好要介紹哪一條河了。今天晚上，你一樣有 <b>40 分鐘</b>的自由時間。'
+];
+var WORK=[
+  '40 分鐘過去了。你在海報紙上畫了一個大框，寫了「河川」兩個字，又擦掉了。',
+  '40 分鐘過去了。你翻了翻社會課本，想了好幾條河，還是決定不了要介紹哪一條。',
+  '40 分鐘過去了。你在海報紙的角落畫了一條彎彎的河，又覺得不太像，停了下來。'
+];
+var WORRY=['要介紹哪一條河？','照片要去哪裡找？','標題要寫什麼？','要塗什麼顏色？','字寫不好怎麼辦？','要寫多少字才夠？'];
+var REF={
+  start:{n:'不知道從哪裡開始',ic:'think',e:'事情在腦袋裡還是一整顆大石頭，看不到第一步，就只能一直繞圈圈，越想越累。',t:'先問自己：「最小的第一步是什麼？五分鐘做得完嗎？」把它寫下來，就先做那一步。'},
+  hard:{n:'覺得太難',ic:'worry',e:'先不碰它，心裡就不用面對「做不好」的擔心，暫時會比較輕鬆。',t:'第一步先求「有」，不用求「好」。草稿可以醜醜的，之後再慢慢改。'},
+  fun:{n:'有更好玩的事',ic:'rock_game',e:'好玩的事就在手邊，一打開就停不下來，時間一下子就不見了。',t:'可以先跟自己約好順序：先做一顆小石頭，再去玩，兩樣都有。'},
+  time:{n:'覺得時間還很多',ic:'hourglass',e:'離交的日子還很遠，大石頭看起來不急，就一天一天往後放。',t:'把大日子拆成小日子：每天晚上，先放一顆小石頭進籃子裡。'}
+};
+var RK=['start','hard','fun','time'];
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',night:0,ch:[null,null,null],perm:null,knocked:0,order:[],first:null,bn:0,bk:[{ids:[],done:false},{ids:[],done:false}],done:[],ref:null}}
+var st=load();if(!st||!st.step)st=fresh();
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function workN(){return st.ch.filter(function(c){return c==='work'}).length}
+function laterN(){return st.ch.filter(function(c){return c&&c!=='work'}).length}
+function laterBefore(n){var c=0;for(var i=0;i<n;i++)if(st.ch[i]&&st.ch[i]!=='work')c++;return c}
+function knockedIds(){return st.perm?st.perm.slice(0,st.knocked):[]}
+function smallP(){return st.done.reduce(function(s,k){return s+P[k].p},0)}
+function smallM(){return st.done.reduce(function(s,k){return s+P[k].m},0)}
+function totalP(){return Math.min(100,workN()*BIGP+smallP())}
+function cheng(p){var v=Math.round(p/5)/2;if(v===0)return '0 成';var n=Math.floor(v),h=v-n>0;if(n===0)return '半成';return n+' 成'+(h?'半':'')}
+function stoneHTML(k){var d=P[k];return ic(d.ic)+'<span class="t">'+d.t+'</span><span class="m">'+d.m+' 分鐘</span>'}
+function stone(k,tag,cls){var s=el(tag||'span','stn'+(cls?' '+cls:''),stoneHTML(k));s.setAttribute('data-k',k);if(tag==='button')s.type='button';return s}
+
+/* ---------- week strip ---------- */
+function weekStrip(cur){
+  var ul=el('ol','week');ul.setAttribute('aria-label','這個星期的晚上');
+  for(var i=0;i<6;i++){
+    var icon='';
+    if(i<3&&st.ch[i])icon=st.ch[i]==='work'?ic('poster'):ic(OPT[st.ch[i]].ic);
+    else if((i===3||i===4)&&st.bk[i-3].done)icon=ic('rock_pebble');
+    else if(i===5)icon=ic('rock_sun');
+    else if(i<3)icon=ic('rock_big');else icon=ic('moon');
+    var li=el('li','wd'+(i===cur?' now':'')+(i<cur?' past':'')+(i===5?' mon':''),'<span>'+DAY[i]+'</span>'+icon);
+    li.setAttribute('aria-label','星期'+DAY[i]+(i===cur?'（現在）':''));
+    ul.appendChild(li);
+  }
+  return ul;
+}
+
+/* ---------- rock scene (viewBox 600×330, floor at y=300) ---------- */
+var CK=['M250 108L262 140L248 166L266 196','M420 124L404 156L418 178L398 206','M128 215L162 222L178 248L206 254','M496 250L462 246L446 268L420 270',
+        'M340 96L336 126L352 150','M180 150L204 176L196 198','M490 300L470 280L478 262','M110 300L140 286L150 266'];
+function rockSVG(noCal){
+  var s='<svg class="scene" viewBox="0 0 600 330" role="img" aria-label="房間的地上有一顆很大的石頭，上面寫著「做海報」">';
+  s+='<rect width="600" height="330" fill="#F4EFE3"/><rect y="298" width="600" height="32" fill="#E2D6BF"/><path d="M0 298H600" stroke="#C9B994" stroke-width="3"/>';
+  if(!noCal)s+='<g transform="translate(36 34) rotate(-4)"><rect width="92" height="70" rx="4" fill="#FBFCF9" stroke="#8C8473" stroke-width="3"/><rect width="92" height="20" rx="4" fill="#F2B8A0" stroke="#8C8473" stroke-width="3"/><text x="46" y="52" text-anchor="middle" font-size="22" font-weight="900" fill="#A8441A" font-family="Noto Sans TC,sans-serif">星期一</text></g>';
+  s+='<ellipse cx="303" cy="302" rx="212" ry="13" fill="#CDBF9F"/>';
+  s+='<g class="rk" id="rk"><g class="rockhit">';
+  s+='<path d="M110 300L128 215L180 150L250 108L340 96L420 124L472 180L496 250L490 300Z" fill="#CFC8B8" stroke="#4E473C" stroke-width="5" stroke-linejoin="round"/>';
+  s+='<path d="M420 124L472 180L496 250L490 300L404 300L432 222Z" fill="#B9B19F"/>';
+  s+='<path d="M180 150L250 108L304 102L236 168Z" fill="#DDD7CA"/>';
+  s+='<path d="M110 300L128 215L180 150L250 108L340 96L420 124L472 180L496 250L490 300Z" fill="none" stroke="#4E473C" stroke-width="5" stroke-linejoin="round"/>';
+  CK.forEach(function(d,i){s+='<path class="ck" data-i="'+i+'" d="'+d+'" fill="none" stroke="#3A342C" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" opacity="0"/>'});
+  s+='<text x="300" y="236" text-anchor="middle" font-size="64" font-weight="900" fill="#3A342C" font-family="Noto Sans TC,sans-serif">做海報</text>';
+  s+='</g></g>';
+  s+='<path d="M86 292h-26M84 280h-16M520 292h26M522 280h16" stroke="#8C8473" stroke-width="4" stroke-linecap="round"/>';
+  return s+'</svg>';
+}
+function rockScale(n){var s0=1+0.05*laterBefore(Math.min(st.night+1,3));return (s0*(1-0.075*n)).toFixed(3)}
+var HAMMER='<svg viewBox="0 0 120 120" aria-hidden="true"><path d="M56 51L106 99" stroke="#7A5A30" stroke-width="17" stroke-linecap="round"/><path d="M56 51L106 99" stroke="#E8C795" stroke-width="10" stroke-linecap="round"/><rect x="14" y="30" width="72" height="30" rx="6" transform="rotate(-45 50 45)" fill="#C9D3DA" stroke="#3A4448" stroke-width="4.5"/><path d="M36 38l18 -18" stroke="#FBFCF9" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>';
+
+/* ---------- poster (viewBox 300×380) ---------- */
+function posterSVG(){
+  var s='<svg class="poster" viewBox="0 0 300 380" role="img" aria-label="河川小海報">';
+  s+='<rect x="3" y="3" width="294" height="374" rx="6" fill="#FFFDF6" stroke="#8C8473" stroke-width="3"/>';
+  s+='<g class="pz" data-k="b1"><rect x="14" y="14" width="272" height="352" fill="none" stroke="#BDB8AA" stroke-width="2.5" stroke-dasharray="8 5"/></g>';
+  s+='<g class="pz" data-k="b2"><text x="150" y="178" text-anchor="middle" font-size="34" fill="#DAD5C8">河川</text><path d="M108 168l86-12" stroke="#E6E1D4" stroke-width="12" stroke-linecap="round"/></g>';
+  s+='<g class="pz" data-k="b3"><path d="M40 262q30-22 60 0t60 0" stroke="#C9C4B6" stroke-width="2.5" fill="none"/></g>';
+  s+='<g class="pz" data-k="color"><rect x="16" y="16" width="268" height="58" rx="6" fill="#F6E7C1"/><rect x="16" y="114" width="268" height="96" rx="6" fill="#DCEFF7"/><rect x="16" y="216" width="170" height="96" rx="6" fill="#FBF1DC"/><rect x="190" y="216" width="94" height="96" rx="6" fill="#E6F2DD"/><path d="M16 330q22-10 44 0t44 0 44 0 44 0 44 0 44 0V364H16Z" fill="#BFDDF0"/></g>';
+  s+='<g class="pz" data-k="sketch" fill="none" stroke="#9FB3C2" stroke-width="2" stroke-dasharray="5 4"><rect x="20" y="20" width="260" height="50"/><rect x="20" y="80" width="170" height="28"/><rect x="20" y="118" width="260" height="88"/><rect x="20" y="220" width="162" height="88"/><rect x="194" y="220" width="86" height="88"/><rect x="150" y="334" width="130" height="28"/></g>';
+  s+='<g class="pz" data-k="river"><rect x="22" y="82" width="166" height="24" rx="12" fill="#FFFFFF" stroke="#205E86" stroke-width="2"/><text x="105" y="99" text-anchor="middle" font-size="14" font-weight="700" fill="#205E86">學校旁邊的排水溝</text></g>';
+  s+='<g class="pz" data-k="title"><text x="150" y="55" text-anchor="middle" font-size="27" font-weight="900" fill="#1F2A2E">排水溝裡住了誰？</text></g>';
+  s+='<g class="pz" data-k="photo">';
+  [24,116,208].forEach(function(x,i){
+    s+='<rect x="'+x+'" y="124" width="68" height="76" rx="3" fill="#FFFFFF" stroke="#56605C" stroke-width="2"/>';
+    if(i===0)s+='<path d="M'+(x+14)+' 162c8-10 22-10 32 0l10-7v14l-10-7c-10 10-24 10-32 0z" fill="#E8B04B" stroke="#8C6A1E" stroke-width="2"/><circle cx="'+(x+22)+'" cy="160" r="2" fill="#1F2A2E"/>';
+    if(i===1)s+='<ellipse cx="'+(x+32)+'" cy="166" rx="15" ry="9" fill="#FFFFFF" stroke="#56605C" stroke-width="2"/><path d="M'+(x+42)+' 162c6-8 0-14 6-20" stroke="#56605C" stroke-width="2.5" fill="none"/><circle cx="'+(x+48)+'" cy="141" r="4" fill="#FFFFFF" stroke="#56605C" stroke-width="2"/><path d="M'+(x+52)+' 140l9 2-9 2z" fill="#E8B04B"/><path d="M'+(x+28)+' 175v14M'+(x+36)+' 175v14" stroke="#56605C" stroke-width="2"/>';
+    if(i===2)s+='<path d="M'+(x+20)+' 192c0-20 4-34 10-44M'+(x+34)+' 192c0-24 2-38 0-50M'+(x+48)+' 192c0-18-2-30-8-40" stroke="#4F7A3A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M'+(x+8)+' 190q10-5 20 0t20 0 20 0" stroke="#5B9BD5" stroke-width="3" fill="none"/>';
+  });
+  s+='</g>';
+  s+='<g class="pz" data-k="text">';
+  [128,108,120].forEach(function(w,i){s+='<text x="24" y="'+(250+i*26)+'" font-size="15" font-weight="900" fill="#56605C">'+(i+1)+'.</text><path d="M44 '+(245+i*26)+'h'+w+'" stroke="#8C949A" stroke-width="5" stroke-linecap="round"/>'});
+  s+='</g>';
+  s+='<g class="pz" data-k="map"><rect x="198" y="224" width="78" height="80" rx="4" fill="#FFFFFF" stroke="#56605C" stroke-width="2"/><rect x="206" y="274" width="22" height="20" fill="#F2B8A0" stroke="#56605C" stroke-width="1.8"/><path d="M262 228q-14 20 0 38t-4 36" stroke="#5B9BD5" stroke-width="5" fill="none"/><path d="M228 280q16-4 26-20" stroke="#56605C" stroke-width="2" stroke-dasharray="3 3" fill="none"/></g>';
+  s+='<g class="pz" data-k="check"><path d="M156 346l6 6 10-12" stroke="#2F7D4F" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="276" y="355" text-anchor="end" font-size="18" font-weight="900" fill="#1F2A2E">五年13班</text></g>';
+  return s+'</svg>';
+}
+function paintPoster(svg,fresh){
+  var w=workN(),on={b1:w>=1,b2:w>=2,b3:w>=3};
+  st.done.forEach(function(k){on[k]=true});
+  var d=0;
+  svg.querySelectorAll('.pz').forEach(function(g){var k=g.getAttribute('data-k');var o=!!on[k];g.classList.toggle('on',o);
+    if(o&&fresh&&fresh.indexOf(k)>=0){g.classList.add('new');g.style.setProperty('--d',(0.25+0.45*(d++))+'s')}});
+}
+function posterBlock(fresh,label){
+  var w=el('div','pwrap');var holder=el('div');holder.innerHTML=posterSVG();paintPoster(holder.querySelector('svg'),fresh);
+  var tp=totalP(),m=el('div','meter');
+  m.innerHTML='<div class="mt">'+(label||'海報完成')+'：<b>'+cheng(tp)+'</b></div><div class="mbar"><i style="width:'+tp+'%"></i></div>';
+  w.append(holder,m);return {wrap:w,meter:m};
+}
+
+/* ---------- intro ---------- */
+function intro(){
+  var c=el('div','card');var sb=el('div','sbox');sb.innerHTML=rockSVG();
+  c.append(sb,
+    el('p','lead','五年13班要做一張<b>「河川小海報」</b>，介紹學校附近的一條排水溝或小河，<b>下星期一</b>要交。'),
+    el('p','lead','今天是星期二。從星期二到星期六，你一共有 <b>5 個晚上</b>，每天晚上寫完功課，大約有 <b>40 分鐘</b>的自由時間。'),
+    el('p','lead','每天晚上這 40 分鐘要怎麼用，都由你自己決定。'));
+  app.append(el('h1',null,'敲開大石頭'),c,button('星期二晚上，開始','btn',function(){st.night=0;go('night')}));
+}
+
+/* ---------- nights 1–3: the big rock ---------- */
+function nightPage(){
+  var n=st.night,c=st.ch[n];
+  app.append(el('p','case',ic('moon')+'星期'+DAY[n]+'晚上（第 '+(n+1)+' 晚）'));
+  app.append(weekStrip(n));
+  app.append(el('h2',null,c?(c==='work'?'你決定開始做海報。':'你決定明天再說。'):'今天晚上的 40 分鐘，你想怎麼用？'));
+  app.append(el('p','lead',STORY[n]));
+  var sb=el('div','sbox');sb.innerHTML=rockSVG();var rk=sb.querySelector('#rk');
+  var lb=laterBefore(n);
+  rk.style.setProperty('--sc',(1+0.05*lb).toFixed(3));
+  var sign=n===0?'大石頭看起來好重':(lb>0?'大石頭好像又變大了一點':'大石頭還是好重');
+  if(c&&c!=='work'){rk.style.setProperty('--sc',(1+0.05*(lb+1)).toFixed(3))}
+  sb.append(el('div','zsign',ic('rock_big')+'<span>'+sign+'</span>'));
+  app.append(sb);
+  app.append(el('p','prog',ic('poster')+'<span>海報完成：<b>'+cheng(totalP())+'</b></span>'));
+  if(!c){
+    var ch=el('div','choose');
+    var big=button('<span class="bt">'+ic('poster')+'開始做海報</span><span class="bs">把一整張海報，從頭做到尾。</span>','btn alt bigbtn',function(){pick('work')});
+    var later=el('div','later');later.append(el('h3',null,'明天再說，今天先……'));
+    Object.keys(OPT).forEach(function(k){later.append(button(ic(OPT[k].ic)+'<span>'+OPT[k].n+'</span>','btn alt',function(){pick(k)}))});
+    ch.append(big,later);app.append(ch);
+  }else{
+    var r=el('div','card');
+    if(c==='work'){
+      r.append(el('p','lead','你攤開海報紙，拿起鉛筆，盯著那顆大石頭……'));
+      r.append(el('div','bubble','從哪裡開始呢？好像好多事……'));
+      var wz=el('div','worries');WORRY.forEach(function(t){wz.append(el('span',null,t))});r.append(wz);
+      r.append(el('p','lead',WORK[n]));
+      r.append(el('p','note warm','大石頭只動了一下下。海報多了一點點（<b>半成</b>）。'));
+      if(st._anim===n){rk.classList.add('wob');st._anim=null}
+    }else{
+      r.append(el('h3',null,ic(OPT[c].ic)+OPT[c].n));
+      r.append(el('p','lead',OPT[c].r+'海報紙還捲著，放在書桌旁邊。'));
+      r.append(el('p','note','大石頭還在那裡。海報今天沒有變。'));
+    }
+    app.append(r);
+    var label=n<2?'下一晚：星期'+DAY[n+1]+'晚上':'睡覺前……';
+    app.append(button(label,'btn',function(){if(n<2){st.night=n+1;go('night')}else go('hammer')}));
+  }
+  function pick(k){st.ch[n]=k;st._anim=n;save(st);render()}
+}
+
+/* ---------- Thursday bedtime: knock the rock ---------- */
+function ensurePerm(){if(!st.perm){st.perm=shuffle(PK);save(st)}}
+function hammerPage(){
+  ensurePerm();
+  st.night=2;
+  app.append(el('p','case',ic('moon')+'星期四晚上，睡覺前'));
+  var say=el('div','say');say.innerHTML=av('kidC');
+  say.append(el('p','sp','讀國中的姊姊經過你的書桌，看了看那顆大石頭，遞給你一支小鐵鎚：「這麼大一顆，當然搬不動。先把它敲成小石頭，每一顆都要是<b>一下子就做得完的小事</b>。」'));
+  app.append(say);
+  app.append(el('h2',null,'點一下大石頭，或把小鐵鎚拖到大石頭上，敲敲看！'));
+  var sb=el('div','sbox');sb.innerHTML=rockSVG(true);var rk=sb.querySelector('#rk');
+  var hm=el('button','hammer',HAMMER);hm.type='button';hm.setAttribute('aria-label','小鐵鎚：點一下就敲一下大石頭');
+  var chip=el('div','chip');sb.append(hm,chip);
+  app.append(sb);
+  var tc=el('div','card');tc.append(el('h3',null,ic('rock_pebble')+'敲下來的小石頭'));
+  var tray=el('div','tray');tc.append(tray);app.append(tc);
+  var hint=el('p','hint');app.append(hint);
+  var nx=button('敲好了，來排順序','btn',function(){if(st.knocked<5)return;st.order=knockedIds();st.first=null;go('order')});
+  app.append(nx);
+  knockedIds().forEach(function(k){tray.append(stone(k))});
+  var busy=false;
+  function upd(){
+    var n=st.knocked;
+    rk.style.setProperty('--sc',rockScale(n));
+    rk.querySelectorAll('.ck').forEach(function(p,i){p.setAttribute('opacity',i<n?1:0)});
+    chip.innerHTML='敲出 <b>'+n+'</b> 顆';
+    if(n>=PK.length){rk.classList.add('gone');hm.disabled=true;if(!sb.querySelector('.done-msg'))sb.append(el('div','done-msg','大石頭全部敲開了！'))}
+    nx.disabled=n<5;
+    hint.innerHTML=n<5?ic('rock_hammer')+'至少要敲出 5 顆小石頭，才能排順序。（現在 '+n+' 顆）':(n<PK.length?ic('rock_hammer')+'大石頭還剩一塊。可以繼續敲，也可以先排順序。':'');
+    hint.style.display=hint.innerHTML?'':'none';
+  }
+  function knock(){
+    if(busy||st.knocked>=PK.length)return;busy=true;
+    hm.classList.remove('swing');void hm.offsetWidth;hm.classList.add('swing');
+    setTimeout(function(){
+      var k=st.perm[st.knocked];st.knocked++;save(st);
+      rk.classList.remove('hit');void rk.getBoundingClientRect();rk.classList.add('hit');
+      dust(sb,rk);
+      tray.append(stone(k,'span','new'));upd();
+      setTimeout(function(){busy=false},120);
+    },200);
+  }
+  rk.addEventListener('click',knock);
+  hammerDrag(hm,rk,knock);
+  upd();
+}
+function dust(sb,rk){
+  var r=rk.getBoundingClientRect(),b=sb.getBoundingClientRect();if(!r.width)return;
+  var x=r.left-b.left+r.width*0.7,y=r.top-b.top+r.height*0.25;
+  for(var i=0;i<6;i++){var d=el('span','dust');d.style.left=x+'px';d.style.top=y+'px';d.style.setProperty('--dx',(rnd(90)-45)+'px');d.style.setProperty('--dy',(rnd(60)+10)+'px');sb.append(d);(function(d){setTimeout(function(){d.remove()},600)})(d)}
+}
+function hammerDrag(hm,target,onHit){
+  var down=false,dragging=false,sx=0,sy=0,ghost=null,moved=false;
+  function over(x,y){var r=target.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+  hm.addEventListener('pointerdown',function(e){if(e.button>0||hm.disabled)return;down=true;dragging=false;sx=e.clientX;sy=e.clientY;try{hm.setPointerCapture(e.pointerId)}catch(_){}});
+  hm.addEventListener('pointermove',function(e){
+    if(!down)return;
+    if(!dragging&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8){dragging=true;ghost=el('div','hghost',HAMMER);document.body.appendChild(ghost);hm.style.opacity='.3'}
+    if(dragging){ghost.style.left=(e.clientX-30)+'px';ghost.style.top=(e.clientY-30)+'px';e.preventDefault()}
+  });
+  function end(e,cancel){if(!down)return;down=false;if(dragging){moved=true;var hit=!cancel&&over(e.clientX,e.clientY);if(ghost){ghost.remove();ghost=null}hm.style.opacity='';dragging=false;if(hit)onHit()}}
+  hm.addEventListener('pointerup',function(e){end(e,false)});
+  hm.addEventListener('pointercancel',function(e){end(e,true)});
+  hm.addEventListener('click',function(){if(moved){moved=false;return}onHit()});
+}
+
+/* ---------- order + circle the first stone ---------- */
+var RING='<svg viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M190 18C178 4 130 2 92 4 42 6 8 16 8 32s34 26 92 24c50-2 92-10 92-26 0-8-8-14-20-18" fill="none" stroke="#C0532C" stroke-width="3.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
+function orderPage(){
+  app.append(el('p','case',ic('moon')+'星期四晚上，睡覺前'));
+  app.append(el('h2',null,'排排看：你想先做哪一顆，再做哪一顆？'));
+  app.append(el('p','lead','按住左邊的把手上下拖，就可以換順序。排好以後，<b>圈出「今天晚上就做的第一顆」</b>。'));
+  var list=el('div','olist');app.append(list);
+  app.append(el('p','note','第一顆不一定要是最重要的，只要是<b>今天晚上就做得到</b>的就好。'));
+  var nx=button('就從圈起來的這一顆開始','btn',function(){if(!st.first)return;st.done=[st.first];go('first')});
+  app.append(nx);
+  var items={};
+  st.order.forEach(function(k){
+    var it=el('div','oitem');it.setAttribute('data-k',k);
+    var g=el('button','grip',ic('grip'));g.type='button';g.setAttribute('aria-label','換順序：'+P[k].t+'（可以用上下鍵）');
+    var no=el('span','no');
+    var c=button('','circ',function(){st.first=k;save(st);upd()});
+    var sw=el('span','sw');sw.append(stone(k),el('span','ring',RING));it.append(g,no,sw,c);
+    list.append(it);items[k]=it;
+    g.addEventListener('pointerdown',function(e){if(e.button>0)return;startDrag(it,e)});
+    g.addEventListener('keydown',function(e){
+      var i=st.order.indexOf(k);
+      if(e.key==='ArrowUp'&&i>0){st.order.splice(i,1);st.order.splice(i-1,0,k);list.insertBefore(it,it.previousElementSibling);e.preventDefault();save(st);upd();g.focus()}
+      else if(e.key==='ArrowDown'&&i<st.order.length-1){st.order.splice(i,1);st.order.splice(i+1,0,k);list.insertBefore(it.nextElementSibling,it);e.preventDefault();save(st);upd();g.focus()}
+    });
+  });
+  var drag=null;
+  function startDrag(it,e){drag=it;it.classList.add('drag');try{list.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()}
+  list.addEventListener('pointermove',function(e){
+    if(!drag)return;e.preventDefault();
+    var y=e.clientY,sib=Array.prototype.slice.call(list.children);
+    for(var i=0;i<sib.length;i++){var s=sib[i];if(s===drag)continue;var r=s.getBoundingClientRect();
+      if(y>r.top&&y<r.bottom){var mid=r.top+r.height/2;var idx=sib.indexOf(drag);
+        if(idx>i&&y<mid){list.insertBefore(drag,s);break}
+        if(idx<i&&y>mid){list.insertBefore(drag,s.nextElementSibling);break}}}
+  });
+  function stop(){if(!drag)return;drag.classList.remove('drag');drag=null;st.order=Array.prototype.map.call(list.children,function(x){return x.getAttribute('data-k')});save(st);upd()}
+  list.addEventListener('pointerup',stop);list.addEventListener('pointercancel',stop);
+  function upd(){
+    Array.prototype.forEach.call(list.children,function(it,i){var k=it.getAttribute('data-k');it.querySelector('.no').textContent=(i+1);
+      var f=st.first===k;it.classList.toggle('first',f);var c=it.querySelector('.circ');c.innerHTML=ic('rock_ring')+(f?'今晚先做':'圈起來');c.setAttribute('aria-pressed',f?'true':'false')});
+    nx.disabled=!st.first;
+  }
+  upd();
+}
+
+/* ---------- Thursday: do the first stone ---------- */
+function firstPage(){
+  var k=st.first,d=P[k];
+  app.append(el('p','case',ic('moon')+'星期四晚上，睡覺前'));
+  app.append(el('h2',null,'你先把圈起來的那一顆做完了。'));
+  var c=el('div','card');
+  var row=el('div','tray');row.append(stone(k,'span','ok'));c.append(row);
+  c.append(el('p','lead','只花了 <b>'+d.m+' 分鐘</b>，海報就多了一塊。'));
+  var pb=posterBlock([k]);c.append(pb.wrap);
+  app.append(c);
+  var left=st.order.filter(function(x){return st.done.indexOf(x)<0});
+  var un=PK.length-st.knocked;
+  app.append(el('p','note','還有 <b>'+left.length+' 顆</b>小石頭在等你'+(un?'，大石頭也還剩一小塊沒敲開':'')+'。明天（星期五）和星期六晚上，一樣各有 40 分鐘。'));
+  app.append(button('星期五晚上','btn',function(){st.bn=0;go('basket')}));
+}
+
+/* ---------- Fri / Sat: fill tonight's basket ---------- */
+function basketPage(){
+  var bn=st.bn,B=st.bk[bn],day=bn===0?'五':'六';
+  app.append(el('p','case',ic('moon')+'星期'+day+'晚上（第 '+(bn+4)+' 晚）'));
+  app.append(weekStrip(bn+3));
+  if(B.done){basketResult(bn);return}
+  app.append(el('h2',null,'把今晚要做的小石頭，拖進「今晚的籃子」。'));
+  app.append(el('p','lead','今晚一樣有 <b>40 分鐘</b>。籃子裡的小石頭做完以後，剩下的時間可以去看卡通、玩遊戲。'));
+  var bk=el('div','bk');
+  var lc=el('div','card');lc.append(el('h3',null,ic('rock_pebble')+'還沒做的小石頭'));
+  var stones=el('div','tray');lc.append(stones);
+  var rockMore=null;
+  if(st.knocked<PK.length){
+    rockMore=button(ic('rock_big')+'<span>還有一小塊大石頭沒敲開。點一下，再敲出一顆。</span>','rockbtn',function(){
+      var k=st.perm[st.knocked];st.knocked++;st.order.push(k);save(st);fill(k);
+      if(st.knocked>=PK.length)rockMore.remove();
+    });
+    lc.append(rockMore);
+  }
+  var bs=el('div','basket');
+  bs.append(el('h3',null,ic('rock_basket')+'今晚的籃子'));
+  var tnum=el('p','tnum'),tbar=el('div','tbar','<i></i>'),inb=el('div','inb'),msg=el('p','msg');
+  bs.append(tnum,tbar,inb,msg);
+  bk.append(lc,bs);app.append(bk);
+  app.append(el('p','hint',ic('chev')+'按住小石頭拖進籃子，或直接點一下。點籃子裡的小石頭，可以把它拿出來。'));
+  var nx=button('就這樣，開始做今晚的小石頭','btn',function(){
+    B.ids.forEach(function(k){if(st.done.indexOf(k)<0)st.done.push(k)});B.done=true;st._fresh=B.ids.slice();save(st);render();try{window.scrollTo(0,0)}catch(e){}
+  });
+  app.append(nx);
+  var pc=el('div','card');pc.append(el('h3',null,ic('poster')+'你的海報'));var pb=posterBlock(null);pc.append(pb.wrap);app.append(pc);
+  function used(){return B.ids.reduce(function(s,k){return s+P[k].m},0)}
+  function fill(newK){
+    stones.innerHTML='';
+    var left=st.order.filter(function(k){return st.done.indexOf(k)<0});
+    left.forEach(function(k){
+      if(B.ids.indexOf(k)>=0)return;
+      var s=stone(k,'button',k===newK?'new':'');
+      s.setAttribute('aria-label',P[k].t+'，'+P[k].m+' 分鐘：點一下放進籃子');
+      dragStone(s,bs,function(){add(k)});
+      stones.append(s);
+    });
+    if(!left.length)stones.append(el('p','empty','小石頭都做完了！'));
+    else if(left.length===B.ids.length)stones.append(el('p','empty','小石頭都放進籃子了。'));
+    inb.innerHTML='';
+    B.ids.forEach(function(k){var s=stone(k,'button');s.setAttribute('aria-label','把「'+P[k].t+'」拿出籃子');s.addEventListener('click',function(){B.ids.splice(B.ids.indexOf(k),1);msg.textContent='';save(st);fill()});inb.append(s)});
+    if(!B.ids.length)inb.append(el('p','empty','籃子還是空的。'));
+    var u=used();tnum.textContent='已經放了 '+u+' 分鐘／今晚有 '+FREE+' 分鐘';tbar.querySelector('i').style.width=(u/FREE*100)+'%';
+  }
+  function add(k){
+    if(B.ids.indexOf(k)>=0)return;
+    var u=used();
+    if(u+P[k].m>FREE){msg.textContent='「'+P[k].t+'」要 '+P[k].m+' 分鐘，今晚只剩 '+(FREE-u)+' 分鐘，放不下了。可以換一顆小一點的，或留到下一晚。';return}
+    msg.textContent='';B.ids.push(k);save(st);fill();
+  }
+  fill();
+}
+function dragStone(b,zone,onDrop){
+  var sx=0,sy=0,down=false,dragging=false,ghost=null,moved=false;
+  function over(x,y){var r=zone.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+  b.addEventListener('pointerdown',function(e){if(e.button>0)return;down=true;dragging=false;sx=e.clientX;sy=e.clientY;try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  b.addEventListener('pointermove',function(e){
+    if(!down)return;
+    if(!dragging&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8){
+      dragging=true;var r=b.getBoundingClientRect();ghost=b.cloneNode(true);ghost.classList.add('sghost');ghost.classList.remove('new');ghost.style.width=r.width+'px';ghost.style.left=r.left+'px';ghost.style.top=r.top+'px';ghost._dx=sx-r.left;ghost._dy=sy-r.top;document.body.appendChild(ghost);
+    }
+    if(dragging){ghost.style.left=(e.clientX-ghost._dx)+'px';ghost.style.top=(e.clientY-ghost._dy)+'px';zone.classList.toggle('over',over(e.clientX,e.clientY));e.preventDefault()}
+  });
+  function end(e,cancel){if(!down)return;down=false;if(dragging){moved=true;var hit=!cancel&&over(e.clientX,e.clientY);if(ghost){ghost.remove();ghost=null}zone.classList.remove('over');dragging=false;if(hit)onDrop()}}
+  b.addEventListener('pointerup',function(e){end(e,false)});
+  b.addEventListener('pointercancel',function(e){end(e,true)});
+  b.addEventListener('click',function(){if(moved){moved=false;return}onDrop()});
+}
+function basketResult(bn){
+  var B=st.bk[bn],m=B.ids.reduce(function(s,k){return s+P[k].m},0),rest=FREE-m;
+  var fresh=st._fresh||[];st._fresh=null;save(st);
+  app.append(el('h2',null,B.ids.length?'今晚做完了 '+B.ids.length+' 顆小石頭！':'今晚沒有放小石頭。'));
+  var c=el('div','card');
+  if(B.ids.length){var row=el('div','tray');B.ids.forEach(function(k){row.append(stone(k,'span','ok'))});c.append(row)}
+  c.append(el('p','lead',B.ids.length?'你花了 <b>'+m+' 分鐘</b>做小石頭。'+(rest>0?'剩下的 <b>'+rest+' 分鐘</b>，你去看了一集卡通。':'今晚的 40 分鐘剛好用完。'):'今晚的 40 分鐘，你都拿去看卡通、玩遊戲了。'));
+  var pb=posterBlock(fresh);c.append(pb.wrap);
+  app.append(c);
+  var left=st.order.filter(function(k){return st.done.indexOf(k)<0}).length+(PK.length-st.knocked);
+  if(bn===0)app.append(el('p','note',left?'還有 <b>'+left+' 塊</b>還沒做。星期六晚上，一樣有 40 分鐘。':'海報的每一塊都做完了！星期六晚上可以好好玩。'));
+  app.append(button(bn===0?'下一晚：星期六晚上':'星期一早上','btn',function(){if(bn===0){st.bn=1;go('basket')}else go('monday')}));
+}
+
+/* ---------- Monday ---------- */
+function mondayPage(){
+  var tp=totalP(),w=workN(),bp=w*BIGP,sp=smallP(),sm=smallM(),sc=st.done.length;
+  var play=st.bk.reduce(function(s,B){return s+FREE-B.ids.reduce(function(a,k){return a+P[k].m},0)},0);
+  app.append(el('p','case',ic('rock_sun')+'星期一早上'));
+  app.append(weekStrip(5));
+  app.append(el('h2',null,'要交海報了！你的海報完成了 '+cheng(tp)+(tp>=100?'，全部做完了。':'。')));
+  var c=el('div','card');var pb=posterBlock(null,'星期一的海報');c.append(pb.wrap);
+  var todo=st.order.filter(function(k){return st.done.indexOf(k)<0}).map(function(k){return '「'+P[k].t+'」'});
+  var un=PK.length-st.knocked;
+  if(todo.length||un)pb.meter.append(el('p','hint',(todo.length?'還沒做的小石頭：'+todo.join('、')+'。':'')+(un?'還有 '+un+' 塊大石頭沒有敲開。':'')));
+  app.append(c);
+  app.append(el('h3',null,'兩段晚上，比一比'));
+  var cmp=el('div','cmp');
+  var a=el('div','card big');
+  a.append(el('h3',null,ic('rock_big')+'大石頭的三個晚上'),el('p','hint','星期二、三、四'),
+    el('div','num',cheng(bp)),
+    el('p',null,w?'你坐下來做海報 <b>'+w+' 晚</b>，一共 <b>'+(w*FREE)+' 分鐘</b>，可是坐下來以後，不知道從哪裡開始。':'這三個晚上，你都選了「明天再說」。'),
+    el('p',null,'選「明天再說」：<b>'+laterN()+' 次</b>'));
+  var b=el('div','card small');
+  b.append(el('h3',null,ic('rock_pebble')+'小石頭的兩個晚上'),el('p','hint','星期五、六（加上星期四睡前的第一顆）'),
+    el('div','num',cheng(sp)),
+    el('p',null,'你做完 <b>'+sc+' 顆</b>小石頭，一共 <b>'+sm+' 分鐘</b>。'),
+    el('p',null,'星期五、六晚上，還剩 <b>'+play+' 分鐘</b>可以玩。'));
+  cmp.append(a,b);app.append(cmp);
+  var t='同樣是自己的晚上。差別在：那顆石頭，有沒有先敲小。';
+  if(bp+sp>100)t+='（兩段加起來超過 10 成，是因為大石頭那幾晚畫的框，後來重新畫過了。）';
+  app.append(el('p','note warm',t));
+  app.append(button('下一步','btn',function(){go('reflect')}));
+}
+
+/* ---------- reflection (no right answer) ---------- */
+function reflectPage(){
+  app.append(el('p','case','最後一題'));
+  app.append(el('h2',null,'你通常最常卡在哪裡？'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>，選一個最像你的就好。選好以後，會看到它的作用和一個小提醒。'));
+  var o=el('div','opts'),bs={},fb=el('div');
+  RK.forEach(function(k){var b=button(ic(REF[k].ic)+'<span>'+REF[k].n+'</span>','btn alt',function(){st.ref=k;save(st);upd()});bs[k]=b;o.append(b)});
+  var nx=button('下一步','btn',function(){if(st.ref)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    RK.forEach(function(k){bs[k].classList.toggle('pick',st.ref===k);bs[k].setAttribute('aria-pressed',st.ref===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.ref;
+    if(st.ref){var r=REF[st.ref];var c=el('div','card');c.append(el('h3',null,ic(r.ic)+r.n));c.append(el('dl','ec','<dt class="e">作用</dt><dd>'+r.e+'</dd><dt class="c">小提醒</dt><dd>'+r.t+'</dd>'));fb.append(c)}
+  }
+  upd();
+}
+
+/* ---------- end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var f=P[st.first];
+  var rows=[
+    ['前三晚，你選了幾次「明天再說」',laterN()+' 次'],
+    ['你敲出幾顆小石頭',st.knocked+' 顆'],
+    ['你選的第一顆',f.t+'（'+f.m+' 分鐘）'],
+    ['星期一，海報完成了幾成',cheng(totalP())],
+    ['你最常卡在哪裡',REF[st.ref].n]
+  ];
+  var c=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);app.append(c);
+  app.append(el('p','note warm','老師等一下會請大家舉手：前三晚選了 0 次、1 次、2 次、3 次「明天再說」的，各有幾個人？'));
+}
+
+function render(){
+  app.innerHTML='';
+  var s=st.step;
+  if(s==='intro')intro();
+  else if(s==='night'&&st.night>=0&&st.night<=2)nightPage();
+  else if(s==='hammer'&&st.ch[2])hammerPage();
+  else if(s==='order'&&st.order.length>=5)orderPage();
+  else if(s==='first'&&st.first)firstPage();
+  else if(s==='basket'&&st.first)basketPage();
+  else if(s==='monday'&&st.first)mondayPage();
+  else if(s==='reflect'&&st.first)reflectPage();
+  else if(s==='end'&&st.first&&st.ref)endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

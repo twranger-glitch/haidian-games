@@ -1,0 +1,315 @@
+<title>餅乾等待挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: rule (take now = 1 stamp, wait 90 s = 2 stamps) → guess whether you will wait → really wait on the tablet with a slow clock and a toolbox (cover, window, small task, say a sentence) → neutral result → which method helped → summary for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#F1F0EA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.opts .btn.alt{text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.take{background:var(--rust)}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rule{background:var(--note);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-size:clamp(19px,2.6vw,24px);font-weight:700}
+.rule.two{background:var(--warm)}
+.stamps{display:flex;gap:8px;justify-content:center}
+.stamps svg{width:clamp(54px,9vw,76px);height:auto}
+.topbar{display:flex;align-items:center;gap:14px}
+.clock{width:clamp(84px,13vw,116px);height:auto;flex:none}
+.topbar .txt{flex:1;min-width:0;font-size:clamp(19px,2.5vw,23px);font-weight:700;line-height:1.5;margin:0}
+.topbar .btn{flex:none}
+.stage{position:relative;border-radius:18px;overflow:hidden;border:3px solid var(--line);background:#F6EBD9}
+.stage svg.view{display:block;width:100%;height:auto}
+.star{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border:0;border-radius:50%;background:rgba(255,255,255,.55);padding:4px;cursor:pointer}
+.star svg{width:100%;height:100%;display:block}
+.star:focus-visible{outline:4px solid var(--sea)}
+.banner{margin:0;background:var(--card);border:3px solid var(--gold);border-radius:14px;padding:6px 12px;font-size:clamp(19px,3vw,27px);font-weight:900;text-align:center;color:var(--rust)}
+.hint{background:var(--note);border-radius:12px;padding:6px 12px;margin:0;font-size:clamp(17px,2.4vw,21px);font-weight:700;text-align:center}
+.tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tool{font:inherit;font-size:clamp(19px,2.4vw,22px);font-weight:900;border:3px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.3}
+.tool span{font-size:clamp(17px,1.9vw,18px);font-weight:700;color:var(--muted)}
+.tool.on{border-color:var(--gold);background:var(--warm)}
+.tool:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.wrap>div:empty{display:none}
+.boxlabel{font-size:clamp(19px,2.5vw,23px);font-weight:900;color:var(--sea);margin:0}
+.egret{cursor:pointer}
+.egret:focus-visible{outline:none}
+.egret:focus-visible .ring{stroke:#205E86;stroke-width:4}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;width:52%} td.n{text-align:right;font-weight:900}
+.big{font-size:clamp(48px,9vw,84px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea);font-variant-numeric:tabular-nums}
+.demo{font-size:17px;color:var(--rust);font-weight:700;margin:0}
+@media (max-width:620px){.tools{grid-template-columns:1fr 1fr}.topbar{flex-wrap:wrap}.topbar .btn{width:100%}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='waiting-cookie-v1';
+var FAST=/fast/.test(location.hash);
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(/reset/.test(location.hash)){save(null)}
+function fresh(){return {step:0,pred:null,start:null,dur:null,tools:{cover:0,window:0,stars:0,talk:0},covered:false,view:'cookie',stars:null,egrets:null,said:null,res:null,best:null}}
+var st=load()||fresh();
+var timer=null;
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(cls,html,fn){var b=el('button',cls,html);b.type='button';b.addEventListener('click',fn);return b}
+function narrow(){return window.innerWidth<620}
+function VB(){return narrow()?'75 0 450 300':'0 0 600 300'}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=rnd(i+1);var t=a[i];a[i]=a[j];a[j]=t}return a}
+
+var TOOLS=[['cover','蓋起來'],['window','看窗外'],['stars','小任務'],['talk','對自己說一句話']];
+var NAME={cover:'蓋起來',window:'看窗外',stars:'小任務（找星星）',talk:'對自己說一句話'};
+var SAY=['再等一下，就有兩枚。','餅乾不會跑掉，我先想別的事。','慢慢吸氣、吐氣，我可以的。'];
+var PRED=['我應該會等滿','我應該會提早拿','我也不知道，等一下就知道了'];
+
+function stampSVG(){return '<svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="35" fill="#FBEDE6" stroke="#A8441A" stroke-width="5"/><circle cx="40" cy="40" r="27" fill="none" stroke="#A8441A" stroke-width="2"/><text x="40" y="38" text-anchor="middle" font-size="17" font-weight="900" fill="#A8441A" font-family="Noto Sans TC,sans-serif">海佃</text><text x="40" y="57" text-anchor="middle" font-size="15" font-weight="900" fill="#A8441A" font-family="Noto Sans TC,sans-serif">印章</text></svg>'}
+function stamps(n){var s='';for(var i=0;i<n;i++)s+=stampSVG();return '<div class="stamps">'+s+'</div>'}
+
+/* cookie on a plate; optional lid */
+function cookieSVG(covered){
+  var dots='';var P=[[262,168],[300,152],[338,168],[276,206],[324,206],[300,224]];
+  P.forEach(function(p){dots+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#B98A4E"/>'});
+  var s='<svg class="view" viewBox="'+VB()+'" role="img" aria-label="'+(covered?'盤子被盤蓋蓋住了，看不到餅乾':'盤子上有一片古早味餅乾，中間有粉紅色的糖霜')+'">'+
+  '<rect width="600" height="300" fill="#F6EBD9"/><rect y="236" width="600" height="64" fill="#E6D3B3"/>'+
+  '<ellipse cx="300" cy="236" rx="190" ry="40" fill="#FFFFFF" stroke="#D5D2C6" stroke-width="4"/><ellipse cx="300" cy="232" rx="140" ry="26" fill="#F3F1EA"/>';
+  if(!covered){
+    s+='<g><circle cx="300" cy="190" r="86" fill="#E2B072" stroke="#C48A45" stroke-width="6"/>';
+    for(var i=0;i<16;i++){var a=i*Math.PI/8;s+='<circle cx="'+(300+86*Math.cos(a)).toFixed(1)+'" cy="'+(190+86*Math.sin(a)).toFixed(1)+'" r="9" fill="#E2B072"/>'}
+    s+='<circle cx="300" cy="190" r="70" fill="none" stroke="#D29B57" stroke-width="3" stroke-dasharray="6 8"/>'+dots+
+    '<path d="M300 162 C318 150 336 170 318 186 C336 200 318 220 300 206 C282 220 264 200 282 186 C264 170 282 150 300 162Z" fill="#F4B6C2" stroke="#E58FA2" stroke-width="3"/><circle cx="300" cy="186" r="7" fill="#FFFFFF"/></g>';
+  }else{
+    s+='<path d="M120 236 Q120 96 300 92 Q480 96 480 236 Z" fill="#C9D3D8" stroke="#8C9AA0" stroke-width="5"/><path d="M160 200 Q170 128 260 112" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity=".7"/><rect x="278" y="70" width="44" height="26" rx="12" fill="#8C9AA0"/>';
+  }
+  return s+'</svg>';
+}
+/* Haidian creek / Taijiang window with egrets that can be tapped to count */
+function egretG(e,i,tag){
+  var f=e.f?-1:1;
+  return '<g class="egret" data-i="'+i+'" tabindex="0" role="button" aria-label="白鷺鷥'+(tag?'，第 '+tag+' 隻':'，還沒數')+'" transform="translate('+e.x+' '+e.y+') scale('+f+' 1)">'+
+  '<circle class="ring" r="34" cy="-6" fill="rgba(255,255,255,0.001)" stroke="'+(tag?'#B7862B':'none')+'" stroke-width="3"/>'+
+  '<line x1="-4" y1="10" x2="-6" y2="30" stroke="#2B2B2B" stroke-width="3"/><line x1="4" y1="10" x2="6" y2="30" stroke="#2B2B2B" stroke-width="3"/>'+
+  '<ellipse cx="0" cy="2" rx="18" ry="11" fill="#FFFFFF" stroke="#9AA6A8" stroke-width="2"/>'+
+  '<path d="M12 -2 C22 -10 10 -20 16 -30" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/><path d="M12 -2 C22 -10 10 -20 16 -30" fill="none" stroke="#9AA6A8" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>'+
+  '<circle cx="17" cy="-31" r="6" fill="#FFFFFF" stroke="#9AA6A8" stroke-width="1.5"/><path d="M22 -32 L36 -29 L22 -28Z" fill="#E0B23A"/><circle cx="18" cy="-32" r="1.6" fill="#1F2A2E"/>'+
+  '</g>'+(tag?'<text x="'+e.x+'" y="'+(e.y-46)+'" text-anchor="middle" font-size="24" font-weight="900" fill="#A8441A" font-family="Noto Sans TC,sans-serif" pointer-events="none">'+tag+'</text>':'');
+}
+function windowSVG(){
+  var E=st.egrets;var g='';
+  E.list.forEach(function(e,i){g+=egretG(e,i,e.t)});
+  return '<svg class="view" viewBox="'+VB()+'" role="img" aria-label="窗外是海佃溪和台江的溼地，水邊有幾隻白鷺鷥">'+
+  '<rect width="600" height="300" fill="#CFE6F0"/><circle cx="460" cy="56" r="24" fill="#F6D57A"/>'+
+  '<path d="M0 120 Q80 100 160 116 T320 112 T480 118 T600 108 V160 H0Z" fill="#8DB78F"/>'+
+  '<path d="M0 150 Q150 136 300 148 T600 142 V300 H0Z" fill="#7FB2C9"/>'+
+  '<path d="M0 182 Q140 172 280 186 T600 178" fill="none" stroke="#A9CFDF" stroke-width="5"/><path d="M40 236 Q200 226 360 240 T600 232" fill="none" stroke="#A9CFDF" stroke-width="5"/>'+
+  '<g fill="#5E8F62"><ellipse cx="60" cy="130" rx="46" ry="22"/><ellipse cx="120" cy="124" rx="36" ry="18"/><ellipse cx="460" cy="128" rx="50" ry="20"/><ellipse cx="540" cy="122" rx="40" ry="18"/></g>'+
+  '<g stroke="#5B4A3A" stroke-width="3"><line x1="50" y1="146" x2="44" y2="160"/><line x1="70" y1="146" x2="76" y2="160"/><line x1="460" y1="144" x2="452" y2="158"/><line x1="476" y1="144" x2="484" y2="158"/></g>'+
+  '<rect x="'+(narrow()?75:0)+'" y="0" width="'+(narrow()?450:600)+'" height="300" fill="none" stroke="#9C7A52" stroke-width="16"/><line x1="300" y1="0" x2="300" y2="22" stroke="#9C7A52" stroke-width="10"/>'+
+  g+'</svg>';
+}
+function newEgrets(){
+  var spots=shuffle([[120,205],[185,252],[250,200],[315,252],[380,205],[445,252],[468,188],[160,160]]);
+  var n=4+rnd(4);var list=[];
+  for(var i=0;i<n;i++)list.push({x:spots[i][0],y:spots[i][1],f:rnd(2)===1,t:0});
+  return {list:list,next:1};
+}
+function newStars(){
+  var cells=shuffle([0,1,2,3,4,5,6,7,8,9,10,11]);var s=[];
+  for(var i=0;i<5;i++){var c=cells[i];var col=c%4,row=Math.floor(c/4);
+    s.push({x:12+col*25+rnd(9)-4,y:18+row*30+rnd(9)-4,got:false})}
+  return s;
+}
+var STAR='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L25 15 L38 15.5 L28 24 L31.5 37 L20 29.5 L8.5 37 L12 24 L2 15.5 L15 15Z" fill="#F2C230" stroke="#B7862B" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+
+function clockSVG(frac){
+  var a=frac*2*Math.PI;var x=50+40*Math.sin(a),y=50-40*Math.cos(a);
+  var ticks='';for(var i=0;i<12;i++){var t=i*Math.PI/6;ticks+='<line x1="'+(50+38*Math.sin(t)).toFixed(1)+'" y1="'+(50-38*Math.cos(t)).toFixed(1)+'" x2="'+(50+44*Math.sin(t)).toFixed(1)+'" y2="'+(50-44*Math.cos(t)).toFixed(1)+'" stroke="#56605C" stroke-width="'+(i%3?2:3.5)+'"/>'}
+  var sector='';
+  if(frac>=0.999)sector='<circle cx="50" cy="50" r="40" fill="#F4DDA8"/>';
+  else if(frac>0)sector='<path d="M50 50 L50 10 A40 40 0 '+(frac>0.5?1:0)+' 1 '+x.toFixed(2)+' '+y.toFixed(2)+' Z" fill="#F4DDA8"/>';
+  return '<svg class="clock" viewBox="0 0 100 100" role="img" aria-label="等待時鐘，已經走了大約'+Math.round(frac*10)+'成"><circle cx="50" cy="50" r="47" fill="#FCFBF7" stroke="#205E86" stroke-width="5"/>'+sector+ticks+
+  '<line x1="50" y1="50" x2="'+(50+34*Math.sin(a)).toFixed(2)+'" y2="'+(50-34*Math.cos(a)).toFixed(2)+'" stroke="#A8441A" stroke-width="4.5" stroke-linecap="round"/><circle cx="50" cy="50" r="5" fill="#A8441A"/></svg>';
+}
+
+var redraw=null;var lastNarrow=narrow();window.addEventListener('resize',function(){if(narrow()!==lastNarrow){lastNarrow=narrow();if(redraw&&st.step===2)redraw()}});
+function stop(){redraw=null;if(timer){clearInterval(timer);timer=null}}
+
+/* step 0 */
+function intro(){
+  stop();app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','放學後，你到七股的阿嬤家。桌上有一盤古早味餅乾，阿嬤笑著說：「我先去後面曬魚乾，你可以現在吃一片；如果等我回來再吃，我多給你一片。」'),
+           el('p','lead','今天我們在平板上真的來等一次。印章只是遊戲裡的，沒有真的東西。'));
+  var r=el('div','rules');
+  r.append(el('div','rule',stamps(1)+'<div>現在就按「現在就拿」<br>得到 1 枚印章</div>'),
+           el('div','rule two',stamps(2)+'<div>等滿 90 秒都不按<br>得到 2 枚印章</div>'));
+  c.appendChild(r);
+  c.appendChild(el('p','note','等的時候，畫面下方有一個「等待工具箱」，你可以隨時用，也可以都不用。'));
+  if(FAST)c.appendChild(el('p','demo','老師示範模式：只要等 5 秒。'));
+  app.append(el('h1',null,'餅乾等待挑戰'),c,btn('btn','我看懂了',function(){st.step=1;save(st);predict()}));
+}
+/* step 1 */
+function predict(){
+  stop();app.innerHTML='';
+  var g=el('div','opts');
+  PRED.forEach(function(t,i){g.appendChild(btn('btn alt',t,function(){st.pred=i;st.step=2;st.start=Date.now();st.dur=FAST?5000:90000;save(st);wait()}))});
+  app.append(el('h2',null,'開始之前先猜猜看：你覺得自己會等滿，還是會提早拿？'),el('p','lead','沒有對錯，選完就會馬上開始計時。'),g);
+}
+/* step 2: waiting */
+function elapsed(){return Math.max(0,Date.now()-st.start)}
+function finish(took){
+  stop();
+  var ms=Math.min(elapsed(),st.dur);
+  var sec=took?Math.round(ms/1000):Math.round(st.dur/1000);
+  st.res={took:took,sec:sec,stamps:took?1:2};
+  st.step=3;save(st);result();
+}
+function wait(){
+  stop();
+  if(elapsed()>=st.dur){finish(false);return}
+  app.innerHTML='';
+  var top=el('div','topbar');
+  var ck=el('div',null);ck.style.flex='none';
+  var txt=el('p','txt','時鐘走完一整圈，就能得到 2 枚印章。想拿的話，隨時都可以按。');
+  var take=btn('btn take','現在就拿',function(){finish(true)});
+  top.append(ck,txt,take);
+  var stage=el('div','stage');var under=el('div','opts');
+  var box=el('div','tools');
+  var panel=el('div',null);
+  app.append(el('h2',null,'等待中……'),top,stage,under,el('p','boxlabel','等待工具箱'),box,panel);
+  if(FAST)app.appendChild(el('p','demo','老師示範模式：只要等 5 秒。'));
+
+  function drawClock(){ck.innerHTML=clockSVG(Math.min(1,elapsed()/st.dur))}
+  function drawStage(){
+    stage.innerHTML=st.view==='window'?windowSVG():cookieSVG(st.covered);under.innerHTML='';
+    if(st.view==='window'){
+      var left=st.egrets.list.filter(function(e){return !e.t}).length;
+      under.appendChild(el('p','hint',left?'數數看，有幾隻白鷺鷥？點一下就幫牠編號。':'全部數完了！一共 '+st.egrets.list.length+' 隻白鷺鷥。'));
+      stage.querySelectorAll('.egret').forEach(function(g){
+        function tap(){var e=st.egrets.list[+g.getAttribute('data-i')];if(!e.t){e.t=st.egrets.next++;save(st);drawStage()}}
+        g.addEventListener('click',tap);g.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();tap()}});
+      });
+    }
+    if(st.stars){
+      var left2=st.stars.filter(function(s){return !s.got}).length;
+      if(left2){
+        st.stars.forEach(function(s,i){if(s.got)return;
+          var b=btn('star',STAR,function(){s.got=true;save(st);drawStage()});
+          b.setAttribute('aria-label','星星');b.style.left=s.x+'%';b.style.top=s.y+'%';stage.appendChild(b)});
+      }else{
+        st.stars=null;save(st);
+        under.appendChild(el('p','hint','5 顆星星都找到了！想再玩可以再按一次「小任務」。'));
+      }
+    }
+    if(st.said!=null)under.appendChild(el('p','banner','「'+SAY[st.said]+'」'));
+  }
+  function drawTools(){
+    box.innerHTML='';
+    var lab={cover:st.covered?['打開蓋子','把盤蓋拿掉']:['蓋起來','用盤蓋蓋住'],
+             window:st.view==='window'?['回到餅乾','不看窗外了']:['看窗外','海佃溪的白鷺鷥'],
+             stars:['小任務','找出 5 顆星星'],
+             talk:['對自己說','選一句話']};
+    TOOLS.forEach(function(t){
+      var k=t[0];var on=(k==='cover'&&st.covered)||(k==='window'&&st.view==='window')||(k==='stars'&&st.stars)||(k==='talk'&&panel.childNodes.length);
+      var b=btn('tool'+(on?' on':''),lab[k][0]+'<span>'+lab[k][1]+'</span>',function(){use(k)});
+      box.appendChild(b);
+    });
+  }
+  function use(k){
+    if(k==='cover'){if(!st.covered){st.tools.cover++;st.covered=true}else st.covered=false;if(st.view==='window'&&st.covered)st.view='cookie'}
+    if(k==='window'){if(st.view!=='window'){st.tools.window++;st.view='window';if(!st.egrets)st.egrets=newEgrets()}else st.view='cookie'}
+    if(k==='stars'){st.tools.stars++;st.stars=newStars()}
+    if(k==='talk'){
+      if(panel.childNodes.length){panel.innerHTML=''}
+      else{
+        var c=el('div','card');c.appendChild(el('p','boxlabel','選一句話，它會出現在畫面上：'));
+        var g=el('div','opts');
+        SAY.forEach(function(s,i){g.appendChild(btn('btn alt'+(st.said===i?' pick':''),'「'+s+'」',function(){st.tools.talk++;st.said=i;save(st);panel.innerHTML='';drawStage();drawTools()}))});
+        c.appendChild(g);panel.appendChild(c);
+      }
+    }
+    save(st);drawStage();drawTools();
+  }
+  drawClock();drawStage();drawTools();redraw=drawStage;
+  timer=setInterval(function(){if(elapsed()>=st.dur){finish(false)}else drawClock()},250);
+}
+function toolRows(){
+  return TOOLS.map(function(t){return [NAME[t[0]],st.tools[t[0]]]});
+}
+function mostUsed(){
+  var m=0;TOOLS.forEach(function(t){m=Math.max(m,st.tools[t[0]])});
+  if(!m)return '沒有用工具';
+  return TOOLS.filter(function(t){return st.tools[t[0]]===m}).map(function(t){return NAME[t[0]]}).join('、');
+}
+/* step 3 */
+function result(){
+  stop();app.innerHTML='';var r=st.res;
+  var c=el('div','card');
+  c.append(el('p','lead',r.took?'你按下了「現在就拿」。在那之前，你等了':'時鐘走完一整圈了。你一共等了'),
+           el('p','big',r.sec+' 秒'),
+           el('p','lead','得到 '+r.stamps+' 枚印章：'));
+  c.insertAdjacentHTML('beforeend',stamps(r.stamps));
+  var t=el('table');toolRows().forEach(function(x){var tr=el('tr');tr.append(el('td','k',x[0]),el('td','n',x[1]+' 次'));t.appendChild(tr)});
+  c.append(el('p','boxlabel','你用了哪些工具：'),t);
+  var msg=r.took?'很多人都會提早拿，這很正常，大人也常常這樣。想要的東西就擺在眼前，本來就很難等。等待不是比誰比較厲害，而是一種可以慢慢練習的方法。'
+                :'你等滿了。不過要記得，提早拿的人也很多，這很正常。等待不是比誰比較厲害，而是一種可以慢慢練習的方法。';
+  app.append(el('h2',null,'結果出來了'),c,el('p','note warm',msg),btn('btn','下一步：想一想',function(){st.step=4;save(st);reflect()}));
+}
+/* step 4 */
+var BEST=[
+ ['把餅乾蓋起來，看不到它','看不到誘惑，心裡比較不會一直想著它。代價是：有時候蓋起來反而會好奇，想偷看一下。'],
+ ['看窗外、數白鷺鷥','把眼睛和腦袋帶去別的地方，時間好像過得比較快。代價是：看久了還是會想起餅乾。'],
+ ['找星星這種小任務','手和眼睛有事做，就比較不會一直盯著時鐘。代價是：任務做完，又要再找下一件事。'],
+ ['對自己說一句話','提醒自己「等一下會更好」，幫自己記得為什麼要等。代價是：如果一直想著「兩枚」，有時反而更想要。'],
+ ['我沒用工具，用自己的方法（例如發呆、哼歌、想別的事）','你自己也找到了方法！很多人等待時都有自己的一套，等一下可以分享給大家聽。'],
+ ['我覺得都不太有用','這也是很真實的感覺。不同的人適合不同的方法，等一下聽聽看別人用了什麼。']
+];
+function reflect(){
+  stop();app.innerHTML='';
+  var g=el('div','opts');var fb=el('div',null);
+  BEST.forEach(function(b,i){g.appendChild(btn('btn alt'+(st.best===i?' pick':''),b[0],function(){st.best=i;save(st);reflect()}))});
+  app.append(el('h2',null,'剛剛等待的時候，你覺得哪一個方法最有幫助？'),
+    el('p','note','有科學家觀察過，很多孩子等得比較久，常常不是因為特別能忍，而是用了方法：把誘惑蓋起來、轉移注意力、想點別的事。'),
+    el('p','lead','沒有標準答案。就算你沒等滿，也可以選「如果再來一次，你最想試試看的方法」。'),g,fb);
+  if(st.best!=null){
+    fb.appendChild(el('p','note warm','這個方法的作用：'+BEST[st.best][1]));
+    app.appendChild(btn('btn','完成',function(){st.step=5;save(st);end()}));
+  }
+}
+/* step 5 */
+function end(){
+  stop();app.innerHTML='';var r=st.res||{sec:0,stamps:0,took:true};
+  var c=el('div','card');var t=el('table');
+  var rows=[['我等了',r.sec+' 秒'],['我拿到的印章',r.stamps+' 枚'],['開始前我猜',st.pred!=null?PRED[st.pred]:'—']];
+  toolRows().forEach(function(x){rows.push(['工具：'+x[0],x[1]+' 次'])});
+  rows.push(['我最常用的工具',mostUsed()]);
+  rows.push(['我覺得最有幫助的方法',st.best!=null?BEST[st.best][0]:'—']);
+  rows.forEach(function(x){var tr=el('tr');tr.append(el('td','k',x[0]),el('td','n',x[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+var S=[intro,predict,wait,result,reflect,end];(S[st.step]||intro)();
+})();
+</script>

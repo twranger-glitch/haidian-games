@@ -1,0 +1,204 @@
+<title>說法修理員</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: four sayings about chance. For each: tap the part of the sentence that goes wrong (other parts explain why they are fine) → pick the better rewrite of three. Then one value question (a cheap scratch card) with no right answer → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.who{font-size:clamp(18px,2.4vw,22px);color:var(--muted);font-weight:700;margin:0}
+.say{font-size:clamp(26px,4.6vw,42px);font-weight:900;line-height:1.75;margin:0}
+.seg{font:inherit;color:inherit;background:#F3F1E8;border:3px dashed #B9B8AC;border-radius:12px;padding:0 8px;margin:3px 2px;cursor:pointer;line-height:1.5;text-align:left;max-width:100%}
+.seg:disabled{cursor:default}
+.seg.ok{background:#E3F0E7;border:3px solid var(--good);color:var(--ink)}
+.seg.bad{background:#F6E4DC;border:3px solid var(--rust);color:var(--rust)}
+.seg.done{border-style:solid;border-color:var(--line);background:transparent}
+.seg.done.bad{border-color:var(--rust);background:#F6E4DC}
+.tag{display:inline-block;font-size:.5em;font-weight:900;vertical-align:middle;margin-left:4px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.ghost{background:transparent;color:var(--sea);border:3px solid var(--sea)}
+.btn:focus-visible,.seg:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.note.good{background:#E3F0E7}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.row .btn{flex:1 1 220px}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+.big{font-size:clamp(40px,8vw,64px);font-weight:900;color:var(--rust);font-variant-numeric:tabular-nums}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "x": "<path d=\"M7 7l10 10M17 7L7 17\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='saying-fixer-v1';
+/* s: segments [text, explanation]; w: index of the wrong part; why: explanation when found;
+   r: three rewrites [text, feedback]; best: index of the better saying */
+var Q=[
+ {who:'海佃國小園遊會，小美在轉盤攤位前排隊，她說：',
+  s:[['園遊會的轉盤攤位，','這一段只是說事情發生在哪裡，沒有想錯。'],
+     ['前面已經有好多人轉到「謝謝光臨」，','這一段是小美親眼看到的事，是真的發生過的，沒有想錯。問題出在她從這件事「推出」了什麼。'],
+     ['所以下一個人一定會轉到大獎！','']],
+  w:2,why:'就是這一段想錯了。轉盤不會記得前面的人轉到什麼，前面沒中，不會讓下一次「該中了」。這種「前面一直沒出現，下一次就會補回來」的想法，叫做賭徒謬誤。',
+  r:[['前面好多人沒中，下一個人中大獎的機會變大了，只是還不到一定。','這句話把「一定」拿掉了，但還是覺得機會「變大了」。轉盤不記得前面發生什麼，機會其實沒有變。'],
+     ['轉盤不記得前面的人轉到什麼，下一個人轉到大獎的機會，跟前面每個人一樣。','這句比較正確。每一次轉，都是重新開始，機會跟前面每個人一樣。'],
+     ['前面都沒有人中，大獎一定早就被拿走了，下一個人一定不會中。','這句話往反方向猜，可是一樣是用「前面發生什麼」來猜下一次。轉盤每一格的大小沒變，機會也沒變。']],
+  best:1},
+ {who:'班上每週抽籤，決定誰去倒廚餘。阿哲說：',
+  s:[['這週一定輪不到小明了，',''],
+     ['因為他已經連續兩週被抽到，','小明連續兩週被抽到是真的，這一段沒有想錯。連續兩週被抽到雖然少見，還是有可能發生。問題出在從這件事推出的結論。'],
+     ['而且我們每週都把全班的籤放回籤筒重抽。','這一段是抽籤的規則，沒有想錯。而且它很重要：籤每次都放回去，表示每週都是重新開始。']],
+  w:0,why:'就是這一段想錯了。籤每週都放回去重抽，籤筒不記得上週抽到誰，小明這週被抽到的機會跟大家一樣。只有規定「抽過的人不放回去」，機會才會改變。',
+  r:[['小明運氣特別差，這週一定又是他。','這句話往反方向猜，覺得「會一直連下去」。可是籤筒不知道誰運氣好、誰運氣差，每個人的機會還是一樣。'],
+     ['小明被抽太多次了，這週被抽到的機會比較小。','這句話還是覺得機會會「補回來」。只要籤每週都放回去，小明這週被抽到的機會沒有變小。'],
+     ['籤每週都放回去重抽，小明這週被抽到的機會，跟班上每個人一樣。','這句比較正確。籤放回去，每週都是重新開始。如果全班覺得不公平，可以改規則，例如「抽過的人先不放回去」。']],
+  best:2},
+ {who:'晚上看氣象預報，小安對媽媽說：',
+  s:[['預報說明天安南區的降雨機率是 80%，','這一段是預報說的內容，沒有想錯。'],
+     ['所以明天一定會下雨，',''],
+     ['我要記得帶傘去學校。','這一段沒有想錯。下雨的機會比較大，帶傘是很好的決定。']],
+  w:1,why:'就是這一段想錯了。80% 不是 100%。像這樣的 10 個日子，大約有 8 天會下雨、2 天不會。「很可能」和「一定」是不一樣的。',
+  r:[['明天比較可能下雨，帶傘是好決定；就算沒下雨，也不代表預報錯了。','這句比較正確。它分清楚「很可能」和「一定」，也知道沒下雨不等於預報不準。'],
+     ['80% 不是 100%，所以傘帶不帶都一樣。','這句話知道「不是一定」，可是又跳到「都一樣」。下雨的機會比較大，帶傘還是比較好的決定。'],
+     ['明天一定會下雨，要是沒下雨，就是預報騙人。','這句話還是把 80% 當成 100%。就算明天沒下雨，預報也可能沒有錯，因為本來就有大約 2 成的機會不下雨。']],
+  best:0},
+ {who:'學校附近的文具店有一台扭蛋機，阿宏說：',
+  s:[['扭蛋機上寫著，每一次有 1% 的機會轉到金色款，','這一段是機器上寫的機率，沒有想錯。'],
+     ['所以只要轉 100 次，就一定轉得到，',''],
+     ['我要先問爸媽，轉 100 次要花多少錢。','這一段沒有想錯。花錢以前先算一算、問一問，是很好的習慣。']],
+  w:1,why:'就是這一段想錯了。每一次都只有 1%，轉 100 次也不保證轉得到。轉了 100 次，還是大約每 3 個人就有 1 個人一次也沒轉到。',
+  r:[['已經轉了 99 次都沒中，第 100 次一定會中。','這句話又是「前面沒中，下一次該中了」。第 100 次，跟第 1 次一樣只有 1%。'],
+     ['每一次都只有 1%，轉 100 次也不保證；還是有不少人 100 次都轉不到。','這句比較正確。轉越多次，轉到的機會會變大，但永遠不會變成「一定」，花的錢卻是一次一次加上去。'],
+     ['1% 太小了，所以不管轉幾次，都不可能轉到。','這句話往反方向想錯了。1% 雖然小，還是有人會轉到，只是不能保證是你。']],
+  best:1}
+];
+var V={q:'園遊會有一攤在賣刮刮卡，一張很便宜，可是刮到大獎的機率很低。你會買嗎？',
+ o:[['會買一張，就當花一點小錢，買刮開那一下的好玩。','你把這張卡當成「買好玩」，不是「賺錢的方法」。這樣想的作用是：沒刮中也不太會難過。代價是：大多數的時候，錢花了，大獎沒有來，要先想好自己能不能接受。'],
+    ['不會買，把錢留下來，買確定想要的東西。','你選的是「確定」：錢一定留在身上，最壞的結果就是沒有刮刮卡。代價是：少了刮開那一下緊張又好玩的感覺。'],
+    ['會先想好最多只買幾張，買完就停。','你先替自己決定好「最壞的情況」：最多就花這些錢。這樣想的作用是：玩得到，又不會越買越多。代價是：沒中的時候，要忍住「再買一張就會中」的念頭。'],
+    ['會一直買，買越多張，越有機會中。','買越多張，中的機會確實會多一點；可是花的錢也一張一張加上去，而且就像扭蛋，買很多張也不保證會中。很多人會在這裡想到「前面都沒中，下一張該中了」，這就是今天說的賭徒謬誤。']]};
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{started:false,i:0,stage:0,tried:[],show:[],pick:[],val:null};
+['tried','show','pick'].forEach(function(k){if(!st[k])st[k]=[]});
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(cls,txt,fn){var b=el('button',cls,txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(){save(st);render();window.scrollTo(0,0)}
+function firstHit(k){var t=st.tried[k]||[];return t.length>0&&t[0]===Q[k].w}
+function found(k){return (st.tried[k]||[]).indexOf(Q[k].w)>=0||st.show[k]}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','你是「說法修理員」。等一下會出現 4 句大家常說的話，每一句都有一個地方想錯了。'),
+           el('p','lead','① 先點出句子裡「想錯的那一段」。<br>② 再從 3 個說法裡，選一個比較正確的說法。<br>最後還有一題，沒有標準答案。'));
+  app.append(el('h1',null,'說法修理員'),c,btn('btn','開始修理',function(){st.started=true;go()}));
+}
+function sayCard(q,k,clickable){
+  var c=el('div','card');c.appendChild(el('p','who',q.who));
+  var p=el('p','say');var t=st.tried[k]||[];var f=found(k);
+  q.s.forEach(function(sg,j){
+    var cls='seg';
+    if(j===q.w&&f)cls+=' bad';else if(t.indexOf(j)>=0)cls+=' ok';
+    if(!clickable)cls+=' done';
+    var b=el('button',cls,sg[0]+(j===q.w&&f?'<span class="tag">'+ic('x')+' 想錯</span>':(t.indexOf(j)>=0?'<span class="tag" style="color:var(--good)">'+ic('check')+' 沒問題</span>':'')));
+    b.type='button';
+    if(!clickable||(f&&j===q.w)){b.disabled=true}
+    else b.addEventListener('click',function(){
+      if(!st.tried[k])st.tried[k]=[];
+      if(st.tried[k].indexOf(j)<0)st.tried[k].push(j);
+      st.last=j;save(st);render();
+    });
+    p.appendChild(b);
+  });
+  c.appendChild(p);return c;
+}
+function step(){
+  var k=st.i,q=Q[k];app.innerHTML='';
+  app.appendChild(el('p','case','第 '+(k+1)+' 句，共 4 句'));
+  if(st.stage===0){
+    var f=found(k);
+    var hit0=(st.tried[k]||[]).indexOf(q.w)>=0;app.appendChild(el('h2',null,f?(hit0?'找到了！':'想錯的是紅色這一段。'):'① 這句話，哪一段想錯了？點點看。'));
+    app.appendChild(sayCard(q,k,!f));
+    if(f){
+      var hit=(st.tried[k]||[]).indexOf(q.w)>=0;
+      app.appendChild(el('p','note warm',hit?q.why:q.why.replace('就是這一段想錯了。','')));
+      app.appendChild(btn('btn','② 把這句話改好',function(){st.stage=1;st.last=null;go()}));
+    }else if(st.last!=null){
+      app.appendChild(el('p','note good','「'+q.s[st.last][0].replace(/[，。！]$/,'')+'」：'+q.s[st.last][1]+'<br><span style="font-size:.85em;color:var(--muted)">再點別的地方看看。</span>'));
+      app.appendChild(btn('btn ghost','直接告訴我想錯的地方',function(){st.show[k]=true;go()}));
+    }
+  }else{
+    app.appendChild(sayCard(q,k,false));
+    app.appendChild(el('h2',null,'② 哪一個是比較正確的說法？'));
+    var g=el('div','opts'),fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+    function show(j,scroll){
+      Array.prototype.forEach.call(g.children,function(x,n){x.classList.toggle('pick',n===j)});
+      fb.innerHTML='';var good=j===q.best;
+      fb.appendChild(el('p','note '+(good?'good':'warm'),q.r[j][1]+(good?'':'<br>比較正確的說法是：「'+q.r[q.best][0]+'」')+'<br><span style="font-size:.85em;color:var(--muted)">想看看別的說法，也可以點點看。</span>'));
+      var nx=btn('btn',k<Q.length-1?'下一句':'最後一題',function(){st.i++;st.stage=0;st.last=null;st.look=null;go()});
+      fb.appendChild(nx);if(scroll)nx.scrollIntoView({behavior:'smooth',block:'end'});
+    }
+    q.r.forEach(function(r,j){g.appendChild(btn('btn alt',r[0],function(){if(st.pick[k]==null){st.pick[k]=j;save(st)}st.look=j;save(st);show(j,true)}))});
+    app.append(g,fb);
+    if(st.pick[k]!=null)show(st.look!=null?st.look:st.pick[k],false);
+  }
+}
+function value(){
+  app.innerHTML='';
+  app.appendChild(el('p','case','最後一題：沒有標準答案'));
+  var c=el('div','card');c.appendChild(el('p','say',V.q));app.appendChild(c);
+  app.appendChild(el('h2',null,'選一個最像你的想法。'));
+  var g=el('div','opts'),fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(j,scroll){
+    Array.prototype.forEach.call(g.children,function(x,n){x.classList.toggle('pick',n===j)});
+    fb.innerHTML='';fb.appendChild(el('p','note','這個選擇背後的想法：'+V.o[j][1]+'<br><span style="font-size:.85em;color:var(--muted)">每個選擇都可以，想改也可以直接點別的。</span>'));
+    var nx=btn('btn','看看我的修理成績',function(){st.i=Q.length+1;go()});fb.appendChild(nx);
+    if(scroll)nx.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  V.o.forEach(function(o,j){g.appendChild(btn('btn alt','ABCD'[j]+'　'+o[0],function(){st.val=j;save(st);show(j,true)}))});
+  app.append(g,fb);if(st.val!=null)show(st.val,false);
+}
+function end(){
+  app.innerHTML='';
+  var nf=0,nb=0;Q.forEach(function(q,k){if(firstHit(k))nf++;if(st.pick[k]===q.best)nb++});
+  var t=el('table');
+  function row(a,b){var tr=el('tr');tr.append(el('td','k',a),el('td',null,b));t.appendChild(tr)}
+  row('第一次就點到<br>想錯那一段','<span class="big">'+nf+'</span> 句（共 4 句）');
+  row('第一次就選到<br>比較正確的說法','<span class="big">'+nb+'</span> 句（共 4 句）');
+  row('刮刮卡你會買嗎？','<b>'+(st.val!=null?['A','B','C','D'][st.val]+'　'+V.o[st.val][0]:'—')+'</b>');
+  var c=el('div','card');c.appendChild(t);
+  var d=el('div','card');d.appendChild(el('p','lead','這 4 句話想錯的地方很像：把「很可能」說成「一定」，或是覺得前面的結果會「補回來」。'));
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,d);
+}
+function render(){
+  if(!st.started){intro();return}
+  if(st.i<Q.length)step();else if(st.i===Q.length)value();else end();
+}
+render();
+})();
+</script>

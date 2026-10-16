@@ -1,0 +1,146 @@
+<title>瘋狂魚苗拍賣會</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{--bg:#FAF7F2;--card:#FFFFFF;--ink:#1E242B;--co:#D95D39;--te:#2A6F68;--mu:#475569;--ln:#E3DED7;--col:#FFF5F2;--tel:#F0F7F6;
+--font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:22px 18px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(28px,5vw,46px);font-weight:900;margin:0;line-height:1.3}
+h2{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45}
+.kick{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--co);letter-spacing:2px;margin:0}
+.lead{font-size:clamp(19px,2.6vw,24px);margin:0;color:var(--mu)}
+.card{background:var(--card);border:2px solid var(--ln);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:10px}
+.card p{margin:0;font-size:clamp(19px,2.6vw,23px)}
+.card.warm{background:var(--col);border-color:#F3D9CF}
+.card.cool{background:var(--tel);border-color:#CFE3E0}
+.btn{font:inherit;font-size:clamp(19px,2.7vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--co);color:#fff;cursor:pointer;line-height:1.45}
+.btn.te{background:var(--te)}
+.btn.ghost{background:var(--card);color:var(--ink);border:3px solid var(--ln)}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--ln);text-align:left;font-weight:700;width:100%}
+.btn.alt.pick{border-color:var(--te);background:var(--tel)}
+.btn:focus-visible{outline:4px solid var(--te);outline-offset:3px}
+.stage{display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;align-items:end}
+.who{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.who .nm{font-weight:900;font-size:clamp(19px,2.6vw,23px)}
+.paddle{width:min(130px,100%);transition:transform .35s}
+.paddle.up{transform:translateY(-16px) rotate(-4deg)}
+.paddle .num{font-weight:900}
+.amt{font-size:clamp(24px,4vw,36px);font-weight:900}
+.amt.me{color:var(--co)} .amt.ai{color:var(--te)}
+.lead-mark{font-size:19px;font-weight:900;border-radius:999px;padding:2px 12px;background:var(--ink);color:#fff}
+.meter{position:relative;height:260px;width:56px;margin:0 auto;border:3px solid var(--ink);border-radius:28px;background:#fff;overflow:hidden}
+.meter .fill{position:absolute;left:0;right:0;bottom:0;background:var(--te);transition:height .5s}
+.meter .fill.over{background:var(--co)}
+.meter .line{position:absolute;left:-2px;right:-2px;height:0;border-top:4px dashed var(--ink)}
+.mcap{font-size:19px;color:var(--mu);text-align:center;margin:4px 0 0;font-weight:700}
+.bucket{width:90px;height:90px;margin:0 auto;display:block}
+.ledger{display:flex;flex-direction:column;gap:6px}
+.ledger p{font-size:clamp(19px,2.5vw,22px)}
+.act{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.stage{grid-template-columns:1fr 84px 1fr}.meter{height:200px;width:44px}.act{grid-template-columns:1fr}}
+.warn{background:var(--col);border:3px solid var(--co);border-radius:16px;padding:12px 16px;font-weight:900;color:var(--co);margin:0;font-size:clamp(19px,2.5vw,22px)}
+.msg{min-height:1.6em;font-weight:700;margin:0;font-size:clamp(19px,2.6vw,23px)}
+.stopset{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.stopset .big{font-size:clamp(34px,7vw,56px);font-weight:900;color:var(--co);min-width:4.2em;text-align:center}
+.sum .row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:2px solid var(--ln);padding:8px 0;font-size:clamp(19px,2.6vw,23px)}
+.sum .row b{color:var(--co);font-size:clamp(20px,3vw,27px);text-align:right}
+.mini{font-size:19px;color:var(--mu);margin:0}
+.rule{display:flex;gap:12px;align-items:flex-start}
+.rule .n{flex:none;width:40px;height:40px;border-radius:50%;background:var(--te);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center}
+</style>
+<div class="wrap" id="app"></div>
+<script>
+var KEY='u2c-fryauction-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function cap(){return 125+5*rnd(13)} // 阿海伯願意喊到 125～185 元
+function fresh(){return {step:'intro',round:1,stop:50,caps:[cap(),cap()],me:0,ai:5,high:'ai',over:false,res:[null,null],why:null,busy:false}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||fresh();st.busy=false;save(st);
+var BUCKET='<svg class="bucket" viewBox="0 0 160 160" aria-label="一桶值 100 元的虱目魚苗"><path d="M28 52 L40 140 Q42 148 50 148 L110 148 Q118 148 120 140 L132 52 Z" fill="#F0F7F6" stroke="#2A6F68" stroke-width="6" stroke-linejoin="round"/><path d="M22 52 L138 52" stroke="#2A6F68" stroke-width="7" stroke-linecap="round"/><path d="M40 52 Q80 4 120 52" fill="none" stroke="#475569" stroke-width="6" stroke-linecap="round"/><path d="M52 84 q8 -6 16 0 q-8 6 -16 0 Z M84 104 q8 -6 16 0 q-8 6 -16 0 Z M60 124 q8 -6 16 0 q-8 6 -16 0 Z" fill="#D95D39" stroke="#D95D39" stroke-width="4" stroke-linejoin="round"/></svg>';
+function paddle(color,up){return '<svg class="paddle'+(up?' up':'')+'" viewBox="0 0 100 130" aria-hidden="true"><rect x="14" y="8" width="72" height="62" rx="14" fill="'+color+'" stroke="#1E242B" stroke-width="5"/><path d="M50 70 L50 122" stroke="#1E242B" stroke-width="7" stroke-linecap="round"/><path d="M32 30 L68 30 M32 48 L58 48" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/></svg>'}
+function high(){return Math.max(st.me,st.ai)}
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function startRound(){st.me=0;st.ai=5;st.high='ai';st.over=false;st.msg='阿海伯先舉牌說：「我出 5 元！」';go('bid')}
+function raise(){if(st.busy)return;var nb=high()+5;st.me=nb;st.high='me';st.msg='你舉牌說：「我出 '+nb+' 元！」';save(st);aiMove()}
+function aiMove(){st.busy=true;save(st);render();
+ setTimeout(function(){var cp=st.caps[st.round-1];var nb2=st.me+5;var prev=st.ai;
+  if(nb2<=cp){st.ai=nb2;st.high='ai';st.msg=(nb2>100?'阿海伯皺著眉頭說：「如果現在放手，我喊過的 '+prev+' 元就白付了。我出 '+nb2+' 元！」':'阿海伯舉牌說：「我出 '+nb2+' 元！」');}
+  else{finish('me');return}
+  st.busy=false;save(st);render()},700)}
+function quit(){if(st.busy)return;finish('ai')}
+function finish(winner){var r={stop:st.round===2?st.stop:null,me:st.me,ai:st.ai,win:winner==='me'};
+ if(winner==='me'){r.net=100-st.me}else{r.net=-st.me}
+ r.over=st.round===2&&st.me>st.stop;
+ st.res[st.round-1]=r;st.busy=false;go('res')}
+var app=document.getElementById('app');
+function meter(){var h=high();var pct=Math.min(h,200)/200*100;return '<div><div class="meter" aria-label="目前最高價 '+h+' 元；虛線是魚苗的價值 100 元"><div class="fill'+(h>100?' over':'')+'" style="height:'+pct+'%"></div><div class="line" style="bottom:50%"></div></div></div>'}
+function render(){var h='';var s=st.step;
+ if(s==='intro'){
+  h='<p class="kick">UNIT 2 第 3 課・活動二</p><h1>瘋狂魚苗拍賣會</h1>'+BUCKET+
+  '<p class="lead">拍賣台上有一桶虱目魚苗，拿到市場上可以賣 100 元，所以它值 100 元。你要和電腦扮演的「阿海伯」輪流喊價，搶這桶魚苗。</p>'+
+  '<div class="card"><div class="rule"><span class="n">1</span><p>每次喊價，都要比對方多喊 5 元。最後喊得最高的人，用自己喊的價錢買走這桶魚苗。</p></div>'+
+  '<div class="rule"><span class="n">2</span><p><b>喊第二高的人，也要付出自己喊過的價錢，可是什麼也拿不到。</b></p></div>'+
+  '<div class="rule"><span class="n">3</span><p>輪到你的時候，你可以舉牌多喊 5 元，也可以放手不喊。只要有一個人放手，這一回合就結束了。</p></div></div>'+
+  '<p class="mini">一共要玩兩回合。遊戲裡的錢都是假的，不用真的付錢。</p>'+
+  '<button class="btn" onclick="startRound()">開始第一回合</button>';
+ } else if(s==='setstop'){
+  h='<p class="kick">第二回合開始前</p><h2>開始以前，請先寫下你的停損點：這一回合，你最多願意喊到多少錢？</h2>'+
+  '<p class="lead">停損點，就是事先替自己畫好的一條線。喊到這條線的時候，就要停下來，重新想一想。請注意：阿海伯這一回合願意喊到多高，和上一回合不一定一樣。</p>'+
+  '<div class="card warm"><div class="stopset"><button class="btn ghost" onclick="adj(-5)" aria-label="減少 5 元">減 5 元</button><span class="big">'+st.stop+' 元</span><button class="btn ghost" onclick="adj(5)" aria-label="增加 5 元">加 5 元</button></div></div>'+
+  '<button class="btn" onclick="st.round=2;startRound()">寫好了，開始第二回合</button>';
+ } else if(s==='bid'){
+  var myTurn=st.high==='ai'&&!st.busy;var nb=high()+5;
+  h='<p class="kick">第 '+st.round+' 回合'+(st.round===2?'・你的停損點是 '+st.stop+' 元':'')+'</p>'+
+  '<div class="card"><div class="stage">'+
+  '<div class="who">'+paddle('#D95D39',st.high==='me')+'<span class="nm">你</span><span class="amt me">'+st.me+' 元</span>'+(st.high==='me'?'<span class="lead-mark">目前最高</span>':'')+'</div>'+
+  '<div>'+meter()+'</div>'+
+  '<div class="who">'+paddle('#2A6F68',st.high==='ai')+'<span class="nm">阿海伯</span><span class="amt ai">'+st.ai+' 元</span>'+(st.high==='ai'?'<span class="lead-mark">目前最高</span>':'')+'</div>'+
+  '</div><p class="mcap">中間的長條是目前最高的價錢；長條上的虛線，代表魚苗的價值 100 元。</p><p class="msg" aria-live="polite">'+(st.msg||'')+'</p></div>';
+  if(myTurn){
+   h+='<div class="card cool ledger"><p>'+(st.me===0?'如果你現在放手：你一次都還沒有喊，所以不用付錢。':'如果你現在放手：你要付出自己喊過的 <b>'+st.me+' 元</b>，可是什麼也拿不到。')+'</p>'+
+   '<p>如果你喊 '+nb+' 元，最後贏了：你花 '+nb+' 元，買到值 100 元的魚苗，'+(nb<=100?'會賺 <b>'+(100-nb)+' 元</b>。':'<b>會賠 '+(nb-100)+' 元</b>。')+'</p></div>'+
+   (st.round===2&&nb>st.stop?'<p class="warn">你寫下的停損點是 '+st.stop+' 元。如果再喊 '+nb+' 元，就超過你的停損點了。</p>':'')+
+   '<div class="act"><button class="btn" onclick="raise()">舉牌：我出 '+nb+' 元</button><button class="btn ghost" onclick="quit()">放手，不喊了</button></div>';
+  } else h+='<p class="lead">阿海伯正在想要不要再喊……</p>';
+ } else if(s==='res'){
+  var r=st.res[st.round-1];
+  var t=r.me===0?'你一次都沒有喊價，阿海伯用 '+r.ai+' 元買走了魚苗。你不用付任何錢。':
+   r.win?'阿海伯放手了！你用 '+r.me+' 元買到值 100 元的魚苗，'+(r.net>=0?'賺了 '+r.net+' 元。':'賠了 '+(-r.net)+' 元。')+'阿海伯雖然沒有買到，也要付他喊過的 '+r.ai+' 元。':
+   '你放手了。阿海伯用 '+r.ai+' 元買走了魚苗；你喊過的 '+r.me+' 元還是要付，可是什麼也拿不到。';
+  var total=r.me+r.ai;
+  h='<p class="kick">第 '+st.round+' 回合結束</p><h2>'+t+'</h2>'+
+  '<div class="card"><p>你們兩個人加起來，一共付出 <b>'+total+' 元</b>，換到一桶值 100 元的魚苗。'+(total>100?'辦拍賣的人多賺了 '+(total-100)+' 元。':'')+'</p>'+
+  (st.round===2?'<p>你寫下的停損點是 '+st.stop+' 元，'+(r.me>st.stop?'<b>你最後喊到 '+r.me+' 元，超過了停損點。</b>':'你最後喊到 '+r.me+' 元，<b>守住了停損點。</b>')+'</p>':'')+'</div>'+
+  (st.round===1?'<button class="btn" onclick="go(\'setstop\')">下一步：準備第二回合</button>':'<button class="btn" onclick="go(\'why\')">下一步</button>');
+ } else if(s==='why'){
+  var W=['我想買到便宜的魚苗。','我不想白白付掉前面已經喊出去的錢。','我不想輸給阿海伯。','我很早就放手了，沒有越喊越高。'];
+  h='<p class="kick">想一想（這一題沒有標準答案）</p><h2>第一回合喊到後來，你心裡的想法比較像哪一句？</h2>';
+  for(var i=0;i<4;i++)h+='<button class="btn alt'+(st.why===i?' pick':'')+'" aria-pressed="'+(st.why===i)+'" onclick="pickW('+i+')">'+W[i]+'</button>';
+  h+='<button class="btn" '+(st.why===null?'disabled':'')+' onclick="go(\'end\')">看結果</button>';
+ } else {
+  var a=st.res[0],b=st.res[1];
+  function out(r){return r.me===0?'沒有喊價，所以不用付錢':r.win?'買到魚苗，'+(r.net>=0?'賺 '+r.net+' 元':'賠 '+(-r.net)+' 元'):'沒有買到，還要付 '+r.me+' 元'}
+  function band(v){return v===0?'沒有喊價':v<=100?'100 元以內':'超過 100 元'}
+  h='<h1>做完了！請停在這一頁，等其他同學。</h1><div class="card sum">'+
+  '<div class="row"><span>第一回合：你最後喊到</span><b>'+a.me+' 元（'+band(a.me)+'）</b></div>'+
+  '<div class="row"><span>第一回合的結果</span><b>'+out(a)+'</b></div>'+
+  '<div class="row"><span>第二回合：你寫下的停損點</span><b>'+b.stop+' 元</b></div>'+
+  '<div class="row"><span>第二回合：你最後喊到</span><b>'+b.me+' 元（'+band(b.me)+'）</b></div>'+
+  '<div class="row"><span>有沒有守住停損點？</span><b>'+(b.over?'超過了':'守住了')+'</b></div>'+
+  '<div class="row"><span>第二回合的結果</span><b>'+out(b)+'</b></div></div>'+
+  '<p class="lead">想一想：價錢超過 100 元以後，還在喊價的人，真的是為了那桶魚苗嗎？</p><p class="mini">（老師要換下一班之前，在網址後面加上 #reset，就可以重新開始。）</p>';
+ }
+ app.innerHTML=h;
+}
+function adj(d){st.stop=Math.max(5,Math.min(200,st.stop+d));save(st);render()}
+function pickW(i){st.why=i;save(st);render()}
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render()}});
+if(st.step==='bid'&&st.high==='me')aiMove();else render();
+</script>

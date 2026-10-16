@@ -1,0 +1,310 @@
+<title>鹿耳門放煙火</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story (Lantern Festival night at the Luermen temple square) → predict what a 15-second ad break would do → tap the night sky to launch fireworks for 50 seconds of play (yellow: straight through; purple: 25 s, a 15-second unskippable shop ad, then 25 s) → rate the last 10 seconds with 1–5 firework icons → want one more minute? → summary page. Secret groups via crypto; #yellow / #purple force a group, #reset clears. Single light classroom look on purpose; only the sky is dark. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.gtag{display:inline-block;border-radius:999px;padding:2px 14px;font-size:clamp(15px,2vw,18px);font-weight:700;letter-spacing:1px;align-self:flex-start}
+.gtag.yellow{background:#E9B824;color:#2A2205}.gtag.purple{background:#7A4FB0;color:#fff}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible,summary:focus-visible,.star:focus-visible,canvas:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.small{font-size:clamp(16px,2.1vw,19px);color:var(--muted);margin:0}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700} td.v{font-weight:900;text-align:right}
+details{background:var(--card);border:3px dashed var(--line);border-radius:18px;padding:12px 16px}
+summary{font-size:clamp(19px,2.8vw,25px);font-weight:900;cursor:pointer}
+svg.pic{width:100%;height:auto;max-height:240px;border-radius:16px;display:block}
+
+/* timer bar */
+.timer{display:flex;flex-direction:column;gap:6px}
+.tlab{display:flex;justify-content:space-between;gap:10px;font-size:clamp(18px,2.6vw,23px);font-weight:900;margin:0;font-variant-numeric:tabular-nums}
+.bar{height:20px;border-radius:10px;background:#DCE1DA;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold);border-radius:10px}
+.bar.adbar i{background:var(--muted)}
+
+/* sky */
+.sky{position:relative;border-radius:20px;overflow:hidden;background:#0E1A33;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.sky canvas{display:block;width:100%;cursor:crosshair}
+.soon{position:absolute;right:12px;top:10px;font-size:clamp(15px,1.9vw,17px);color:#C9D2E3;margin:0;pointer-events:none;letter-spacing:1px}
+.shots{font-size:clamp(19px,2.7vw,25px);font-weight:900;margin:0;font-variant-numeric:tabular-nums}
+
+/* ad */
+.ad{border-radius:20px;background:#FFF8E7;border:4px solid #C9B88A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center}
+.ad .adtag{align-self:flex-start;background:#56605C;color:#fff;border-radius:8px;padding:0 10px;font-size:clamp(15px,2vw,18px);font-weight:700}
+.ad .shop{font-size:clamp(32px,6vw,56px);font-weight:900;color:#7A3E12;margin:0;line-height:1.25}
+.ad .goods{font-size:clamp(22px,3.6vw,32px);font-weight:700;margin:0}
+.ad .wel{font-size:clamp(20px,3vw,28px);color:var(--muted);margin:0}
+.ad svg{width:min(100%,360px);height:auto}
+.ad .left{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--muted);margin:0;font-variant-numeric:tabular-nums}
+
+/* rating */
+.stars{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.star{font:inherit;border:3px solid var(--line);background:var(--card);border-radius:16px;padding:8px 2px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-weight:900;font-size:clamp(18px,2.6vw,23px)}
+.star svg{width:min(100%,64px);height:auto}
+.star.on{border-color:var(--gold);background:var(--warm);color:var(--ink)}
+.slab{display:flex;justify-content:space-between;font-size:clamp(16px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0}
+.picked{font-size:clamp(22px,3.4vw,30px);font-weight:900;text-align:center;color:var(--rust);margin:0;min-height:1.5em}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='fireworks-v1';
+var GN={yellow:'黃組',purple:'紫組'};
+var PRED=['會比較好玩','差不多','會比較不好玩'];
+var AGAIN=['好想再放','都可以','不太想'];
+var RATE=['','很無聊','有一點無聊','普通','好玩','超好玩'];
+var PLAY=50,HALF=25,AD=15;
+var RM=false;try{RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+
+/* crypto random */
+var pool=new Uint32Array(256),pi=256;
+function rnd(){if(pi>=pool.length){try{crypto.getRandomValues(pool)}catch(e){for(var i=0;i<pool.length;i++)pool[i]=Math.floor(Math.random()*4294967296)}pi=0}return pool[pi++]/4294967296}
+function rint(n){return Math.floor(rnd()*n)}
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function clearHash(){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(g){return {g:g,stage:0,pred:null,t:0,n:0,n10:0,rate:null,again:null}}
+var h=location.hash;
+if(h==='#reset'){save(null);clearHash()}
+var st=load();
+if(h==='#yellow'||h==='#purple'){var want=h.slice(1);if(!st||st.g!==want)st=null;clearHash();if(!st){st=fresh(want);save(st)}}
+if(!st||!GN[st.g]){st=fresh(rint(2)?'purple':'yellow');save(st)}
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function gtag(){return el('span','gtag '+st.g,GN[st.g])}
+
+/* timeline: t = seconds since the show started (ads included) */
+function total(){return st.g==='purple'?PLAY+AD:PLAY}
+function phase(t){if(t>=total())return 'end';if(st.g==='purple'&&t>=HALF&&t<HALF+AD)return 'ad';return 'play'}
+function played(t){if(st.g!=='purple')return Math.min(t,PLAY);if(t<HALF)return t;if(t<HALF+AD)return HALF;return Math.min(PLAY,t-AD)}
+
+var SCENE='<svg class="pic" viewBox="0 0 600 240" role="img" aria-label="元宵節晚上，廟埕上掛著紅燈籠，夜空中有煙火"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B1630"/><stop offset="1" stop-color="#2A3A66"/></linearGradient></defs><rect width="600" height="240" fill="url(#sk)"/>'+
+ burstSVG(150,70,40,'#F6C445')+burstSVG(440,58,34,'#F07A9A')+burstSVG(310,100,26,'#7FD3F0')+
+ '<path d="M0 240V196H600V240Z" fill="#141A24"/><path d="M200 196V160H400V196Z" fill="#1E2532"/><path d="M180 162Q300 140 420 162L432 146Q300 118 168 146Z" fill="#2B3344"/><path d="M168 146L156 132M432 146L444 132" stroke="#2B3344" stroke-width="6" stroke-linecap="round"/>'+
+ '<path d="M0 120Q150 150 300 128T600 120" fill="none" stroke="#5A4A3A" stroke-width="2"/>'+[40,110,180,250,350,420,490,560].map(function(x,i){var y=[124,134,140,136,129,126,124,121][i];return '<ellipse cx="'+x+'" cy="'+(y+12)+'" rx="10" ry="12" fill="#D9412E"/><rect x="'+(x-5)+'" y="'+(y+22)+'" width="10" height="4" fill="#E8C35A"/>'}).join('')+'</svg>';
+function burstSVG(cx,cy,r,c){var s='';for(var i=0;i<12;i++){var a=i*Math.PI/6;s+='<line x1="'+(cx+Math.cos(a)*r*.3).toFixed(1)+'" y1="'+(cy+Math.sin(a)*r*.3).toFixed(1)+'" x2="'+(cx+Math.cos(a)*r).toFixed(1)+'" y2="'+(cy+Math.sin(a)*r).toFixed(1)+'" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/>'}return s+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*.16).toFixed(1)+'" fill="'+c+'"/>'}
+function iconFW(on){var c=on?'#E0A21A':'#B9BFB8';return '<svg viewBox="0 0 64 64" aria-hidden="true">'+burstSVG(32,30,26,c).replace(/stroke-width="3"/g,'stroke-width="4"')+'<line x1="32" y1="58" x2="32" y2="44" stroke="'+c+'" stroke-width="3" stroke-dasharray="3 3"/></svg>'}
+
+/* ---------- pages ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.innerHTML=SCENE;
+  c.append(el('p','lead','元宵節的晚上，安南區鹿耳門的廟埕擠滿了人，大家都在等著看煙火。今年廟方想到一個特別的玩法：每個人都可以用手指點夜空，點哪裡，煙火就會從地面射上去，在那裡「碰」地炸開。'),
+           el('p','small','（這是虛構的故事。）'));
+  app.append(el('h1',null,'鹿耳門放煙火'),gtag(),c,
+    el('p','note','等一下輪到你放煙火。畫面上方的時間條會告訴你還可以放多久，想放幾發都可以。'),
+    btn('下一步',null,function(){st.stage=1;save(st);render()}));
+}
+
+function predict(){
+  app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'放煙火之前，先猜猜看'),gtag());
+  var g=el('div','opts');var go=btn('去放煙火',null,function(){if(st.pred==null)return;st.stage=2;save(st);render()});go.disabled=st.pred==null;
+  PRED.forEach(function(t,k){var b=btn(t,'alt'+(st.pred===k?' pick':''),function(){st.pred=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');go.disabled=false});g.appendChild(b)});
+  app.append(cs,el('h2',null,'如果放煙火放到一半，突然被一段廣告打斷 15 秒，你覺得放起來會怎麼樣？'),g,
+    el('p','small','這一題沒有對錯，選你心裡最先想到的就好。'),go);
+}
+
+/* ---------- play ---------- */
+var raf=0,cv=null,ctx=null,W=0,H=0,DPR=1,stars=[],fws=[],ui={};
+function stopLoop(){if(raf)cancelAnimationFrame(raf);raf=0;window.onresize=null}
+
+function play(){
+  stopLoop();app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'放煙火'),gtag());
+  var tm=el('div','timer');ui.lab=el('p','tlab');ui.bar=el('div','bar');ui.fill=el('i');ui.bar.appendChild(ui.fill);tm.append(ui.lab,ui.bar);
+  ui.stage=el('div');
+  ui.shots=el('p','shots');
+  app.append(cs,tm,ui.stage,ui.shots);
+  ui.mode=null;
+  pauseView();
+}
+function pauseView(){
+  ui.mode='pause';ui.stage.innerHTML='';
+  var c=el('div','card');
+  if(st.t<=0){
+    c.append(el('p','lead','準備好了嗎？按下「開始」以後，時間就會開始算。用手指點夜空的任何地方，煙火就會飛到那裡炸開。'));
+    c.appendChild(btn('開始放煙火',null,function(){run()}));
+  }else{
+    c.append(el('p','lead','剛剛放到一半就停下來了。已經過的時間和放過的煙火都還記得，按「繼續」就可以接著放。'));
+    c.appendChild(btn('繼續',null,function(){run()}));
+  }
+  ui.stage.appendChild(c);updateHud();
+}
+function skyH(){return Math.round(Math.max(280,Math.min(560,window.innerHeight-250)))}
+function run(){
+  ui.mode=null;var last=performance.now(),saveAt=0;
+  function frame(now){
+    var dt=Math.min(0.25,Math.max(0,(now-last)/1000));last=now;
+    var before=phase(st.t);
+    st.t+=dt;
+    var ph=phase(st.t);
+    if(ph==='end'){st.t=total();st.stage=3;save(st);stopLoop();render();return}
+    if(ph!==ui.mode)setMode(ph);
+    if(ph==='play')drawSky(dt);
+    updateHud();
+    saveAt+=dt;if(saveAt>0.5||before!==ph){saveAt=0;save(st)}
+    raf=requestAnimationFrame(frame);
+  }
+  setMode(phase(st.t));updateHud();
+  raf=requestAnimationFrame(frame);
+}
+function setMode(ph){
+  ui.mode=ph;ui.stage.innerHTML='';fws=[];
+  if(ph==='play'){
+    var sky=el('div','sky');cv=document.createElement('canvas');cv.setAttribute('role','img');cv.setAttribute('aria-label','夜空。點一下，煙火就會飛到那裡炸開。');cv.tabIndex=0;
+    ui.soon=el('p','soon','快結束了');ui.soon.style.display='none';
+    sky.append(cv,ui.soon);ui.stage.appendChild(sky);
+    ctx=cv.getContext('2d');size();window.onresize=size;
+    cv.addEventListener('pointerdown',function(e){var r=cv.getBoundingClientRect();launch(e.clientX-r.left,e.clientY-r.top);e.preventDefault()});
+    cv.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){launch(W*(0.15+rnd()*0.7),H*(0.15+rnd()*0.4));e.preventDefault()}});
+  }else if(ph==='ad'){
+    window.onresize=null;
+    var a=el('div','ad');a.style.minHeight=skyH()+'px';
+    a.innerHTML='<span class="adtag">廣告</span>'+
+      '<svg viewBox="0 0 360 120" aria-hidden="true"><rect x="30" y="20" width="34" height="84" rx="8" fill="#5B2A0E"/><rect x="38" y="6" width="18" height="18" rx="3" fill="#C8352B"/><rect x="34" y="50" width="26" height="30" fill="#F4E3B5"/>'+
+      '<path d="M120 104c-10-40 10-70 50-70s60 30 50 70z" fill="#F4E8C8" stroke="#B7862B" stroke-width="3"/><path d="M135 60c20 10 50 10 70 0M135 75c20 10 50 10 70 0M135 90c20 10 50 10 70 0" stroke="#D8C49A" stroke-width="3" fill="none"/>'+
+      '<ellipse cx="280" cy="78" rx="26" ry="32" fill="#ECEFF1" stroke="#9AA3A6" stroke-width="3"/><ellipse cx="318" cy="84" rx="22" ry="27" fill="#ECEFF1" stroke="#9AA3A6" stroke-width="3"/></svg>'+
+      '<p class="shop">海佃雜貨店</p><p class="goods">醬油、米粉、鹹蛋</p><p class="wel">歡迎光臨</p>';
+    ui.adleft=el('p','left');a.appendChild(ui.adleft);
+    ui.stage.appendChild(a);
+  }
+}
+function size(){
+  if(!cv)return;DPR=Math.min(2,window.devicePixelRatio||1);
+  W=cv.parentNode.clientWidth;H=skyH();
+  cv.style.height=H+'px';cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(!stars.length)for(var i=0;i<70;i++)stars.push([rnd(),rnd()*0.7,rnd()*1.4+0.4]);
+  drawSky(0);
+}
+function groundY(){return H-Math.max(56,H*0.16)}
+function color(){var hue=rint(360);return 'hsl('+hue+','+(80+rint(20))+'%,'+(60+rint(12))+'%)'}
+function launch(x,y){
+  if(ui.mode!=='play')return;
+  var gy=groundY();y=Math.min(y,gy-30);
+  st.n++;if(PLAY-played(st.t)<=10)st.n10++;save(st);updateHud();
+  var c=color(),c2=rnd()<0.35?color():c;
+  if(fws.length>30)fws.shift();
+  if(RM){fws.push({x:x,y:y,c:c,c2:c2,life:1.4,still:true,rot:rnd()*Math.PI});return}
+  var p=[],n=46+rint(20),sp=90+rnd()*80;
+  for(var i=0;i<n;i++){var a=rnd()*Math.PI*2,v=sp*(0.35+rnd()*0.7);p.push({x:0,y:0,vx:Math.cos(a)*v,vy:Math.sin(a)*v,c:i%3===0?c2:c})}
+  fws.push({sx:x,x:x,y:y,ry:gy,t:0,rise:0.45+rnd()*0.2,p:p,age:0,life:1.5+rnd()*0.4,c:c});
+}
+function drawBG(){
+  var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#08122A');g.addColorStop(1,'#283A68');
+  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#DDE6FF';stars.forEach(function(s){ctx.globalAlpha=0.55;ctx.fillRect(s[0]*W,s[1]*H,s[2],s[2])});ctx.globalAlpha=1;
+  var gy=groundY(),cx=W/2,rw=Math.min(W*0.42,320);
+  // lantern string
+  ctx.strokeStyle='#5A4A3A';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,gy-60);ctx.quadraticCurveTo(W/2,gy-30,W,gy-60);ctx.stroke();
+  var k=Math.max(4,Math.round(W/70));
+  for(var i=1;i<k;i++){var lx=W*i/k,t=i/k,ly=(1-t)*(1-t)*(gy-60)+2*(1-t)*t*(gy-30)+t*t*(gy-60);ctx.fillStyle='#D9412E';ctx.beginPath();ctx.ellipse(lx,ly+11,8,10,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#E8C35A';ctx.fillRect(lx-4,ly+20,8,3)}
+  // temple
+  ctx.fillStyle='#1E2532';ctx.fillRect(cx-rw*0.42,gy-34,rw*0.84,34);
+  ctx.fillStyle='#2B3344';ctx.beginPath();ctx.moveTo(cx-rw/2-14,gy-50);ctx.quadraticCurveTo(cx,gy-78,cx+rw/2+14,gy-50);ctx.lineTo(cx+rw/2-4,gy-32);ctx.quadraticCurveTo(cx,gy-52,cx-rw/2+4,gy-32);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#2B3344';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(cx-rw/2-14,gy-50);ctx.lineTo(cx-rw/2-24,gy-64);ctx.moveTo(cx+rw/2+14,gy-50);ctx.lineTo(cx+rw/2+24,gy-64);ctx.stroke();
+  ctx.fillStyle='#E8C35A';ctx.globalAlpha=0.6;ctx.fillRect(cx-14,gy-26,28,26);ctx.globalAlpha=1;
+  ctx.fillStyle='#141A24';ctx.fillRect(0,gy,W,H-gy);
+}
+function star(x,y,r,rot,c){
+  ctx.strokeStyle=c;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(var i=0;i<12;i++){var a=rot+i*Math.PI/6,r1=i%2?r*0.7:r;ctx.moveTo(x+Math.cos(a)*r*0.25,y+Math.sin(a)*r*0.25);ctx.lineTo(x+Math.cos(a)*r1,y+Math.sin(a)*r1)}
+  ctx.stroke();ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r*0.12,0,Math.PI*2);ctx.fill();
+}
+function drawSky(dt){
+  if(!ctx)return;drawBG();
+  var keep=[];
+  fws.forEach(function(f){
+    if(f.still){f.life-=dt;if(f.life>0){star(f.x,f.y,Math.min(W,H)*0.12,f.rot,f.c);star(f.x,f.y,Math.min(W,H)*0.06,f.rot+0.26,f.c2);keep.push(f)}return}
+    if(f.t<f.rise){f.t+=dt;var k=Math.min(1,f.t/f.rise),e=1-(1-k)*(1-k),cy=f.ry+(f.y-f.ry)*e;
+      ctx.strokeStyle='rgba(255,230,180,.8)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(f.x,cy);ctx.lineTo(f.x,Math.min(f.ry,cy+22));ctx.stroke();
+      ctx.fillStyle='#FFF4D6';ctx.beginPath();ctx.arc(f.x,cy,2.6,0,Math.PI*2);ctx.fill();keep.push(f);return}
+    f.age+=dt;if(f.age>f.life)return;
+    var a=1-f.age/f.life;ctx.globalCompositeOperation='lighter';
+    if(f.age<0.12){ctx.globalAlpha=1-f.age/0.12;ctx.fillStyle='#FFF8E8';ctx.beginPath();ctx.arc(f.x,f.y,14,0,Math.PI*2);ctx.fill()}
+    ctx.lineWidth=2.2;
+    f.p.forEach(function(p){var px=p.x,py=p.y;p.vx*=Math.pow(0.35,dt);p.vy=p.vy*Math.pow(0.35,dt)+55*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
+      ctx.globalAlpha=Math.max(0,a);ctx.strokeStyle=p.c;ctx.beginPath();ctx.moveTo(f.x+px,f.y+py);ctx.lineTo(f.x+p.x,f.y+p.y);ctx.stroke()});
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';keep.push(f);
+  });
+  fws=keep;
+}
+function updateHud(){
+  if(!ui.lab)return;
+  var ph=phase(st.t),left=Math.max(0,PLAY-played(st.t));
+  if(ph==='ad'){
+    var al=Math.ceil(HALF+AD-st.t);
+    ui.lab.innerHTML='<span>廣告時間</span><span>廣告還有 '+al+' 秒</span>';ui.bar.className='bar adbar';ui.fill.style.width=((HALF+AD-st.t)/AD*100).toFixed(1)+'%';
+    if(ui.adleft)ui.adleft.textContent='廣告還有 '+al+' 秒，不能跳過';
+  }else{
+    ui.lab.innerHTML='<span>還可以放</span><span>'+Math.ceil(left-1e-6)+' 秒</span>';ui.bar.className='bar';ui.fill.style.width=(left/PLAY*100).toFixed(1)+'%';
+  }
+  if(ui.soon)ui.soon.style.display=(ui.mode==='play'&&left<=10)?'block':'none';
+  ui.shots.textContent='你已經放了 '+st.n+' 發煙火';
+}
+
+/* ---------- after ---------- */
+function rate(){
+  stopLoop();app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'時間到了！'),gtag());
+  var c=el('div','card');c.append(el('p','lead','煙火放完了，你一共放了 '+st.n+' 發。'));
+  var g=el('div','stars');var out=el('p','picked',st.rate?st.rate+' 顆：'+RATE[st.rate]:'');
+  var go=btn('下一題',null,function(){if(!st.rate)return;st.stage=4;save(st);render()});go.disabled=!st.rate;
+  for(var i=1;i<=5;i++)(function(i){var b=el('button','star','');b.type='button';b.setAttribute('aria-label',i+' 顆煙火：'+RATE[i]);b.addEventListener('click',function(){st.rate=i;save(st);paint();out.textContent=i+' 顆：'+RATE[i];go.disabled=false});g.appendChild(b)})(i);
+  function paint(){Array.prototype.forEach.call(g.children,function(b,k){var on=st.rate&&k<st.rate;b.classList.toggle('on',!!on);b.innerHTML=iconFW(on)+'<span>'+(k+1)+'</span>'})}
+  paint();
+  var sl=el('p','slab');sl.append(el('span',null,'1 很無聊'),el('span',null,'3 普通'),el('span',null,'5 超好玩'));
+  app.append(cs,c,el('h2',null,'最後那 10 秒，你覺得好不好玩？'),el('p','small','點一顆煙火代表「很無聊」，點五顆代表「超好玩」。沒有對錯。'),g,sl,out,go);
+}
+function again(){
+  app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'最後一題'),gtag());
+  var g=el('div','opts');
+  AGAIN.forEach(function(t,k){g.appendChild(btn(t,'alt',function(){st.again=k;st.stage=5;save(st);render()}))});
+  app.append(cs,el('h2',null,'如果還可以再放 1 分鐘，你想再放嗎？'),g,el('p','small','這一題也沒有對錯，選你現在真的想的就好。'));
+}
+function finish(){
+  stopLoop();app.innerHTML='';
+  var rows=[['你的組別',GN[st.g]],['一開始猜被廣告打斷',st.pred!=null?PRED[st.pred]:'—'],['一共放了幾發',st.n+' 發'],['最後 10 秒放了幾發',st.n10+' 發'],['最後 10 秒給幾顆煙火',st.rate?st.rate+' 顆（'+RATE[st.rate]+'）':'—'],['還想再放 1 分鐘嗎？',st.again!=null?AGAIN[st.again]:'—']];
+  var t=el('table');rows.forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  var d=el('details');d.appendChild(el('summary',null,'老師說可以再打開'));
+  var p=el('p','note','黃組連續放 50 秒；紫組中間被 15 秒的廣告打斷，兩組放煙火的時間一樣長。');p.style.marginTop='10px';d.appendChild(p);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),gtag(),c,d);
+}
+
+window.addEventListener('hashchange',function(){var x=location.hash;if(x==='#reset'||x==='#yellow'||x==='#purple')location.reload()});
+function render(){
+  if(st.stage<=0)intro();else if(st.stage===1)predict();else if(st.stage===2)play();else if(st.stage===3)rate();else if(st.stage===4)again();else finish();
+  window.scrollTo(0,0);
+}
+render();
+})();
+</script>

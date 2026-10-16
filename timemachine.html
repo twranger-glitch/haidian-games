@@ -1,0 +1,203 @@
+<title>快樂時光機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: a red envelope → pick one of four ways to spend it (two things, two experiences) → ride the time machine to four stops (that day, 1 week, 1 month, 1 year), answer with three face buttons → see your face track and peek at the other three stories → would you pick the same again? → summary for a show of hands. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#F1F0EA; --card:#FCFBF7; --ink:#1F2A2E; --muted:#56605C; --line:#D5D2C6;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.story{font-size:clamp(20px,2.9vw,26px);line-height:1.75;margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn:focus-visible,summary:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.opt{display:flex;flex-direction:column;gap:6px}
+.opt .tag{font-size:clamp(18px,2.1vw,20px);font-weight:700;color:var(--muted)}
+.opt .nm{font-size:clamp(21px,3vw,27px);font-weight:900}
+.opt .ds{font-size:clamp(19px,2.3vw,21px);font-weight:500;color:var(--muted)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+/* time-machine track */
+.track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;position:relative;margin:0;padding:0;list-style:none}
+.track::before{content:"";position:absolute;left:12%;right:12%;top:22px;height:6px;background:var(--line);border-radius:3px}
+.track li{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-size:clamp(16px,2.2vw,20px);font-weight:700;color:var(--muted)}
+.track .dot{width:50px;height:50px;border-radius:50%;background:var(--card);border:4px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted)}
+.track li.done .dot{border-color:var(--sea);color:var(--sea)}
+.track li.now .dot{background:var(--gold);border-color:var(--gold);color:#fff}
+.track li.now{color:var(--ink)}
+.track svg.face{width:42px;height:42px}
+.faces{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fbtn{font:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 6px;cursor:pointer;font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--ink)}
+.fbtn svg{width:clamp(56px,10vw,84px);height:clamp(56px,10vw,84px)}
+.fbtn.pick{border-color:var(--gold);background:var(--warm)}
+.fbtn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+details{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 16px}
+summary{font-size:clamp(20px,2.8vw,25px);font-weight:900;cursor:pointer;line-height:1.5}
+details ol{margin:10px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+details li{font-size:clamp(19px,2.5vw,22px);line-height:1.7}
+details li b{color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:middle} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+.big{font-size:clamp(40px,8vw,72px);font-weight:900;line-height:1.2;margin:0;text-align:center;color:var(--sea)}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='happy-timemachine-v1';
+var STOPS=['買完當天','1 個星期後','1 個月後','1 年後'];
+var SHORT=['當天','1 星期','1 個月','1 年'];
+var FACES=[['happy','很開心'],['ok','還好'],['meh','沒什麼感覺']];
+var O=[
+ {kind:'物品',name:'新的無線耳機',ds:'可以一邊走路、一邊聽音樂。',
+  t:['你打開盒子，耳機白白亮亮的，戴起來好舒服。晚上寫功課的時候，你一直聽喜歡的歌，覺得自己好幸福。',
+     '每天放學坐爸爸的機車回家，你都會戴著它。新鮮感少了一點，但它已經變成你每天會用的東西。',
+     '盒子上有了一點刮痕，你也不再每天打開來看。有一天，隔壁班同學戴著一副新款，聽說聲音更好，你多看了兩眼。',
+     '耳機還在用，電池沒有以前那麼久了。你現在想到它，比較像想到鉛筆盒：很好用，但已經很平常。偶爾聽到一年前最常聽的那首歌，還是會想起剛拿到它的那個晚上。']},
+ {kind:'物品',name:'一雙很想要的新鞋',ds:'就是你在店裡看了好幾次的那一雙。',
+  t:['你穿著新鞋走來走去，一直低頭看。走在路上，你覺得每個人都在看你的鞋子。',
+     '下雨天你捨不得穿，怕弄髒。星期一穿去學校，有兩個同學說「好好看」，你很開心。',
+     '體育課跑完操場，鞋頭多了一道刮痕，鞋底也有沙子。它現在就是你每天穿的鞋，你很少再特別想到它。班上有人買了另一個顏色，好像更好看。',
+     '你長高了，腳也變大，這雙鞋有點擠，放到鞋櫃最下面了。你記得它曾經很新，但想起它的時候，沒有什麼特別的感覺。']},
+ {kind:'經驗',name:'和家人去四草綠色隧道搭竹筏',ds:'在紅樹林搭成的隧道裡，慢慢划過水道。',
+  t:['那天好熱，排隊也有點久。可是竹筏划進綠色隧道的時候，陽光從葉子中間灑下來，你還看到招潮蟹揮著大螯，弟弟興奮得一直叫。',
+     '你在班上跟同學講那天看到的招潮蟹，講得比手畫腳。媽媽把照片傳到家族群組，阿嬤回了好多個讚。',
+     '晚餐的時候，爸爸又說起弟弟的帽子差點被風吹進水裡，全家笑成一團。你發現，那天的熱和排隊，你已經記不太清楚了。',
+     '手機跳出「一年前的今天」，是全家在竹筏上的照片。媽媽問：「今年要不要再去一次？」你想起那天的風和笑聲，心裡暖暖的。']},
+ {kind:'經驗',name:'和好朋友去看電影，再一起吃冰',ds:'看完電影，再去吃一大碗芒果冰。',
+  t:['電影好好看，你們看到最後一幕都叫出聲來。出來以後一起吃芒果冰，一邊吃一邊搶著說最喜歡哪一段。',
+     '下課的時候，你和好朋友一直學電影裡的一句台詞，學一次笑一次，旁邊的同學都聽不懂。',
+     '那句台詞變成你們兩個人的暗號。有時候你心情不好，好朋友只要說一次，你就笑出來了。',
+     '電影的劇情你已經忘了一大半，可是你還記得那天突然下大雨，你們兩個抱著頭跑進冰店，全身濕答答的。現在講起來，你們還是會大笑。']}
+];
+var AG={same:'會，還是選一樣的',change:'會換成別的',unsure:'還不確定'};
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,pick:null,stop:0,faces:[],again:null,to:null};
+if(!st.faces)st.faces=[];
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function face(t){
+  var mouth=t==='happy'?'<path d="M28 58 Q48 78 68 58" fill="none" stroke="#1F2A2E" stroke-width="6" stroke-linecap="round"/>':
+            t==='ok'?'<path d="M30 62 Q48 70 66 62" fill="none" stroke="#1F2A2E" stroke-width="6" stroke-linecap="round"/>':
+            '<path d="M30 64 H66" fill="none" stroke="#1F2A2E" stroke-width="6" stroke-linecap="round"/>';
+  var fill=t==='happy'?'#F2C94C':t==='ok'?'#BFD8E6':'#DAD7CD';
+  var eyes=t==='meh'?'<path d="M28 40 H42 M54 40 H68" stroke="#1F2A2E" stroke-width="6" stroke-linecap="round"/>':'<circle cx="35" cy="40" r="6" fill="#1F2A2E"/><circle cx="61" cy="40" r="6" fill="#1F2A2E"/>';
+  return '<svg class="face" viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="44" fill="'+fill+'" stroke="#1F2A2E" stroke-width="4"/>'+eyes+mouth+'</svg>';
+}
+function fname(t){for(var i=0;i<FACES.length;i++)if(FACES[i][0]===t)return FACES[i][1];return '—'}
+function track(cur,showFaces){
+  var ul=el('ol','track');ul.setAttribute('aria-label','時光機路線');
+  SHORT.forEach(function(s,k){
+    var li=el('li',k===cur?'now':(k<cur||showFaces?'done':''));
+    var d=el('div','dot');
+    if(showFaces&&st.faces[k]){d.style.border='0';d.style.background='transparent';d.innerHTML=face(st.faces[k])}else d.textContent=k+1;
+    li.append(d,el('span',null,s));
+    if(showFaces)li.appendChild(el('span',null,fname(st.faces[k])));
+    ul.appendChild(li)});
+  return ul;
+}
+function go(n){st.step=n;save(st);render();window.scrollTo(0,0)}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','story','過年的時候，阿公給了你一個紅包。你打開一看，裡面有 <b>600 元</b>，而且爸媽說：「這筆錢你可以自己決定怎麼用。」'),
+           el('p','story','你想了好久，最後剩下四個選擇。每一個都可以選，沒有標準答案。'));
+  var h=el('h2',null,'你會把這 600 元拿去做什麼？');
+  var g=el('div','grid');var nx=el('div');nx.style.display='flex';nx.style.flexDirection='column';nx.style.gap='12px';
+  O.forEach(function(o,k){
+    var b=el('button','btn alt opt'+(st.pick===k?' pick':''));b.type='button';
+    b.append(el('span','tag',o.kind==='物品'?'買一樣東西':'一起去做一件事'),el('span','nm',o.name),el('span','ds',o.ds));
+    b.addEventListener('click',function(){st.pick=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');showGo()});
+    g.appendChild(b)});
+  function showGo(){nx.innerHTML='';
+    var b=el('button','btn','就選「'+O[st.pick].name+'」，坐上時光機！');b.type='button';
+    b.addEventListener('click',function(){st.stop=0;go(1)});nx.appendChild(b);b.scrollIntoView({behavior:'smooth',block:'end'})}
+  app.append(el('h1',null,'快樂時光機'),c,h,g,nx);
+  if(st.pick!=null)showGo();
+}
+function travel(){
+  var k=st.stop,o=O[st.pick];app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','case','時光機第 '+(k+1)+' 站，共 4 站：'+STOPS[k]),el('p','story',o.t[k]));
+  var h=el('h2',null,STOPS[k]+'，你想起「'+o.name+'」，感覺如何？');
+  var g=el('div','faces');var nx=el('div');nx.style.display='flex';nx.style.flexDirection='column';
+  FACES.forEach(function(f){
+    var b=el('button','fbtn'+(st.faces[k]===f[0]?' pick':''),face(f[0])+'<span>'+f[1]+'</span>');b.type='button';b.setAttribute('aria-pressed',st.faces[k]===f[0]?'true':'false');
+    b.addEventListener('click',function(){st.faces[k]=f[0];save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick');x.setAttribute('aria-pressed','false')});b.classList.add('pick');b.setAttribute('aria-pressed','true');showNext()});
+    g.appendChild(b)});
+  function showNext(){nx.innerHTML='';
+    var b=el('button','btn',k<3?'時光機出發：到「'+STOPS[k+1]+'」':'下車，看看我的心情路線');b.type='button';
+    b.addEventListener('click',function(){if(k<3){st.stop=k+1;save(st);travel();window.scrollTo(0,0)}else go(2)});
+    nx.appendChild(b);b.scrollIntoView({behavior:'smooth',block:'end'})}
+  app.append(el('p','case','你選的是：'+o.name),track(k,false),c,h,el('p','lead','跟著你自己的感覺選，三個都可以選。'),g,nx);
+  if(st.faces[k])showNext();
+}
+function peek(){
+  var o=O[st.pick];app.innerHTML='';
+  var c=el('div','card');c.append(el('h2',null,'你的心情路線：'+o.name),track(-1,true));
+  var h=el('h2',null,'偷看一下：如果選了別的，四站的故事會是什麼樣子？');
+  var box=el('div','opts');
+  O.forEach(function(x,k){if(k===st.pick)return;
+    var d=el('details');d.appendChild(el('summary',null,'（'+x.kind+'）'+x.name));
+    var ol=el('ol');x.t.forEach(function(t,j){ol.appendChild(el('li',null,'<b>'+STOPS[j]+'：</b>'+t))});d.appendChild(ol);box.appendChild(d)});
+  var b=el('button','btn','看完了，下一步');b.type='button';b.addEventListener('click',function(){go(3)});
+  app.append(c,h,el('p','lead','點一下名字就能打開，看完可以再點一次收起來。'),box,b);
+}
+function again(){
+  var o=O[st.pick];app.innerHTML='';
+  var h=el('h2',null,'如果時光機帶你回到收到紅包的那一天，你還會選「'+o.name+'」嗎？');
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  var list=[['same',null]];O.forEach(function(x,k){if(k!==st.pick)list.push(['change',k])});list.push(['unsure',null]);
+  list.forEach(function(it){
+    var label=it[0]==='same'?AG.same:it[0]==='unsure'?AG.unsure:'會換成「'+O[it[1]].name+'」';
+    var b=el('button','btn alt'+(st.again===it[0]&&st.to===it[1]?' pick':''),label);b.type='button';
+    b.addEventListener('click',function(){st.again=it[0];st.to=it[1];save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');showFb()});
+    g.appendChild(b)});
+  function showFb(){fb.innerHTML='';
+    var msg=st.again==='same'?'你覺得這個選擇很適合你。可以想一想：它在這一年裡，是怎麼陪著你的？':
+            st.again==='unsure'?'還不確定也很正常。每個選擇都有它好的地方，也有它的代價。':
+            '你想換成「'+O[st.to].name+'」。可以想一想：是哪一站的故事，讓你改變了想法？';
+    fb.append(el('p','note',msg),
+      el('p','note warm','有心理學家做過研究：平均來說，「一起去做一件事」的花費，帶來的快樂常常比較長久，因為它會變成回憶、照片和可以一直講的故事，也比較不會拿去跟別人比。不過這只是大多數人的傾向，不是每個人都一樣。東西也可以帶來長久的快樂，例如每天都會用、陪你做喜歡的事的東西。重點是想一想：它會怎麼陪我？'));
+    var nx=el('button','btn','完成');nx.type='button';nx.addEventListener('click',function(){go(4)});fb.appendChild(nx);nx.scrollIntoView({behavior:'smooth',block:'end'})}
+  app.append(el('p','lead','沒有對錯，選你現在心裡的想法。'),h,g,fb);
+  if(st.again)showFb();
+}
+function end(){
+  var o=O[st.pick];app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','我選的是'),el('p','big',o.kind==='物品'?'買東西':'一起去做事'),el('p','lead',o.name),track(-1,true));
+  var t=el('table');
+  var ag=st.again==='same'?AG.same:st.again==='unsure'?AG.unsure:'會換成「'+(st.to!=null?O[st.to].name:'—')+'」';
+  [['四站表情',st.faces.map(fname).join('、')],['1 年後的心情',fname(st.faces[3])],['重來一次',ag]].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,'<b>'+r[1]+'</b>'));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+function render(){
+  if(st.pick==null&&st.step>0)st.step=0;
+  if(st.step>=2&&st.faces.filter(Boolean).length<4){st.step=1;st.stop=st.faces.filter(Boolean).length}
+  if(st.step===4&&!st.again)st.step=3;
+  [intro,travel,peek,again,end][st.step]();
+}
+render();
+})();
+</script>

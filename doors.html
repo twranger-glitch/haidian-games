@@ -1,0 +1,181 @@
+<title>兩扇門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: six rounds, one at a time, each two big doors (sooner-but-less vs one-day-later-but-more). Three reward types each appear twice: a "near" version (today vs tomorrow) and a "far" version (30 vs 31 days). Order is shuffled with crypto and saved. Then a mirror page pairs near and far side by side, then a summary for a show of hands. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --wood:#9C6B3E; --wood2:#B9844F; --woodline:#6E4826; --glow:#FFF4CF;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(21px,3.2vw,29px);font-weight:900;border:0;border-radius:16px;padding:16px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn:focus-visible,.door:focus-visible{outline:4px solid var(--gold);outline-offset:4px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.dots{display:flex;gap:8px;flex-wrap:wrap}
+.dots i{width:18px;height:18px;border-radius:50%;background:var(--line)}
+.dots i.done{background:var(--sea)} .dots i.now{background:var(--gold)}
+
+/* doors */
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:clamp(12px,3vw,28px)}
+.door{position:relative;display:block;width:100%;aspect-ratio:3/4.3;border:0;padding:0;margin:0;cursor:pointer;background:none;font:inherit;color:inherit;perspective:1200px;border-radius:18px 18px 6px 6px}
+.door:disabled{cursor:default}
+.frame{position:absolute;inset:0;border-radius:18px 18px 6px 6px;background:var(--woodline);padding:clamp(7px,1.6vw,12px) clamp(7px,1.6vw,12px) 0}
+.inside{position:relative;width:100%;height:100%;border-radius:12px 12px 0 0;background:radial-gradient(circle at 50% 40%,#FFFBEA 0%,var(--glow) 45%,#F1D98A 100%);display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;overflow:hidden}
+.inside b{font-size:clamp(20px,3vw,28px);font-weight:900;color:var(--good);line-height:1.4}
+.leaf{position:absolute;inset:clamp(7px,1.6vw,12px) clamp(7px,1.6vw,12px) 0;border-radius:12px 12px 0 0;background:linear-gradient(90deg,var(--wood) 0%,var(--wood2) 50%,var(--wood) 100%);transform-origin:left center;transition:transform .8s cubic-bezier(.4,.1,.3,1),box-shadow .8s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,1.4vw,12px);padding:clamp(10px,2.4vw,22px) clamp(8px,2vw,18px);box-shadow:inset 0 0 0 3px rgba(0,0,0,.12);backface-visibility:hidden}
+.door.open .leaf{transform:rotateY(-105deg);box-shadow:inset 0 0 0 3px rgba(0,0,0,.12),18px 0 30px rgba(0,0,0,.25)}
+.door:not(:disabled):hover .leaf{transform:rotateY(-8deg)}
+.plate{background:#FCFBF7;border:3px solid var(--woodline);border-radius:14px;width:100%;padding:clamp(8px,2vw,16px) 6px;display:flex;flex-direction:column;gap:4px}
+.when{font-size:clamp(26px,5vw,46px);font-weight:900;color:var(--rust);line-height:1.2;margin:0}
+.what{font-size:clamp(19px,2.9vw,27px);font-weight:900;line-height:1.4;margin:0;color:var(--ink)}
+.knob{position:absolute;right:9%;top:70%;width:clamp(14px,2.6vw,22px);height:clamp(14px,2.6vw,22px);border-radius:50%;background:var(--gold);box-shadow:0 2px 0 var(--woodline)}
+.panel2{width:80%;flex:1;max-height:28%;border:3px solid rgba(0,0,0,.18);border-radius:8px}
+.tap{font-size:clamp(19px,2.4vw,22px);color:#fff;font-weight:700;margin:0;opacity:.95}
+@media (prefers-reduced-motion:reduce){.leaf{transition:none}}
+
+/* mirror page */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.side{border:3px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:#fff}
+.side .lab{font-size:clamp(19px,2.4vw,22px);font-weight:900;color:var(--sea);margin:0}
+.side .opt{font-size:clamp(19px,2.4vw,22px);color:var(--muted);margin:0;line-height:1.5}
+.side .got{font-size:clamp(20px,2.8vw,26px);font-weight:900;margin:0;line-height:1.45}
+.tag{display:inline-block;font-size:clamp(19px,2.4vw,22px);font-weight:700;border-radius:999px;padding:4px 14px;background:var(--note);color:var(--ink);margin:0;align-self:flex-start}
+.tag.chg{background:#FBF1DC}
+.big{font-size:clamp(56px,11vw,100px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:middle} td.n{text-align:right;font-weight:900;white-space:nowrap}
+@media (max-width:620px){.pair{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='two-doors-v1';
+/* three rewards; each appears as a near version and a far version */
+var R=[
+ {name:'古早味餅乾',story:'你這學期每天都準時交聯絡簿，老師要送你古早味餅乾當獎勵。',one:'1 包古早味餅乾',two:'2 包古早味餅乾'},
+ {name:'集點貼紙',story:'你每天幫忙替班上的小盆栽澆水，老師要送你集點貼紙。',one:'1 張集點貼紙',two:'2 張集點貼紙'},
+ {name:'下課多玩',story:'你們這一組把「海佃溪」的報告做完了，老師要讓你們下課多玩一下。',one:'下課多玩 5 分鐘',two:'下課多玩 10 分鐘'}
+];
+var WHEN={near:['今天','明天'],far:['30 天後','31 天後']};
+/* round ids: r*2 = near, r*2+1 = far */
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
+function okOrder(o){for(var i=1;i<o.length;i++){if((o[i]>>1)===(o[i-1]>>1))return false}return true}
+function makeOrder(){var o;for(var k=0;k<500;k++){o=shuffle([0,1,2,3,4,5]);if(okOrder(o))return o}return [0,2,4,1,3,5]}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(!st||!Array.isArray(st.order)||st.order.length!==6){st={step:'intro',i:0,order:makeOrder(),left:[0,1,2,3,4,5].map(function(){return rnd(2)}),pick:{}};save(st)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function info(id){var r=R[id>>1],far=id&1,w=WHEN[far?'far':'near'];return {r:r,far:far,now:{when:w[0],what:r.one},wait:{when:w[1],what:r.two}}}
+function label(id,k){var x=info(id)[k];return x.when+'拿到 '+x.what}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','接下來有 6 組選擇，一次一組。每一組都有兩扇門：一扇門比較快拿到，但是比較少；另一扇門要多等一天，但是多一倍。'),
+   el('p','lead','想好了，就點你想打開的那一扇門。沒有對錯，每一扇門都可以選，選你心裡真正想要的就好。'));
+  var b=el('button','btn','開始');b.type='button';b.addEventListener('click',function(){st.step='q';st.i=0;save(st);render()});
+  app.append(el('h1',null,'兩扇門'),c,b);
+}
+function doorEl(id,k,picked){
+  var x=info(id)[k];
+  var d=el('button','door');d.type='button';d.setAttribute('aria-label',x.when+'，'+x.what);
+  var f=el('div','frame');f.appendChild(el('div','inside','<b>你打開了<br>這扇門</b>'));
+  var lf=el('div','leaf');
+  var p=el('div','plate');p.append(el('p','when',x.when),el('p','what',x.what));
+  lf.append(el('div','panel2'),p,el('div','panel2'),el('span','knob'));
+  d.append(f,lf);
+  if(picked)d.classList.add('open');
+  return d;
+}
+function question(){
+  var i=st.i,id=st.order[i],q=info(id);
+  app.innerHTML='';
+  var dots=el('div','dots');for(var k=0;k<6;k++)dots.appendChild(el('i',k<i?'done':(k===i?'now':'')));
+  var c=el('div','card');c.append(el('p','lead',q.r.story),el('h2',null,'你想打開哪一扇門？'));
+  var g=el('div','doors');
+  var keys=st.left[i]?['wait','now']:['now','wait'];
+  var picked=st.pick[id];
+  var btns=keys.map(function(k){
+    var d=doorEl(id,k,picked===k);
+    if(picked)d.disabled=true;
+    d.addEventListener('click',function(){
+      if(st.pick[id])return;
+      st.pick[id]=k;save(st);
+      btns.forEach(function(b){b.disabled=true});
+      d.classList.add('open');
+      setTimeout(next,1300);
+    });
+    g.appendChild(d);return d;
+  });
+  app.append(el('p','case','第 '+(i+1)+' 組，共 6 組'),dots,c,g);
+  if(picked){setTimeout(next,600)}
+}
+var moving=false;
+function next(){if(moving)return;moving=true;st.i++;if(st.i>=6){st.step='mirror'}save(st);moving=false;render()}
+function kind(r){var a=st.pick[r*2],b=st.pick[r*2+1];
+  if(a==='now'&&b==='wait')return 'chg';
+  if(a==='wait'&&b==='now')return 'rev';
+  return 'same'}
+function mirror(){
+  app.innerHTML='';
+  app.append(el('h1',null,'照鏡子'),el('p','lead','剛剛的 6 組，其實是 3 對「鏡子題」。每一對的獎品一樣，也都是「只差一天、多一倍」。差別只在：一個離現在很近，一個離現在很遠。'));
+  R.forEach(function(r,ri){
+    var c=el('div','card');c.appendChild(el('h2',null,'第 '+(ri+1)+' 對：'+r.name));
+    var pr=el('div','pair');
+    ['near','far'].forEach(function(v,vi){
+      var id=ri*2+vi,s=el('div','side');var p=st.pick[id];
+      s.append(el('p','lab',vi?'遠的版本':'近的版本'),
+        el('p','opt',label(id,'now')+'<br>或 '+label(id,'wait')),
+        el('p','got','你選了：'+(p?(p==='now'?'比較快的「':'多等一天的「')+info(id)[p].when+'」':'—')));
+      pr.appendChild(s);
+    });
+    var k=kind(ri);
+    var t=el('p','tag'+(k==='chg'?' chg':''),k==='chg'?'近的選「現在」，遠的選「等」':(k==='rev'?'近的選「等」，遠的選「現在」':'近的、遠的選得一樣'));
+    c.append(pr,t);app.appendChild(c);
+  });
+  app.append(el('p','note warm','很多人在「近的」時候會選「現在」，可是到了「遠的」時候，卻願意多等一天。仔細看，兩邊同樣都只差一天、同樣多一倍。只是離現在越近，「現在」這兩個字看起來就越大，這叫做「現時偏誤」。'),
+    el('p','note','兩邊選得一樣，也很正常。選「現在」有它的好處：馬上拿到、不用擔心之後變卦；選「等」也有它的好處：拿到比較多。沒有哪一種比較好，等一下全班一起聊聊。'));
+  var b=el('button','btn','看我的摘要');b.type='button';b.addEventListener('click',function(){st.step='end';save(st);render()});
+  app.appendChild(b);
+}
+function end(){
+  app.innerHTML='';
+  var w=0;for(var id=0;id<6;id++){if(st.pick[id]==='wait')w++}
+  var chg=0,same=0,rev=0;R.forEach(function(r,ri){var k=kind(ri);if(k==='chg')chg++;else if(k==='rev')rev++;else same++});
+  var c=el('div','card');
+  c.append(el('p','lead','6 組裡，你選「等」的有'),el('p','big',w+' 組'));
+  var t=el('table');
+  [['3 對鏡子題裡，「近的選現在、遠的選等」',chg+' 對'],['近的、遠的選得一樣',same+' 對'],['「近的選等、遠的選現在」',rev+' 對']].forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+function render(){
+  if(st.step==='q'){if(st.i>=6){st.step='mirror';save(st);mirror()}else question()}
+  else if(st.step==='mirror')mirror();
+  else if(st.step==='end')end();
+  else intro();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);location.replace(location.pathname+location.search);}});
+render();
+})();
+</script>

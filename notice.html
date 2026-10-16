@@ -1,0 +1,307 @@
+<title>兩支螢光筆</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: part 1 yellow highlighter (30 s, find day + time) → quiz; part 2 blue highlighter (30 s, find place / things to bring / changes) → quiz; part 3 mental math one step at a time, interrupted by two fake group-chat pop-ups; part 4 pick my own two-pass targets; summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --yel:#FFE36A; --blu:#A9D8F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible,input:focus-visible,.ch:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+/* the notice paper */
+.paper{background:#fff;border:3px solid var(--line);border-radius:14px;padding:clamp(14px,3vw,26px);box-shadow:0 4px 0 var(--line)}
+.paper .ttl{font-size:clamp(23px,3.6vw,32px);font-weight:900;text-align:center;margin:0 0 10px}
+.paper p{margin:0 0 6px;font-size:clamp(20px,2.9vw,26px);line-height:1.75}
+.paper p.small{margin-top:22px;font-size:clamp(19px,2.2vw,20px);color:var(--muted)}
+.ch{cursor:pointer;border-radius:6px;padding:2px 1px;-webkit-box-decoration-break:clone;box-decoration-break:clone;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.ch.y{background:var(--yel)}
+.ch.b{background:var(--blu)}
+.ch.y.b{background:linear-gradient(var(--yel) 0 50%,var(--blu) 50% 100%)}
+.ro .ch{cursor:default}
+.pen{display:flex;align-items:center;gap:12px;font-size:clamp(19px,2.7vw,25px);font-weight:900;margin:0}
+.pen i{display:inline-block;width:56px;height:22px;border-radius:6px 14px 14px 6px;flex:none}
+.bar{height:16px;background:var(--line);border-radius:10px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--rust);transition:width .25s linear}
+.timer{font-size:clamp(20px,3vw,26px);font-weight:900;color:var(--rust);margin:0;font-variant-numeric:tabular-nums}
+.sticky{position:sticky;top:0;z-index:2;background:var(--bg);padding-block:8px;display:flex;flex-direction:column;gap:8px}
+.ok{color:var(--good);font-weight:900}
+.no{color:var(--rust);font-weight:900}
+/* mental math */
+.board{background:#fff;border:6px solid #B9C2BC;border-radius:18px;min-height:clamp(190px,32vw,280px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px}
+.board .stepn{font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:700;margin:0}
+.board .big{font-size:clamp(64px,13vw,120px);font-weight:900;line-height:1.1;margin:0;color:var(--sea);font-variant-numeric:tabular-nums}
+.pop{position:fixed;inset:0;background:rgba(31,42,46,.45);display:flex;align-items:flex-start;justify-content:center;padding:18vh 16px 16px;z-index:9}
+.msg{background:#fff;border-radius:20px;max-width:520px;width:100%;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:10px}
+.msg .from{font-size:clamp(19px,2.4vw,21px);color:var(--muted);font-weight:700;margin:0}
+.msg .txt{font-size:clamp(22px,3.2vw,28px);font-weight:900;margin:0;line-height:1.5}
+.ans{font:inherit;font-size:clamp(40px,8vw,64px);font-weight:900;width:min(260px,100%);text-align:center;border:4px solid var(--line);border-radius:16px;padding:6px 10px;color:var(--ink);background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chips .btn.alt{font-size:clamp(19px,2.6vw,23px);padding:10px 16px}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;width:42%}
+@media (max-width:520px){td.k{width:46%}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='two-highlighters-v1';
+var READ_SEC=30, STEP_MS=2000;
+/* the notice: each line is split into tappable pieces */
+var N=[
+ ['親愛的六年級同學：'],
+ ['這學期的校外教學，','我們要到四草綠色隧道搭竹筏，','再去台江國家公園遊客中心看展覽。'],
+ ['出發日期是','11 月 20 日（星期五）。'],
+ ['當天','早上 7 點 40 分，','請到學校操場司令台前集合。'],
+ ['8 點整，','遊覽車從學校側門出發。'],
+ ['中午在遊客中心','吃學校訂好的便當。'],
+ ['要帶：','水壺、帽子、雨衣。'],
+ ['下午 3 點半','回到學校，','照平常的方式放學。'],
+ ['有問題請問導師。']
+];
+var SMALL=['※ 如果下雨，','集合地點改到活動中心。'];
+var Q_DAY={q:'校外教學是哪一天？',o:['11 月 12 日（星期四）','11 月 20 日（星期五）','11 月 2 日（星期一）','10 月 20 日（星期二）'],a:1};
+var Q_TIME={q:'早上幾點要集合？',o:['早上 8 點整','早上 7 點半','早上 7 點 40 分','下午 3 點半'],a:2};
+var Q_RAIN={q:'如果下雨，要去哪裡集合？',o:['學校操場司令台前','學校側門','活動中心','通知沒寫，或是我不記得'],a:2};
+var Q_BRING={q:'要帶什麼？',o:['水壺、便當、雨傘','水壺、帽子、雨衣','帽子、零用錢、外套','通知沒寫，或是我不記得'],a:1};
+var MSGS=[['六年三班好朋友（群組）','阿哲：欸你看這個影片，超好笑的！'],['六年三班好朋友（群組）','小琪：明天體育課要不要穿運動服？']];
+var FEEL={remember:['記得','你的小白板撐住了。不過也有很多同學會覺得被打斷後很亂，等一下聽聽大家怎麼說。'],
+ forgot:['忘了','這很常見。腦中的小白板一次只能放幾樣東西，訊息一跳出來，剛剛算到的數字就被擠掉了。'],
+ messy:['有點亂','這種「好像記得、又好像不確定」的感覺，就是小白板被打斷時常見的樣子：注意力被拉走，回來時要花力氣把數字找回來。']};
+var GOALS=['日期和時間','地點','要帶的東西','有沒有改過','要交的東西（例如回條）'];
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){return {step:0,y:[],b:[],end1:0,end2:0,q1:{},q2:{},math:null,mAns:null,feel:null,g1:[],g2:[]}}
+var st=load()||fresh();
+['y','b','g1','g2'].forEach(function(k){if(!Array.isArray(st[k]))st[k]=[]});if(!st.q1)st.q1={};if(!st.q2)st.q2={};
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+var timers=[];function clearT(){timers.forEach(function(t){clearTimeout(t);clearInterval(t)});timers=[]}
+function go(s){clearT();st.step=s;save(st);render();window.scrollTo(0,0)}
+
+/* ---------- the notice ---------- */
+function notice(mode){ // mode: 'y' | 'b' | null (read only)
+  var p=el('div','paper'+(mode?'':' ro'));p.appendChild(el('p','ttl','六年級四草校外教學通知'));
+  var id=0;
+  function piece(txt,parent){
+    var k=id++;var s=el('span','ch',txt);
+    if(st.y.indexOf(k)>=0)s.classList.add('y');if(st.b.indexOf(k)>=0)s.classList.add('b');
+    if(mode){s.tabIndex=0;s.setAttribute('role','button');
+      var tog=function(){var arr=st[mode],i=arr.indexOf(k);if(i>=0)arr.splice(i,1);else arr.push(k);s.classList.toggle(mode,i<0);save(st)};
+      s.addEventListener('click',tog);s.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();tog()}});}
+    parent.appendChild(s);
+  }
+  N.forEach(function(line){var q=el('p');line.forEach(function(t){piece(t,q)});p.appendChild(q)});
+  var sm=el('p','small');SMALL.forEach(function(t){piece(t,sm)});p.appendChild(sm);
+  return p;
+}
+function readPage(mode){
+  var endKey=mode==='y'?'end1':'end2';
+  if(!st[endKey]){st[endKey]=Date.now()+READ_SEC*1000;save(st)}
+  var head=el('div','sticky');
+  var pen=el('p','pen');var sw=el('i');sw.style.background=mode==='y'?'var(--yel)':'var(--blu)';
+  pen.append(sw,el('span',null,mode==='y'?'黃色螢光筆：找「哪一天、幾點集合」':'藍色螢光筆：找「地點、要帶什麼、有沒有改過」'));
+  var tm=el('p','timer');var bar=el('div','bar');var fill=el('span');bar.appendChild(fill);
+  head.append(pen,tm,bar);
+  app.append(el('p','case',mode==='y'?'第一部分・第 1 遍':'第二部分・第 2 遍'),head,
+    el('p','lead','點一下字句就會塗上顏色，再點一次可以擦掉。'+(mode==='b'?'黃色是你第 1 遍畫的。':'')),notice(mode));
+  function tick(){
+    var left=Math.max(0,st[endKey]-Date.now());
+    tm.textContent='通知還會出現 '+Math.ceil(left/1000)+' 秒';fill.style.width=(left/(READ_SEC*10))+'%';
+    if(left<=0){go(mode==='y'?2:4)}
+  }
+  tick();timers.push(setInterval(tick,250));
+}
+
+/* ---------- questions ---------- */
+function ask(Q,store,key,after){
+  var c=el('div','card');c.appendChild(el('h2',null,Q.q));
+  var g=el('div','opts');
+  Q.o.forEach(function(t,i){var b=btn(t,'btn alt'+(store[key]===i?' pick':''),function(){
+    store[key]=i;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');after()});g.appendChild(b)});
+  c.appendChild(g);return c;
+}
+function quiz1(){
+  app.append(el('p','case','第一部分・通知收起來了'),el('h2',null,'不能回頭看，憑記憶回答這三題。'));
+  var nx=btn('看看我答得怎樣','btn',function(){go(21)});
+  function upd(){nx.disabled=!(st.q1.day!=null&&st.q1.time!=null&&st.q1.rain!=null)}
+  app.append(ask(Q_DAY,st.q1,'day',upd),ask(Q_TIME,st.q1,'time',upd),ask(Q_RAIN,st.q1,'rain',upd),nx);upd();
+}
+function mark(ok){return ok?'<span class="ok">答對了</span>':'<span class="no">不太對</span>'}
+function quiz1fb(){
+  var d=st.q1.day===Q_DAY.a,t=st.q1.time===Q_TIME.a;
+  var c=el('div','card');
+  c.append(el('p','note','哪一天？'+mark(d)+'　答案是「'+Q_DAY.o[Q_DAY.a]+'」。'),
+    el('p','note','幾點集合？'+mark(t)+'　答案是「'+Q_TIME.o[Q_TIME.a]+'」。'),
+    el('p','note warm','下雨時去哪裡集合？你選了「'+Q_RAIN.o[st.q1.rain]+'」。這一題先保密，等一下第 2 遍再看看。'));
+  app.append(el('p','case','第一部分・對答案'),c,
+    el('p','lead','第 1 遍，手電筒照在「哪一天、幾點」。現在換一支藍色螢光筆，再讀一次同一張通知，這次要找的東西不一樣。'),
+    btn('拿起藍色螢光筆','btn',function(){go(3)}));
+}
+function quiz2(){
+  app.append(el('p','case','第二部分・通知又收起來了'),el('h2',null,'這次也憑記憶回答。'));
+  var nx=btn('看看我答得怎樣','btn',function(){go(41)});
+  function upd(){nx.disabled=!(st.q2.rain!=null&&st.q2.bring!=null)}
+  app.append(ask(Q_RAIN,st.q2,'rain',upd),ask(Q_BRING,st.q2,'bring',upd),nx);upd();
+}
+function quiz2fb(){
+  var r1=st.q1.rain===Q_RAIN.a,r2=st.q2.rain===Q_RAIN.a,bo=st.q2.bring===Q_BRING.a;
+  var c=el('div','card');
+  c.append(el('p','note','下雨時去哪裡集合？答案是「活動中心」，寫在通知最下面的小字裡。<br>第 1 遍你選「'+Q_RAIN.o[st.q1.rain]+'」（'+mark(r1)+'），第 2 遍你選「'+Q_RAIN.o[st.q2.rain]+'」（'+mark(r2)+'）。'),
+    el('p','note','要帶什麼？'+mark(bo)+'　答案是「'+Q_BRING.o[Q_BRING.a]+'」。'));
+  var msg;
+  if(!r1&&r2)msg='你第 2 遍才發現「下雨要改地點」。小字一直都在通知上，第 1 遍你的眼睛很可能也掃過它，只是手電筒照在日期和時間，大腦沒有注意到。';
+  else if(r1&&r2)msg='你兩遍都注意到了小字。想一想：第 1 遍明明在找日期和時間，你是怎麼注意到它的？等一下可以分享給大家。';
+  else if(r1&&!r2)msg='第 1 遍你答對了，第 2 遍卻換了答案。讀太多遍、資訊太多時，記憶也可能被新的東西蓋過去，這也很常見。';
+  else msg='兩遍都沒有抓到這句小字。它寫在最下面、字比較小，很多人第一眼都會漏掉。真的要出門前，可以專門找一遍「有沒有改過」。';
+  app.append(el('p','case','第二部分・對答案'),c,el('p','note warm',msg),
+    el('p','lead','下面是你畫過的通知：黃色是第 1 遍，藍色是第 2 遍。'),notice(null),
+    btn('下一關：腦中的小白板','btn',function(){go(5)}));
+}
+
+/* ---------- mental math with interruptions ---------- */
+function makeMath(){
+  for(var tries=0;tries<500;tries++){
+    var s=5+rnd(14),cur=s,ops=[],ok=true,plus=0,minus=0;
+    for(var i=0;i<4;i++){var sign=rnd(2)?1:-1,m=2+rnd(8);cur+=sign*m;if(cur<1||cur>30){ok=false;break}ops.push(sign*m);if(sign>0)plus++;else minus++}
+    if(ok&&plus&&minus&&cur!==s)return {start:s,ops:ops,ans:cur};
+  }
+  return {start:13,ops:[8,-6,5,-3],ans:17};
+}
+function opTxt(v){return (v>0?'＋ ':'－ ')+Math.abs(v)}
+function mathIntro(){
+  if(!st.math){st.math=makeMath();save(st)}
+  var c=el('div','card');
+  c.append(el('p','lead','接下來，螢幕上一次只會出現一步，每 2 秒換一步：先出現一個數字，再出現「＋幾」或「－幾」。'),
+    el('p','lead','請把算到的數字寫在腦中的小白板上，不能用紙筆。中途可能會跳出訊息，按掉就能繼續。'));
+  app.append(el('p','case','第三部分・小白板被打斷'),el('h2',null,'在腦中心算，算到最後是多少？'),c,btn('準備好了，開始','btn',function(){go(6)}));
+}
+function mathRun(){
+  var M=st.math;
+  var seq=[{t:'從這個數字開始',v:String(M.start)}];
+  M.ops.forEach(function(v,i){if(i===2)seq.push({pop:0});if(i===3)seq.push({pop:1});seq.push({t:'第 '+(i+1)+' 步',v:opTxt(v)})});
+  var bd=el('div','board');var sn=el('p','stepn');var bg=el('p','big');bd.append(sn,bg);
+  app.append(el('p','case','第三部分・在腦中算'),bd,el('p','lead','只記在腦中，不要用手指或紙筆喔。'));
+  var k=0;
+  function next(){
+    if(k>=seq.length){go(7);return}
+    var it=seq[k++];
+    if(it.pop!=null){
+      sn.textContent='';bg.textContent='';
+      var ov=el('div','pop');var m=el('div','msg');
+      m.append(el('p','from','新訊息・'+MSGS[it.pop][0]),el('p','txt',MSGS[it.pop][1]),btn('按掉通知','btn',function(){ov.remove();timers.push(setTimeout(next,300))}));
+      ov.appendChild(m);document.body.appendChild(ov);m.querySelector('button').focus();return;
+    }
+    sn.textContent=it.t;bg.textContent=it.v;timers.push(setTimeout(next,STEP_MS));
+  }
+  next();
+}
+function mathAsk(){
+  var c=el('div','card');c.appendChild(el('h2',null,'算到最後，答案是多少？'));
+  var inp=document.createElement('input');inp.type='number';inp.inputMode='numeric';inp.className='ans';inp.min=0;inp.max=99;inp.setAttribute('aria-label','心算答案');
+  if(st.mAns!=null&&st.mAns!=='?')inp.value=st.mAns;
+  var row=el('div','chips');
+  var dk=btn('我不知道','btn alt'+(st.mAns==='?'?' pick':''),function(){st.mAns='?';inp.value='';dk.classList.add('pick');save(st);upd()});
+  inp.addEventListener('input',function(){st.mAns=inp.value===''?null:inp.value;dk.classList.remove('pick');save(st);upd()});
+  row.append(inp,dk);c.appendChild(row);
+  var c2=el('div','card');c2.appendChild(el('h2',null,'被訊息打斷的時候，你還記得算到哪裡嗎？'));
+  var g=el('div','opts');
+  Object.keys(FEEL).forEach(function(k){var b=btn(FEEL[k][0],'btn alt'+(st.feel===k?' pick':''),function(){st.feel=k;save(st);
+    Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');upd()});g.appendChild(b)});
+  c2.append(el('p','lead','沒有對錯，照你剛剛的感覺選。'),g);
+  var nx=btn('對答案','btn',function(){go(71)});
+  function upd(){nx.disabled=!(st.mAns!=null&&st.feel)}
+  app.append(el('p','case','第三部分・寫下答案'),c,c2,nx);upd();
+}
+function mathFb(){
+  var M=st.math,cur=M.start,lines=[];
+  M.ops.forEach(function(v,i){var n=cur+v;lines.push(cur+' '+opTxt(v)+' ＝ '+n+(i===1||i===2?'　<span style="color:var(--rust);font-weight:700">← 這裡跳出訊息</span>':''));cur=n});
+  var right=st.mAns!=='?'&&Number(st.mAns)===M.ans;
+  var c=el('div','card');
+  c.append(el('p','note',(st.mAns==='?'?'你選了「我不知道」。':'你寫的是 '+st.mAns+'，'+mark(right)+'。')+'正確答案是 <b>'+M.ans+'</b>。'),
+    el('p','note',lines.join('<br>')),
+    el('p','note warm','你說被打斷時「'+FEEL[st.feel][0]+'」。'+FEEL[st.feel][1]));
+  app.append(el('p','case','第三部分・對答案'),c,
+    el('p','lead','讀通知也一樣：讀到一半被訊息打斷，回來時很容易忘了剛剛讀到哪裡、看到了什麼。'),
+    btn('最後一步：我的兩遍計畫','btn',function(){go(8)}));
+}
+
+/* ---------- my two-pass plan ---------- */
+function goals(){
+  function group(title,key){
+    var c=el('div','card');c.appendChild(el('h2',null,title));
+    var g=el('div','chips');
+    GOALS.forEach(function(t){var b=btn(t,'btn alt'+(st[key].indexOf(t)>=0?' pick':''),function(){
+      var i=st[key].indexOf(t);if(i>=0)st[key].splice(i,1);else st[key].push(t);b.classList.toggle('pick',i<0);b.setAttribute('aria-pressed',i<0);save(st);upd()});
+      b.setAttribute('aria-pressed',st[key].indexOf(t)>=0);g.appendChild(b)});
+    c.appendChild(g);return c;
+  }
+  var fb=el('p','note');
+  var nx=btn('完成','btn',function(){go(9)});
+  function upd(){
+    nx.disabled=!(st.g1.length&&st.g2.length);
+    var same=st.g1.length&&st.g1.length===st.g2.length&&st.g1.every(function(x){return st.g2.indexOf(x)>=0});
+    if(!st.g1.length||!st.g2.length){fb.textContent='兩遍都至少選一個。可以選很多個，沒有對錯。'}
+    else if(same){fb.textContent='你兩遍選的一模一樣。這樣第 2 遍比較像把同一行再讀一次；換個目標，手電筒才會照到新的地方。想改也可以，不改也可以。'}
+    else{fb.textContent='第 1 遍和第 2 遍的目標不一樣，手電筒會照到不同的地方。'}
+  }
+  app.append(el('p','case','第四部分・我的兩遍計畫'),el('h2',null,'下次讀重要通知，你打算怎麼讀？'),
+    group('第 1 遍，我先找……','g1'),group('第 2 遍，我改找……','g2'),fb,nx);upd();
+}
+
+/* ---------- intro & end ---------- */
+function intro(){
+  var c=el('div','card');
+  c.append(el('p','lead','老師發了一張校外教學通知。你手上有兩支螢光筆：'),
+    el('p','pen','<i style="background:var(--yel)"></i><span>黃色：第 1 遍，找「哪一天、幾點集合」</span>'),
+    el('p','pen','<i style="background:var(--blu)"></i><span>藍色：第 2 遍，找「地點、要帶什麼、有沒有改過」</span>'),
+    el('p','lead','每一遍只有 30 秒，時間到通知就會收起來。最後還有一個「腦中小白板」的心算挑戰。'));
+  app.append(el('h1',null,'兩支螢光筆'),c,btn('拿起黃色螢光筆','btn',function(){go(1)}));
+}
+function end(){
+  var M=st.math||{ans:0};
+  var r1=st.q1.rain===Q_RAIN.a,r2=st.q2.rain===Q_RAIN.a,mr=st.mAns!=='?'&&Number(st.mAns)===M.ans;
+  var rows=[
+    ['第 1 遍：下雨集合地點',r1?'答對':'沒答對'],
+    ['第 2 遍：下雨集合地點',r2?'答對':'沒答對'],
+    ['心算答案',mr?'答對':'沒答對'],
+    ['被訊息打斷時',st.feel?FEEL[st.feel][0]:'—'],
+    ['第 1 遍我先找',st.g1.join('、')||'—'],
+    ['第 2 遍我改找',st.g2.join('、')||'—']
+  ];
+  var t=el('table');rows.forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,'<b>'+r[1]+'</b>'));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+var VIEWS={0:intro,1:function(){readPage('y')},2:quiz1,21:quiz1fb,3:function(){readPage('b')},4:quiz2,41:quiz2fb,5:mathIntro,6:mathRun,7:mathAsk,71:mathFb,8:goals,9:end};
+function render(){app.innerHTML='';document.querySelectorAll('.pop').forEach(function(x){x.remove()});(VIEWS[st.step]||intro)()}
+render();
+})();
+</script>

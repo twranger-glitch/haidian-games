@@ -1,0 +1,324 @@
+<title>交換連連看</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: class flea market, no money. Four rounds of classmates standing in a ring, each card "I have / I want". Drag (or tap-tap) an arrow from one classmate to another = the first gives their item to the second; it sticks only if the second wants it. Round 4 cannot be closed: a button "I think it can't be arranged" (hint after 3 minutes) reveals the class-ticket idea with a small animation. Then "which round was hardest?" and a summary for hand-raising. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.opts .btn.alt{text-align:left}
+.btn.alt.glow{border-color:var(--gold);background:#FBF1DC}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.note.ok{background:#E3F1E7}
+.stat{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--muted);margin:0}
+.stat b{color:var(--good);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:clamp(17px,2.4vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+
+/* the ring board */
+.board{position:relative;width:100%;height:clamp(420px,calc(100vh - 250px),540px);height:clamp(420px,calc(100svh - 250px),540px);background:#F5F6F1;border:3px dashed var(--line);border-radius:22px;touch-action:pan-y}
+.board svg.lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.p{--nw:186px;position:absolute;width:var(--nw);transform:translate(-50%,-50%);background:var(--card);border:3px solid var(--line);border-radius:18px;padding:6px 8px 8px;
+   display:flex;flex-direction:column;gap:3px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;-webkit-touch-callout:none}
+.p .who{display:flex;align-items:center;gap:6px;font-size:clamp(20px,2.5vw,23px);font-weight:900;line-height:1.2}
+.p .who svg{width:42px;height:42px;flex:none}
+.p .r{display:flex;align-items:center;gap:6px;font-size:19px;font-weight:700;line-height:1.3}
+.p .tag{flex:none;font-size:15px;font-weight:900;border-radius:8px;padding:1px 6px;background:var(--note);color:var(--sea)}
+.p .r.w .tag{background:#FBF1DC;color:var(--rust)}
+.p .r.gone b{text-decoration:line-through;color:var(--muted)}
+.p .r.gone .tag{background:#E4E6E1;color:var(--muted)}
+.p .r.got .tag{background:var(--good);color:#fff}
+.p.sel{border-color:var(--gold);box-shadow:0 0 0 4px #F2DFAF}
+.p.happy{border-color:var(--good)}
+.p.no{animation:shake .35s}
+@keyframes shake{25%{transform:translate(calc(-50% - 6px),-50%)}75%{transform:translate(calc(-50% + 6px),-50%)}}
+@media (max-width:620px){
+  .board{height:clamp(560px,calc(100vh - 250px),640px);height:clamp(560px,calc(100svh - 250px),640px)}
+  .wrap.play{gap:12px;padding-block:16px 28px}
+  .wrap{padding-inline:16px}
+  .p{--nw:156px;padding:5px 6px 7px}
+  .p .tag{font-size:14px;padding:1px 4px}
+  .p .r{gap:4px}
+  .p .who svg{width:36px;height:36px}
+}
+/* reveal animation */
+svg.anim{width:100%;height:auto;max-height:300px}
+.mv1,.mv2{animation-duration:3.2s;animation-fill-mode:both;animation-timing-function:ease-in-out}
+.go .mv1{animation-name:m1} .go .mv2{animation-name:m2}
+@keyframes m1{0%,15%{transform:translate(0,0)}55%,100%{transform:translate(330px,0)}}
+@keyframes m2{0%,45%{transform:translate(0,0);opacity:0}50%{opacity:1}90%,100%{transform:translate(-330px,0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.mv1,.mv2{animation-duration:.01s}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='cycle-v1';
+/* each level: people [name, has, wants, shirt color, hair style] */
+var LV=[
+ {p:[['小安','故事書','足球','#5B8DB8',0],['小哲','足球','色鉛筆','#C9733E',1],['小葳','色鉛筆','故事書','#7FA65A',2]]},
+ {p:[['品君','跳繩','溜溜球','#C76A8A',2],['宥翔','拼圖','跳繩','#5B8DB8',1],['子晴','彩色筆','拼圖','#7FA65A',2],['柏諺','溜溜球','彩色筆','#C9733E',0]]},
+ {p:[['承恩','桌遊','扭蛋','#5B8DB8',0],['語彤','扭蛋','貼紙本','#C76A8A',2],['冠宇','貼紙本','桌遊','#7FA65A',1],['心妤','魔術方塊','鑰匙圈','#B7862B',2],['家豪','鑰匙圈','魔術方塊','#8A6CB0',0]]},
+ {p:[['小芸','恐龍模型','漫畫第12集','#C76A8A',2],['育晨','水彩','恐龍模型','#5B8DB8',1],['品妍','跳棋','水彩','#7FA65A',2],['俊宏','風箏','跳棋','#C9733E',0],['怡君','漫畫第3集','風箏','#8A6CB0',2]]}
+];
+var HINT=180; /* seconds before the hint in round 4 */
+var POS={wide:{3:[[.5,.2],[.78,.76],[.22,.76]],4:[[.22,.22],[.78,.22],[.78,.78],[.22,.78]],5:[[.5,.15],[.84,.43],[.7,.84],[.3,.84],[.16,.43]]},
+         narrow:{3:[[.5,.17],[.775,.72],[.225,.72]],4:[[.225,.2],[.775,.2],[.775,.8],[.225,.8]],5:[[.5,.12],[.775,.42],[.775,.86],[.225,.86],[.225,.42]]}};
+
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:0,lv:0,seat:[],links:[[],[],[],[]],err:[0,0,0,0],t0:[],sec:[],cant:[0,0,0],give:null,hint:false,hard:null};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function shuffle(n){var a=[];for(var i=0;i<n;i++)a.push(i);for(var j=n-1;j>0;j--){var k=rnd(j+1),t=a[j];a[j]=a[k];a[k]=t}return a}
+function now(){return Date.now()}
+function secs(lv){return Math.max(0,Math.round((now()-st.t0[lv])/1000))}
+
+function fig(color,hair){
+  var h=['<path d="M8 19 Q21 2 34 19 Q31 11 21 10 Q11 11 8 19Z" fill="#2B2118"/>',
+         '<path d="M8 20 Q9 5 21 6 Q33 5 34 20 L31 14 L26 16 L21 12 L16 16 L11 14Z" fill="#2B2118"/>',
+         '<path d="M7 30 Q4 6 21 6 Q38 6 35 30 L32 30 Q33 14 21 13 Q9 14 10 30Z" fill="#2B2118"/>'][hair];
+  return '<svg viewBox="0 0 42 42" aria-hidden="true"><path d="M5 42 Q5 30 21 30 Q37 30 37 42Z" fill="'+color+'"/><circle cx="21" cy="19" r="11" fill="#F2CFAE"/>'+h+'<circle cx="17" cy="20" r="1.6" fill="#1F2A2E"/><circle cx="25" cy="20" r="1.6" fill="#1F2A2E"/><path d="M17.5 24.5 Q21 27 24.5 24.5" stroke="#1F2A2E" stroke-width="1.4" fill="none"/></svg>';
+}
+
+function intro(){
+  app.classList.remove('play');app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','海佃國小五年級辦了一場班級跳蚤市場。大家把自己用不到的東西帶來學校，想換一樣自己想要的東西。'),
+           el('p','lead','不過今天有一個規定：<b style="color:var(--ink)">不可以用錢，只能拿東西換東西。</b>'));
+  var c2=el('div','card');
+  c2.append(el('h2',null,'怎麼玩？'),
+    el('p','lead','① 每位同學的卡片上寫著「有」什麼東西、「想要」什麼東西。'),
+    el('p','lead','② 從一位同學身上<b style="color:var(--ink)">拖一條線</b>到另一位同學，意思是「前面那位，把他的東西送給後面那位」。不方便拖的話，也可以先點第一位、再點第二位。'),
+    el('p','lead','③ 只有後面那位真的想要這樣東西，線才會連上。每個人都拿到想要的東西，就過關。一共 4 關。'));
+  var b=el('button','btn','開始第 1 關');b.type='button';b.addEventListener('click',function(){startLv(0)});
+  app.append(el('h1',null,'交換連連看'),c,c2,b);
+}
+function startLv(i){
+  st.step=1;st.lv=i;if(!st.seat[i])st.seat[i]=shuffle(LV[i].p.length);if(!st.t0[i])st.t0[i]=now();save(st);level();
+}
+
+/* ---------- a round ---------- */
+var timer=null;
+function level(){
+  if(timer){clearInterval(timer);timer=null}
+  var lv=st.lv,P=LV[lv].p,n=P.length,links=st.links[lv],seat=st.seat[lv];
+  var done=st.sec[lv]!=null&&lv<3;
+  app.innerHTML='';
+  var giver=function(a){for(var k=0;k<links.length;k++)if(links[k][0]===a)return links[k][1];return -1};
+  var gotFrom=function(b){for(var k=0;k<links.length;k++)if(links[k][1]===b)return links[k][0];return -1};
+  var cs=el('p','case','第 '+(lv+1)+' 關，共 4 關・'+n+' 位同學');
+  var stat=el('p','stat');var sHappy=el('span');var sErr=el('span');stat.append(sHappy,sErr);
+  var msg=el('p','note',done?'':'讓每一位同學都拿到想要的東西！從一位同學拖一條線到另一位同學（也可以先點一位、再點另一位）。');
+  var board=el('div','board');
+  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('class','lines');svg.setAttribute('aria-hidden','true');
+  svg.innerHTML='<defs><marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#2F7D4F"/></marker><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#A8441A"/></marker><marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#205E86"/></marker></defs><g class="fixed"></g><g class="temp"></g>';
+  board.appendChild(svg);
+  var nodes=[];
+  P.forEach(function(q,i){
+    var d=el('div','p');d.dataset.i=i;d.setAttribute('role','button');d.tabIndex=0;
+    d.setAttribute('aria-label',q[0]+'，有'+q[1]+'，想要'+q[2]);
+    d.innerHTML='<div class="who">'+fig(q[3],q[4])+'<span>'+q[0]+'</span></div><div class="r h"><span class="tag">有</span><b>'+q[1]+'</b></div><div class="r w"><span class="tag">想要</span><b>'+q[2]+'</b></div>';
+    board.appendChild(d);nodes.push(d);
+  });
+  var cant=el('button','btn alt','我覺得排不起來');cant.type='button';
+  var next=el('div','opts');
+  app.classList.add('play');app.append(cs,stat,msg,board,next);
+  if(!done)app.appendChild(cant);
+  function place(){
+    var key=window.innerWidth<=620?'narrow':'wide';
+    seat.forEach(function(who,s){var xy=POS[key][n][s];nodes[who].style.left=(xy[0]*100)+'%';nodes[who].style.top=(xy[1]*100)+'%'});
+  }
+  function refresh(){
+    var happy=0;
+    nodes.forEach(function(d,i){
+      var g=giver(i)>=0,r=gotFrom(i)>=0;if(r)happy++;
+      d.classList.toggle('happy',r);
+      var rh=d.querySelector('.r.h'),rw=d.querySelector('.r.w');
+      rh.classList.toggle('gone',g);rh.querySelector('.tag').textContent=g?'送出':'有';
+      rw.classList.toggle('got',r);rw.querySelector('.tag').textContent=r?'拿到':'想要';
+    });
+    sHappy.innerHTML='拿到想要東西的同學：<b>'+happy+'／'+n+'</b>';
+    sErr.innerHTML='連錯：<b style="color:var(--rust)">'+st.err[lv]+'</b> 次';
+    drawFixed();
+    return happy;
+  }
+  function center(d){var br=board.getBoundingClientRect(),r=d.getBoundingClientRect();return {x:r.left-br.left+r.width/2,y:r.top-br.top+r.height/2,hw:r.width/2+4,hh:r.height/2+4}}
+  function edge(c,tx,ty){var dx=tx-c.x,dy=ty-c.y;if(!dx&&!dy)return {x:c.x,y:c.y};var s=Math.min(dx?c.hw/Math.abs(dx):1e9,dy?c.hh/Math.abs(dy):1e9);if(s>1)s=1;return {x:c.x+dx*s,y:c.y+dy*s}}
+  function seg(a,b){var A=center(nodes[a]),B=center(nodes[b]);var p=edge(A,B.x,B.y),q=edge(B,A.x,A.y);return [p,q]}
+  function drawFixed(){
+    var g=svg.querySelector('.fixed');var h='';
+    links.forEach(function(l){var s=seg(l[0],l[1]),mx=s[0].x+(s[1].x-s[0].x)*.4,my=s[0].y+(s[1].y-s[0].y)*.4,t=P[l[0]][1],w=t.length*16+16,len=Math.hypot(s[1].x-s[0].x,s[1].y-s[0].y);
+      h+='<line x1="'+s[0].x+'" y1="'+s[0].y+'" x2="'+s[1].x+'" y2="'+s[1].y+'" stroke="#2F7D4F" stroke-width="6" stroke-linecap="round" marker-end="url(#ag)"/>';
+      if(len>w+30)h+=
+         '<rect x="'+(mx-w/2)+'" y="'+(my-15)+'" width="'+w+'" height="30" rx="10" fill="#E3F1E7" stroke="#2F7D4F" stroke-width="2"/><text x="'+mx+'" y="'+(my+6)+'" text-anchor="middle" font-size="16" font-weight="700" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">'+t+'</text>'});
+    g.innerHTML=h;
+  }
+  function tempLine(a,x,y,color){
+    var g=svg.querySelector('.temp');var A=center(nodes[a]),p=edge(A,x,y);
+    g.innerHTML='<line x1="'+p.x+'" y1="'+p.y+'" x2="'+x+'" y2="'+y+'" stroke="'+color+'" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+(color==='#205E86'?'10 8':'none')+'" marker-end="url(#'+(color==='#205E86'?'ab':'ar')+')"/>';
+  }
+  function bounce(a,x,y){
+    var A=center(nodes[a]),p=edge(A,x,y),t0=performance.now();
+    (function f(t){var k=Math.min(1,(t-t0)/380),e=1-k;var cx=p.x+(x-p.x)*e,cy=p.y+(y-p.y)*e;
+      if(k<1){tempLine(a,cx,cy,'#A8441A');requestAnimationFrame(f)}else svg.querySelector('.temp').innerHTML=''})(t0);
+  }
+  function say(t,cls){msg.className='note'+(cls?' '+cls:'');msg.innerHTML=t}
+  function finish(){
+    if(timer){clearInterval(timer);timer=null}
+    st.sec[lv]=secs(lv);save(st);
+    var extra=lv===2?'這一關其實有兩個圈：一個 3 個人的圈，加上一對互相交換的同學。':'';
+    say('大家都拿到想要的東西了！這一關你連錯 '+st.err[lv]+' 次，花了 '+st.sec[lv]+' 秒。'+extra,'ok');
+    if(cant.parentNode)cant.remove();
+    showNext();
+  }
+  function showNext(){
+    next.innerHTML='';var b=el('button','btn','前往第 '+(lv+2)+' 關');b.type='button';
+    b.addEventListener('click',function(){startLv(lv+1)});next.appendChild(b);
+  }
+  function attempt(a,b,x,y){
+    var A=P[a],B=P[b];
+    var gb=giver(a);
+    if(gb>=0){say(A[0]+'的'+A[1]+'已經送給'+P[gb][0]+'了，每個人只送出一樣東西。','warm');svg.querySelector('.temp').innerHTML='';return}
+    if(gotFrom(b)>=0){say(B[0]+'已經拿到想要的'+B[2]+'了，不需要別的東西。','warm');svg.querySelector('.temp').innerHTML='';return}
+    if(B[2]!==A[1]){
+      st.err[lv]++;save(st);
+      var c=center(nodes[b]);bounce(a,x!=null?x:c.x,y!=null?y:c.y);
+      nodes[b].classList.remove('no');void nodes[b].offsetWidth;nodes[b].classList.add('no');
+      say(B[0]+'說：「我不想要'+A[1]+'。」','warm');refresh();return;
+    }
+    links.push([a,b]);save(st);svg.querySelector('.temp').innerHTML='';
+    var happy=refresh();
+    if(happy===n){finish();return}
+    say(A[0]+'把'+A[1]+'送給'+B[0]+'，'+B[0]+'拿到想要的東西了！可是'+A[0]+'自己想要的'+A[2]+'，'+(gotFrom(a)>=0?'已經拿到了。':'還沒拿到喔。'));
+  }
+  /* pointer: drag or tap-tap */
+  var drag=null,sel=-1;
+  function setSel(i){sel=i;nodes.forEach(function(d,k){d.classList.toggle('sel',k===i)})}
+  function local(e){var br=board.getBoundingClientRect();return {x:e.clientX-br.left,y:e.clientY-br.top}}
+  board.addEventListener('pointerdown',function(e){
+    if(done)return;var d=e.target.closest('.p');if(!d)return;
+    e.preventDefault();drag={from:+d.dataset.i,sx:e.clientX,sy:e.clientY,moved:false,id:e.pointerId};
+    try{board.setPointerCapture(e.pointerId)}catch(_){}
+  });
+  board.addEventListener('pointermove',function(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    if(!drag.moved&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)>12){drag.moved=true;setSel(-1)}
+    if(drag.moved){var p=local(e);tempLine(drag.from,p.x,p.y,'#205E86')}
+  });
+  function up(e){
+    if(!drag||e.pointerId!==drag.id)return;var dr=drag;drag=null;
+    try{board.releasePointerCapture(e.pointerId)}catch(_){}
+    if(!dr.moved){tap(dr.from);return}
+    var t=document.elementFromPoint(e.clientX,e.clientY);t=t&&t.closest?t.closest('.p'):null;
+    var p=local(e);
+    if(t&&+t.dataset.i!==dr.from){attempt(dr.from,+t.dataset.i,p.x,p.y)}
+    else{bounce(dr.from,p.x,p.y);say('把線拉到另一位同學的卡片上，再放開手指。','warm')}
+  }
+  board.addEventListener('pointerup',up);
+  board.addEventListener('pointercancel',function(e){if(drag){drag=null;svg.querySelector('.temp').innerHTML=''}});
+  function tap(i){
+    if(sel<0){
+      var gb=giver(i);
+      if(gb>=0){say(P[i][0]+'的'+P[i][1]+'已經送給'+P[gb][0]+'了。','warm');return}
+      setSel(i);say('要把'+P[i][0]+'的「'+P[i][1]+'」送給誰？點另一位同學。（再點'+P[i][0]+'一次可以取消）');
+    }else if(sel===i){setSel(-1);say('取消了。從一位同學拖一條線到另一位同學，或先點一位、再點另一位。')}
+    else{var a=sel;setSel(-1);attempt(a,i)}
+  }
+  nodes.forEach(function(d,i){d.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();if(!done)tap(i)}})});
+  cant.addEventListener('click',function(){
+    if(lv<3){
+      st.cant[lv]=(st.cant[lv]||0)+1;save(st);
+      say('這一關其實排得起來喔！可以先找一位同學，看看他想要什麼，再找找看是誰有那樣東西。','warm');return;
+    }
+    if(timer){clearInterval(timer);timer=null}
+    st.give={at:secs(3),hinted:!!st.hint};st.sec[3]=st.give.at;st.step=2;save(st);reveal();
+  });
+  if(lv===3&&!done){
+    var tick=function(){if(!st.hint&&secs(3)>=HINT){st.hint=true;save(st)}
+      if(st.hint&&!cant.classList.contains('glow')){cant.classList.add('glow');cant.textContent='我覺得排不起來（按這裡）';
+        var hn=el('p','note warm','已經過了 3 分鐘了。試了這麼久，你覺得這一關是不是排不起來呢？如果你也這麼覺得，就按下面的「我覺得排不起來」。');app.insertBefore(hn,cant)}};
+    tick();timer=setInterval(tick,1000);
+  }
+  place();refresh();
+  if(done){say('大家都拿到想要的東西了！這一關你連錯 '+st.err[lv]+' 次，花了 '+st.sec[lv]+' 秒。'+(lv===2?'這一關其實有兩個圈：一個 3 個人的圈，加上一對互相交換的同學。':''),'ok');showNext()}
+  var ro=function(){place();drawFixed()};
+  window.onresize=ro;
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){if(document.body.contains(board))drawFixed()});
+  requestAnimationFrame(function(){drawFixed()});
+}
+
+/* ---------- round 4 reveal ---------- */
+var ANIM='<svg class="anim" viewBox="0 0 560 260" role="img" aria-label="小芸把恐龍模型交給育晨，育晨把一張班級券交給小芸。">'+
+ '<rect x="0" y="0" width="560" height="260" rx="18" fill="#EAF1EC"/>'+
+ '<g transform="translate(40,70) scale(3)">'+fig('#C76A8A',2).replace(/^<svg[^>]*>|<\/svg>$/g,'')+'</g>'+
+ '<g transform="translate(394,70) scale(3)">'+fig('#5B8DB8',1).replace(/^<svg[^>]*>|<\/svg>$/g,'')+'</g>'+
+ '<text x="103" y="240" text-anchor="middle" font-size="24" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">小芸</text>'+
+ '<text x="457" y="240" text-anchor="middle" font-size="24" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">育晨</text>'+
+ '<g class="mv1"><rect x="40" y="18" width="126" height="44" rx="12" fill="#FBF1DC" stroke="#B7862B" stroke-width="3"/><text x="103" y="48" text-anchor="middle" font-size="21" font-weight="900" fill="#A8441A" font-family="Noto Sans TC,sans-serif">恐龍模型</text></g>'+
+ '<g class="mv2"><rect x="394" y="18" width="126" height="44" rx="6" fill="#FFFFFF" stroke="#205E86" stroke-width="3" stroke-dasharray="6 4"/><text x="457" y="48" text-anchor="middle" font-size="21" font-weight="900" fill="#205E86" font-family="Noto Sans TC,sans-serif">班級券</text></g>'+
+ '</svg>';
+function reveal(){
+  if(timer){clearInterval(timer);timer=null}
+  window.onresize=null;app.classList.remove('play');app.innerHTML='';
+  var g=st.give||{at:0,hinted:false};
+  var c=el('div','card');
+  c.append(el('p','lead','你在第 '+g.at+' 秒按下了「我覺得排不起來」。'+(g.hinted?'':'你沒有等提示，就自己發現了。')),
+    el('h2',null,'對，這一關真的排不起來。'),
+    el('p','note','小芸想要的是「漫畫第12集」，可是這裡沒有人有（怡君帶的是第3集）。小芸拿不到想要的東西，就不想把手上的恐龍模型送出去；她不送，後面的同學也就一個接一個換不到，圈怎麼排都接不起來……'),
+    el('h2',null,'如果大家都收「班級券」呢？'));
+  var box=el('div');box.innerHTML=ANIM;
+  var cap=el('p','lead','育晨很想要恐龍模型，就用一張班級券跟小芸買。小芸先把班級券收好，留著以後用：等哪一天有人帶漫畫第12集來，她再拿券去買。');
+  var again=el('button','btn alt','再看一次');again.type='button';
+  function play(){box.classList.remove('go');void box.offsetWidth;box.classList.add('go')}
+  again.addEventListener('click',play);
+  c.append(box,cap,again);
+  var nx=el('button','btn','最後一題');nx.type='button';nx.addEventListener('click',function(){st.step=3;save(st);ask()});
+  app.append(el('p','case','第 4 關，揭曉'),c,nx);
+  requestAnimationFrame(play);
+}
+function ask(){
+  if(timer){clearInterval(timer);timer=null}
+  window.onresize=null;app.classList.remove('play');app.innerHTML='';
+  var g=el('div','opts');
+  ['第 1 關（3 位同學）','第 2 關（4 位同學）','第 3 關（5 位同學，兩個圈）','第 4 關（5 位同學，有小芸）'].forEach(function(t,k){
+    var b=el('button','btn alt',t);b.type='button';b.addEventListener('click',function(){st.hard=k+1;st.step=4;save(st);end()});g.appendChild(b)});
+  app.append(el('p','case','最後一題'),el('h2',null,'你覺得哪一關最難？'),el('p','lead','沒有對錯，選你自己玩起來的感覺。'),g);
+}
+function end(){
+  if(timer){clearInterval(timer);timer=null}
+  window.onresize=null;app.classList.remove('play');app.innerHTML='';
+  var t=el('table');
+  function row(k,v){var tr=el('tr');tr.append(el('td','k',k),el('td',null,v));t.appendChild(tr)}
+  for(var i=0;i<3;i++)row('第 '+(i+1)+' 關','連錯 <b>'+st.err[i]+'</b> 次，花了 <b>'+(st.sec[i]!=null?st.sec[i]:'—')+'</b> 秒');
+  var g=st.give||{at:0,hinted:true};
+  row('第 4 關','連錯 <b>'+st.err[3]+'</b> 次，第 <b>'+g.at+'</b> 秒按下「排不起來」');
+  row('排不起來','<b>'+(g.hinted?'看到提示以後才按':'自己發現的（沒等提示）')+'</b>');
+  row('最難的一關','<b>第 '+(st.hard||'—')+' 關</b>');
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+var S=[intro,level,reveal,ask,end];(S[st.step]||intro)();
+})();
+</script>

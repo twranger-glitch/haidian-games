@@ -1,0 +1,139 @@
+<title>班長的難題</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: you are class leader choosing the party activity → pick your favourite → tap seats in a 7×4 classroom to pull classmates into "your team" (your guess) → run a pretend survey (fixed fictional results) that colours the same seat map → compare guess with result. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF1EF; --card:#FBFCFA; --ink:#1F2A2E; --muted:#56605C; --line:#D2D9D5;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --a0:#2F7D4F; --a1:#205E86; --a2:#8A6416; --a3:#A8441A;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(10px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{font:inherit;font-size:clamp(21px,3.2vw,29px);font-weight:900;border:0;border-radius:16px;padding:16px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn.small{font-size:clamp(19px,2.6vw,23px);padding:10px 16px;align-self:flex-start}
+.btn:focus-visible,.seat:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.count{font-size:clamp(40px,8vw,72px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums;line-height:1.2}
+/* classroom */
+.room{display:flex;flex-direction:column;gap:10px;align-items:center}
+.desk{width:60%;text-align:center;background:#E4E6DF;border-radius:12px;padding:4px;font-size:clamp(17px,2.4vw,21px);font-weight:700;color:var(--muted)}
+.seats{display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(7px,1.6vw,14px);width:100%;max-width:640px}
+.seat{position:relative;aspect-ratio:1;min-width:0;border-radius:50%;border:3px solid var(--line);background:#fff;color:#9AA4A0;padding:0;font:inherit;font-weight:900;font-size:clamp(18px,3.4vw,30px);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.seat svg{width:62%;height:62%}
+.seat.on{background:var(--me);border-color:var(--me);color:#fff}
+.seat .tick{position:absolute;right:-6px;top:-6px;width:clamp(18px,2.8vw,24px);height:clamp(18px,2.8vw,24px);border-radius:50%;background:var(--ink);color:#fff;font-size:clamp(12px,1.8vw,15px);display:none;align-items:center;justify-content:center;line-height:1}
+.seat.on .tick,.seat.mine .tick{display:flex}
+.seat.res{cursor:default;color:#fff}
+.seat.mine{box-shadow:0 0 0 3px var(--card),0 0 0 7px var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:clamp(18px,2.5vw,22px);font-weight:700;margin:0;padding:0;list-style:none}
+.legend li{display:flex;align-items:center;gap:8px}
+.sw{width:1.6em;height:1.6em;border-radius:50%;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.85em;flex:none}
+.sw.ring{background:#fff;color:var(--ink);margin:0 6px;box-shadow:0 0 0 3px var(--card),0 0 0 6px var(--ink);border:2px solid var(--line)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vs div{background:var(--note);border-radius:16px;padding:10px;text-align:center;font-size:clamp(19px,2.6vw,24px);font-weight:700}
+.vs b{display:block;font-size:clamp(36px,7vw,60px);font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:5.5em 1fr 3.5em;align-items:center;gap:10px;font-size:clamp(18px,2.6vw,24px);font-weight:700}
+.track{height:30px;background:#E4E6DF;border-radius:10px;overflow:hidden}
+.fill{height:100%;border-radius:10px;transition:width .5s}
+.bar b{text-align:right;font-variant-numeric:tabular-nums}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='class-leader-v2';
+var A=['大地遊戲','看電影','玩桌遊','做點心'];
+var CH=['地','影','桌','點'];
+var VOTES=[9,8,6,5];
+/* 遊戲編的固定座位結果：7 欄 × 4 排，同一種活動分散在教室各處（0:9、1:8、2:6、3:5） */
+var MAP=[0,1,2,0,3,1,0, 1,3,0,1,2,0,2, 2,0,1,3,0,1,3, 0,2,1,0,1,3,2];
+var COLS=7;
+var ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.2" fill="currentColor"/><path d="M4 21c0-4.6 3.6-7.6 8-7.6s8 3 8 7.6z" fill="currentColor"/></svg>';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load();
+if(!st||typeof st!=='object')st={step:0,pick:null,sel:[],est:null};
+if(!Array.isArray(st.sel))st.sel=[];
+st.sel=st.sel.filter(function(i){return i>=0&&i<28});
+if(st.step>0&&!(st.pick>=0&&st.pick<4))st.step=0;
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function seatName(i){return '第 '+(Math.floor(i/COLS)+1)+' 排第 '+(i%COLS+1)+' 個座位'}
+function room(){var r=el('div','room');r.appendChild(el('div','desk','講台'));var s=el('div','seats');r.appendChild(s);return {box:r,seats:s}}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','你是班長。期末同樂會要選一個活動，全班除了你，還有 28 位同學。'),el('p','lead','先選一個你自己最喜歡的活動。'));
+  var g=el('div','grid');A.forEach(function(t,k){var b=el('button','btn alt',t);b.type='button';b.addEventListener('click',function(){st.pick=k;st.sel=[];st.step=1;save(st);guess()});g.appendChild(b)});
+  app.append(el('h1',null,'班長的難題'),c,g);
+}
+function guess(){
+  app.innerHTML='';
+  var col='var(--a'+st.pick+')';
+  var h=el('h2',null,'你選了「'+A[st.pick]+'」。你猜，28 位同學裡，有幾位也最喜歡「'+A[st.pick]+'」？');
+  var tip=el('p','lead','下面是教室的 28 個座位。點一下座位，就把那位同學拉進你的「'+A[st.pick]+'」隊伍；再點一下可以放回去。你覺得有幾位，就拉幾位。');
+  var out=el('p','count');out.setAttribute('aria-live','polite');
+  function upd(){out.textContent='我猜 '+st.sel.length+' 位'}
+  var rm=room();rm.seats.style.setProperty('--me',col);
+  var btns=[];
+  for(var i=0;i<28;i++){(function(i){
+    var b=el('button','seat',ICON+'<span class="tick" aria-hidden="true">'+ic('check')+'</span>');b.type='button';
+    b.setAttribute('aria-label',seatName(i));
+    function paint(){var on=st.sel.indexOf(i)>=0;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')}
+    b.addEventListener('click',function(){var k=st.sel.indexOf(i);if(k>=0)st.sel.splice(k,1);else st.sel.push(i);save(st);paint();upd()});
+    paint();btns.push(paint);rm.seats.appendChild(b);
+  })(i)}
+  var lg=el('ul','legend');
+  var l1=el('li');l1.append(el('span','sw',''),document.createTextNode('有顏色、打勾＝在你的隊伍裡'));l1.firstChild.style.background=col;l1.firstChild.innerHTML=ic('check');
+  var l2=el('li');var s2=el('span','sw','');s2.style.background='#fff';s2.style.border='3px solid var(--line)';l2.append(s2,document.createTextNode('白色＝沒有拉進來'));
+  lg.append(l1,l2);
+  var clr=el('button','btn alt small','全部放回去');clr.type='button';clr.addEventListener('click',function(){st.sel=[];save(st);btns.forEach(function(p){p()});upd()});
+  var c=el('div','card');c.append(rm.box,lg,clr);
+  var b=el('button','btn','做一個全班調查');b.type='button';b.addEventListener('click',function(){st.est=st.sel.length;st.step=2;save(st);result()});
+  upd();
+  app.append(h,tip,out,c,b);
+}
+function result(){
+  app.innerHTML='';
+  var real=VOTES[st.pick];var est=(st.est==null?st.sel.length:st.est);
+  var rm=room();
+  MAP.forEach(function(k,i){var mine=st.sel.indexOf(i)>=0;
+    var s=el('div','seat res'+(mine?' mine':''),CH[k]+(mine?'<span class="tick" aria-hidden="true">'+ic('check')+'</span>':''));
+    s.style.background='var(--a'+k+')';s.style.borderColor='var(--a'+k+')';
+    s.setAttribute('role','img');s.setAttribute('aria-label',seatName(i)+'：'+A[k]+(mine?'（你剛剛拉進隊伍）':''));
+    rm.seats.appendChild(s)});
+  var lg=el('ul','legend');
+  A.forEach(function(t,k){var li=el('li');var sw=el('span','sw',CH[k]);sw.style.background='var(--a'+k+')';li.append(sw,document.createTextNode(t+' '+VOTES[k]+' 位'+(k===st.pick?'（你選的）':'')));lg.appendChild(li)});
+  var lr=el('li');lr.append(el('span','sw ring',ic('check')),document.createTextNode('黑框打勾＝你剛剛拉進隊伍的座位'));lg.appendChild(lr);
+  var c=el('div','card');c.append(el('h2',null,'調查結果：每個座位的同學最喜歡什麼'),rm.box,lg,el('p','lead','這是遊戲裡編的調查結果，不是我們班真的。'));
+  var vs=el('div','vs');vs.append(el('div',null,'你猜<b>'+est+' 位</b>'),el('div',null,'調查結果<b>'+real+' 位</b>'));
+  var c2=el('div','card');var bars=el('div','bars');
+  A.forEach(function(t,k){var r=el('div','bar');var tr=el('div','track');var f=el('div','fill');f.style.background='var(--a'+k+')';f.style.width='0%';tr.appendChild(f);r.append(el('span',null,t),tr,el('b',null,VOTES[k]+' 位'));if(k===st.pick)r.firstChild.style.textDecoration='underline';bars.appendChild(r);setTimeout(function(){f.style.width=(VOTES[k]/28*100)+'%'},60)});
+  c2.append(el('h2',null,'用長條圖再看一次（底線是你選的）'),bars);
+  var diff=est-real;
+  var msg=diff>0?'你猜有 <b>'+est+' 位</b>同學跟你一樣，調查結果是 <b>'+real+' 位</b>，比你猜的少了 '+diff+' 位。':(diff<0?'你猜有 <b>'+est+' 位</b>，調查結果是 <b>'+real+' 位</b>，比你猜的還多！':'你猜得剛剛好：<b>'+real+' 位</b>！');
+  var n=el('p','note',msg+'<br>四個活動都有人喜歡。就算是最多人選的「大地遊戲」，也只有 9 位，不到全班的一半。');
+  app.append(c,vs,n,c2,el('h2',null,'做完了！請停在這一頁，等其他同學。'));
+}
+var S=[intro,guess,result];(S[st.step]||intro)();
+})();
+</script>

@@ -1,0 +1,83 @@
+<title>我和大家一樣嗎？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: six either-or questions; for each pick yours, then guess what share of the class picked the same → summary of how often you thought you were in the majority. No right answers. Single light classroom look on purpose. */
+:root{
+  --bg:#F0F1EC; --card:#FCFCF8; --ink:#1F2A2E; --muted:#56605C; --line:#D3D6CB;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:860px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.step{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{font:inherit;font-size:clamp(21px,3.2vw,30px);font-weight:900;border:0;border-radius:16px;padding:16px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn.alt[aria-pressed="true"]{border-color:var(--gold);background:#FBF1DC}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.count{font-size:clamp(54px,10vw,90px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--rust);height:40px}
+.scale{display:flex;justify-content:space-between;font-size:clamp(16px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0}
+.big{font-size:clamp(50px,10vw,90px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--sea);font-variant-numeric:tabular-nums}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+table{border-collapse:collapse;width:100%;font-size:clamp(17px,2.4vw,22px)}
+td{padding:9px 8px;border-bottom:2px solid var(--line)} td.n{text-align:right;font-weight:900;white-space:nowrap}
+@media (max-width:440px){.two{grid-template-columns:1fr}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='false-consensus-v1';
+var Q=[['蚵仔煎','蚵嗲'],['夏天','冬天'],['下課去操場玩','下課留在教室'],['養狗','養貓'],['鹹的早餐','甜的早餐'],['看書','看影片']];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{i:0,pick:[],est:[]};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','一共 6 題，每一題選一個你比較喜歡的，沒有對錯。'),el('p','lead','選完以後，再猜猜看：全班有幾成同學，跟你選的一樣？'));
+  var b=el('button','btn','開始');b.type='button';b.addEventListener('click',ask);
+  app.append(el('h1',null,'我和大家一樣嗎？'),c,b);
+}
+function ask(){
+  if(st.i>=Q.length){end();return}
+  var q=Q[st.i];app.innerHTML='';
+  var s=el('p','step','第 '+(st.i+1)+' 題，共 6 題');
+  var h=el('h2',null,'你比較喜歡哪一個？');
+  var g=el('div','two');var bs=[];
+  var guess=el('div','card');guess.style.display='none';
+  q.forEach(function(t,k){var b=el('button','btn alt',t);b.type='button';b.setAttribute('aria-pressed','false');b.addEventListener('click',function(){st.pick[st.i]=k;bs.forEach(function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');showGuess()});bs.push(b);g.appendChild(b)});
+  function showGuess(){
+    guess.style.display='';guess.innerHTML='';
+    var hh=el('h2',null,'你猜，全班有幾成同學也選「'+q[st.pick[st.i]]+'」？');
+    var r=document.createElement('input');r.type='range';r.min=0;r.max=10;r.step=1;r.value=5;r.setAttribute('aria-label','幾成同學選一樣');
+    var out=el('p','count','5 成');r.addEventListener('input',function(){out.textContent=r.value+' 成'});
+    var sc=el('p','scale');sc.append(el('span',null,'0 成'),el('span',null,'10 成：全班都一樣'));
+    var nx=el('button','btn',st.i<Q.length-1?'下一題':'看結果');nx.type='button';nx.addEventListener('click',function(){st.est[st.i]=+r.value;st.i++;save(st);ask()});
+    guess.append(hh,out,r,sc,nx);nx.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  app.append(s,h,g,guess);
+}
+function end(){
+  app.innerHTML='';
+  var maj=st.est.filter(function(x){return x>=6}).length;
+  var t=el('table');Q.forEach(function(q,k){var tr=el('tr');tr.append(el('td',null,'第 '+(k+1)+' 題：你選「'+q[st.pick[k]]+'」'),el('td','n','猜 '+st.est[k]+' 成一樣'));t.appendChild(tr)});
+  var c=el('div','card');c.append(el('p','lead','6 題裡，你猜「跟我一樣的人比較多」（6 成以上）的有'),el('p','big',maj+' 題'),t,el('p','note','等一下老師會請大家舉手，看看全班真正的答案。'));
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+if(st.i>0)ask();else intro();
+})();
+</script>

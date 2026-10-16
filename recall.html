@@ -1,0 +1,184 @@
+<title>十二個詞</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro → 12 words flash one by one (2 s + 0.3 s gap, no pause) → 90 s recall into a basket of word cards → answer key in three parts + "your three parts" bar → words not on the list → summary for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line)}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+/* flash */
+.stage{min-height:min(56vh,440px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.word{font-size:clamp(84px,20vw,170px);font-weight:900;line-height:1.1;margin:0;color:var(--ink);letter-spacing:.06em;min-height:1.1em}
+.prog{font-size:clamp(22px,3.4vw,30px);font-weight:700;color:var(--muted);margin:0;font-variant-numeric:tabular-nums}
+.dots{display:flex;gap:6px}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--sea)}
+/* recall */
+.timer{display:flex;align-items:center;gap:12px}
+.timer b{font-size:clamp(34px,6vw,52px);font-weight:900;color:var(--rust);font-variant-numeric:tabular-nums;min-width:3.2ch}
+.bar{flex:1;height:14px;background:var(--line);border-radius:7px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--rust);border-radius:7px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row input{flex:1 1 200px;min-width:0;font:inherit;font-size:clamp(26px,4.4vw,36px);font-weight:700;padding:10px 16px;border:3px solid var(--line);border-radius:16px;background:#fff;color:var(--ink)}
+.row .btn{flex:1 0 auto}
+.msg{min-height:1.6em;margin:0;font-size:clamp(19px,2.5vw,22px);color:var(--rust);font-weight:700}
+.basket{background:#F3E9D2;border:3px dashed var(--gold);border-radius:22px;padding:14px;min-height:130px;display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start}
+.basket .empty{color:var(--muted);font-size:clamp(19px,2.5vw,22px);margin:auto}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:4px 4px 4px 14px;font-size:clamp(22px,3.4vw,28px);font-weight:900}
+.chip button{font:inherit;font-size:18px;font-weight:700;border:0;background:#F1E3DB;color:var(--rust);border-radius:10px;min-width:44px;min-height:44px;cursor:pointer}
+.chip button:focus-visible{outline:4px solid var(--gold)}
+/* key */
+.parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.part h3{margin:0;font-size:clamp(20px,2.8vw,24px);font-weight:900}
+.part h3 small{font-weight:700;color:var(--muted);font-size:.8em}
+.wl{display:flex;flex-direction:column;gap:6px}
+.w{display:flex;align-items:center;gap:8px;border-radius:12px;padding:6px 10px;font-size:clamp(21px,3vw,26px);font-weight:700;color:var(--muted);background:#E6E9E4}
+.w em{font-style:normal;font-size:.7em;min-width:1.6em;color:var(--muted)}
+.w.hit{background:#FBE7A8;color:var(--ink);font-weight:900;box-shadow:inset 0 0 0 3px var(--gold)}
+.w.hit::after{content:"記得";padding-left:1.2em;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%237A5A16%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2012.5l4.5%204.5L19%207.5%22/%3E%3C/svg%3E") left center/1em 1em no-repeat;margin-left:auto;font-size:.68em;color:#7A5A12}
+.chart{display:flex;flex-direction:column;gap:10px}
+.cb{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:clamp(19px,2.6vw,23px);font-weight:700}
+.track{height:34px;border-bottom:2px solid var(--line);position:relative}
+.fill{position:absolute;left:0;top:4px;bottom:0;background:var(--sea);border-radius:0 4px 4px 0;min-width:0}
+.cb b{font-variant-numeric:tabular-nums;min-width:4.4em;text-align:right}
+.extra{display:flex;flex-wrap:wrap;gap:8px}
+.extra span{background:#F1E3DB;border-radius:12px;padding:4px 14px;font-size:clamp(22px,3.2vw,28px);font-weight:900;color:var(--rust)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap} td.n{font-weight:900}
+@media (max-width:620px){.parts{grid-template-columns:1fr}.row .btn{flex-basis:100%}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='twelve-words-v1';
+var W=['蚵仔','鹽山','堤防','漁網','燈塔','廟口','潮水','竹竿','螃蟹','夕陽','鹹粥','海風'];
+var SHOW=2000,GAP=300,LIMIT=90;
+// 只收「同一個詞的不同寫法」（手寫辨識常跑出簡體字）；意思相近的詞（例如毛蟹、海浪）不算。
+var SAME={'盐山':'鹽山','渔网':'漁網','灯塔':'燈塔','庙口':'廟口','竹杆':'竹竿','咸粥':'鹹粥','海风':'海風','夕阳':'夕陽','螃蠏':'螃蟹','隄防':'堤防'};
+var PARTS=[['開頭',0,'1–4'],['中間',4,'5–8'],['結尾',8,'9–12']];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load()||{step:'intro',idx:0,basket:[],endAt:0};
+if(!st.basket)st.basket=[];
+var tick=null,flashT=null;
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function btn(t,cls,fn){var b=el('button',cls||'btn');b.type='button';b.textContent=t;b.addEventListener('click',fn);return b}
+function go(s){st.step=s;save(st);render()}
+function clean(s){return String(s).replace(/[\s　，,。.、;；!！?？「」"'()（）]/g,'')}
+function norm(s){var c=clean(s);return Object.prototype.hasOwnProperty.call(SAME,c)&&SAME[c]?SAME[c]:c}
+function hits(){var h={};st.basket.forEach(function(x){var n=norm(x);if(W.indexOf(n)>=0)h[n]=1});return h}
+function extras(){var out=[];st.basket.forEach(function(x){var n=norm(x);if(W.indexOf(n)<0&&out.indexOf(n)<0)out.push(n)});return out}
+function counts(){var h=hits();return PARTS.map(function(p){var c=0;for(var k=p[1];k<p[1]+4;k++)if(h[W[k]])c++;return c})}
+function most(c){var mx=Math.max.apply(null,c);if(mx===0)return '差不多';var top=c.filter(function(v){return v===mx}).length;if(top>1)return '差不多';return PARTS[c.indexOf(mx)][0]}
+
+function render(){
+  clearInterval(tick);clearTimeout(flashT);app.innerHTML='';window.scrollTo(0,0);
+  ({intro:intro,flash:flash,recall:recall,key:key,extra:extra,end:end}[st.step]||intro)();
+}
+function intro(){
+  var c=el('div','card');
+  c.append(el('p','lead','等一下，十二個詞會一個一個出現，每個 2 秒。<b style="color:var(--ink)">只要看，不要抄。</b>'),
+    el('p','lead','詞語只會播一次，不能暫停，也不能倒回去。播完以後，你要把記得的詞打進平板。'),
+    el('p','note','打字比較慢的同學，可以切換成<b>手寫輸入</b>，用手指把字寫出來就好。順序不用對，也不會打分數。'));
+  app.append(el('h1',null,'十二個詞'),c,btn('準備好了，開始','btn',function(){st.idx=0;go('flash')}));
+}
+function flash(){
+  var s=el('div','card stage');var w=el('p','word');var p=el('p','prog');var d=el('div','dots');
+  for(var k=0;k<W.length;k++)d.appendChild(el('i'));
+  s.append(w,p,d);app.append(el('p','case','只要看，不要抄'),s);
+  function show(){
+    if(st.idx>=W.length){st.endAt=Date.now()+LIMIT*1000;go('recall');return}
+    w.textContent=W[st.idx];p.textContent=(st.idx+1)+' / 12';
+    Array.prototype.forEach.call(d.children,function(x,k){x.classList.toggle('on',k<=st.idx)});
+    flashT=setTimeout(function(){w.textContent='';st.idx++;save(st);flashT=setTimeout(show,GAP)},SHOW);
+  }
+  show();
+}
+function recall(){
+  var left=function(){return Math.max(0,Math.ceil((st.endAt-Date.now())/1000))};
+  if(left()<=0){go('key');return}
+  var tm=el('div','timer');var tb=el('b');var bar=el('div','bar');var fill=el('span');bar.appendChild(fill);tm.append(tb,bar);
+  var c=el('div','card');
+  var row=el('div','row');var inp=document.createElement('input');inp.type='text';inp.placeholder='打一個詞';inp.setAttribute('aria-label','記得的詞');inp.autocomplete='off';inp.setAttribute('autocapitalize','off');inp.spellcheck=false;inp.maxLength=12;
+  var msg=el('p','msg');
+  var add=btn('放進籃子','btn',put);row.append(inp,add);
+  var bk=el('div','basket');bk.setAttribute('aria-label','籃子');
+  function draw(){
+    bk.innerHTML='';
+    if(!st.basket.length){bk.appendChild(el('span','empty','打好的詞會放在這個籃子裡'));return}
+    st.basket.forEach(function(x,k){var ch=el('span','chip');ch.appendChild(document.createTextNode(x));var del=el('button',null,'刪除');del.type='button';del.setAttribute('aria-label','刪除 '+x);
+      del.addEventListener('click',function(){st.basket.splice(k,1);save(st);draw();inp.focus()});ch.appendChild(del);bk.appendChild(ch)});
+    cnt.textContent='籃子裡有 '+st.basket.length+' 個詞';
+  }
+  var cnt=el('p','lead','');
+  function put(){
+    var v=clean(inp.value);
+    if(!v){msg.textContent='先打一個詞，再放進籃子。';inp.focus();return}
+    if(st.basket.some(function(x){return norm(x)===norm(v)})){msg.textContent='「'+v+'」已經在籃子裡了。';inp.value='';inp.focus();return}
+    st.basket.push(v);save(st);inp.value='';msg.textContent='';draw();inp.focus();
+  }
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229){e.preventDefault();put()}});
+  c.append(el('p','lead','想不起來不要猜，寫你確定看過的。一次打一個詞，按「放進籃子」或 Enter。'),row,msg);
+  app.append(el('h2',null,'你記得哪些詞？'),tm,c,cnt,bk,btn('我寫完了','btn alt',function(){finish()}));
+  function finish(){var v=clean(inp.value);if(v&&!st.basket.some(function(x){return norm(x)===norm(v)}))st.basket.push(v);go('key')}
+  function upd(){var l=left();tb.textContent=l+' 秒';fill.style.width=(l/LIMIT*100)+'%';if(l<=0)finish()}
+  draw();if(!st.basket.length)cnt.textContent='籃子裡還沒有詞';upd();tick=setInterval(upd,250);
+  setTimeout(function(){try{inp.focus()}catch(e){}},50);
+}
+function key(){
+  var h=hits(),c=counts();
+  var g=el('div','parts');
+  PARTS.forEach(function(p,i){var pc=el('div','card part');pc.appendChild(el('h3',null,p[0]+' <small>'+p[2]+'</small>'));var wl=el('div','wl');
+    for(var k=p[1];k<p[1]+4;k++)wl.appendChild(el('div','w'+(h[W[k]]?' hit':''),'<em>'+(k+1)+'</em>'+W[k]));pc.appendChild(wl);g.appendChild(pc)});
+  var ch=el('div','card');ch.appendChild(el('h2',null,'你的三段'));var cc=el('div','chart');cc.setAttribute('role','img');cc.setAttribute('aria-label','開頭 '+c[0]+' 個，中間 '+c[1]+' 個，結尾 '+c[2]+' 個，每段最多 4 個');
+  PARTS.forEach(function(p,i){var r=el('div','cb');var tr=el('div','track');var f=el('div','fill');f.style.width=(c[i]/4*100)+'%';tr.appendChild(f);
+    r.append(el('span',null,p[0]),tr,el('b',null,c[i]+' / 4 個'));r.title=p[0]+'：記得 '+c[i]+' 個';cc.appendChild(r)});
+  ch.append(cc,el('p','lead','這是你自己一個人的結果，不用跟別人比。等一下全班一起看，大家的三段會不會有一樣的樣子。'));
+  app.append(el('h2',null,'對答案：記得的詞會亮起來'),g,ch,btn('下一步','btn',function(){go('extra')}));
+}
+function extra(){
+  var x=extras();var c=el('div','card');
+  if(x.length){
+    var ex=el('div','extra');x.forEach(function(w){ex.appendChild(el('span',null,esc(w)))});
+    c.append(el('p','lead','你寫了'),ex,el('p','lead','可是清單裡沒有'+(x.length>1?'這些詞':'這個詞')+'。'),
+      el('p','note warm','這很常見，不是你不認真。大腦在想東西的時候，會把<b>很像、常常一起出現</b>的東西也拼進去。十二個詞都跟海邊有關，所以大腦很容易「順手」補上別的海邊東西。'),
+      el('p','lead','先記住這件事，下半節我們會再回來看它。'));
+  }else{
+    c.append(el('p','note','這次你沒有多寫清單外的詞。下半節我們再來看另一種情況。'),
+      el('p','lead','有些同學可能會寫出清單裡沒有、但很像海邊會有的東西。等一下老師問的時候，可以聽聽看別人寫了什麼。'));
+  }
+  app.append(el('h2',null,'多出來的詞'),c,btn('看我的摘要','btn',function(){go('end')}));
+}
+function end(){
+  var c=counts(),x=extras();
+  var t=el('table');
+  [['開頭 1–4',c[0]+' 個'],['中間 5–8',c[1]+' 個'],['結尾 9–12',c[2]+' 個'],['哪一段最多',most(c)],['清單外的詞',x.length?'有：'+x.map(esc).join('、'):'沒有']].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','n',r[1]));t.appendChild(tr)});
+  var card=el('div','card');card.append(el('p','lead','老師會請大家舉手：「哪一段最多？」「有沒有寫出清單外的詞？」'),t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),card);
+}
+render();
+})();
+</script>

@@ -1,0 +1,215 @@
+<title>加薪拔河</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story of two fish-farm workers (A-Ming: price same, +50 wage; A-Hua: prices up, +200 wage) shown as two side-by-side cards → three questions answered by dragging a tug-of-war rope to 阿明 / 差不多 / 阿華 → summary page. Secret groups: blue sees an extra "in bowls of congee" line under each card; pink does not. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --red:#C8352B; --rope:#B98A4E;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.gtag{display:inline-block;border-radius:999px;padding:2px 14px;font-size:clamp(15px,2vw,18px);font-weight:700;letter-spacing:1px;color:#fff;align-self:flex-start}
+.gtag.pink{background:#D0517E}.gtag.blue{background:#2F6FB0}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);font-weight:700}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible,input:focus-visible,summary:focus-visible,.knot:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(18px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.small{font-size:clamp(16px,2.1vw,19px);color:var(--muted);margin:0}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap} td.v{font-weight:900;text-align:right;white-space:nowrap}
+
+/* people cards */
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pc{background:var(--card);border:3px solid var(--line);border-radius:20px;padding:clamp(12px,2.4vw,18px);display:flex;flex-direction:column;gap:8px;min-width:0}
+.pc .who{display:flex;align-items:center;gap:10px}
+.pc .who b{font-size:clamp(22px,3.2vw,30px);font-weight:900}
+.row{font-size:clamp(17px,2.4vw,22px);line-height:1.5;margin:0}
+.row .k{display:block;color:var(--muted);font-weight:700;font-size:.85em}
+.row .v{font-weight:900;font-variant-numeric:tabular-nums}
+.nw{white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.up{color:var(--rust)} .same{color:var(--good)}
+.bowls{background:var(--warm);border-radius:14px;padding:8px 10px;font-size:clamp(17px,2.4vw,22px);line-height:1.5;margin:0}
+.bowls .ic{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-weight:900;font-variant-numeric:tabular-nums}
+.bowl{width:34px;height:26px;flex:none}
+
+/* CSS person icon */
+.av{position:relative;width:54px;height:60px;flex:none}
+.av .hd{position:absolute;left:12px;top:2px;width:30px;height:30px;border-radius:50%;background:#F1C9A5}
+.av .hr{position:absolute;left:10px;top:0;width:34px;height:15px;border-radius:17px 17px 4px 4px;background:#2B2118}
+.av .hat{position:absolute;left:6px;top:-2px;width:42px;height:10px;border-radius:6px;background:#E8C35A}
+.av .bd{position:absolute;left:6px;top:32px;width:42px;height:28px;border-radius:16px 16px 6px 6px}
+.av .ey{position:absolute;top:17px;width:4px;height:4px;border-radius:50%;background:#1F2A2E}
+.av.ming .bd{background:#2F7D4F} .av.hua .bd{background:#205E86}
+
+/* tug of war */
+.tug{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}
+.side{display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:900;font-size:clamp(17px,2.4vw,22px);transition:transform .2s}
+.side.win{transform:scale(1.12)}
+.side.win b{color:var(--red)}
+.track{position:relative;height:150px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;border-radius:16px;background:#F3EFE3}
+.track.drag{cursor:grabbing}
+.mark{position:absolute;top:8px;bottom:44px;width:0;border-left:3px dashed #C9C3B0}
+.rope{position:absolute;top:44px;height:16px;left:-60%;width:220%;border-radius:8px;background:repeating-linear-gradient(115deg,var(--rope) 0 10px,#9C6F38 10px 14px);will-change:transform}
+.knot{position:absolute;top:24px;left:50%;width:34px;height:56px;margin-left:-17px;border-radius:6px;background:var(--red);box-shadow:0 3px 0 #8E211A;outline:none}
+.knot::after{content:"";position:absolute;left:50%;top:56px;margin-left:-2px;width:4px;height:10px;background:#8E211A}
+.lab{position:absolute;bottom:6px;transform:translateX(-50%);white-space:nowrap;font-size:clamp(17px,2.4vw,22px);font-weight:700;color:var(--muted);pointer-events:none}
+.lab.on{color:var(--red);font-weight:900}
+.ctrl{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+details{background:var(--card);border:3px dashed var(--line);border-radius:18px;padding:12px 16px}
+summary{font-size:clamp(19px,2.8vw,25px);font-weight:900;cursor:pointer}
+@media (max-width:620px){.pair{gap:8px}.pc{padding:10px;border-radius:16px}.av{transform:scale(.85);margin:-4px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='raise-v1';
+var GN={pink:'粉紅組',blue:'藍組'};
+var POS=['阿明','差不多','阿華'];
+var FR=[0.16,0.5,0.84];
+var Q=['誰比較開心？','一年後，誰一天的工錢可以買比較多東西？','如果隔壁魚塭也在找人，誰比較可能想換工作？'];
+
+function rint(n){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function clearHash(){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var h=location.hash;
+if(h==='#reset'){save(null);clearHash()}
+var st=load();
+if(h==='#pink'||h==='#blue'){var want=h.slice(1);if(!st||st.g!==want){st=null}clearHash();if(!st){st={g:want,stage:0,ans:[]};save(st)}}
+if(!st||!GN[st.g]){st={g:rint(2)?'blue':'pink',stage:0,ans:[]};save(st)}
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button','btn'+(cls?' '+cls:''),t);b.type='button';b.addEventListener('click',fn);return b}
+function gtag(){return el('span','gtag '+st.g,'你是'+GN[st.g])}
+
+var BOWL='<svg class="bowl" viewBox="0 0 34 26" aria-hidden="true"><path d="M8 6c0-3 3-3 3-6M16 6c0-3 3-3 3-6M24 6c0-3 3-3 3-6" fill="none" stroke="#B9B2A0" stroke-width="1.6"/><ellipse cx="17" cy="10" rx="15" ry="3.5" fill="#F4EBD6"/><path d="M2 10h30c0 8-7 14-15 14S2 18 2 10z" fill="#FFFFFF" stroke="#205E86" stroke-width="2"/><path d="M6 15h22" stroke="#205E86" stroke-width="1.6"/></svg>';
+function avatar(who){var c=who==='ming'?'ming':'hua';return '<span class="av '+c+'" aria-hidden="true"><span class="bd"></span><span class="hd"></span><span class="hr"></span>'+(c==='ming'?'<span class="hat"></span>':'')+'<span class="ey" style="left:20px"></span><span class="ey" style="left:30px"></span></span>'}
+function bowlLine(name,a,b){
+  return '<p class="bowls"><span class="k" style="display:block;font-weight:700;color:var(--muted);font-size:.85em">換成粥</span>'+name+'一天的工錢從 '+a+' 碗變成 '+b+' 碗'+
+    '<span class="ic"><span class="nw">'+BOWL+'× '+a+'</span> → <span class="nw">'+BOWL+'× '+b+'</span></span></p>';
+}
+function people(showBowls){
+  var p=el('div','pair');
+  var D=[
+   {id:'ming',n:'阿明',p:'<span class="nw">50 元 → <span class="v same">50 元</span></span><span class="nw">（沒有漲）</span>',w:'<span class="nw">1000 元 → <span class="v up">1050 元</span></span><span class="nw">（多 50 元）</span>',b:[20,21]},
+   {id:'hua',n:'阿華',p:'<span class="nw">50 元 → <span class="v up">60 元</span></span><span class="nw">（漲了）</span>',w:'<span class="nw">1000 元 → <span class="v up">1200 元</span></span><span class="nw">（多 200 元）</span>',b:[20,20]}
+  ];
+  D.forEach(function(d){
+    var c=el('div','pc');
+    c.appendChild(el('div','who',avatar(d.id)+'<b>'+d.n+'</b>'));
+    c.appendChild(el('p','row','<span class="k">他工作的那一年，一碗虱目魚粥</span>'+d.p));
+    c.appendChild(el('p','row','<span class="k">一天的工錢</span>'+d.w));
+    if(showBowls)c.insertAdjacentHTML('beforeend',bowlLine(d.n,d.b[0],d.b[1]));
+    p.appendChild(c);
+  });
+  return p;
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','阿明和阿華都在安南區的魚塭工作。剛開始的時候，他們一天的工錢都是 1000 元，那時候一碗虱目魚粥是 50 元。'),
+           el('p','lead','後來，他們在不同的年份各工作了一年。阿明工作的那一年，粥價沒有漲，還是 50 元，老闆把他的工錢加成 1050 元。阿華工作的那一年，什麼東西都漲價，粥變成 60 元，老闆把他的工錢加成 1200 元。'));
+  app.append(el('h1',null,'加薪拔河'),gtag(),c,people(st.g==='blue'),
+    el('p','small','（為了好算，這裡的數字都是假設的。）'),
+    el('p','note','接下來有 3 題。每一題都要把繩子中間的紅布條，拉到「阿明」「差不多」或「阿華」，再按「決定」。'),
+    btn('開始拔河',null,function(){st.stage=1;save(st);render()}));
+}
+
+function question(){
+  var qi=st.stage-1;app.innerHTML='';
+  var cs=el('p','case');cs.append(el('span',null,'第 '+(qi+1)+' 題，共 3 題'),gtag());
+  app.append(cs,people(st.g==='blue'),el('h2',null,Q[qi]));
+
+  var pos=1,touched=false;
+  var tug=el('div','tug');
+  var L=el('div','side',avatar('ming')+'<b>阿明</b>'),R=el('div','side',avatar('hua')+'<b>阿華</b>');
+  var tr=el('div','track');tr.setAttribute('aria-hidden','true');
+  FR.forEach(function(f){var m=el('span','mark');m.style.left=(f*100)+'%';tr.appendChild(m)});
+  var rope=el('div','rope');tr.appendChild(rope);
+  var knot=el('div','knot');knot.tabIndex=0;knot.setAttribute('role','slider');knot.setAttribute('aria-label','紅布條的位置');knot.setAttribute('aria-valuemin','0');knot.setAttribute('aria-valuemax','2');
+  tr.appendChild(knot);
+  tug.append(L,tr,R);
+  var labs=[];POS.forEach(function(t,i){var s=el('span','lab',t);s.style.left=(FR[i]*100)+'%';tr.appendChild(s);labs.push(s)});
+  var hint=el('p','small','用手指拖動紅布條，或按下面的箭頭。');
+  var go=btn('決定',null,function(){if(!touched)return;st.ans[qi]=pos;st.stage++;save(st);render()});go.disabled=true;
+  var ctrl=el('div','ctrl');
+  ctrl.append(btn('← 往阿明拉','alt',function(){setPos(Math.max(0,pos-1),true)}),btn('往阿華拉 →','alt',function(){setPos(Math.min(2,pos+1),true)}));
+  app.append(tug,ctrl,hint,go,el('p','small','這一題選好就好，不會告訴你對不對。等一下全班一起聊。'));
+
+  function W(){return tr.clientWidth||1}
+  function place(frac,anim){
+    var x=(frac-0.5)*W();
+    var t=anim?'transform .22s ease-out':'none';
+    rope.style.transition=t;knot.style.transition=t;
+    rope.style.transform='translateX('+x+'px)';knot.style.transform='translateX('+x+'px)';
+  }
+  function setPos(p,user){
+    pos=p;place(FR[p],true);
+    if(user){touched=true;go.disabled=false}
+    labs.forEach(function(s,i){s.classList.toggle('on',touched&&i===p)});
+    L.classList.toggle('win',touched&&p===0);R.classList.toggle('win',touched&&p===2);
+    knot.setAttribute('aria-valuenow',String(p));knot.setAttribute('aria-valuetext',POS[p]);
+  }
+  var dragging=false,startX=0,startF=0,id=null;
+  function fracAt(cx){var r=tr.getBoundingClientRect();return Math.min(FR[2],Math.max(FR[0],startF+(cx-startX)/r.width))}
+  tr.addEventListener('pointerdown',function(e){
+    dragging=true;id=e.pointerId;try{tr.setPointerCapture(id)}catch(_){}
+    tr.classList.add('drag');
+    var r=tr.getBoundingClientRect();var kx=r.left+FR[pos]*r.width;
+    // grabbing anywhere: if near the knot drag relative, else jump knot under finger
+    if(Math.abs(e.clientX-kx)<40){startX=e.clientX;startF=FR[pos]}else{startX=e.clientX;startF=Math.min(FR[2],Math.max(FR[0],(e.clientX-r.left)/r.width))}
+    place(startF,false);e.preventDefault();
+  });
+  tr.addEventListener('pointermove',function(e){if(!dragging||e.pointerId!==id)return;place(fracAt(e.clientX),false);e.preventDefault()});
+  function end(e){
+    if(!dragging||e.pointerId!==id)return;dragging=false;tr.classList.remove('drag');
+    var f=fracAt(e.clientX),best=0;FR.forEach(function(v,i){if(Math.abs(v-f)<Math.abs(FR[best]-f))best=i});
+    setPos(best,true);
+  }
+  tr.addEventListener('pointerup',end);tr.addEventListener('pointercancel',end);
+  knot.addEventListener('keydown',function(e){
+    if(e.key==='ArrowLeft'){setPos(Math.max(0,pos-1),true);e.preventDefault()}
+    else if(e.key==='ArrowRight'){setPos(Math.min(2,pos+1),true);e.preventDefault()}
+  });
+  window.onresize=function(){if(!dragging)place(FR[pos],false)};
+  setPos(1,false);place(FR[1],false);
+}
+
+function finish(){
+  window.onresize=null;app.innerHTML='';
+  var t=el('table');
+  var r0=el('tr');r0.append(el('td','k','你的組別'),el('td','v',GN[st.g]));t.appendChild(r0);
+  Q.forEach(function(q,k){var tr=el('tr');tr.append(el('td',null,'第 '+(k+1)+' 題：'+q),el('td','v',st.ans[k]!=null?'拉向'+(st.ans[k]===1?'「差不多」':POS[st.ans[k]]):'—'));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  var d=el('details');
+  d.appendChild(el('summary',null,'看看換算（等老師說可以再打開）'));
+  var inner=el('div');inner.style.cssText='display:flex;flex-direction:column;gap:10px;margin-top:10px';
+  inner.innerHTML=bowlLine('阿明',20,21)+'<p class="small" style="margin:0">阿明：1000 ÷ 50 = 20 碗；1050 ÷ 50 = 21 碗。</p>'+
+    bowlLine('阿華',20,20)+'<p class="small" style="margin:0">阿華：1000 ÷ 50 = 20 碗；1200 ÷ 60 = 20 碗。</p>';
+  d.appendChild(inner);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),gtag(),c,d);
+}
+
+window.addEventListener('hashchange',function(){var x=location.hash;if(x==='#reset'||x==='#pink'||x==='#blue')location.reload()});
+function render(){if(st.stage<=0)intro();else if(st.stage<=3)question();else finish()}
+render();
+})();
+</script>

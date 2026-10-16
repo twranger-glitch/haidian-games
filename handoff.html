@@ -1,0 +1,240 @@
+<title>自己來還是傳球</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: class quiz "海佃小知識王", you and teammate 小海 (fictional). 6 questions; each: see the question (no options) → tap how sure you are (4 big buttons) → see how often 小海 gets this kind right → drag the fishball to 「我自己來」 or 「傳給小海」 (or tap a side) → answer yourself, or 小海 answers by chance (crypto) → result. Then: your record (how many times you kept the ball although 小海's rate was higher) → one feeling question with no right answer → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px}
+.case .pts{color:var(--rust)}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.qtext{font-size:clamp(25px,4vw,36px);font-weight:900;line-height:1.45;margin:0;text-wrap:balance}
+.mine{font-size:clamp(19px,2.6vw,23px);color:var(--muted);font-weight:700;margin:0}
+.center{text-align:center}
+.conf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cf{font:inherit;background:var(--card);color:var(--ink);border:3px solid var(--line);border-radius:18px;padding:12px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;line-height:1.3}
+.cf small{font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:700}
+.cf b{font-size:clamp(26px,4.2vw,38px);font-weight:900;color:var(--sea)}
+.cf.pick{border-color:var(--gold);background:#FBF1DC}
+.xh{display:flex;align-items:center;gap:14px;background:var(--note);border-radius:18px;padding:12px 16px}
+.xh svg{width:72px;height:72px;flex:none}
+.xh p{margin:0;font-size:clamp(19px,2.7vw,25px);line-height:1.55}
+.xh p b{color:var(--rust);font-size:1.25em;white-space:nowrap}
+.court{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.zone{font:inherit;color:var(--ink);background:var(--card);border:4px dashed var(--line);border-radius:22px;min-height:170px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:border-color .15s,background .15s}
+.zone svg{width:64px;height:64px}
+.zone span{font-size:clamp(21px,3.2vw,29px);font-weight:900;line-height:1.3;text-align:center}
+.zone.me span{color:var(--sea)} .zone.xhz span{color:var(--rust)}
+.zone.over,.zone.got{border-style:solid;border-color:var(--gold);background:#FBF1DC}
+.ball{width:clamp(84px,14vw,120px);height:clamp(84px,14vw,120px);border-radius:50%;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;position:relative;z-index:5;transition:transform .25s}
+.ball.drag{transition:none;cursor:grabbing;filter:drop-shadow(0 8px 10px rgba(0,0,0,.18))}
+.ball svg{width:100%;height:100%;display:block;pointer-events:none}
+.hint{font-size:clamp(19px,2.5vw,22px);color:var(--muted);margin:0;text-align:center}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default}
+.btn:focus-visible,.cf:focus-visible,.zone:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.res{font-size:clamp(28px,4.6vw,40px);font-weight:900;margin:0;line-height:1.35}
+.res.ok{color:var(--good)} .res.no{color:var(--rust)}
+.big{font-size:clamp(60px,12vw,110px);font-weight:900;line-height:1.05;margin:0;text-align:center;color:var(--rust);font-variant-numeric:tabular-nums}
+.bigl{font-size:clamp(21px,3.2vw,29px);font-weight:900;margin:0;text-align:center;line-height:1.5;text-wrap:balance}
+.rows{display:flex;flex-direction:column}
+.row{border-top:2px solid var(--line);padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.row:first-child{border-top:0}
+.row.hl{background:#FBF1DC;border-radius:12px}
+.row .t{font-weight:900;font-size:clamp(19px,2.7vw,24px)}
+.chips{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:clamp(19px,2.4vw,22px)}
+.chips span{white-space:nowrap}
+.chips i{font-style:normal;color:var(--muted)}
+.flag{font-size:clamp(19px,2.3vw,21px);color:#7A5A16;font-weight:700}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:center}
+.three div{background:var(--note);border-radius:16px;padding:10px 6px}
+.three b{display:block;font-size:clamp(34px,6vw,52px);font-weight:900;line-height:1.2;color:var(--sea)}
+.three span{font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:700}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.n{text-align:right;font-weight:900;white-space:nowrap} td.n.w{white-space:normal;width:42%}
+@media (max-width:620px){.conf{grid-template-columns:repeat(2,minmax(0,1fr))}.zone{min-height:150px}.zone svg{width:48px;height:48px}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='handoff-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+
+// q: question; o: options; a: index of the right option; x: 小海's chance (in 成); why: why 小海 is good or not at this kind; e: one-sentence explanation
+var Q=[
+ {s:'章魚的心臟',q:'章魚有幾顆心臟？',o:['1 顆','2 顆','3 顆'],a:2,x:9,why:'小海很愛看海洋動物的影片，這種海洋動物的題目，',e:'章魚有 3 顆心臟：2 顆把血送到鰓，另外 1 顆把血送到全身。'},
+ {s:'台灣最高的山',q:'台灣最高的山是哪一座？',o:['玉山','雪山','阿里山'],a:0,x:4,why:'小海說地名常常記混，這種地理的題目，',e:'玉山是台灣最高的山；雪山是第二高。'},
+ {s:'黑面琵鷺的嘴巴',q:'冬天會飛來七股的黑面琵鷺，嘴巴是什麼形狀？',o:['尖尖細細的，像一根針','彎彎的，像一個鉤子','扁扁長長的，前端像飯匙'],a:2,x:8,why:'小海常常跟家人去七股看鳥，這種鳥的題目，',e:'黑面琵鷺的嘴巴扁扁長長，前端像飯匙，也像琵琶；牠在淺水裡把嘴巴左右掃來掃去，找魚蝦吃。'},
+ {s:'月亮繞地球',q:'月亮繞地球一圈，大約要多久？',o:['大約一天','大約一個月','大約一年'],a:1,x:3,why:'小海對天上的月亮星星沒什麼興趣，這種題目，',e:'月亮繞地球一圈大約一個月，所以月亮從圓到缺、再變回圓，也大約是一個月。'},
+ {s:'蜘蛛的腳',q:'蜘蛛有幾隻腳？',o:['6 隻','8 隻','10 隻'],a:1,x:7,why:'小海家裡有一本小動物圖鑑，這種小動物的題目，',e:'蜘蛛有 8 隻腳；昆蟲才是 6 隻腳，所以蜘蛛不是昆蟲。'},
+ {s:'招潮蟹的大螯',q:'四草濕地的招潮蟹，有一隻特別大的螯。是誰才有這隻大螯？',o:['只有公的才有','公的、母的都有','只有母的才有'],a:0,x:8,why:'小海常常去四草的濕地看螃蟹，這種螃蟹的題目，',e:'只有公的招潮蟹有一隻特別大的螯，母的兩隻螯都小小的；公蟹會揮動大螯，吸引母蟹注意。'}
+];
+var CONF=[2,4,6,8];
+var CL=['大概 2 成','大概 4 成','大概 6 成','大概 8 成以上'];
+var FEEL=[
+ {t:'放心',e:'覺得放心，比較容易把事情交給比較擅長的人，自己也輕鬆一點；不過球傳出去以後，結果就不在自己手上了。'},
+ {t:'有點不安',e:'很多人都有這種感覺：結果不是自己決定的，心裡會懸著。這份不安代表你很在乎結果，它也可能讓人比較想把球留在自己手上。'},
+ {t:'還是比較想自己來',e:'自己來，答對了很開心，答錯了也甘願；不過有時候，可能會錯過讓更擅長的人上場的機會。'},
+ {t:'看是誰、看什麼事',e:'先想一想「這件事誰比較擅長？我信不信任他？」再決定要不要傳；這樣想比較周全，也要多花一點時間想清楚。'}
+];
+var st=load()||{step:'intro',i:0,stage:'rate',conf:[],who:[],ans:[],ok:[],feel:null};
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,f,cls){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',f);return b}
+function go(step){st.step=step;save(st);render();window.scrollTo(0,0)}
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}
+function score(){return st.ok.filter(function(x){return x===true}).length}
+// 小海's rate is clearly higher than how sure you said you were. 「8 成以上」 can mean 8 to 10, so it is never counted.
+function higher(i){var c=st.conf[i];return c!=null&&c<8&&Q[i].x>c}
+function stats(){var o={n:0,hi:0,self:0,pass:0};Q.forEach(function(q,i){var h=higher(i),me=st.who[i]==='me';if(h)o.hi++;if(h&&me)o.n++;if(me)o.self++;else if(st.who[i]==='xh')o.pass++});return o}
+function cLabel(c){return c===8?'8 成以上':c+' 成'}
+
+var BALL='<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="52" r="44" fill="#E9E1CB"/><circle cx="50" cy="48" r="44" fill="#FFFBF0" stroke="#CFC3A2" stroke-width="3"/><ellipse cx="35" cy="30" rx="12" ry="7" fill="#fff" transform="rotate(-25 35 30)"/><circle cx="62" cy="60" r="2.4" fill="#D9CDAE"/><circle cx="44" cy="68" r="2" fill="#D9CDAE"/><circle cx="70" cy="40" r="2" fill="#D9CDAE"/><circle cx="30" cy="56" r="1.8" fill="#D9CDAE"/></svg>';
+var ME='<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="24" r="14" fill="#F2CFAE"/><path d="M18 22 Q32 4 46 22 Z" fill="#2B2118"/><circle cx="27" cy="25" r="2.2" fill="#1F2A2E"/><circle cx="37" cy="25" r="2.2" fill="#1F2A2E"/><path d="M27 31 Q32 35 37 31" stroke="#1F2A2E" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M12 62 Q14 42 32 42 Q50 42 52 62 Z" fill="#205E86"/></svg>';
+var XH='<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="24" r="14" fill="#E9BE96"/><path d="M17 24 Q18 6 32 8 Q46 6 47 24 Q40 14 32 15 Q24 14 17 24 Z" fill="#3A2A1C"/><circle cx="27" cy="25" r="2.2" fill="#1F2A2E"/><circle cx="37" cy="25" r="2.2" fill="#1F2A2E"/><path d="M26 31 Q32 36 38 31" stroke="#1F2A2E" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M12 62 Q14 42 32 42 Q50 42 52 62 Z" fill="#A8441A"/><text x="32" y="58" text-anchor="middle" font-size="11" font-weight="900" fill="#fff">海</text></svg>';
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','班上要舉辦「海佃小知識王」比賽，你和隊友小海一隊。小海是故事裡的同學，他對有些題目特別拿手，有些題目就普普通通。'),
+    el('p','lead','比賽一共 6 題，每題答對，你們這一隊就得到 1 顆魚丸點數。每一題你都要先做三件事：'),
+    el('p','lead','① 先看題目，說說你有幾成把握答對。<br>② 看看小海這種題目大約幾成會答對。<br>③ 把魚丸球拖到「我自己來」或「傳給小海」。'),
+    el('p','lead','怎麼選都可以，沒有規定一定要怎麼做。'));
+  var x=el('div','xh');x.innerHTML=XH;x.appendChild(el('p',null,'我是小海，我們一起加油！'));
+  app.append(el('h1',null,'自己來還是傳球'),c,x,btn('開始比賽',function(){st.i=0;st.stage='rate';go('q')}));
+}
+function head(){var h=el('p','case');h.append(el('span',null,'第 '+(st.i+1)+' 題，共 6 題'),el('span','pts','魚丸點數：'+score()+' 顆'));return h}
+function qcard(q){var c=el('div','card');c.appendChild(el('p','qtext',q.q));return c}
+
+function question(){
+  if(st.i>=Q.length){go('record');return}
+  var q=Q[st.i],i=st.i;app.innerHTML='';
+  var c=qcard(q);app.append(head(),c);
+  if(st.stage==='rate'){
+    c.appendChild(el('p','mine','選項等一下才會出現。'));
+    var g=el('div','conf');
+    CONF.forEach(function(v,k){var b=el('button','cf','<small>大概</small><b>'+(v===8?'8 成以上':v+' 成')+'</b>');b.type='button';b.setAttribute('aria-label',CL[k]);
+      b.addEventListener('click',function(){st.conf[i]=v;st.stage='choose';save(st);render()});g.appendChild(b)});
+    app.append(el('h2',null,'看到這一題，你覺得自己有幾成把握答對？'),g);
+  }else if(st.stage==='choose'){
+    c.appendChild(el('p','mine','你說：你有大概 '+cLabel(st.conf[i])+'把握答對。'));
+    var x=el('div','xh');x.innerHTML=XH;x.appendChild(el('p',null,q.why+'小海大約 <b>'+q.x+' 成</b>會答對。'));
+    var court=el('div','court');
+    var zm=el('button','zone me',ME+'<span>我自己來</span>');zm.type='button';
+    var zx=el('button','zone xhz',XH+'<span>傳給小海</span>');zx.type='button';
+    var ball=el('div','ball',BALL);ball.setAttribute('aria-hidden','true');
+    court.append(zm,ball,zx);
+    var done=false;
+    function pick(who){if(done)return;done=true;(who==='me'?zm:zx).classList.add('got');
+      st.who[i]=who;
+      if(who==='xh'){st.ok[i]=rnd()<q.x/10;st.stage='result'}else{st.stage='answer'}
+      save(st);
+      var zr=(who==='me'?zm:zx).getBoundingClientRect(),br=ball.getBoundingClientRect();
+      ball.classList.remove('drag');ball.style.transform='translate('+((zr.left+zr.width/2)-(br.left+br.width/2)+cur.x)+'px,'+((zr.top+zr.height/2)-(br.top+br.height/2)+cur.y)+'px) scale(.6)';
+      setTimeout(render,380)}
+    zm.addEventListener('click',function(){pick('me')});zx.addEventListener('click',function(){pick('xh')});
+    var sx=null,sy=0,cur={x:0,y:0};
+    function inside(z,e){var r=z.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom}
+    ball.addEventListener('pointerdown',function(e){if(done)return;e.preventDefault();sx=e.clientX;sy=e.clientY;cur={x:0,y:0};ball.classList.add('drag');try{ball.setPointerCapture(e.pointerId)}catch(_){}});
+    ball.addEventListener('pointermove',function(e){if(sx==null)return;cur={x:e.clientX-sx,y:e.clientY-sy};ball.style.transform='translate('+cur.x+'px,'+cur.y+'px)';
+      zm.classList.toggle('over',inside(zm,e));zx.classList.toggle('over',inside(zx,e))});
+    function up(e){if(sx==null)return;sx=null;zm.classList.remove('over');zx.classList.remove('over');
+      if(e&&inside(zm,e)){pick('me');return}if(e&&inside(zx,e)){pick('xh');return}
+      ball.classList.remove('drag');cur={x:0,y:0};ball.style.transform='';}
+    ball.addEventListener('pointerup',up);ball.addEventListener('pointercancel',function(){up(null)});
+    app.append(x,el('h2',null,'這一題，你要自己來，還是傳給小海？'),court,el('p','hint','把中間的魚丸球拖到左邊或右邊；直接點左邊或右邊也可以。'));
+  }else if(st.stage==='answer'){
+    c.appendChild(el('p','mine','你選了「我自己來」。請選一個答案：'));
+    var g2=el('div','opts');
+    q.o.forEach(function(t,k){g2.appendChild(btn(t,function(){st.ans[i]=k;st.ok[i]=(k===q.a);st.stage='result';save(st);render()},'btn alt'))});
+    app.append(g2);
+  }else{
+    var me=st.who[i]==='me',ok=st.ok[i];
+    var r=el('div','card');
+    if(me){
+      r.append(el('p','mine','你自己來，選了「'+q.o[st.ans[i]]+'」。'),el('p','res '+(ok?'ok':'no'),ok?'答對了！得到 1 顆魚丸點數。':'這次沒有答對。'));
+    }else{
+      var x2=el('div','xh');x2.innerHTML=XH;x2.appendChild(el('p',null,'你把球傳給小海，小海想了一下，說出他的答案……'));
+      r.append(x2,el('p','res '+(ok?'ok':'no'),ok?'小海答對了！得到 1 顆魚丸點數。':'小海這次沒有答對。'));
+    }
+    r.append(el('p','note','正確答案是：<b>'+q.o[q.a]+'</b><br>'+q.e));
+    app.append(r,btn(i<Q.length-1?'下一題':'看看我的紀錄',function(){st.i++;st.stage='rate';save(st);render();window.scrollTo(0,0)}));
+  }
+}
+
+function record(){
+  app.innerHTML='';
+  var S=stats(),n=S.n,hiAll=S.hi,self=S.self,pass=S.pass,eightNine=false;
+  var rows=el('div','rows');
+  Q.forEach(function(q,i){
+    var h=higher(i),me=st.who[i]==='me';
+    if(st.conf[i]===8&&q.x>8)eightNine=true;
+    var r=el('div','row'+(h&&me?' hl':''));
+    r.appendChild(el('span','t','第 '+(i+1)+' 題　'+q.s));
+    var ch=el('div','chips');
+    ch.innerHTML='<span><i>你的把握</i> '+(st.conf[i]!=null?cLabel(st.conf[i]):'—')+'</span><span><i>小海</i> '+q.x+' 成</span><span><i>你選</i> '+(me?'我自己來':st.who[i]?'傳給小海':'—')+'</span><span><i>結果</i> '+(st.ok[i]?'答對 +1':'沒答對')+'</span>';
+    r.appendChild(ch);
+    if(h&&me)r.appendChild(el('span','flag','小海的成數比較高，你還是選了自己來。'));
+    rows.appendChild(r);
+  });
+  var big=el('div','card');
+  big.append(el('p','bigl','你覺得小海比較可能答對（小海的成數比你的把握高），卻還是選「我自己來」：'),el('p','big',n+' 次'),
+    el('p','mine center','（6 題裡，小海的成數比你的把握高的有 '+hiAll+' 題。'+(eightNine?'你選「8 成以上」的題目不算在裡面。':'')+'）'));
+  var three=el('div','three');
+  three.innerHTML='<div><b>'+self+' 次</b><span>我自己來</span></div><div><b>'+pass+' 次</b><span>傳給小海</span></div><div><b>'+score()+' 顆</b><span>魚丸點數</span></div>';
+  big.appendChild(three);
+  var c=el('div','card');c.appendChild(rows);
+  app.append(el('p','case','比賽結束'),el('h2',null,'你的紀錄'),big,
+    el('p','note','很多人都會這樣，這不是錯，等一下全班一起看看。'),c,btn('下一步：回答一個小問題',function(){go('feel')}));
+}
+
+function feel(){
+  app.innerHTML='';
+  var g=el('div','opts');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  function show(k){
+    Array.prototype.forEach.call(g.children,function(x,j){x.classList.toggle('pick',j===k)});fb.innerHTML='';
+    fb.append(el('p','note',FEEL[k].e+'<br><span style="font-size:.9em;color:var(--muted)">這一題沒有標準答案。想換的話，直接點別的選項。</span>'),btn('選好了',function(){go('end')}));
+  }
+  FEEL.forEach(function(f,k){g.appendChild(btn(f.t,function(){st.feel=k;save(st);show(k)},'btn alt'))});
+  app.append(el('p','case','最後一個問題'),el('h2',null,'把球傳給別人的時候，你心裡比較像？'),el('p','lead','選最接近你心裡感覺的那一個。'),g,fb);
+  if(st.feel!=null)show(st.feel);
+}
+
+function end(){
+  app.innerHTML='';
+  var t=el('table'),S=stats();
+  [['我自己來',S.self+' 次'],['傳給小海',S.pass+' 次'],['覺得小海比較會，卻還是自己來',S.n+' 次'],['總共得到的魚丸點數',score()+' 顆'],['把球傳給別人時，我心裡比較像',st.feel!=null?FEEL[st.feel].t:'—']]
+    .forEach(function(r,k){var tr=el('tr');tr.append(el('td',null,r[0]),el('td',k===4?'n w':'n',r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  if(st.step==='q')question();else if(st.step==='record')record();else if(st.step==='feel')feel();else if(st.step==='end')end();else intro();
+}
+render();
+})();
+</script>

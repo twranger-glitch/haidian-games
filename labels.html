@@ -1,0 +1,451 @@
+<title>標籤拆拆看</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro → palette (our class: tap 1–5 paint blobs, a class-photo strip gets painted) → palette (fictional 安和國小) → compare the two strips → six label pages (a label stuck on a cardboard standee; pick 全部都是／很多是／有些是／說不準, then hold or drag the label to peel it; three short stories appear; "did your view change?") → 草地郎 question (every option shows what it does) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --kraft:#E6D2AC; --kraft2:#CDB283;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.case svg.i{width:1.4em;height:1.4em;vertical-align:-0.35em;margin-right:8px}
+.nw{white-space:nowrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.grid2 .btn.alt{text-align:center}
+.btn.go{background:var(--rust)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.alt:disabled{opacity:1;color:var(--muted)}
+.btn.alt.pick:disabled{color:var(--ink)}
+.btn:focus-visible,.blob:focus-visible,.lbwrap:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.parts{display:flex;flex-direction:column;gap:12px}
+.part{display:flex;gap:14px;align-items:center;font-size:clamp(19px,2.6vw,24px);line-height:1.55}
+.part svg.i{width:52px;height:52px;flex:none;color:var(--ink)}
+.part b{display:block}
+
+/* ---------- palette ---------- */
+.scale{display:flex;justify-content:space-between;gap:12px;font-size:clamp(19px,2.3vw,21px);font-weight:700;color:var(--muted);margin:0}
+.scale span:last-child{text-align:right}
+.pal{position:relative;width:min(100%,580px);aspect-ratio:1.62;margin:0 auto;background:var(--kraft);border:3px solid var(--kraft2);border-radius:50% 46% 44% 52% / 58% 56% 44% 42%;box-shadow:inset 0 -8px 0 rgba(120,90,40,.10)}
+.pal .hole{position:absolute;left:13%;top:58%;width:16%;aspect-ratio:1;border-radius:50%;background:var(--bg);border:3px solid var(--kraft2)}
+.blob{position:absolute;width:19%;aspect-ratio:1;border:3px dashed rgba(31,42,46,.35);padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s,box-shadow .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:transparent}
+.blob .paint{position:absolute;inset:6%;border-radius:inherit;background:var(--c);opacity:.38;transition:opacity .12s}
+.blob .tick{position:relative;width:46%;aspect-ratio:1;border-radius:50%;background:#FBFCF9;color:var(--ink);display:none;align-items:center;justify-content:center;border:2px solid var(--ink)}
+.blob .tick svg{width:78%;height:78%}
+.blob.on{border:3px solid var(--ink);transform:scale(1.08);box-shadow:0 4px 0 rgba(31,42,46,.18)}
+.blob.on .paint{opacity:1;inset:0}
+.blob.on .tick{display:flex}
+.blob:active{transform:scale(.96)}
+.b0{left:31%;top:10%;border-radius:52% 48% 55% 45%/48% 55% 45% 52%}
+.b1{left:53%;top:7%;border-radius:45% 55% 48% 52%/55% 45% 55% 45%}
+.b2{left:74%;top:22%;border-radius:55% 45% 50% 50%/50% 52% 48% 50%}
+.b3{left:66%;top:56%;border-radius:48% 52% 45% 55%/52% 48% 52% 48%}
+.b4{left:41%;top:52%;border-radius:50% 50% 55% 45%/45% 55% 50% 50%}
+.count{font-size:clamp(23px,3.8vw,32px);font-weight:900;text-align:center;margin:0;line-height:1.4}
+.count small{display:block;font-size:clamp(19px,2.6vw,23px);font-weight:700;color:var(--muted)}
+.photo{display:flex;justify-content:center;gap:clamp(2px,1vw,10px);background:#FFFDF6;border:3px solid var(--line);border-radius:16px;padding:12px 8px 0;overflow:hidden}
+.photo svg{width:11%;max-width:62px;height:auto;display:block}
+.photo .kid path,.photo .kid circle{transition:fill .25s}
+.cmp{display:grid;grid-template-columns:auto 1fr;gap:12px 14px;align-items:center}
+.cmp .who{font-weight:900;font-size:clamp(19px,2.8vw,25px);display:flex;flex-direction:column;align-items:center;text-align:center;line-height:1.3;min-width:5.2em}
+.cmp .who svg.i{width:40px;height:40px}
+.cmp .who small{font-size:clamp(19px,2.4vw,21px);color:var(--muted)}
+.cmp .photo{padding-top:8px}
+
+/* ---------- label standee ---------- */
+.stand{position:relative;width:min(100%,440px);margin:0 auto;aspect-ratio:300/250}
+.stand > svg{position:absolute;inset:0;width:100%;height:100%}
+.lbwrap{position:absolute;left:5%;right:5%;top:53%;transform-origin:20% 40%;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;outline:none;border-radius:10px;-webkit-tap-highlight-color:transparent}
+.lbwrap.locked{cursor:default}
+.lbwrap.gone{transition:transform .5s cubic-bezier(.4,0,.8,.6),opacity .5s;opacity:0}
+.lbface{background:#FFFDF4;border:2px solid #CBBE98;border-radius:10px;padding:12px 16px;font-size:clamp(23px,3.4vw,30px);font-weight:900;line-height:1.35;text-align:center;color:var(--ink);box-shadow:0 3px 0 rgba(90,70,30,.15)}
+.lbface .pos{display:block;font-size:clamp(19px,2.3vw,21px);font-weight:700;color:var(--rust)}
+.fold{position:absolute;right:0;bottom:0;width:14px;height:14px;background:linear-gradient(135deg,#F1EAD6 0%,#E2D6B4 60%,#CDBE95 100%);clip-path:polygon(0 0,100% 0,0 100%);pointer-events:none;filter:drop-shadow(-1px -1px 0 rgba(0,0,0,.08))}
+.peelhint{display:flex;align-items:center;gap:10px;justify-content:center;font-weight:900;color:var(--rust);font-size:clamp(19px,2.6vw,24px);margin:0;text-align:left}
+.peelhint svg.i{width:1.6em;height:1.6em}
+.peelhint.wait{color:var(--muted);font-weight:700}
+@keyframes wig{0%,100%{transform:rotate(0)}25%{transform:rotate(-2.2deg)}75%{transform:rotate(2.2deg)}}
+.lbwrap.wiggle{animation:wig .5s ease-in-out 2}
+.three{position:absolute;left:5%;right:5%;top:50%;display:flex;justify-content:space-around;align-items:center;gap:4px;background:rgba(255,253,244,.85);border:3px dashed #CBBE98;border-radius:12px;padding:6px}
+.three svg.av{width:30%;max-width:84px;height:auto}
+.ppl{display:flex;flex-direction:column;gap:10px}
+.pp{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 16px}
+.pp svg.av{width:72px;height:72px}
+.pp p{margin:0;font-size:clamp(19px,2.6vw,23px);line-height:1.65}
+.pp .nm{font-weight:900;font-size:clamp(19px,2.6vw,23px);color:var(--sea);display:block}
+.pp .nm small{font-weight:700;color:var(--muted);font-size:.9em;margin-left:6px}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.pp.in{animation:rise .45s both}
+.was{margin:0;font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:700}
+
+/* ---------- tables ---------- */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700}
+td b{font-size:1.1em}
+td .sw{display:inline-flex;gap:4px;vertical-align:-0.1em;margin-left:8px}
+td .sw i{width:.9em;height:.9em;border-radius:50%;border:2px solid var(--ink);display:inline-block}
+td.lb{color:var(--ink);font-weight:700}
+.chg{display:inline-block;font-size:.85em;font-weight:700;color:var(--rust);margin-left:6px}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  th,td{padding:8px 4px}
+  .grid2{gap:8px}
+  .grid2 .btn{padding:12px 8px}
+  .pp{padding:10px 12px;gap:10px}
+  .pp svg.av{width:58px;height:58px}
+  .cmp{grid-template-columns:1fr}
+  .cmp .who{flex-direction:row;gap:8px;min-width:0;justify-content:flex-start}
+  table.sum, table.sum tbody, table.sum tr, table.sum td{display:block}
+  table.sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  table.sum td{border:0;padding:2px 4px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"palette": "<path d=\"M12 3C6.8 3 2.8 6.9 2.8 11.8c0 4.7 3.6 8.6 8.2 8.6 1.6 0 2.4-.9 2.4-2.1 0-1.4-1.1-1.8-1.1-3 0-1.1.9-1.9 2.1-1.9h2.2c2.5 0 4.6-1.6 4.6-4.4C21.2 5.7 17 3 12 3z\" fill=\"#F3E3BE\"/><circle cx=\"7.4\" cy=\"11\" r=\"2\" fill=\"#9CC3E0\"/><circle cx=\"9.8\" cy=\"6.9\" r=\"2\" fill=\"#F2B8A0\"/><circle cx=\"14.6\" cy=\"6.6\" r=\"2\" fill=\"#F3D27A\"/><circle cx=\"7.8\" cy=\"15.6\" r=\"2\" fill=\"#CFE3C4\"/>", "peel": "<path d=\"M3.5 7.2a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v5.6l-5.8 5.8H5.5a2 2 0 0 1-2-2z\" fill=\"#FBF4E2\"/><path d=\"M20.5 12.8h-3.8a2 2 0 0 0-2 2v3.8\" fill=\"#F3E3BE\"/><path d=\"M7 9.6h8.4M7 13h5\"/>", "school": "<path d=\"M3.5 21V11l8.5-4.6 8.5 4.6v10z\" fill=\"#DCE8F0\"/><path d=\"M12 6.4V2.4\"/><path d=\"M12 2.4h4.2l-1.1 1.4 1.1 1.4H12\" fill=\"#F2B8A0\"/><path d=\"M10 21v-4.4a2 2 0 0 1 4 0V21\" fill=\"#FBFCF9\"/><path d=\"M6.4 13.4h2.2M15.4 13.4h2.2\"/><path d=\"M2 21h20\"/>", "crowd": "<circle cx=\"12\" cy=\"6.6\" r=\"2.6\" fill=\"#F6E3D6\"/><circle cx=\"5.4\" cy=\"9.2\" r=\"2.2\" fill=\"#F6E3D6\"/><circle cx=\"18.6\" cy=\"9.2\" r=\"2.2\" fill=\"#F6E3D6\"/><path d=\"M7.6 19.6c.3-3.6 2-5.6 4.4-5.6s4.1 2 4.4 5.6z\" fill=\"#F3E3BE\"/><path d=\"M1.8 19.6c.2-3 1.6-4.6 3.6-4.6 1 0 1.8.3 2.4.9M22.2 19.6c-.2-3-1.6-4.6-3.6-4.6-1 0-1.8.3-2.4.9\"/>", "talk": "<path d=\"M2.8 5.6a2.2 2.2 0 0 1 2.2-2.2h8.6a2.2 2.2 0 0 1 2.2 2.2v4.6a2.2 2.2 0 0 1-2.2 2.2H8.4L4.8 15.2v-2.9a2.2 2.2 0 0 1-2-2.1z\" fill=\"#DCE8F0\"/><path d=\"M18.6 8.6h.4a2.2 2.2 0 0 1 2.2 2.2v4.4a2.2 2.2 0 0 1-2 2.2v2.8l-3.6-2.8h-4.2a2.2 2.2 0 0 1-2.2-2.2\" fill=\"#F6DCCF\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "undo": "<path d=\"M4 4.5v5h5\"/><path d=\"M4.8 9.5A8 8 0 1 1 4 13.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"grandma": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#A8441A\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><circle cx=\"32\" cy=\"12.5\" r=\"5\" fill=\"#C9CCD1\"/><path d=\"M19 27 Q19 13 32 14 Q45 13 45 27 Q41 19 32 19.5 Q23 19 19 27 Z\" fill=\"#C9CCD1\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"27.5\" cy=\"28\" r=\"3.6\" fill=\"none\" stroke=\"#56605C\" stroke-width=\"1.5\"/><circle cx=\"36.5\" cy=\"28\" r=\"3.6\" fill=\"none\" stroke=\"#56605C\" stroke-width=\"1.5\"/><path d=\"M31.1 28h1.8\" stroke=\"#56605C\" stroke-width=\"1.5\"/>", "grandpa": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#56605C\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19 26 Q19 12.5 32 13 Q45 12.5 45 26 Q43 19.5 38 18.5 Q32 20.5 26 18.5 Q21 19.5 19 26 Z\" fill=\"#D5D8DC\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M28.5 31.2 Q32 30 35.5 31.2\" fill=\"none\" stroke=\"#B9BEC4\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "auntie": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#C0532C\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><circle cx=\"32\" cy=\"11\" r=\"5.5\" fill=\"#3A2A1C\"/><path d=\"M19 28 Q18 13 32 13.5 Q46 13 45 28 Q42 19 32 19.5 Q22 19 19 28 Z\" fill=\"#3A2A1C\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"19.6\" cy=\"32\" r=\"1.4\" fill=\"#F3D27A\"/><circle cx=\"44.4\" cy=\"32\" r=\"1.4\" fill=\"#F3D27A\"/>", "kidA": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#B7862B\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M19 25 Q19 12 32 13 Q45 12 45 25 Q41 17.5 33 18.5 Q30 15.5 26 18.5 Q22 20 19 25 Z\" fill=\"#2B2118\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidB": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#2F7D4F\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19.5 24 Q20 12.5 32 13 Q44 12.5 44.5 24 Q38 17 26 19 Q22 20 19.5 24 Z\" fill=\"#3A2A1C\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidC": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#A8441A\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M18.5 30 Q17 12 32 12.5 Q47 12 45.5 30 Q44 20 32 19.5 Q20 20 18.5 30 Z\" fill=\"#5A3A22\"/><circle cx=\"47\" cy=\"22\" r=\"4.5\" fill=\"#5A3A22\"/><circle cx=\"44.2\" cy=\"19.6\" r=\"1.6\" fill=\"#E8A0A8\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidD": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#7A6A9E\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#E3B48C\"/><path d=\"M19 24 Q18.5 11 32 12 Q45.5 11 45 24 L42 19 L38.5 22 L35 18 L31 21.5 L27 18 L23.5 21.5 Z\" fill=\"#1F1A16\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidE": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#3E7C83\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M18 33 Q16 12 32 12.5 Q48 12 46 33 Q45 24 42 20 Q34 17 27 20 Q21 22 20 26 Q19 29 18 33 Z\" fill=\"#2B2118\"/><path d=\"M27 20 Q30 22 34 21\" fill=\"none\" stroke=\"#1F1A16\" stroke-width=\"1.2\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidF": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#205E86\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#E9BE96\"/><path d=\"M19 24 Q19 12 32 12.5 Q45 12 45 24 Q44 20 32 19.8 Q20 20 19 24 Z\" fill=\"#2B2118\"/><path d=\"M18.5 21.5 Q32 15 45.5 21.5 L48 23.5 Q32 19.5 16.5 23.5 Z\" fill=\"#205E86\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>", "kidG": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#8C6BB1\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#F2CFAE\"/><path d=\"M19 28 Q18 12.5 32 13 Q46 12.5 45 28 Q43 19 37 18.5 Q31 21.5 24 19.5 Q20.5 22 19 28 Z\" fill=\"#2B2118\"/><path d=\"M45 20 Q51 24 49 33 Q47 28 44.5 26 Z\" fill=\"#2B2118\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var GL='<circle cx="27.5" cy="28" r="4" fill="none" stroke="#1F2A2E" stroke-width="1.6"/><circle cx="36.5" cy="28" r="4" fill="none" stroke="#1F2A2E" stroke-width="1.6"/><path d="M31.5 28h1" stroke="#1F2A2E" stroke-width="1.6"/>';
+function avg(k,g){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+(g?GL:'')+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='labels-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){var lb=[];for(var i=0;i<6;i++)lb.push({op:null,peeled:false,chg:null});return {step:0,us:[0,0,0,0,0],them:[0,0,0,0,0],lb:lb,word:null}}
+var st=load();
+if(!st||!st.lb||st.lb.length!==6||!st.us||!st.them)st=fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function sum(a){var n=0;a.forEach(function(x){if(x)n++});return n}
+
+/* ---------- data ---------- */
+var COLORS=[['#4F8FC0','藍色'],['#E07A5F','橘紅色'],['#E8B84A','黃色'],['#5BA672','綠色'],['#8C6BB1','紫色']];
+var MEAN=['','大家都差不多','有一點不一樣','有些地方不一樣','很多地方不一樣','每個人都很不一樣'];
+var ORDER=[0,3,1,4,2,1,3,0];
+var OPS=['全部都是','很多是','有些是','說不準'];
+var CHG=['和剛才差不多','有一點不一樣了'];
+var LB=[
+ {t:'住海邊的人都很會游泳',sum:'這三個人都住在海邊：有人不會游泳，有人正在學，也有人游得很好。',
+  p:[['grandma','阿嬤','住七股','阿嬤在七股的海邊住了六十幾年，到現在還不會游泳。她最厲害的是看天色，知道明天適不適合出海。'],
+     ['kidC','小澄','住四草','小澄家走路五分鐘就到海邊，可是她今年暑假才開始學游泳，現在正在練習換氣。'],
+     ['kidB','阿凱','住安南','阿凱從小跟爸爸去海邊玩水，游得又快又穩，是游泳課的小幫手。']]},
+ {t:'城市裡的小孩都不會抓螃蟹',sum:'這三個人都住在城市裡：有人抓得很快，有人沒抓過，也有人正在學。',
+  p:[['kidE','小芸','住台南市區','小芸住在市區的大樓，每年暑假都去外婆家的魚塭玩，抓螃蟹比表哥還快。'],
+     ['kidD','阿哲','住台南市區','阿哲真的沒有抓過螃蟹，可是他很愛看自然圖鑑，能說出十幾種螃蟹的名字。'],
+     ['kidF','小恩','住台南市區','小恩第一次在四草看到招潮蟹，蹲在旁邊看了好久，現在正在請阿公教他怎麼抓。']]},
+ {t:'鄉下的人都很早起',sum:'這三個人都住在鄉下：有人天還沒亮就起床，有人愛賴床，也有人因為工作晚睡晚起。',
+  p:[['grandpa','阿伯','在七股養虱目魚','阿伯每天天還沒亮就起床，先到魚塭看看魚，再回家吃早餐。'],
+     ['kidA','小宇','住在鄉下','小宇最愛賴床，鬧鐘要響三次才爬得起來，常常是全家最晚出門的人。'],
+     ['auntie','阿姨','住在鄉下','阿姨晚上在夜市擺攤，收攤回到家已經很晚了，所以早上都睡到九點才起床。']]},
+ {t:'會畫畫的人都不愛運動',sum:'這三個人都很會畫畫：有人也愛打球，有人不太愛跑步，也有人一邊騎車一邊找畫畫的題材。',
+  p:[['kidG','小晴','愛畫畫','小晴畫畫得過獎，也是學校躲避球隊的隊員，一下課就往球場跑。'],
+     ['kidA','阿杰','愛畫畫','阿杰最愛畫漫畫，不太喜歡跑步，下課時間大多拿著筆在畫畫。'],
+     ['kidE','小萱','愛畫畫','小萱喜歡畫鳥，常常騎腳踏車到四草看鳥，一騎就是一個小時，回家再把看到的鳥畫下來。']]},
+ {t:'愛打球的人都不愛看書',sum:'這三個人都愛打球：有人書包裡一定有小說，有人比較愛聽故事，也有人是借書借最多的人。',
+  p:[['kidB','阿翔','愛打籃球','阿翔每天下課都去打籃球，書包裡也一定放著一本推理小說。'],
+     ['kidC','小安','愛打桌球','小安很愛打桌球，可是一看書就想睡覺，他比較喜歡聽別人說故事。'],
+     ['kidD','阿誠','愛打棒球','阿誠是棒球隊的隊長，也是班上到圖書館借書借最多次的人。']]},
+ {t:'戴眼鏡的人功課都很好',pos:true,sum:'這三個人都戴眼鏡：有人數學很好，有人最會煮菜，也有人功課普普通通，卻很會修東西。',
+  p:[['kidA','小佑','戴眼鏡',"小佑戴眼鏡，數學考得很好，國語的作文還在努力練習。",1],
+     ['kidG','阿珊','戴眼鏡','阿珊戴眼鏡，她最拿手的不是考試，是煮菜，會煮一鍋好吃的虱目魚粥。',1],
+     ['kidF','小敏','戴眼鏡','小敏從二年級就戴眼鏡，功課普普通通，可是同學的玩具壞了，都會來找她修。',1]]}
+];
+var WORD=[
+ ['不舒服','說出「不舒服」，可以讓對方知道：一個詞會讓人覺得被看扁了。說的時候講清楚是哪裡不舒服，對方比較聽得進去。'],
+ ['沒關係','不放在心上，可以讓自己輕鬆一點，也不會為了一個詞吵起來。不過，同一區也許有人會在意，可以想一想他們的感受。'],
+ ['要看是什麼詞','同一個詞，可能是開玩笑，也可能是看不起人。先弄清楚說的人是什麼意思，再決定要怎麼回應。'],
+ ['會想讓他認識我們','讓對方認識我們這一區各式各樣的人，他就比較不會只用一個詞，把所有人都說完了。']
+];
+
+/* ---------- painted class photo ---------- */
+function kid(color){
+  return '<svg class="kid" viewBox="0 0 40 58" aria-hidden="true"><path d="M5.5 58V43.5a14.5 14.5 0 0 1 29 0V58z" fill="'+color+'" stroke="#1F2A2E" stroke-width="1.8" stroke-linejoin="round"/><circle cx="20" cy="15.5" r="9.5" fill="'+color+'" stroke="#1F2A2E" stroke-width="1.8"/></svg>';
+}
+function photo(sel){
+  var cs=[];sel.forEach(function(x,i){if(x)cs.push(COLORS[i][0])});
+  var h='';for(var i=0;i<8;i++)h+=kid(cs.length?cs[ORDER[i]%cs.length]:'#D4D9D2');
+  var d=el('div','photo',h);d.setAttribute('aria-hidden','true');return d;
+}
+function swatch(sel){var h='<span class="sw" aria-hidden="true">';sel.forEach(function(x,i){if(x)h+='<i style="background:'+COLORS[i][0]+'"></i>'});return h+'</span>'}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','這個遊戲有三個部分，每一題都<b>沒有標準答案</b>，照你自己的想法選就好。'));
+  var ps=el('div','parts');
+  [['palette','第一部分：我們和他們','用調色盤上的顏色，表示一群人「彼此有多不一樣」。'],
+   ['peel','第二部分：拆標籤','看板上貼著六張標籤，先說說你的看法，再把標籤撕下來，看看底下的人。'],
+   ['talk','第三部分：被叫一個詞','想一想，如果有人用一個詞叫我們這一區所有的人，你會有什麼感覺。']].forEach(function(r){
+    ps.appendChild(el('div','part',ic(r[0])+'<span><b>'+r[1]+'</b>'+r[2]+'</span>'));
+  });
+  c.appendChild(ps);
+  app.append(el('h1',null,'標籤拆拆看'),c,button('開始','btn',function(){go(1)}));
+}
+
+/* ---------- steps 1, 2: palette ---------- */
+function palette(which){
+  var key=which===0?'us':'them', sel=st[key];
+  app.innerHTML='';
+  app.appendChild(el('p','case',ic('palette')+'第一部分　我們和他們　'+(which+1)+'／2'));
+  app.appendChild(el('h2',null,which===0?'你們班的同學，彼此有多不一樣？':'隔壁學校「安和國小」的學生，彼此有多不一樣？'));
+  if(which===1)app.appendChild(el('p','lead','安和國小是故事裡的學校。想像它就在附近，可是你沒有在那裡讀過書。'));
+  app.appendChild(el('p','lead','點調色盤上的顏料，選 1 到 5 個顏色。顏色越多，代表你覺得這群人彼此越不一樣；再點一下可以拿掉。'));
+  var card=el('div','card');
+  var sc=el('p','scale','<span>1 個顏色＝都差不多</span><span>5 個顏色＝每個人都很不一樣</span>');
+  var pal=el('div','pal');pal.appendChild(el('span','hole'));
+  var blobs=[];
+  COLORS.forEach(function(c,i){
+    var b=el('button','blob b'+i+(sel[i]?' on':''),'<span class="paint"></span><span class="tick">'+ic('check')+'</span>');
+    b.type='button';b.style.setProperty('--c',c[0]);
+    b.setAttribute('aria-pressed',sel[i]?'true':'false');b.setAttribute('aria-label',c[1]+'顏料');
+    b.addEventListener('click',function(){
+      sel[i]=sel[i]?0:1;save(st);
+      b.classList.toggle('on',!!sel[i]);b.setAttribute('aria-pressed',sel[i]?'true':'false');upd();
+    });
+    pal.appendChild(b);blobs.push(b);
+  });
+  var cnt=el('p','count');var ph=el('div');
+  card.append(sc,pal,cnt,ph);
+  var nx=button(which===0?'下一題':'比一比','btn',function(){if(!sum(sel))return;go(which===0?2:3)});
+  function upd(){
+    var n=sum(sel);
+    cnt.innerHTML=n?'你選了 '+n+' 個顏色<small>'+MEAN[n]+'</small>':'還沒有選顏色<small>點上面的顏料試試看</small>';
+    ph.innerHTML='';var p=photo(sel);ph.appendChild(p);
+    nx.disabled=!n;
+  }
+  upd();
+  app.append(card,nx);
+}
+
+/* ---------- step 3: compare ---------- */
+function compare(){
+  app.innerHTML='';
+  var a=sum(st.us),b=sum(st.them);
+  app.appendChild(el('p','case',ic('palette')+'第一部分　我們和他們'));
+  app.appendChild(el('h2',null,'兩邊的顏色，比一比'));
+  var c=el('div','card');var g=el('div','cmp');
+  g.append(el('div','who',ic('crowd')+'<span>你們班<br><small>'+a+' 個顏色</small></span>'),photo(st.us),
+           el('div','who',ic('school')+'<span>安和國小<br><small>'+b+' 個顏色</small></span>'),photo(st.them));
+  c.appendChild(g);
+  var msg;
+  if(a>b)msg='你給自己班的顏色比較多。很多人都會這樣：自己熟悉的這群人，每個人哪裡不一樣都看得很清楚；不太認識的那群人，就容易覺得「他們都差不多」。';
+  else if(a===b)msg='你給兩邊一樣多的顏色。等一下全班比一比，看看大家是怎麼選的。';
+  else msg='你給安和國小的顏色比較多。等一下全班比一比，看看大家是怎麼選的。';
+  app.append(c,el('p','note',msg+'<br>這一題沒有對錯，先記住你的兩個數字。'),button('下一部分：拆標籤','btn',function(){go(4)}));
+}
+
+/* ---------- steps 4–9: labels ---------- */
+function board(){
+  return '<svg viewBox="0 0 300 250" aria-hidden="true">'+
+   '<path d="M40 246 V178 Q40 128 96 118 Q120 114 128 104 A52 52 0 1 1 172 104 Q180 114 204 118 Q260 128 260 178 V246 Z" fill="#E6D2AC" stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round"/>'+
+   '<circle cx="150" cy="58" r="40" fill="#EFE0C2"/><path d="M134 64 q16 10 32 0" fill="none" stroke="#B49A69" stroke-width="3" stroke-linecap="round"/><circle cx="136" cy="50" r="4" fill="#B49A69"/><circle cx="164" cy="50" r="4" fill="#B49A69"/>'+
+   '<path d="M40 246h220" stroke="#1F2A2E" stroke-width="3" stroke-linecap="round"/></svg>';
+}
+function labelPage(i){
+  var L=LB[i],S=st.lb[i];
+  app.innerHTML='';
+  app.appendChild(el('p','case',ic('peel')+'第二部分　拆標籤　'+(i+1)+'／6'+(L.pos?'　<span class="nw">這一張聽起來是稱讚</span>':'')));
+  app.appendChild(el('h2',null,S.peeled?'標籤撕下來了，底下有三個人。':'<span class="nw">看板上貼著一張標籤。</span><span class="nw">你覺得這句話？</span>'));
+  var stand=el('div','stand',board());
+  var hint=el('p','peelhint');
+  if(!S.peeled){
+    var wrap=el('div','lbwrap'+(S.op==null?' locked':''));
+    wrap.setAttribute('role','button');wrap.tabIndex=0;wrap.setAttribute('aria-label','標籤：'+L.t+'。按住或拖開，可以把標籤撕下來');
+    var face=el('div','lbface',L.t);var fold=el('div','fold');
+    wrap.append(face,fold);stand.appendChild(wrap);
+    peelable(wrap,face,fold,function(){return st.lb[i].op!=null},function(){
+      st.lb[i].peeled=true;save(st);labelPage(i);
+      var t=document.getElementById('ppl');if(t){try{t.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}}
+    },function(){hint.className='peelhint wait';hint.innerHTML=ic('peel')+'先在下面選一個答案，再撕標籤。'});
+  }else{
+    var th=el('div','three');L.p.forEach(function(p){th.innerHTML+=avg(p[0],p[4])});stand.appendChild(th);
+  }
+  app.appendChild(stand);
+  function setHint(){
+    if(S.peeled){hint.remove();return}
+    if(S.op==null){hint.className='peelhint wait';hint.innerHTML=ic('peel')+'先在下面選一個答案，再撕標籤。'}
+    else{hint.className='peelhint';hint.innerHTML=ic('peel')+'現在把標籤撕下來：按住標籤不放，或用手指把它拖開。'}
+  }
+  setHint();app.appendChild(hint);
+  /* opinion */
+  var q=el('div','card');
+  if(S.peeled)q.appendChild(el('p','was','撕開之前，你覺得「'+L.t+'」這句話：'));
+  var g=el('div','grid2');
+  OPS.forEach(function(o,k){
+    var b=button(o,'btn alt'+(S.op===k?' pick':''),function(){
+      if(st.lb[i].peeled)return;
+      var first=st.lb[i].op==null;
+      st.lb[i].op=k;save(st);
+      Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');
+      var w=stand.querySelector('.lbwrap');
+      if(w){w.classList.remove('locked');if(first){w.classList.remove('wiggle');void w.offsetWidth;w.classList.add('wiggle')}}
+      setHint();
+      if(first){try{stand.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}}
+    });
+    if(S.peeled)b.disabled=true;
+    g.appendChild(b);
+  });
+  q.appendChild(g);app.appendChild(q);
+  if(!S.peeled)return;
+  /* stories */
+  var pl=el('div','ppl');pl.id='ppl';
+  L.p.forEach(function(p,k){
+    var d=el('div','pp in',avg(p[0],p[4])+'<p><span class="nm">'+p[1]+'<small>'+p[2]+'</small></span>'+p[3]+'</p>');
+    d.style.animationDelay=(k*0.15)+'s';pl.appendChild(d);
+  });
+  app.appendChild(pl);
+  var txt=L.sum+'<br><b>同一群人裡，每個人都不一樣。</b>一句話也許說中了其中一些人，卻裝不下每一個人。';
+  if(L.pos)txt+='<br>這句話聽起來像是稱讚，可是戴眼鏡、功課還在努力的人聽了，可能會有壓力；沒戴眼鏡的人，好像也被說成比較不會讀書。<b>正面的標籤，也是把一整群人說成一樣。</b>';
+  app.appendChild(el('p','note',txt));
+  var c2=el('div','card');
+  c2.appendChild(el('p','lead','<b>看完這三個人，你對這句話的想法？</b>'));
+  var g2=el('div','grid2');
+  var nx=button(i<5?'下一張標籤':'進入第三部分','btn',function(){if(st.lb[i].chg==null)return;go(5+i)});
+  nx.disabled=S.chg==null;
+  CHG.forEach(function(o,k){
+    var b=button(o,'btn alt'+(S.chg===k?' pick':''),function(){
+      st.lb[i].chg=k;save(st);
+      Array.prototype.forEach.call(g2.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;
+    });
+    g2.appendChild(b);
+  });
+  c2.appendChild(g2);
+  app.append(c2,nx);
+}
+
+/* hold or drag to peel */
+function peelable(wrap,face,fold,can,done,nope){
+  var p=0,down=false,t0=0,sx=0,sy=0,dx=0,dy=0,finished=false,pid=null,auto=false;
+  function draw(){
+    var H=face.offsetHeight||80,W=face.offsetWidth||300;
+    var s=Math.round(14+p*(Math.min(H*0.95,W*0.45)-14));
+    face.style.clipPath='polygon(0 0,100% 0,100% calc(100% - '+s+'px),calc(100% - '+s+'px) 100%,0 100%)';
+    face.style.webkitClipPath=face.style.clipPath;
+    fold.style.width=fold.style.height=s+'px';
+    if(!finished)wrap.style.transform='translate('+(dx*0.35)+'px,'+(dy*0.35-p*10)+'px) rotate('+(-p*5)+'deg)';
+  }
+  function tick(){
+    if(finished)return;
+    if(down||auto){
+      var hp=(performance.now()-t0)/(auto?650:1000),dp=Math.sqrt(dx*dx+dy*dy)/170;
+      p=Math.min(1,Math.max(hp,dp));draw();
+      if(p>=1){finish();return}
+      requestAnimationFrame(tick);
+    }
+  }
+  function back(){
+    var p0=p,dx0=dx,dy0=dy,t1=performance.now();
+    (function f(){if(down||finished)return;var k=Math.min(1,(performance.now()-t1)/200);p=p0*(1-k);dx=dx0*(1-k);dy=dy0*(1-k);draw();if(k<1)requestAnimationFrame(f)})();
+  }
+  function finish(){
+    finished=true;down=false;
+    wrap.classList.add('gone');
+    wrap.style.transform='translate(170px,-260px) rotate(32deg)';
+    setTimeout(done,480);
+  }
+  wrap.addEventListener('pointerdown',function(e){
+    if(finished)return;
+    if(!can()){nope();return}
+    e.preventDefault();
+    try{wrap.setPointerCapture(e.pointerId)}catch(_){}
+    pid=e.pointerId;down=true;t0=performance.now();sx=e.clientX;sy=e.clientY;dx=dy=0;
+    wrap.classList.remove('wiggle');
+    requestAnimationFrame(tick);
+  });
+  wrap.addEventListener('pointermove',function(e){if(!down||e.pointerId!==pid)return;dx=e.clientX-sx;dy=e.clientY-sy});
+  function up(e){if(!down)return;down=false;if(!finished)back()}
+  wrap.addEventListener('pointerup',up);wrap.addEventListener('pointercancel',up);
+  wrap.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'&&e.key!==' ')return;
+    e.preventDefault();if(finished||auto)return;
+    if(!can()){nope();return}
+    auto=true;t0=performance.now();requestAnimationFrame(tick);
+  });
+  requestAnimationFrame(draw);
+}
+
+/* ---------- step 10: one word ---------- */
+function oneWord(){
+  app.innerHTML='';
+  app.appendChild(el('p','case',ic('talk')+'第三部分　被叫一個詞'));
+  var c=el('div','card');c.appendChild(el('p','lead','<b>以前府城人把城外的人都叫做<span class="nw">「草地郎」。</span></b>'));
+  app.append(c,el('h2',null,'如果有人用一個詞叫我們這一區所有人，你覺得？'));
+  var g=el('div','opts');var fb=el('div');
+  var nx=button('完成','btn go',function(){if(st.word==null)return;go(11)});nx.disabled=st.word==null;
+  function show(){fb.innerHTML='';if(st.word!=null)fb.appendChild(el('p','note','<b>'+WORD[st.word][0]+'：</b>'+WORD[st.word][1]+'<br>每一個選擇都可以，等一下全班一起聊一聊。'))}
+  WORD.forEach(function(w,k){
+    var b=button(w[0],'btn alt'+(st.word===k?' pick':''),function(){
+      st.word=k;save(st);
+      Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;show();
+    });
+    g.appendChild(b);
+  });
+  show();
+  app.append(g,fb,nx);
+}
+
+/* ---------- step 11: end ---------- */
+function end(){
+  app.innerHTML='';
+  var a=sum(st.us),b=sum(st.them);
+  var rows=[
+    [ic('crowd')+' 我們班多不一樣','<b>'+a+'</b> 個顏色'+swatch(st.us)],
+    [ic('school')+' 隔壁學校多不一樣','<b>'+b+'</b> 個顏色'+swatch(st.them)],
+    ['我們班的顏色比隔壁學校','<b>'+(a>b?'比較多':a===b?'一樣多':'比較少')+'</b>']
+  ];
+  var nchg=0;
+  LB.forEach(function(L,i){
+    var S=st.lb[i];if(S.chg===1)nchg++;
+    rows.push(['<span class="lbt">'+(i+1)+'. '+L.t+'</span>','<b>'+(S.op!=null?OPS[S.op]:'—')+'</b>'+(S.chg===1?'<span class="chg">撕開後有改變</span>':'')]);
+  });
+  rows.push([ic('peel')+' 撕開後改變想法','<b>'+nchg+'</b> 張（共 6 張）']);
+  rows.push([ic('talk')+' 被叫一個詞時','<b>'+(st.word!=null?WORD[st.word][0]:'—')+'</b>']);
+  var t=el('table','sum');
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var s=st.step|0;
+  if(s>=2&&!sum(st.us))s=1;
+  else if(s>=3&&!sum(st.them))s=2;
+  if(s>=5){for(var i=0;i<6&&4+i<s;i++){if(st.lb[i].chg==null||!st.lb[i].peeled){s=4+i;break}}}
+  if(s>=11&&st.word==null)s=10;
+  st.step=s;
+  if(s===0)intro();else if(s===1)palette(0);else if(s===2)palette(1);else if(s===3)compare();
+  else if(s>=4&&s<=9)labelPage(s-4);else if(s===10)oneWord();else if(s===11)end();else intro();
+}
+render();
+})();
+</script>

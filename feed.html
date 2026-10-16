@@ -1,0 +1,98 @@
+<title>推薦影片牆</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: 8 pages of a pretend video feed, 6 cards each; picking one card makes the "app" show more of that topic next page → at the end compare page 1 and page 8 as stacked bars. Single light classroom look on purpose. */
+:root{
+  --bg:#EFF1F0; --card:#FBFCFB; --ink:#1F2A2E; --muted:#56605C; --line:#D2D9D5;
+  --sea:#205E86; --gold:#B7862B; --note:#EAF1F5;
+  --t0:#2F6F9E; --t1:#C0612B; --t2:#3E8A5A; --t3:#8A5BA8; --t4:#B58A1F; --t5:#4C7C7C;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:clamp(18px,2.6vw,24px);font-weight:700;color:var(--muted);margin:0}
+.top b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.v{font:inherit;text-align:left;border:3px solid var(--line);border-radius:18px;background:var(--card);padding:0;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;color:var(--ink)}
+.v .thumb{height:78px;display:flex;align-items:flex-end;padding:8px 10px}
+.v .tag{background:rgba(255,255,255,.92);border-radius:999px;padding:2px 10px;font-size:clamp(14px,1.9vw,17px);font-weight:900}
+.v .title{padding:8px 10px 12px;font-size:clamp(16px,2.2vw,20px);font-weight:700;line-height:1.45}
+.v:focus-visible,.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.btn{font:inherit;font-size:clamp(20px,3vw,27px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.4}
+.btn.alt{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.stack{display:flex;height:44px;border-radius:12px;overflow:hidden}
+.stack span{display:block;height:100%}
+.row{display:grid;grid-template-columns:6em 1fr;gap:12px;align-items:center;font-size:clamp(18px,2.5vw,23px);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;font-size:clamp(16px,2.2vw,20px);font-weight:700}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;margin-right:6px;vertical-align:-2px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.7vw,25px);line-height:1.7;margin:0}
+.big{font-size:clamp(46px,9vw,80px);font-weight:900;line-height:1.15;margin:0;text-align:center;color:var(--sea)}
+@media (max-width:620px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='feed-bubble-v1';
+var PAGES=8;
+var T=[
+ {n:'貓咪',c:'var(--t0)',bg:'#DCE8F2',v:['貓咪跳進比自己還小的紙箱','橘貓第一次看到雪','貓咪偷偷把杯子推下桌','三隻小貓搶一個毛線球','貓咪和吸塵器的大對決','貓咪睡覺的十種奇怪姿勢']},
+ {n:'籃球',c:'var(--t1)',bg:'#F5E1D4',v:['半場投籃連進十球挑戰','國小生的超帥上籃','罰球時最緊張的一秒','十個最好笑的運球失誤','一分鐘學會胯下運球','最後一秒的逆轉三分球']},
+ {n:'美食',c:'var(--t2)',bg:'#DCEDE2',v:['一百元吃遍夜市挑戰','虱目魚粥的祕密湯頭','在家做蚵仔煎','十種芒果冰比一比','早餐店蛋餅大評比','用電鍋做布丁']},
+ {n:'恐龍',c:'var(--t3)',bg:'#EAE0F1',v:['暴龍的手到底有多短','最大的恐龍有多大','恐龍化石是怎麼挖出來的','會飛的不一定是恐龍','如果恐龍沒有滅絕','三角龍的角拿來做什麼']},
+ {n:'魔術',c:'var(--t4)',bg:'#F4EBD2',v:['硬幣消失術教學','讀心術撲克牌','橡皮筋穿過手指','杯子和球的魔術','把筆變不見','簡單又好學的紙牌魔術']},
+ {n:'海邊生物',c:'var(--t5)',bg:'#DCEAEA',v:['招潮蟹為什麼一隻大螯','黑面琵鷺怎麼找魚吃','彈塗魚會爬樹？','寄居蟹換殼大排隊','退潮後的泥灘有什麼','紅樹林裡的小動物']}
+];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+var st=load()||{page:0,w:[1,1,1,1,1,1],picks:[],shown:[],done:false};
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function rnd(){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296}catch(e){return Math.random()}}
+function draw6(){var tot=st.w.reduce(function(a,b){return a+b},0);var out=[];for(var k=0;k<6;k++){var r=rnd()*tot,t=0;while(r>st.w[t]){r-=st.w[t];t++}out.push(t)}
+  if(st.page===0){out=[0,1,2,3,4,5]}return out}
+function pickTitle(t){var v=T[t].v;return v[Math.floor(rnd()*v.length)]}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');c.append(el('p','lead','這是一個假裝的影片網站。每一頁有 6 支影片，請你點一支「最想看的」。'),el('p','lead','一共 8 頁。點完一支，網站就會換下一頁給你。仔細看看，每一頁的影片有沒有在變。'));
+  var b=el('button','btn','開始滑影片');b.type='button';b.addEventListener('click',function(){page()});
+  app.append(el('h1',null,'推薦影片牆'),c,b);
+}
+function page(){
+  if(!st.shown[st.page]){st.shown[st.page]=draw6();save(st)}
+  var list=st.shown[st.page];
+  app.innerHTML='';
+  var top=el('p','top','<span>第 <b>'+(st.page+1)+'</b> / '+PAGES+' 頁</span><span>點一支你最想看的</span>');
+  var g=el('div','grid');
+  list.forEach(function(t){var v=el('button','v');v.type='button';var th=el('div','thumb');th.style.background=T[t].bg;th.appendChild(el('span','tag',T[t].n));th.querySelector('.tag').style.color=T[t].c;
+    v.append(th,el('div','title',pickTitle(t)));v.setAttribute('aria-label',T[t].n+'影片');
+    v.addEventListener('click',function(){st.picks.push(t);st.w[t]*=2.2;st.page++;if(st.page>=PAGES){st.done=true;save(st);end()}else{save(st);page()}});g.appendChild(v)});
+  app.append(top,g);
+}
+function stack(list){var s=el('div','stack');var cnt=[0,0,0,0,0,0];list.forEach(function(t){cnt[t]++});cnt.forEach(function(c,t){if(!c)return;var sp=el('span');sp.style.width=(c/list.length*100)+'%';sp.style.background=T[t].c;sp.title=T[t].n+' '+c+' 支';s.appendChild(sp)});return s}
+function end(){
+  app.innerHTML='';
+  var first=st.shown[0],last=st.shown[PAGES-1];
+  var cnt=[0,0,0,0,0,0];last.forEach(function(t){cnt[t]++});var mx=Math.max.apply(null,cnt);var top=cnt.indexOf(mx);
+  var c=el('div','card');
+  var lg=el('p','legend');T.forEach(function(t){lg.innerHTML+='<span><i style="background:'+t.c+'"></i>'+t.n+'</span>'});
+  var r1=el('div','row');r1.append(el('span',null,'第 1 頁'),stack(first));
+  var r2=el('div','row');r2.append(el('span',null,'第 '+PAGES+' 頁'),stack(last));
+  c.append(lg,r1,r2,el('p','note','第 1 頁，6 種影片各 1 支。<br>到了第 '+PAGES+' 頁，6 支裡有 <b>'+mx+' 支</b>是「'+T[top].n+'」。'),
+    el('p','note','網站每次都看你點了什麼，就多給你一樣的。<br>你沒有點過的主題，就越來越少出現在你眼前。'));
+  app.append(el('h2',null,'滑完了！請停在這一頁，等其他同學。'),el('p','big',mx+' / 6 支'),c);
+}
+if(st.done)end();else if(st.page>0)page();else intro();
+})();
+</script>

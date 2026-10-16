@@ -1,0 +1,531 @@
+<title>班遊開票所</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story + four ballot stacks (25 fixed ballots) → three counting rooms, each "guess first, then count":
+   plurality (press 開票, ballots fly into four boxes) → two-round (tap the two knocked-out stacks, watch them transfer) →
+   ranked points (tap each stack, points fly to four scoreboards) → three winners side by side → which is fairest (all options ok) → summary. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:10px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.go{background:var(--rust)}
+.btn:focus-visible,.stack:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.letter{display:inline-block;min-width:1.3em;font-weight:900;color:var(--sea)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+/* places */
+.places{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.place{display:flex;align-items:center;gap:12px;background:var(--card);border:3px solid var(--line);border-left:10px solid var(--c);border-radius:18px;padding:10px 14px;font-size:clamp(19px,2.6vw,24px);font-weight:700;line-height:1.35}
+.place svg.i{width:2.2em;height:2.2em}
+.place .letter{color:var(--c)}
+/* ballot stacks */
+.stacks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 12px;padding:0 8px 8px 0}
+.stack{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-radius:14px;padding:8px 7px 10px;display:flex;flex-direction:column;gap:4px;
+  box-shadow:4px 4px 0 -1px var(--card),4px 4px 0 1px var(--line),8px 8px 0 -1px var(--card),8px 8px 0 1px var(--line);transition:border-color .15s,background .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-width:0}
+button.stack{cursor:pointer}
+button.stack:active{transform:translate(1px,1px)}
+.stack.todo{border-color:var(--rust);animation:pulse 1.6s ease-in-out infinite}
+.stack.done{background:#F4F6F2}
+.stack.stay{opacity:.75}
+@keyframes pulse{50%{border-color:#E7B49B}}
+.sh{display:flex;align-items:center;gap:6px;font-size:clamp(17px,2.1vw,20px);font-weight:900;line-height:1.3}
+.sh svg.i{width:1.15em;height:1.15em}
+.sh .n{font-size:1.25em;color:var(--rust)}
+.ballot{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+.ballot li{display:flex;align-items:center;gap:4px;font-size:clamp(16px,2vw,19px);font-weight:700;line-height:1.25;border-radius:9px;padding:3px 2px;border:2px solid transparent;transition:opacity .2s,background .2s;min-width:0;position:relative}
+.ballot li .rk{flex:none;width:1.45em;height:1.45em;border-radius:50%;background:var(--note);color:var(--sea);font-weight:900;display:grid;place-items:center;font-size:.9em}
+.ballot li svg.i{width:1.35em;height:1.35em}
+.ballot li .pn{min-width:0;overflow-wrap:anywhere}
+.ballot li.dim{opacity:.32}
+.ballot li.hl{background:var(--warm);border-color:var(--gold)}
+.ballot li.to{background:#E3F0E6;border-color:var(--good)}
+.ballot li.tagged svg.i{display:none}
+.ballot li .tag{margin-left:auto;flex:none;font-weight:900;color:var(--rust);font-variant-numeric:tabular-nums;padding-left:4px}
+.sst{font-size:clamp(16px,2vw,19px);font-weight:700;color:var(--muted);line-height:1.35;margin-top:2px}
+.stack.todo .sst{color:var(--rust)}
+/* ballot boxes & score boards */
+.boxes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.boxes.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:560px;width:100%;margin:0 auto}
+.bbox{position:relative;background:var(--b);border:3px solid var(--c);border-radius:6px 6px 18px 18px;padding:18px 6px 10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;transition:transform .12s}
+.bbox::before{content:"";position:absolute;top:6px;left:28%;right:28%;height:6px;border-radius:4px;background:var(--ink);opacity:.75}
+.bbox.score{border-radius:18px;padding-top:10px}
+.bbox.score::before{display:none}
+.bbox svg.i{width:2em;height:2em}
+.bbox .bn{font-size:clamp(15px,2vw,19px);font-weight:900;line-height:1.25;overflow-wrap:anywhere}
+.bbox .bc{font-size:clamp(34px,6vw,54px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--c)}
+.bbox .bc small{font-size:.4em;margin-left:2px;color:var(--ink)}
+.bbox.bump{transform:scale(1.06)}
+.bbox.win{box-shadow:0 0 0 4px var(--gold)}
+.bbox .crown{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:36px;height:36px;color:var(--ink)}
+.bbox.out{opacity:.4}
+.bbox .nw{display:none}
+.bar{width:100%;height:10px;border-radius:6px;background:rgba(31,42,46,.1);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--c);border-radius:6px;transition:width .3s}
+.rule{display:flex;flex-wrap:wrap;gap:8px}
+.rule span{background:var(--note);border-radius:12px;padding:4px 12px;font-weight:900;font-size:clamp(19px,2.4vw,22px)}
+.rule span b{color:var(--rust)}
+.detail{min-height:3.4em}
+/* flying ballots */
+.fly{position:fixed;left:0;top:0;z-index:50;pointer-events:none;will-change:transform}
+.fly>span{display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);background:var(--card);border:3px solid var(--c);border-radius:8px;width:46px;height:34px;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+.fly>span svg.i{width:24px;height:24px}
+.fly.pt>span{width:auto;height:auto;padding:2px 10px;border-radius:14px;font-weight:900;font-size:22px;color:var(--rust);border-color:var(--gold);background:var(--warm)}
+/* results */
+.winners{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wcard{background:var(--card);border:3px solid var(--c);border-radius:20px;padding:14px 12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.wcard .m{font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--muted);margin:0}
+.wcard .r{font-size:19px;color:var(--muted);margin:0;line-height:1.4}
+.wcard svg.i{width:72px;height:72px}
+.wcard .p{font-size:clamp(23px,3.4vw,30px);font-weight:900;margin:0;line-height:1.3}
+.wcard .p .letter{color:var(--c)}
+.wcard .s{font-size:clamp(19px,2.6vw,24px);font-weight:900;color:var(--c);margin:0}
+.big{font-size:clamp(34px,7vw,64px);font-weight:900;text-align:center;color:var(--sea);margin:0;line-height:1.25;text-wrap:balance}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:700}
+.ex p{margin:0}
+.place small{display:block;font-size:clamp(17px,2vw,19px);font-weight:500;color:var(--muted);line-height:1.4}
+.boxwrap{position:sticky;top:0;z-index:5;background:var(--bg);padding:24px 0 8px;margin-top:-12px;display:flex;flex-direction:column;gap:4px}
+.boxcap{margin:0;text-align:center;font-weight:900;color:var(--muted);font-size:clamp(19px,2.4vw,22px)}
+.ex{display:flex;flex-direction:column;gap:6px}
+@media (max-width:760px){
+  .stacks{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:620px){
+  .bbox .wd{display:none}
+  .bbox .nw{display:inline}
+  .wrap{padding-inline:16px}
+  .winners{grid-template-columns:1fr}
+  .wcard{flex-direction:row;flex-wrap:wrap;justify-content:center;text-align:left;column-gap:12px}
+  .wcard .m,.wcard .r{width:100%;text-align:center}
+  .wcard svg.i{width:56px;height:56px}
+  .boxes{gap:6px}
+  .bbox{padding-inline:3px}
+  th,td{padding:8px 4px}
+}
+@media (max-width:440px){.places{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.stack.todo{animation:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+
+var ICI={
+tunnel:'<path d="M2.5 20V12.5a9.5 8.5 0 0 1 19 0V20" fill="#CFE3C4"/><path d="M7 20v-6.2a5 5 0 0 1 10 0V20" fill="#EAF4F1"/><path d="M5.6 8.4l1.4 1.2M12 4.4v1.8M18.4 8.4L17 9.6"/><path d="M8.6 17.4q1.15-1 2.3 0t2.3 0 2.3 0"/><path d="M1.5 20.5h21"/>',
+salt:'<path d="M2.5 20.5Q8 6.5 12 5.5q4 1 9.5 15z" fill="#E6EEF4"/><path d="M11 9.2h2M10.3 12.4h3.4M9.6 15.6h4.8M8.9 18.6h6.2"/><circle cx="19" cy="5" r="2.2" fill="#F3D27A"/><path d="M1.5 20.5h21"/>',
+fort:'<path d="M3 20.5V12h2.6v1.6h2.2V12h8.4v1.6h2.2V12H21v8.5z" fill="#F2C9B5"/><path d="M3 16.4h6.4M14.6 16.4H21"/><path d="M9.6 20.5v-2.6a2.4 2.4 0 0 1 4.8 0v2.6" fill="#FBFCF9"/><path d="M8.6 12V7.6h6.8V12" fill="#FBFCF9"/><path d="M7.4 7.6L12 3.6l4.6 4z" fill="#F2C9B5"/>',
+museum:'<path d="M6.6 8.8a5.4 4.6 0 0 1 10.8 0z" fill="#F3E3BE"/><path d="M12 4.2V2.4"/><rect x="3" y="8.8" width="18" height="2.6" rx=".6" fill="#FBF4E2"/><path d="M6 11.4v6.4M10 11.4v6.4M14 11.4v6.4M18 11.4v6.4"/><rect x="2.5" y="17.8" width="19" height="2.8" rx=".6" fill="#FBF4E2"/>',
+ballot:'<rect x="5" y="2.8" width="14" height="18.4" rx="2" fill="#FBF4E2"/><path d="M8.5 7.5h7M8.5 11.5h7M8.5 15.5h4.5"/>',
+bbox:'<path d="M8.2 11V3.6h7.6V11" fill="#FBFCF9"/><path d="M10.2 6.6h3.6"/><path d="M3.5 11h17v8.8a1.4 1.4 0 0 1-1.4 1.4H4.9a1.4 1.4 0 0 1-1.4-1.4z" fill="#DCE8F0"/><path d="M8.5 15.6h7"/>',
+crown:'<path d="M3.5 8.2l4.4 4 4.1-6.6 4.1 6.6 4.4-4-1.7 10.3H5.2z" fill="#F3D27A"/><path d="M5.4 21h13.2"/>'
+};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='ballot-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){return {step:0,g:[null,null,null],p:false,t:[false,false,false,false],s:[false,false,false,false],fair:null}}
+var st=load();
+if(!st||!st.g||!st.t||!st.s)st=fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var gen=0,busy=false;
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var SLOW=1;
+try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)SLOW=0.35}catch(e){}
+
+/* ---------- data: 25 fixed ballots ---------- */
+var PL=[
+  {k:'A',name:'四草綠色隧道',s:'綠色隧道',ic:'tunnel',c:'#2F7D4F',b:'#E3F0E6',say:'坐竹筏穿過紅樹林搭成的隧道'},
+  {k:'B',name:'七股鹽山',s:'七股鹽山',ic:'salt',c:'#205E86',b:'#E3EEF5',say:'爬上白白的鹽山，看曬鹽的鹽田'},
+  {k:'C',name:'安平古堡',s:'安平古堡',ic:'fort',c:'#A8441A',b:'#F8E6DC',say:'走老城牆，看幾百年前的古堡'},
+  {k:'D',name:'奇美博物館',s:'奇美博物館',ic:'museum',c:'#8A6216',b:'#FBF1DC',say:'看名畫、樂器和動物標本'}
+];
+var BALLOTS=[{n:9,r:[0,3,2,1]},{n:8,r:[1,2,3,0]},{n:5,r:[2,1,3,0]},{n:3,r:[3,2,1,0]}];
+var PTS=[3,2,1,0];
+var TOTAL=BALLOTS.reduce(function(s,g){return s+g.n},0);
+function plurality(){var c=[0,0,0,0];BALLOTS.forEach(function(g){c[g.r[0]]+=g.n});return c}
+function top2(c){return [0,1,2,3].sort(function(a,b){return c[b]-c[a]||a-b}).slice(0,2)}
+function transferTo(g,keep){for(var i=0;i<g.r.length;i++)if(keep.indexOf(g.r[i])>=0)return g.r[i];return -1}
+function runoff(){var c=plurality(),k=top2(c),f=[0,0,0,0];BALLOTS.forEach(function(g){f[transferTo(g,k)]+=g.n});return {first:c,keep:k,final:f}}
+function borda(){var s=[0,0,0,0];BALLOTS.forEach(function(g){g.r.forEach(function(p,i){s[p]+=PTS[i]*g.n})});return s}
+function argmax(a){var m=0;for(var i=1;i<a.length;i++)if(a[i]>a[m])m=i;return m}
+function rankCount(p,rank){var n=0;BALLOTS.forEach(function(g){if(g.r[rank]===p)n+=g.n});return n}
+var R1=plurality(),R2=runoff(),R3=borda();
+var KEEP=R2.keep;
+var MOVE=[0,1,2,3].filter(function(i){return KEEP.indexOf(BALLOTS[i].r[0])<0});
+var W=[argmax(R1),argmax(R2.final),argmax(R3)];
+window.BALLOT_CALC={total:TOTAL,plurality:R1,runoff:R2,borda:R3,winners:W.map(function(i){return PL[i].k})};
+
+var M=[
+  {name:'多數決',rule:'每張選票<b>只看第 1 名</b>。哪個地方拿到最多張「第 1 名」，哪個地方就贏。'},
+  {name:'兩輪投票',rule:'第一輪只看第 1 名，留下<b>票數最多的兩個地方</b>。其他地方被淘汰，投給它們的票不會作廢，要轉給這張票上<b>排比較前面的那一個</b>。第二輪票數多的贏。'},
+  {name:'排序給分',rule:'每張選票上，<b>第 1 名得 3 分、第 2 名得 2 分、第 3 名得 1 分、第 4 名得 0 分</b>。把 25 張選票的分數加起來，總分最高的贏。'}
+];
+var FAIR=[
+  {t:'多數決',good:'最簡單、最快。每個人只要寫一個名字，開票一下子就算完了。',cost:'贏家可能只有少數人最喜歡。這次綠色隧道只有 9 票，另外 16 個人都把它排在最後一名，等於很多人很不想去的地方贏了。'},
+  {t:'兩輪投票',good:'第二輪只剩兩個地方，贏家一定有超過一半的人支持。這次七股鹽山拿到 16 票，比 25 人的一半還多。',cost:'要多投一次或多看一次排名，比較花時間。第一輪就被淘汰的地方，例如安平古堡，就算很多人覺得「它也不錯」，也沒有機會了。'},
+  {t:'排序給分',good:'每個人的第二、第三喜歡也算數，大家「都還能接受」的地方比較容易贏。這次安平古堡沒有人排最後一名。',cost:'每個人都要把四個地方排好順序，算起來比較麻煩。分數怎麼給（3、2、1、0 還是別的）也要先講好，換一種給法，結果可能又不一樣。'},
+  {t:'看情況',good:'想到不同的事情適合不同的算法，例如選班遊地點和選幹部，可能就不一樣。',cost:'每次都要先討論用哪一種，比較花時間；而且一定要在開票前講好，不然看到結果才想換算法，大家會覺得不公平。'}
+];
+
+/* ---------- small pieces ---------- */
+function pname(i,short){var p=PL[i];return '<span class="letter" style="color:'+p.c+'">'+p.k+'</span>'+p.name}
+function plain(i){return PL[i].k+' '+PL[i].name}
+function crown(){return '<svg class="crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI.crown+'</svg>'}
+
+/* four stacks of ballots; mode: show / plural / runoff / borda */
+function stacks(mode,onTap){
+  var wrap=el('div','stacks'),refs=[];
+  BALLOTS.forEach(function(g,gi){
+    var tappable=!!onTap;
+    var s=el(tappable?'button':'div','stack');
+    if(tappable){s.type='button';s.addEventListener('click',function(){onTap(gi)})}
+    var head=el('div','sh',ic('ballot')+'<span class="n">'+g.n+'</span> 張');
+    var ol=el('ol','ballot');ol.setAttribute('aria-label',g.n+' 張選票的排法');
+    var lis=[];
+    g.r.forEach(function(p,rk){
+      var li=el('li',null,'<span class="rk">'+(rk+1)+'</span>'+ic(PL[p].ic)+'<span class="pn">'+PL[p].s+'</span>');
+      li.style.setProperty('--c',PL[p].c);
+      ol.appendChild(li);lis.push(li);
+    });
+    var sst=el('div','sst','');
+    s.append(head,ol,sst);
+    wrap.appendChild(s);
+    refs.push({el:s,lis:lis,sst:sst});
+  });
+  return {el:wrap,refs:refs};
+}
+/* ballot boxes or score boards */
+function boxes(list,score){
+  var w=el('div','boxes'+(list.length===2?' two':'')),refs={};
+  list.forEach(function(p){
+    var b=el('div','bbox'+(score?' score':''));
+    b.style.setProperty('--c',PL[p].c);b.style.setProperty('--b',PL[p].b);
+    var cnt=el('div','bc','0<small>'+(score?'分':'票')+'</small>');
+    b.append(el('div',null,ic(PL[p].ic)),el('div','bn','<span class="wd">'+PL[p].k+' '+PL[p].name+'</span><span class="nw">'+PL[p].s+'</span>'),cnt);
+    var bar=null;
+    if(score){bar=el('div','bar','<span style="width:0%"></span>');b.appendChild(bar)}
+    w.appendChild(b);
+    refs[p]={el:b,cnt:cnt,bar:bar,v:0,set:function(v){this.v=v;this.cnt.innerHTML=v+'<small>'+(score?'分':'票')+'</small>';if(this.bar)this.bar.firstChild.style.width=Math.round(v/(TOTAL*3)*100)+'%'}};
+  });
+  var sw=el('div','boxwrap');sw.appendChild(w);
+  return {el:sw,refs:refs};
+}
+function bump(r){r.el.classList.add('bump');setTimeout(function(){r.el.classList.remove('bump')},140)}
+function center(e){var r=e.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2}}
+function fly(from,to,html,color,pt,cb){
+  var my=gen;
+  var f=el('div','fly'+(pt?' pt':''));var sp=el('span',null,html);sp.style.setProperty('--c',color);if(!pt)sp.style.borderColor=color;
+  f.appendChild(sp);document.body.appendChild(f);
+  var a=center(from),b=center(to);
+  var dur=Math.round(620*SLOW);
+  function done(){if(f.parentNode)f.parentNode.removeChild(f);if(my===gen)cb()}
+  if(f.animate){
+    var mid={x:(a.x+b.x)/2,y:Math.min(a.y,b.y)-40};
+    var an=f.animate([{transform:'translate('+a.x+'px,'+a.y+'px) scale(1)'},{transform:'translate('+mid.x+'px,'+mid.y+'px) scale(1.1)',offset:.5},{transform:'translate('+b.x+'px,'+b.y+'px) scale(.8)'}],{duration:dur,easing:'ease-in-out',fill:'forwards'});
+    an.onfinish=done;
+  }else{setTimeout(done,10)}
+}
+
+/* ---------- step 0: story ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','五年13班的 25 位同學，要一起決定今年班遊去哪裡。老師列出四個地方：'));
+  var pl=el('div','places');
+  PL.forEach(function(p,i){var d=el('div','place',ic(p.ic)+'<span><span class="letter">'+p.k+'</span>'+p.name+'<small>'+p.say+'</small></span>');d.style.setProperty('--c',p.c);pl.appendChild(d)});
+  c.append(pl,el('p','lead','老師請每個人在選票上，把四個地方從<b>最想去</b>排到<b>最不想去</b>。25 張選票收回來一看，剛好只有四種排法：'));
+  var s=stacks('show');
+  s.refs.forEach(function(r,gi){r.sst.textContent=BALLOTS[gi].n+' 個人這樣排'});
+  var n=el('p','note','今天你是開票員。這 25 張選票一張都不會改，可是要用<b>三種不同的算法</b>來開票：<b>多數決</b>、<b>兩輪投票</b>、<b>排序給分</b>。每一種開票前，都先猜猜看誰會贏。');
+  app.append(el('h1',null,'班遊開票所'),c,s.el,n,button('開始','btn',function(){go(1)}));
+}
+
+/* ---------- guesses (steps 1, 3, 5) ---------- */
+function guess(m){
+  app.innerHTML='';
+  var mm=M[m];
+  app.append(el('p','case','第 '+(m+1)+' 種算法：'+mm.name),el('h2',null,'用「'+mm.name+'」開票，你猜哪個地方會贏？'),el('p','note',mm.rule));
+  if(m>0){
+    var prev=[];for(var i=0;i<m;i++)prev.push(M[i].name+'是 '+plain(W[i])+'贏');
+    app.appendChild(el('p','lead','剛剛'+prev.join('，')+'。選票還是同一批，現在換一種算法。'));
+  }
+  var s=stacks('show');
+  s.refs.forEach(function(r,gi){r.sst.textContent=BALLOTS[gi].n+' 個人這樣排'});
+  if(m===0)s.refs.forEach(function(r){r.lis[0].classList.add('hl');for(var k=1;k<4;k++)r.lis[k].classList.add('dim')});
+  app.appendChild(s.el);
+  var g=el('div','opts');
+  var nx=button('我猜好了，開始開票','btn go',function(){if(st.g[m]==null)return;go(m*2+2)});
+  nx.disabled=st.g[m]==null;
+  PL.forEach(function(p,k){
+    var b=button('<span class="letter" style="color:'+p.c+'">'+p.k+'</span>'+ic(p.ic)+p.name,'btn alt'+(st.g[m]===k?' pick':''),function(){
+      st.g[m]=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;
+    });
+    g.appendChild(b);
+  });
+  app.append(el('p','lead','先選一個。猜錯也沒關係，開票之後就知道了。'),g,nx);
+}
+function guessLine(m){
+  var w=W[m],g=st.g[m];
+  if(g==null)return '';
+  return g===w?'你猜的是 '+plain(g)+'，猜中了。':'你猜的是 '+plain(g)+'，這次贏的是 '+plain(w)+'。';
+}
+
+/* ---------- step 2: plurality ---------- */
+function plural(){
+  app.innerHTML='';busy=false;
+  app.append(el('p','case','第 1 種算法：多數決'),el('h2',null,'按「開票」，每張選票的第 1 名會投進票箱'),el('p','note',M[0].rule));
+  var bx=boxes([0,1,2,3],false);
+  var s=stacks('plural');
+  s.refs.forEach(function(r,gi){r.lis[0].classList.add('hl');for(var k=1;k<4;k++)r.lis[k].classList.add('dim');r.sst.textContent=st.p?'開完了':'還沒開'});
+  var res=el('div','opts');
+  app.append(bx.el,s.el,res);
+  function finish(){
+    for(var p=0;p<4;p++)bx.refs[p].set(R1[p]);
+    s.refs.forEach(function(r,gi){r.el.classList.add('done');r.sst.textContent='開完了：'+BALLOTS[gi].n+' 張'});
+    var w=W[0];bx.refs[w].el.classList.add('win');bx.refs[w].el.insertAdjacentHTML('beforeend',crown());
+    var last=rankCount(w,3);
+    res.innerHTML='';
+    res.append(el('p','note warm','<b>多數決的結果：'+plain(w)+' '+R1[w]+' 票最多，贏了！</b><br>'+guessLine(0)),
+      el('p','lead',last===TOTAL-R1[w]?'可是你看看：沒有投給'+PL[w].name+'的另外 '+last+' 個人，每一個都把它排在<b>最後一名</b>。':'可是你看看：沒有投給'+PL[w].name+'的 '+(TOTAL-R1[w])+' 個人裡面，有 '+last+' 個人把它排在<b>最後一名</b>。'),
+      button('下一種算法：兩輪投票','btn',function(){go(3)}));
+  }
+  if(st.p){finish();return}
+  var btn=button(ic('bbox')+' 開票','btn go',function(){
+    if(busy)return;busy=true;btn.disabled=true;btn.textContent='開票中……';
+    try{bx.el.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}
+    var q=[];BALLOTS.forEach(function(g,gi){for(var i=0;i<g.n;i++)q.push(gi)});
+    var opened=[0,0,0,0],landed=0,my=gen;
+    q.forEach(function(gi,i){
+      setTimeout(function(){
+        if(my!==gen)return;
+        var g=BALLOTS[gi],p=g.r[0],r=s.refs[gi];
+        opened[gi]++;r.sst.textContent='開出 '+opened[gi]+'／'+g.n+' 張';
+        if(opened[gi]===g.n)r.el.classList.add('done');
+        fly(r.lis[0],bx.refs[p].el,ic(PL[p].ic),PL[p].c,false,function(){
+          var b=bx.refs[p];b.set(b.v+1);bump(b);landed++;
+          if(landed===q.length){busy=false;st.p=true;save(st);btn.remove();finish();try{res.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}}
+        });
+      },Math.round((380+i*150)*SLOW));
+    });
+  });
+  res.appendChild(btn);
+}
+
+/* ---------- step 4: two-round ---------- */
+function rounds(){
+  app.innerHTML='';busy=false;
+  var a=KEEP[0],b=KEEP[1],out=[0,1,2,3].filter(function(p){return KEEP.indexOf(p)<0});
+  app.append(el('p','case','第 2 種算法：兩輪投票'),el('h2',null,'點有橘色框的兩疊選票，看它們的票轉給誰'),
+    el('p','note','<b>第一輪</b>就是剛剛的多數決：'+PL[a].name+' '+R1[a]+' 票、'+PL[b].name+' '+R1[b]+' 票，留下來進第二輪；'+out.map(function(p){return PL[p].name+' '+R1[p]+' 票'}).join('、')+'，被淘汰了。<br>投給被淘汰地方的票不會作廢，要轉給這張票上排比較前面的那一個。'));
+  var bx=boxes(KEEP,false);
+  bx.el.insertBefore(el('p','boxcap','第二輪'),bx.el.firstChild);
+  var detail=el('p','lead detail','');
+  var res=el('div','opts');
+  var s=stacks('runoff',tap);
+  function paint(gi){
+    var g=BALLOTS[gi],r=s.refs[gi],moving=MOVE.indexOf(gi)>=0,to=transferTo(g,KEEP);
+    r.el.classList.remove('todo','done','stay');
+    r.lis.forEach(function(li,k){li.classList.remove('hl','dim','to');var t=li.querySelector('.tag');if(t)t.remove();if(KEEP.indexOf(g.r[k])<0)li.classList.add('dim')});
+    if(!moving){r.el.classList.add('stay');r.lis[0].classList.add('hl');r.sst.textContent='第 1 名還在，票留在原地'}
+    else if(st.t[gi]){r.el.classList.add('done');var li=r.lis[g.r.indexOf(to)];li.classList.add('to');r.sst.textContent='轉給'+PL[to].name+'了'}
+    else{r.el.classList.add('todo');r.sst.textContent='點我，看票轉給誰'}
+  }
+  function counts(skip){var c=[0,0,0,0];BALLOTS.forEach(function(g,gi){if(gi===skip)return;if(MOVE.indexOf(gi)<0||st.t[gi])c[transferTo(g,KEEP)]+=g.n});return c}
+  function say(gi){
+    var g=BALLOTS[gi],to=transferTo(g,KEEP);
+    if(MOVE.indexOf(gi)<0){detail.innerHTML='這 '+g.n+' 張選票的第 1 名是'+PL[g.r[0]].name+'，它還在第二輪，所以票留在原地，還是投給'+PL[g.r[0]].name+'。';return}
+    var other=KEEP[0]===to?KEEP[1]:KEEP[0];
+    detail.innerHTML='這 '+g.n+' 張選票的第 1 名是'+PL[g.r[0]].name+'，已經被淘汰了。剩下的兩個地方，這 '+g.n+' 個人把<b>'+PL[to].name+'排第 '+(g.r.indexOf(to)+1)+' 名</b>、'+PL[other].name+'排第 '+(g.r.indexOf(other)+1)+' 名，'+PL[to].name+'比較前面，所以 '+g.n+' 票都轉給'+PL[to].name+'。';
+  }
+  function finish(){
+    var f=R2.final,w=W[1],l=w===a?b:a;
+    bx.refs[w].el.classList.add('win');if(!bx.refs[w].el.querySelector('.crown'))bx.refs[w].el.insertAdjacentHTML('beforeend',crown());
+    res.innerHTML='';
+    res.append(el('p','note warm','<b>兩輪投票的結果：'+plain(w)+' '+f[w]+' 票，'+PL[l].name+' '+f[l]+' 票，'+PL[w].name+'贏了！</b><br>25 個人的一半是 12.5 人，'+PL[w].name+'的 '+f[w]+' 票超過一半。<br>'+guessLine(1)),
+      button('下一種算法：排序給分','btn',function(){go(5)}));
+  }
+  function allDone(){return MOVE.every(function(gi){return st.t[gi]})}
+  function tap(gi){
+    if(busy)return;
+    say(gi);
+    if(MOVE.indexOf(gi)<0||st.t[gi])return;
+    busy=true;
+    var g=BALLOTS[gi],to=transferTo(g,KEEP),r=s.refs[gi];
+    st.t[gi]=true;save(st);paint(gi);
+    try{bx.el.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}
+    var src=r.lis[g.r.indexOf(to)],landed=0,my=gen;
+    for(var i=0;i<g.n;i++)(function(i){
+      setTimeout(function(){
+        if(my!==gen)return;
+        fly(src,bx.refs[to].el,ic(PL[to].ic),PL[to].c,false,function(){
+          var bb=bx.refs[to];bb.set(bb.v+1);bump(bb);landed++;
+          if(landed===g.n){busy=false;if(allDone()){finish();try{res.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}}}
+        });
+      },Math.round((300+i*170)*SLOW));
+    })(i);
+  }
+  BALLOTS.forEach(function(g,gi){paint(gi)});
+  var c=counts(-1);KEEP.forEach(function(p){bx.refs[p].set(c[p])});
+  app.append(bx.el,s.el,detail,res);
+  if(allDone())finish();
+}
+
+/* ---------- step 6: ranked points ---------- */
+function points(){
+  app.innerHTML='';busy=false;
+  app.append(el('p','case','第 3 種算法：排序給分'),el('h2',null,'點每一疊選票，把分數加到四個地方的計分板'));
+  var rl=el('div','rule');PTS.forEach(function(v,i){rl.appendChild(el('span',null,'第 '+(i+1)+' 名 <b>'+v+'</b> 分'))});
+  app.appendChild(rl);
+  var bx=boxes([0,1,2,3],true);
+  var detail=el('p','lead detail','');
+  var res=el('div','opts');
+  var s=stacks('borda',tap);
+  function paint(gi){
+    var g=BALLOTS[gi],r=s.refs[gi];
+    r.el.classList.remove('todo','done');
+    r.lis.forEach(function(li){var t=li.querySelector('.tag');if(t)t.remove()});
+    if(st.s[gi]){r.el.classList.add('done');r.lis.forEach(function(li,k){li.classList.add('tagged');li.insertAdjacentHTML('beforeend','<span class="tag">+'+(PTS[k]*g.n)+'</span>')});r.sst.textContent='分數加好了'}
+    else{r.el.classList.add('todo');r.sst.textContent='點我，加分數'}
+  }
+  function say(gi){
+    var g=BALLOTS[gi];
+    detail.innerHTML='這 '+g.n+' 張選票：'+g.r.map(function(p,k){return PL[p].name+'排第 '+(k+1)+' 名，'+(PTS[k]?g.n+' × '+PTS[k]+' = <b>'+(g.n*PTS[k])+' 分</b>':'得 <b>0 分</b>')}).join('；')+'。';
+  }
+  function finish(){
+    var w=W[2],first=rankCount(w,0),second=rankCount(w,1),last=rankCount(w,3);
+    bx.refs[w].el.classList.add('win');if(!bx.refs[w].el.querySelector('.crown'))bx.refs[w].el.insertAdjacentHTML('beforeend',crown());
+    var order=[0,1,2,3].sort(function(x,y){return R3[y]-R3[x]});
+    res.innerHTML='';
+    res.append(el('p','note warm','<b>排序給分的結果：'+plain(w)+' '+R3[w]+' 分最高，贏了！</b><br>'+order.map(function(p){return PL[p].name+' '+R3[p]+' 分'}).join('、')+'。<br>'+guessLine(2)),
+      el('p','lead',PL[w].name+'只有 '+first+' 個人排第 1 名，可是有 '+second+' 個人把它排第 2 名，'+(last?'只有 '+last+' 個人':'沒有人')+'把它排在最後一名。'),
+      button('看三種算法的結果','btn',function(){go(7)}));
+  }
+  function allDone(){return st.s.every(function(x){return x})}
+  function tap(gi){
+    if(busy)return;
+    say(gi);
+    if(st.s[gi])return;
+    busy=true;
+    var g=BALLOTS[gi],r=s.refs[gi];
+    st.s[gi]=true;save(st);paint(gi);
+    try{bx.el.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}
+    var jobs=g.r.map(function(p,k){return {p:p,k:k,v:PTS[k]*g.n}}).filter(function(j){return j.v>0});
+    var landed=0,my=gen;
+    jobs.forEach(function(j,i){
+      setTimeout(function(){
+        if(my!==gen)return;
+        fly(r.lis[j.k],bx.refs[j.p].el,'+'+j.v,PL[j.p].c,true,function(){
+          var bb=bx.refs[j.p];bb.set(bb.v+j.v);bump(bb);landed++;
+          if(landed===jobs.length){busy=false;if(allDone()){finish();try{res.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}}}
+        });
+      },Math.round((300+i*320)*SLOW));
+    });
+  }
+  BALLOTS.forEach(function(g,gi){paint(gi)});
+  var sc=[0,0,0,0];BALLOTS.forEach(function(g,gi){if(st.s[gi])g.r.forEach(function(p,k){sc[p]+=PTS[k]*g.n})});
+  for(var p=0;p<4;p++)bx.refs[p].set(sc[p]);
+  app.append(bx.el,s.el,detail,res);
+  if(allDone())finish();
+}
+
+/* ---------- step 7: three winners ---------- */
+function winners(){
+  app.innerHTML='';
+  var w=el('div','winners');
+  var info=[R1[W[0]]+' 票',R2.final[W[1]]+' 票 ： '+R2.final[KEEP[0]===W[1]?KEEP[1]:KEEP[0]]+' 票',R3[W[2]]+' 分'];
+  var rule=['只看第 1 名','留兩個，再把票轉過去','第 1 名 3 分，依序遞減'];
+  W.forEach(function(p,m){
+    var c=el('div','wcard');c.style.setProperty('--c',PL[p].c);
+    c.append(el('p','m',M[m].name),el('p','r',rule[m]),el('div',null,ic(PL[p].ic)),el('div',null,'<p class="p">'+pname(p)+'</p><p class="s">'+info[m]+'</p>'));
+    w.appendChild(c);
+  });
+  app.append(el('p','case','開票結果'),el('p','big','同一批選票，三個贏家'),w,
+    el('p','note','這 25 張選票，從頭到尾<b>一張都沒有改</b>。改的只是「怎麼算」，贏家就跟著變了。所以投票之前，大家要先講好用哪一種算法。'),
+    button('下一題','btn',function(){go(8)}));
+}
+
+/* ---------- step 8: which is fairest ---------- */
+function fair(){
+  app.innerHTML='';
+  var g=el('div','opts'),fb=el('div','opts');
+  var nx=button('下一步','btn',function(){if(st.fair==null)return;go(9)});
+  nx.disabled=st.fair==null;
+  function show(k){
+    var f=FAIR[k];
+    fb.innerHTML='';
+    fb.appendChild(el('div','note ex','<p><b>你選了「'+f.t+'」。</b></p><p><b>作用：</b>'+f.good+'</p><p><b>代價：</b>'+f.cost+'</p>'));
+  }
+  FAIR.forEach(function(f,k){
+    var b=button('<span class="letter">'+'ABCD'[k]+'</span>'+(k<3?f.t:'看情況，不同的事用不同的算法'),'btn alt'+(st.fair===k?' pick':''),function(){
+      st.fair=k;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;show(k);
+    });
+    g.appendChild(b);
+  });
+  if(st.fair!=null)show(st.fair);
+  app.append(el('p','case','想一想'),el('h2',null,'你覺得哪一種算法最公平？'),el('p','lead','每個選項都可以選，沒有標準答案。選了以後，看看這個選擇的作用和代價。'),g,fb,nx);
+}
+
+/* ---------- step 9: end ---------- */
+function end(){
+  app.innerHTML='';
+  var hit=0;for(var m=0;m<3;m++)if(st.g[m]===W[m])hit++;
+  var other=R2.final[KEEP[0]===W[1]?KEEP[1]:KEEP[0]];
+  var rows=[
+    ['多數決，我猜',st.g[0]!=null?pname(st.g[0]):'—'],
+    ['兩輪投票，我猜',st.g[1]!=null?pname(st.g[1]):'—'],
+    ['排序給分，我猜',st.g[2]!=null?pname(st.g[2]):'—'],
+    ['三次猜中','<b>'+hit+'</b> 次'],
+    ['多數決的贏家',pname(W[0])+'（'+R1[W[0]]+' 票）'],
+    ['兩輪投票的贏家',pname(W[1])+'（'+R2.final[W[1]]+' 票比 '+other+' 票）'],
+    ['排序給分的贏家',pname(W[2])+'（'+R3[W[2]]+' 分）'],
+    ['我覺得最公平',st.fair!=null?'<span class="letter">'+'ABCD'[st.fair]+'</span>'+FAIR[st.fair].t:'—']
+  ];
+  var t=el('table');
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,r[1]));t.appendChild(tr)});
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  gen++;busy=false;
+  Array.prototype.forEach.call(document.querySelectorAll('.fly'),function(f){f.remove()});
+  var S=[intro,function(){guess(0)},plural,function(){guess(1)},rounds,function(){guess(2)},points,winners,fair,end];
+  if(st.step>=2&&st.g[0]==null)st.step=1;
+  else if(st.step>=3&&!st.p)st.step=2;
+  else if(st.step>=4&&st.g[1]==null)st.step=3;
+  else if(st.step>=5&&!MOVE.every(function(gi){return st.t[gi]}))st.step=4;
+  else if(st.step>=6&&st.g[2]==null)st.step=5;
+  else if(st.step>=7&&!st.s.every(function(x){return x}))st.step=6;
+  else if(st.step>=9&&st.fair==null)st.step=8;
+  (S[st.step]||intro)();
+}
+render();
+})();
+</script>

@@ -1,0 +1,274 @@
+<title>問話橡皮擦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: part 1, a witness's memory picture; the student (as a police officer) picks one of two wordings for 3 questions, leading wordings splice a new item into her picture (animated), then original vs now side by side. Part 2, erase the answer-carrying chunks of 3 leading questions and attach a neutral ending. Summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:16px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:disabled{cursor:default;opacity:.45}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.say{font-size:clamp(20px,2.8vw,26px);font-weight:700;margin:0;line-height:1.6}
+.say b{color:var(--muted);font-size:.85em;display:block}
+svg.mem{width:100%;height:auto;display:block;border-radius:14px}
+.legend{font-size:clamp(17px,2.3vw,21px);color:var(--muted);margin:0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pair h3{font-size:clamp(18px,2.6vw,24px);margin:0 0 6px;font-weight:900}
+.pair .card{padding:10px;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chip{font:inherit;font-size:clamp(23px,3.6vw,32px);font-weight:900;padding:10px 16px;border-radius:14px;border:3px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;line-height:1.35;transition:background .2s,color .2s}
+.chip.gone{background:#E3E5E1;color:#9AA19C;text-decoration:line-through;text-decoration-thickness:4px;text-decoration-color:var(--rust);border-style:dashed}
+.chip:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.qm{font-size:clamp(23px,3.6vw,32px);font-weight:900}
+.built{font-size:clamp(23px,3.6vw,32px);font-weight:900;color:var(--sea);margin:0;min-height:1.4em;word-break:break-all}
+.ends{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+table{border-collapse:collapse;width:100%;font-size:clamp(18px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap} td.n{text-align:right;font-weight:900;white-space:nowrap}
+.big{font-size:clamp(48px,9vw,84px);font-weight:900;line-height:1.1;margin:0;color:var(--rust);font-variant-numeric:tabular-nums}
+.new{transform-box:fill-box;transform-origin:center;animation:pop .7s ease-out both}
+.ring{animation:blink 1.2s ease-in-out 3}
+@keyframes pop{0%{transform:scale(0);opacity:0}70%{transform:scale(1.25);opacity:1}100%{transform:scale(1)}}
+@keyframes blink{50%{opacity:.15}}
+@media (prefers-reduced-motion:reduce){.new,.ring{animation:none}}
+@media (max-width:560px){.ends{grid-template-columns:1fr}.pair{gap:8px}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"spark": "<path d=\"M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21M5.6 5.6l3.2 3.2M15.2 15.2l3.2 3.2M18.4 5.6l-3.2 3.2M8.8 15.2l-3.2 3.2\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='question-eraser-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rnd2(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]%2===0}catch(e){return true}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(cls,text,fn){var b=el('button',cls,text);b.type='button';b.addEventListener('click',fn);return b}
+
+/* ---------- 第一部分：證人的記憶畫面 ---------- */
+var Q=[
+ {key:'red',name:'紅燈',lead:'「機車是不是闖紅燈？」',open:'「你看到紅綠燈是什麼顏色？」',
+  sayLead:'紅燈喔……你這樣一問，我好像真的有看到紅燈耶。',sayOpen:'紅綠燈喔，我記得是綠燈。',
+  fbLead:'你的問題裡已經放了「紅燈」。阿姨原本記得的是綠燈，可是聽完問題，她的記憶畫面裡，綠燈變成了紅燈。',
+  fbOpen:'你的問題沒有放答案進去，阿姨照自己原本記得的說：綠燈。畫面沒有改變。'},
+ {key:'glass',name:'碎玻璃',lead:'「地上的碎玻璃多不多？」',open:'「地上有什麼？」',
+  sayLead:'碎玻璃喔……應該有一些吧，我好像有看到地上亮亮的。',sayOpen:'地上喔？沒什麼東西啊，乾乾淨淨的。',
+  fbLead:'你的問題先假設「地上有碎玻璃」，只問「多不多」。阿姨原本記得地上什麼都沒有，現在她的畫面裡多了碎玻璃。',
+  fbOpen:'你的問題沒有說地上有什麼，阿姨照自己原本記得的說：地上沒有東西。畫面沒有改變。'},
+ {key:'speed',name:'速度線',lead:'「腳踏車是不是騎很快才撞上去？」',open:'「腳踏車怎麼騎的？」',
+  sayLead:'這樣說起來……好像騎得滿快的喔。',sayOpen:'就慢慢騎啊，跟平常一樣。',
+  fbLead:'你的問題裡放了「騎很快」。阿姨原本記得腳踏車騎得慢慢的，現在她的畫面裡，腳踏車後面多了速度線。',
+  fbOpen:'你的問題沒有說快或慢，阿姨照自己原本記得的說：慢慢騎。畫面沒有改變。'}
+];
+var ORIG_ITEMS='腳踏車、機車、紅綠燈是綠燈、地上沒有東西、陰天';
+
+function tag(x,y,txt,anim){
+  var w=txt.length*15+16;
+  return '<g'+(anim?' class="new"':'')+'><rect x="'+x+'" y="'+y+'" width="'+w+'" height="26" rx="6" fill="#A8441A"/><text x="'+(x+w/2)+'" y="'+(y+19)+'" text-anchor="middle" font-size="15" font-weight="900" fill="#fff">'+txt+'</text></g>';
+}
+/* ins: {red,glass,speed} → 0 none, 1 inserted earlier, 2 inserted just now */
+function scene(ins,label){
+  ins=ins||{};var s='';
+  s+='<svg class="mem" viewBox="0 0 400 260" role="img" aria-label="'+label+'">';
+  s+='<rect width="400" height="260" fill="#DCE1E0"/>';
+  /* cloudy sky */
+  s+='<rect width="400" height="92" fill="#C9D0D2"/>';
+  s+='<g fill="#EEF0EF"><ellipse cx="70" cy="40" rx="42" ry="17"/><ellipse cx="100" cy="30" rx="30" ry="16"/><ellipse cx="230" cy="44" rx="48" ry="16"/><ellipse cx="262" cy="34" rx="28" ry="14"/></g>';
+  /* temple roof hint */
+  s+='<path d="M10 92 L40 70 L110 70 L140 92 Z" fill="#A8441A" opacity=".55"/>';
+  /* road */
+  s+='<rect y="150" width="400" height="80" fill="#8E9696"/><rect x="150" y="92" width="80" height="168" fill="#8E9696"/>';
+  s+='<g stroke="#F6F5F0" stroke-width="4" stroke-dasharray="14 12"><line x1="0" y1="190" x2="150" y2="190"/><line x1="230" y1="190" x2="400" y2="190"/></g>';
+  /* traffic light */
+  var red=ins.red?'#E5483B':'#5C4040',green=ins.red?'#3F5248':'#3BB273';
+  s+='<rect x="318" y="98" width="6" height="58" fill="#56605C"/><rect x="304" y="50" width="34" height="56" rx="7" fill="#2B3336"/>';
+  s+='<circle cx="321" cy="62" r="7" fill="'+red+'"'+(ins.red===2?' class="new"':'')+'/><circle cx="321" cy="78" r="7" fill="#5C5638"/><circle cx="321" cy="94" r="7" fill="'+green+'"/>';
+  if(ins.red){s+='<circle cx="321" cy="62" r="15" fill="none" stroke="#A8441A" stroke-width="3" stroke-dasharray="5 4"'+(ins.red===2?' class="ring"':'')+'/>'+tag(250,14,ins.red===2?'剛剛拼進來':'拼進來的',ins.red===2)}
+  /* glass shards */
+  if(ins.glass){
+    s+='<g'+(ins.glass===2?' class="new"':'')+' fill="#DFF3FA" stroke="#5E8FA3" stroke-width="1.5"><path d="M170 214 l10 -6 l2 9 z"/><path d="M196 222 l9 2 l-6 7 z"/><path d="M214 210 l8 -4 l1 9 z"/><path d="M184 228 l7 -3 l1 7 z"/><path d="M226 224 l7 0 l-4 6 z"/></g>';
+    s+='<ellipse cx="200" cy="219" rx="40" ry="18" fill="none" stroke="#A8441A" stroke-width="3" stroke-dasharray="5 4"'+(ins.glass===2?' class="ring"':'')+'/>'+tag(160,232,ins.glass===2?'剛剛拼進來':'拼進來的',ins.glass===2);
+  }
+  /* bicycle (from left) */
+  s+='<g stroke="#205E86" stroke-width="4" fill="none"><circle cx="88" cy="196" r="16"/><circle cx="138" cy="196" r="16"/><path d="M88 196 L108 172 L130 172 L138 196 M108 172 L112 196 L88 196 M130 172 L134 164"/></g>';
+  s+='<circle cx="112" cy="146" r="8" fill="#F2CFAE"/><path d="M112 154 L118 172" stroke="#205E86" stroke-width="5"/>';
+  if(ins.speed){
+    s+='<g'+(ins.speed===2?' class="new"':'')+' stroke="#A8441A" stroke-width="4" stroke-linecap="round"><line x1="20" y1="170" x2="62" y2="170"/><line x1="12" y1="186" x2="60" y2="186"/><line x1="24" y1="202" x2="62" y2="202"/></g>';
+    s+='<rect x="6" y="158" width="62" height="54" rx="8" fill="none" stroke="#A8441A" stroke-width="3" stroke-dasharray="5 4"'+(ins.speed===2?' class="ring"':'')+'/>'+tag(4,124,ins.speed===2?'剛剛拼進來':'拼進來的',ins.speed===2);
+  }
+  /* scooter (from top road) */
+  s+='<g><circle cx="178" cy="176" r="9" fill="#2B3336"/><circle cx="214" cy="176" r="9" fill="#2B3336"/><path d="M172 170 Q174 150 192 152 L206 152 L214 132 L220 134 L214 170 Z" fill="#B7862B"/><circle cx="198" cy="128" r="8" fill="#F2CFAE"/><path d="M190 120 Q198 110 206 120 Z" fill="#205E86"/></g>';
+  /* tiny bump mark */
+  s+='<g transform="translate(151,151) scale(.67)" fill="none" stroke="#1F2A2E" stroke-width="2.6" stroke-linecap="round">'+ICI.spark+'</g>';
+  s+='</svg>';return s;
+}
+function insFrom(upto,justNow){var o={};for(var i=0;i<upto;i++){if(st.p1[i]==='lead')o[Q[i].key]=(i===justNow?2:1)}return o}
+
+/* ---------- 第二部分：橡皮擦 ---------- */
+var E=[
+ {chunks:['你','是不是','因為貪玩','才','沒寫完','作業'],key:2,word:'貪玩',ref:'「作業怎麼了？」',
+  why:'「貪玩」是問的人自己先猜好的理由。對方聽到，可能就順著說「對啦」，就算原本是因為別的事，例如家裡有事、題目看不懂。'},
+ {chunks:['那台機車','是不是','闖紅燈','才','撞上去的'],key:2,word:'闖紅燈',ref:'「你看到了什麼？」',
+  why:'就像第一部分，問的人先說了「闖紅燈」，證人的記憶畫面裡就可能多出一盞紅燈，她還會真心覺得自己看到了。'},
+ {chunks:['蚵仔煎','是不是','很難吃'],key:2,word:'很難吃',ref:'「你覺得蚵仔煎怎麼樣？」',
+  why:'「很難吃」把感覺先替對方說好了。對方本來覺得還不錯，聽到這樣問，也可能開始覺得好像沒那麼好吃。'}
+];
+var ENDS=[
+ function(x){return x?x+'怎麼了？':'怎麼了？'},
+ function(x){return x?'關於'+x+'，你看到了什麼？':'你看到了什麼？'},
+ function(x){return '你覺得'+x+'怎麼樣？'},
+ function(x){return x?x+'發生什麼事了？':'發生什麼事了？'}
+];
+var ENDNAME=['……怎麼了？','你看到了什麼？','你覺得……怎麼樣？','發生什麼事了？'];
+function kept(k){var c=E[k].chunks,g=st.er[k]||[],a=[];c.forEach(function(t,i){if(g.indexOf(i)<0)a.push(t)});return a.join('')}
+function erasedList(k){var g=(st.er[k]||[]).slice().sort();return g.map(function(i){return E[k].chunks[i]})}
+
+var st=load();
+if(!st||!st.ord){st={step:0,stage:0,ord:[rnd2(),rnd2(),rnd2()],p1:[],er:[[],[],[]],end:[null,null,null]};save(st)}
+
+function go(step){st.step=step;st.stage=0;save(st);render();window.scrollTo(0,0)}
+function render(){
+  var s=st.step;
+  if(s===0)intro();else if(s<=3)ask(s-1);else if(s===4)compare();else if(s===5)part2();else if(s<=8)erase(s-6);else end();
+}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.innerHTML=scene({},'秀蘭阿姨原本記得的畫面：陰天，路口有一台腳踏車和一台機車擦撞，紅綠燈是綠燈，地上沒有東西。');
+  c.append(el('p','legend','阿姨原本記得：'+ORIG_ITEMS+'。'));
+  app.append(el('p','case','第一部分・證人的記憶畫面'),el('h1',null,'問話橡皮擦'),
+    el('p','lead','秀蘭阿姨每天早上在安南區的廟口賣鹹粥。今天早上，天氣陰陰的，她正在盛粥，看到路口一台腳踏車和一台機車擦撞了一下。還好兩個人都只是小擦傷。'),
+    el('h2',null,'下面是阿姨「原本記得」的畫面。'),c,
+    el('p','lead','下午，你是來問話的警察。你要問阿姨 3 個問題，每一題都從兩種問法裡挑一個。看看你的問題，會不會讓阿姨的畫面變得不一樣。'),
+    button('btn','開始問話',function(){go(1)}));
+}
+
+function ask(i){
+  var q=Q[i];app.innerHTML='';
+  app.append(el('p','case','第一部分・第 '+(i+1)+' 題，共 3 題'));
+  if(st.stage===0||!st.p1[i]){
+    var c=el('div','card');c.innerHTML=scene(insFrom(i,-1),'阿姨現在的記憶畫面');
+    app.append(el('h2',null,'你要怎麼問阿姨？'));
+    var g=el('div','opts');
+    var opts=st.ord[i]?[['lead',q.lead],['open',q.open]]:[['open',q.open],['lead',q.lead]];
+    opts.forEach(function(o){g.appendChild(button('btn alt',o[1],function(){st.p1[i]=o[0];st.stage=1;save(st);render()}))});
+    app.append(g,el('p','legend','阿姨現在的記憶畫面：'),c);
+  }else{
+    var lead=st.p1[i]==='lead';
+    var c2=el('div','card');c2.innerHTML=scene(insFrom(i+1,i),'阿姨回答以後的記憶畫面');
+    c2.prepend(el('p','say','<b>你問：</b>'+(lead?q.lead:q.open)),el('p','say','<b>阿姨說：</b>「'+(lead?q.sayLead:q.sayOpen)+'」'));
+    var other=lead?'如果改問'+q.open+'，阿姨比較可能照原本記得的回答。':'如果改問'+q.lead+'，「'+q.name+'」就可能被拼進畫面裡。';
+    var nx=button('btn',i<2?'問下一題':'把兩張畫面放在一起看',function(){go(i+2)});
+    app.append(c2,el('p','note'+(lead?' warm':''),(lead?q.fbLead+'她不是在說謊，她是真的覺得自己看到了。':q.fbOpen)+'<br><span style="font-size:.88em;color:var(--muted)">'+other+'</span>'),nx);
+  }
+}
+
+function countLead(){return st.p1.filter(function(x){return x==='lead'}).length}
+function leadNames(){var a=[];Q.forEach(function(q,i){if(st.p1[i]==='lead')a.push(q.name)});return a}
+
+function compare(){
+  app.innerHTML='';
+  var n=countLead(),names=leadNames();
+  var p=el('div','pair');
+  var a=el('div');a.append(el('h3',null,'原本記得的'));var ca=el('div','card');ca.innerHTML=scene({},'阿姨原本記得的畫面');a.appendChild(ca);
+  var b=el('div');b.append(el('h3',null,'被問完以後'));var cb=el('div','card');cb.innerHTML=scene(insFrom(3,-1),'阿姨被問完以後的畫面');b.appendChild(cb);
+  p.append(a,b);
+  var msg=n?'你選了 '+n+' 次帶答案的問法，阿姨的畫面被拼進了 '+n+' 樣東西：'+names.join('、')+'。這些東西，都是從問題裡來的，不是阿姨原本看到的。':'你 3 題都選了不帶答案的問法，阿姨的畫面和原本一模一樣。';
+  app.append(el('p','case','第一部分・兩張畫面放在一起'),el('h2',null,'阿姨的記憶，前後有什麼不一樣？'),p,
+    el('p','note'+(n?' warm':''),msg),
+    el('p','lead','這就是上課講的「記憶重建」：每次想起來，都是重新拼一次，問的人說的話，也可能變成其中一塊。'),
+    button('btn','進入第二部分：問話橡皮擦',function(){go(5)}));
+}
+
+function part2(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','下面有 3 個帶答案的問句。句子已經切成一塊一塊的。'),
+    el('p','lead','① 點一下詞塊，用橡皮擦把「把答案塞進去的字」擦掉。擦錯了，再點一次就能還原。'),
+    el('p','lead','② 從下面挑一個句尾或開頭接上，組成不帶答案的問法。'),
+    el('p','lead','③ 按「完成」，看看參考答案。'));
+  app.append(el('p','case','第二部分・問話橡皮擦'),el('h2',null,'把塞進去的答案擦掉'),c,button('btn','開始擦',function(){go(6)}));
+}
+
+function erase(k){
+  var e=E[k];app.innerHTML='';
+  app.append(el('p','case','第二部分・第 '+(k+1)+' 題，共 3 題'));
+  if(st.stage===0){
+    var g=st.er[k];
+    app.append(el('h2',null,'哪幾個字，把答案塞進去了？點它，把它擦掉。'));
+    var card=el('div','card');var ch=el('div','chips');
+    e.chunks.forEach(function(t,i){
+      var b=button('chip'+(g.indexOf(i)>=0?' gone':''),t,function(){
+        var p=g.indexOf(i);if(p>=0)g.splice(p,1);else g.push(i);save(st);
+        b.classList.toggle('gone',g.indexOf(i)>=0);b.setAttribute('aria-pressed',g.indexOf(i)>=0?'true':'false');upd();
+      });b.setAttribute('aria-pressed',g.indexOf(i)>=0?'true':'false');ch.appendChild(b);
+    });
+    ch.appendChild(el('span','qm','？'));card.appendChild(ch);
+    var ends=el('div','ends');var built=el('p','built');
+    var done=button('btn','完成',function(){st.stage=1;save(st);render();window.scrollTo(0,0)});
+    ENDNAME.forEach(function(nm,j){var b=button('btn alt'+(st.end[k]===j?' pick':''),nm,function(){
+      st.end[k]=j;save(st);Array.prototype.forEach.call(ends.children,function(x){x.classList.remove('pick')});b.classList.add('pick');upd()});ends.appendChild(b)});
+    function upd(){
+      if(st.end[k]==null){built.textContent='（還沒接上）';done.disabled=true;return}
+      built.textContent='「'+ENDS[st.end[k]](kept(k))+'」';done.disabled=false;
+    }
+    upd();
+    app.append(card,el('h2',null,'再挑一個接上去：'),ends,el('p','legend','你組出來的問法：'),built,done);
+  }else{
+    var gone=erasedList(k),hit=(st.er[k]||[]).indexOf(e.key)>=0;
+    var c=el('div','card');
+    c.append(el('p','say','<b>原本的問句：</b>「'+e.chunks.join('')+'？」'),
+      el('p','say','<b>你擦掉了：</b>'+(gone.length?gone.map(function(t){return '「'+t+'」'}).join(''):'（沒有擦掉任何字）')),
+      el('p','say','<b>你組出的問法：</b>「'+ENDS[st.end[k]](kept(k))+'」'),
+      el('p','say','<b>參考答案：</b>'+e.ref));
+    var msg=(hit?'你擦掉了「'+e.word+'」。':'「'+e.word+'」還留在句子裡。')+(hit?'被擦掉的':'應該擦掉的')+'「貪玩」「闖紅燈」「很難吃」，就是塞進去的答案。'+e.why+(st.er[k].indexOf(1)<0?'另外，「是不是……」這種問法，常常只讓對方回答「是」或「不是」。':'');
+    app.append(c,el('p','note'+(hit?'':' warm'),msg),el('p','legend','參考答案不是唯一的答案。只要對方聽不出你希望他怎麼回答，都是好問法。'),
+      button('btn',k<2?'下一題':'看看我的紀錄',function(){go(k+7)}));
+  }
+}
+
+function end(){
+  app.innerHTML='';
+  var n=countLead(),names=leadNames();
+  var c1=el('div','card');
+  c1.append(el('p','case','第一部分・證人的記憶畫面'));
+  var t1=el('table');
+  [['選了帶答案的問法',n+' 次（共 3 題）'],['阿姨的畫面被拼進',n+' 樣東西'+(n?'：'+names.join('、'):'')]].forEach(function(r){var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t1.appendChild(tr)});
+  c1.append(el('p','big',n+' 次'),t1);
+  var c2=el('div','card');c2.append(el('p','case','第二部分・問話橡皮擦'));
+  var t2=el('table');
+  E.forEach(function(e,k){var hit=(st.er[k]||[]).indexOf(e.key)>=0;var tr=el('tr');
+    tr.append(el('td','k','第 '+(k+1)+' 題'),el('td',null,'「'+e.word+'」<br><span style="color:var(--muted);font-size:.85em">我的問法：「'+(st.end[k]!=null?ENDS[st.end[k]](kept(k)):'—')+'」</span>'),el('td','n',hit?'擦掉了':'還留著'));t2.appendChild(tr)});
+  var nh=E.filter(function(e,k){return (st.er[k]||[]).indexOf(e.key)>=0}).length;
+  c2.append(el('p','big',nh+' / 3'),el('p','legend','三個關鍵詞擦掉了幾個'),t2);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c1,c2);
+}
+
+render();
+})();
+</script>

@@ -1,0 +1,466 @@
+<title>規則修理站</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro → for each of 3 "rule machines": guess what goes wrong (4 options, all allowed) → the machine runs and shows what came out (neutral note on the guess + why) → drag a tool from the toolbox onto the machine's tool socket (or tap it), the machine runs again and shows the new result, what it helps and what it costs; tools can be swapped → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h1 svg.i{width:1.1em;height:1.1em;vertical-align:-0.18em;margin-right:10px;color:var(--ink)}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,3vw,27px);font-weight:900;margin:0;line-height:1.45}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.case svg.i{width:1.4em;height:1.4em;vertical-align:-0.35em;margin-right:8px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.go{background:var(--rust)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.tool:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.letter{display:inline-block;min-width:1.6em;font-weight:900;color:var(--sea)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.steps3{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font-size:clamp(19px,2.6vw,24px)}
+
+/* ---------- rule machine ---------- */
+.mcard{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(12px,2.6vw,20px);display:flex;flex-direction:column;gap:6px;transition:border-color .15s,background .15s}
+.mcard.hot{border-color:var(--gold);background:var(--warm)}
+.port{display:flex;flex-direction:column;gap:6px}
+.plabel{display:inline-flex;align-self:flex-start;align-items:center;gap:6px;font-size:clamp(17px,2.2vw,20px);font-weight:900;color:#fff;background:var(--sea);border-radius:999px;padding:2px 14px;letter-spacing:1px}
+.plabel.out{background:var(--rust)}
+.rulecard{background:#FBF4E2;border:3px solid #E3CF9E;border-radius:14px;padding:10px 14px;font-size:clamp(20px,2.8vw,25px);font-weight:900;line-height:1.5;margin:0}
+.rulecard .add{display:block;font-size:clamp(19px,2.5vw,22px);font-weight:700;color:var(--rust);margin-top:4px}
+.mach{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;overflow:visible}
+.outbox{background:#FFF;border:3px dashed var(--line);border-radius:14px;padding:10px 14px;min-height:64px;display:flex;flex-direction:column;gap:8px}
+.outbox.full{border-style:solid;border-color:#E3B9A6;background:#FDF5F1}
+.outbox.fixed{border-style:solid;border-color:#B9D3C1;background:#F3F8F3}
+.outtxt{margin:0;font-size:clamp(20px,2.8vw,25px);font-weight:900;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+.outtxt svg.i{width:1.6em;height:1.6em;margin-top:.05em}
+.outtxt.wait{color:var(--muted);font-weight:700}
+.pc{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:start;margin:0}
+.pc .tag{font-size:clamp(17px,2.2vw,19px);font-weight:900;border-radius:10px;padding:2px 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;margin-top:.15em}
+.pc .tag.g{background:#DDEEDF;color:#1F5C38}
+.pc .tag.c{background:#F8E0D4;color:#8A3714}
+.pc .tag svg.i{width:1em;height:1em;vertical-align:0}
+.pc p{margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.6}
+/* machine animation */
+.mach .g1,.mach .g2,.mach .needle{transform-box:fill-box;transform-origin:center}
+.mach .needle{transform-origin:0 0;transform-box:view-box}
+.mach .pin{opacity:0}
+.mach .pout{opacity:0}
+.mach.done .pout{opacity:1;transform:translateY(16px)}
+.mach.done .lamp{fill:#9FD0AE}
+.mach.wait .slotbox{stroke:var(--gold);animation:pulse 1s ease-in-out infinite}
+.mach.run .pin{animation:pin .55s ease-in forwards}
+.mach.run .g1{animation:spin 1.3s linear .35s}
+.mach.run .g2{animation:spinr 1.3s linear .35s}
+.mach.run .needle{animation:swing 1.3s ease-in-out .35s}
+.mach.run .lamp{animation:blink .32s steps(2,jump-none) infinite}
+.mach.run .shake{animation:shake .12s linear .4s 9}
+.mach.run .pout{animation:pout .45s ease-out 1.25s forwards}
+.mach.run .toolin{animation:pop .4s ease-out}
+@keyframes pin{0%{opacity:1;transform:translateY(-16px)}80%{opacity:1}100%{opacity:0;transform:translateY(46px)}}
+@keyframes pout{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:translateY(16px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinr{to{transform:rotate(-540deg)}}
+@keyframes swing{0%{transform:rotate(0)}30%{transform:rotate(70deg)}60%{transform:rotate(-40deg)}100%{transform:rotate(0)}}
+@keyframes blink{0%{fill:#F3D27A}100%{fill:#F2B8A0}}
+@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}100%{transform:translateX(0)}}
+@keyframes pulse{50%{stroke-opacity:.35}}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.mach .toolin{transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:reduce){
+  .mach.run .g1,.mach.run .g2,.mach.run .needle,.mach.run .shake,.mach.run .lamp{animation:none}
+  .mach.run .pin{animation-duration:.2s}
+  .mach.run .pout{animation-duration:.2s;animation-delay:.2s}
+}
+
+/* ---------- toolbox ---------- */
+.fixgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+.tbox{background:#F7E7DF;border:3px solid #E3B9A6;border-radius:22px;padding:clamp(12px,2.4vw,18px);display:flex;flex-direction:column;gap:10px}
+.tbox h3 svg.i{width:1.3em;height:1.3em;vertical-align:-0.3em;margin-right:6px}
+.tbox .hint{margin:0;font-size:clamp(19px,2.2vw,20px);color:var(--muted);line-height:1.5}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tool{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:16px;padding:10px 6px 8px;cursor:grab;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;position:relative;transition:transform .08s,border-color .12s}
+.tool:active{transform:scale(.96)}
+.tool svg.i{width:52px;height:52px;pointer-events:none}
+.tool .tn{font-size:clamp(15px,1.9vw,17px);font-weight:700;color:var(--muted);line-height:1.3}
+.tool .tf{font-size:clamp(19px,2.3vw,21px);font-weight:900;line-height:1.35}
+.tool.on{border-color:var(--rust);background:#FDF5F1}
+.tool.tried .badge{display:inline-flex}
+.badge{display:none;position:absolute;top:6px;right:6px;align-items:center;gap:2px;font-size:15px;font-weight:900;color:var(--good);background:#DDEEDF;border-radius:999px;padding:0 8px 0 4px}
+.badge svg.i{width:18px;height:18px}
+.tool.on .badge{color:#fff;background:var(--rust)}
+.ghost{position:fixed;left:0;top:0;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:18px;background:var(--card);border:3px solid var(--gold);box-shadow:0 8px 22px rgba(31,42,46,.25);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:50}
+.ghost svg.i{width:52px;height:52px}
+.ghost.fly{transition:transform .38s ease-in-out,opacity .38s}
+.choose{display:flex;flex-direction:column;gap:8px}
+.choose p{margin:0;color:var(--muted);font-size:clamp(19px,2.3vw,21px)}
+
+/* ---------- end ---------- */
+.sum{display:flex;flex-direction:column;gap:12px}
+.sum .card{gap:6px}
+.sum h3{color:var(--sea);display:flex;align-items:center;gap:8px}
+.sum h3 svg.i{width:1.3em;height:1.3em}
+.row2{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:clamp(19px,2.6vw,24px);line-height:1.55}
+.row2 .k{color:var(--muted);font-weight:700;white-space:nowrap}
+.row2 .v{font-weight:900}
+.row2 .v svg.i{margin-right:4px}
+
+@media (max-width:760px){
+  .fixgrid{grid-template-columns:1fr}
+}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .tool svg.i{width:44px;height:44px}
+}
+@media (max-width:440px){
+  .row2{grid-template-columns:1fr;gap:0}
+  .row2 .v{margin-bottom:6px}
+}
+.tool .badge svg.i{width:18px;height:18px}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"dice": "<rect x=\"3.5\" y=\"3.5\" width=\"17\" height=\"17\" rx=\"3.8\" fill=\"#FBF4E2\"/><circle cx=\"8.4\" cy=\"8.4\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15.6\" cy=\"15.6\" r=\"1.5\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15.6\" cy=\"8.4\" r=\"1.5\" fill=\"#C0532C\" stroke=\"none\"/><circle cx=\"8.4\" cy=\"15.6\" r=\"1.5\" fill=\"#C0532C\" stroke=\"none\"/>", "week": "<path d=\"M3 9.5V6.7a2.2 2.2 0 0 1 2.2-2.2h13.6A2.2 2.2 0 0 1 21 6.7v2.8z\" fill=\"#DCE8F0\"/><path d=\"M3 9.5h18v8.8a2.2 2.2 0 0 1-2.2 2.2H5.2A2.2 2.2 0 0 1 3 18.3z\" fill=\"#FBFCF9\"/><path d=\"M7.5 2.6v3.6M16.5 2.6v3.6\"/><rect x=\"5.8\" y=\"12.4\" width=\"12.4\" height=\"4.6\" rx=\"1.3\" fill=\"#F3D27A\"/>", "magnify": "<circle cx=\"10\" cy=\"10\" r=\"6.4\" fill=\"#DCE8F0\"/><path d=\"M7 9a3.2 3.2 0 0 1 2.6-2.6\"/><path d=\"M15.4 15.4l5.4 5.4\" stroke-width=\"3.4\"/>", "ruler": "<g transform=\"rotate(-35 12 12)\"><rect x=\"1.4\" y=\"8.6\" width=\"21.2\" height=\"6.8\" rx=\"1.4\" fill=\"#F3D27A\"/><path d=\"M4.8 8.6v2.8M8.2 8.6v1.7M11.6 8.6v2.8M15 8.6v1.7M18.4 8.6v2.8\"/></g>", "namelist": "<rect x=\"2.8\" y=\"2.8\" width=\"18.4\" height=\"13.6\" rx=\"1.8\" fill=\"#F3E3BE\"/><path d=\"M6.8 16.4v4.8M17.2 16.4v4.8\"/><circle cx=\"6.6\" cy=\"6.8\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"6.6\" cy=\"9.8\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"6.6\" cy=\"12.8\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M9.4 6.8h8M9.4 9.8h8M9.4 12.8h5.2\"/>", "shovel": "<g transform=\"rotate(35 12 12)\"><path d=\"M12 2.2v11\"/><path d=\"M9.2 2.2h5.6\"/><path d=\"M7.4 13.2h9.2v3.6a4.6 4.6 0 0 1-9.2 0z\" fill=\"#DCE8F0\"/></g>", "brush": "<g transform=\"rotate(35 12 12)\"><rect x=\"10.3\" y=\"1.2\" width=\"3.4\" height=\"12.4\" rx=\"1\" fill=\"#F3E3BE\"/><path d=\"M10.3 13.6h3.4l.8 2.5c.5 1.5-.2 3.3-2.5 5.6-2.3-2.3-3-4.1-2.5-5.6z\" fill=\"#56605C\"/></g>", "noticepin": "<path d=\"M5 3.5h10.4L19 7.1v13.4H5z\" fill=\"#FBF4E2\"/><path d=\"M15.4 3.5v3.6H19\"/><path d=\"M8 11h8M8 14h8M8 17h5\"/><circle cx=\"8.4\" cy=\"6.6\" r=\"1.5\" fill=\"#F2B8A0\"/>", "rotate": "<circle cx=\"12\" cy=\"12\" r=\"2.6\" fill=\"#F6E3D6\"/><path d=\"M19 10A7.2 7.2 0 0 0 5.6 8.4\"/><path d=\"M19.4 5.4V10h-4.6\"/><path d=\"M5 14a7.2 7.2 0 0 0 13.4 1.6\"/><path d=\"M4.6 18.6V14h4.6\"/>", "hourglass": "<path d=\"M5.5 2.8h13M5.5 21.2h13\"/><path d=\"M7.2 2.8c0 4.6 4.8 6 4.8 9.2s-4.8 4.6-4.8 9.2h9.6c0-4.6-4.8-6-4.8-9.2s4.8-4.6 4.8-9.2z\" fill=\"#FBF4E2\"/><path d=\"M9.4 7.2h5.2c-.7 1.3-1.6 2-2.6 2.8-1-.8-1.9-1.5-2.6-2.8z\" fill=\"#F3D27A\"/><path d=\"M8.4 20.4c.8-2.4 2.2-3.4 3.6-4.2 1.4.8 2.8 1.8 3.6 4.2z\" fill=\"#F3D27A\"/>", "wrench": "<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z\" fill=\"#DCE8F0\"/>", "toolbox": "<path d=\"M8.6 8V5.6A1.6 1.6 0 0 1 10.2 4h3.6a1.6 1.6 0 0 1 1.6 1.6V8\"/><rect x=\"2.5\" y=\"8\" width=\"19\" height=\"12.2\" rx=\"2\" fill=\"#F2B8A0\"/><path d=\"M2.5 13.2h19\"/><rect x=\"10\" y=\"11.6\" width=\"4\" height=\"3.4\" rx=\".8\" fill=\"#FBF4E2\"/>", "canal": "<path d=\"M2.5 6.5h19M2.5 17.5h19\"/><path d=\"M2.5 9.4h19v5.2h-19z\" fill=\"#DCE8F0\" stroke=\"none\"/><path d=\"M3.5 12q2.1-1.7 4.2 0t4.2 0 4.2 0 4.2 0\"/><path d=\"M5.5 6.5V4.2M9.5 6.5V3.6M18 17.5v2.4M14 17.5v2.9\" stroke=\"#2F7D4F\"/>", "drycanal": "<path d=\"M2.5 6.5h7.5M14 6.5h7.5M2.5 17.5h19\"/><path d=\"M2.5 9.4h19v5.2h-19z\" fill=\"#F3E3BE\" stroke=\"none\"/><path d=\"M3.8 12.4l3-1.6 2.6 2.2 3-2.4 2.8 2.2 2.6-1.8 2.4 1.2\"/><path d=\"M10 6.5l1.2-2M14 6.5l-1.2-2\"/>", "boat": "<path d=\"M1.8 14.2h20.4l-2.5 4.1a2 2 0 0 1-1.7 1H6a2 2 0 0 1-1.7-1z\" fill=\"#F3E3BE\"/><path d=\"M6.4 14.2V9.8Q12 5.6 17.6 9.8v4.4z\" fill=\"#DCE8F0\"/><rect x=\"9.6\" y=\"9.6\" width=\"4.8\" height=\"3.2\" rx=\".7\" fill=\"#FBFCF9\"/><path d=\"M1.5 22q2.6-1.5 5.2 0t5.2 0 5.2 0 5.2 0\"/>", "broom": "<path d=\"M12 2v8.4\"/><rect x=\"9\" y=\"10.4\" width=\"6\" height=\"2.6\" rx=\".8\" fill=\"#DCE8F0\"/><path d=\"M9.2 13L5 21.2h14L14.8 13z\" fill=\"#F3E3BE\"/><path d=\"M8.4 21.2l1.8-5M12 21.2v-5M15.6 21.2l-1.8-5\"/>", "scale": "<path d=\"M12 4.8v15.7M7.5 20.5h9\"/><path d=\"M4.5 7h15\"/><path d=\"M4.5 7L2.2 13M4.5 7l2.3 6M19.5 7l-2.3 6M19.5 7l2.3 6\"/><path d=\"M1.6 13h5.8a2.9 2.9 0 0 1-5.8 0z\" fill=\"#F3E3BE\"/><path d=\"M16.6 13h5.8a2.9 2.9 0 0 1-5.8 0z\" fill=\"#F3E3BE\"/><circle cx=\"12\" cy=\"4.2\" r=\"1.5\" fill=\"#FBF4E2\"/>", "drawer": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"11.6\" rx=\"1.6\" fill=\"#F3E3BE\"/><path d=\"M3 8.8h18\"/><path d=\"M10 5.9h4M10 11.7h4\"/><path d=\"M1.8 14.6h20.4v4.9a1.5 1.5 0 0 1-1.5 1.5H3.3a1.5 1.5 0 0 1-1.5-1.5z\" fill=\"#FBF4E2\"/><path d=\"M10 17.8h4\"/>", "school": "<path d=\"M3.5 21V11l8.5-4.6 8.5 4.6v10z\" fill=\"#DCE8F0\"/><path d=\"M12 6.4V2.4\"/><path d=\"M12 2.4h4.2l-1.1 1.4 1.1 1.4H12\" fill=\"#F2B8A0\"/><path d=\"M10 21v-4.4a2 2 0 0 1 4 0V21\" fill=\"#FBFCF9\"/><path d=\"M6.4 13.4h2.2M15.4 13.4h2.2\"/><path d=\"M2 21h20\"/>", "coins": "<path d=\"M3.5 6.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6V6.5\" fill=\"#F3E3BE\"/><ellipse cx=\"9.5\" cy=\"6.5\" rx=\"6\" ry=\"2.6\" fill=\"#FBF4E2\"/><path d=\"M8.5 13.5v4.2c0 1.4 2.7 2.6 6 2.6s6-1.2 6-2.6v-4.2\" fill=\"#F3E3BE\"/><ellipse cx=\"14.5\" cy=\"13.5\" rx=\"6\" ry=\"2.6\" fill=\"#FBF4E2\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "plus": "<path d=\"M12 5v14M5 12h14\"/>", "minus": "<path d=\"M5 12h14\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='fixrule-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){return {step:0,c:[0,1,2].map(function(){return {g:null,seen:false,tool:null,tried:[]}})}}
+var st=load();
+if(!st||!st.c||st.c.length!==3)st=fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var REDUCE=false;try{REDUCE=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+var RUN_MS=REDUCE?450:1750;
+var L='ABCD';
+
+/* ---------- the three cases ---------- */
+var CASES=[
+{icon:'school',name:'教室整潔加分',
+ story:['五年13班的老師想讓教室保持乾淨，訂了一條規則。','每天放學前，老師會走一圈，看每一組座位的地上有沒有垃圾。地上乾淨的組就加 1 分，月底分數最高的組，可以先挑下個月的座位。'],
+ rule:'每天放學檢查地上有沒有垃圾，乾淨的組加分',
+ opts:[
+  {t:'大家每天認真打掃，教室真的變乾淨了',s:'教室真的變乾淨',n:'有些組確實會更認真打掃，這正是加分想要的作用。不過，這台機器同時還跑出了另一個結果。'},
+  {t:'地上看起來很乾淨，垃圾卻被塞進抽屜和櫃子',s:'垃圾被塞進抽屜和櫃子',n:'你猜的，和這台機器跑出來的一樣。'},
+  {t:'大家放學前才急著撿，白天教室還是很髒',s:'放學前才急著撿',n:'這也很可能發生：只在放學時檢查，白天就沒有人管。這一次，機器跑出來的是另一個更省力的辦法。'},
+  {t:'各組互相怪罪，吵說垃圾是別組丟的',s:'各組互相怪罪',n:'加分比賽常常會讓組和組互相怪罪，這也可能發生。這一次，機器跑出來的是另一件事。'}],
+ real:1,
+ problem:{icon:'drawer',text:'地上真的變乾淨了，可是垃圾被塞進抽屜和櫃子裡。'},
+ why:'老師想要的是「整間教室乾淨」，可是檢查時只看「地上」。加分讓大家很想贏，最快的辦法，就是讓地上看起來乾淨，而不是讓教室真的變乾淨。被拿來打分數的那一樣東西，大家就會想辦法讓它好看。',
+ tools:[
+  {k:'dice',name:'抽查骰子',fix:'隨機抽查抽屜',out:'抽屜裡的垃圾變少了，因為不知道哪一天會被打開。',good:'不知道哪一天、哪一組的抽屜會被打開，把垃圾塞進抽屜就不保險了。',cost:'翻同學的抽屜，有人會覺得自己的東西被看光；檢查也要多花時間。垃圾還可能改塞進書包裡。'},
+  {k:'week',name:'一週看板',fix:'改看一週的整體',out:'平常也比較乾淨了，不只是放學那一刻。',good:'老師這一週隨時看，週五再連抽屜和櫃子一起看，臨時塞起來就不划算了。',cost:'要記錄一整週，比較麻煩；分數要等到週五才知道，大家比較感覺不到加分的動力。'},
+  {k:'magnify',name:'放大鏡',fix:'讓各組互相檢查',out:'塞起來的垃圾比較容易被找到了。',good:'檢查的眼睛變多了，而且同學最知道垃圾會藏在哪裡。',cost:'組和組可能互相挑毛病、吵架；也可能兩組偷偷約好，互相放水。'},
+  {k:'broom',name:'掃把',fix:'不加分，改成大家一起打掃',out:'沒有分數可以拚，就沒有人需要把垃圾藏起來。',good:'打掃變成全班一起的事，藏垃圾已經得不到任何好處。',cost:'少了比賽，有人可能比較不積極；很認真的組，也不再被特別看見。'}]},
+{icon:'canal',name:'水圳的水租',
+ story:['很久以前，臺江邊有一個種田的庄頭。家家戶戶的田，都靠同一條水圳引水灌溉，水圳每年都要花錢修補。','庄裡的人約好：每一家照自己報的田地大小，繳一筆「水租」，存起來修水圳。（「甲」是計算田地大小的單位，田越大，繳得越多。）'],
+ rule:'每一家依自己報的田地大小繳水租，用來修水圳',
+ opts:[
+  {t:'大家都照實報，錢剛好夠修水圳',s:'大家都照實報',n:'如果每一家都照實報，確實會這樣。不過這條規則沒有安排任何人去看，少報也不會被發現。'},
+  {t:'田大的人家覺得繳太多，吵著要每家繳一樣',s:'田大的人家吵著要一樣',n:'這也可能發生：田大的人繳得多，可能會覺得自己吃虧。這一次，機器跑出來的是另一件事。'},
+  {t:'上游的人家先把水用光，下游的田沒水',s:'上游先把水用光',n:'搶水在很多地方都發生過。不過這條規則管的是「繳錢」，這一次出問題的是錢。'},
+  {t:'有人少報田地，收到的錢不夠修水圳',s:'有人少報，錢不夠修',n:'你猜的，和這台機器跑出來的一樣。'}],
+ real:3,
+ problem:{icon:'drycanal',text:'有人十甲田只報八甲，收到的錢不夠修，水圳壞了，大家都沒水。'},
+ why:'要繳多少錢，是看「自己報的」田地大小，又沒有人去查。少報兩甲，自己就少繳一點；可是每一家都少一點，加起來就修不起水圳。最後水圳壞了，連少報的那一家，田裡也沒有水。',
+ tools:[
+  {k:'ruler',name:'量尺',fix:'派人去丈量田地',out:'少報的田被量出來，水租收齊了。',good:'田地多大，用量的，不再只靠自己說，少報就會被發現。',cost:'要請人花時間一塊一塊量，也要付工錢；如果量田的人收了好處，還是可能故意量少。'},
+  {k:'namelist',name:'名單公告板',fix:'公開每一家的申報名單',out:'鄰居都看得到名單，少報的人不好意思了。',good:'大家都知道彼此的田在哪裡、有多大，少報很容易被看出來，而且幾乎不用花錢。',cost:'有人不喜歡家裡的事被公開；鄰居之間可能互相猜疑、吵架；人緣好的人，說不定還是會被包庇。'},
+  {k:'scale',name:'天平',fix:'改成依用水量收錢',out:'用多少水就繳多少錢，少報田地也沒有用了。',good:'繳錢的根據，改成真正用了多少水，不再是自己報的田地大小。',cost:'要有人守著水門，記下每一家放水放了多久，很費工夫；遇到乾旱，需要多用水的人家要繳很多錢。'},
+  {k:'shovel',name:'鏟子',fix:'水圳壞了，大家一起出工',out:'不收錢了，水圳壞了，大家就一起去修。',good:'出力看得見，誰來了、誰沒來，大家都知道。',cost:'每一家要出幾個人又會吵；有人只派小孩來；平常沒有存錢，水圳壞得太嚴重時，可能修不起來。'}]},
+{icon:'boat',name:'港口防海盜',
+ story:['很久以前，臺江邊有一個熱鬧的港口，附近的海上常有海盜出沒。','管港口的人訂了一條規則：每一艘船，都要在船篷上寫號碼。這樣一看就知道，哪一艘是港口自己的船，哪一艘可能是海盜船。這條規則本身是好的。'],
+ rule:'每艘船都要在船篷寫號碼，方便檢查',
+ opts:[
+  {t:'海盜也在船篷寫上號碼，混進港口',s:'海盜也寫號碼混進來',n:'這是有可能的，會寫字的不只有好人。不過這一次，機器跑出來的問題不在海盜身上。'},
+  {t:'船主嫌麻煩，偷偷不寫號碼',s:'船主嫌麻煩不寫',n:'有人嫌麻煩是常見的事。不過這一次，船主大多願意寫，問題出在別的地方。'},
+  {t:'負責檢查的人說「我幫你寫」，一艘收一次錢',s:'檢查的人幫寫號碼收錢',n:'你猜的，和這台機器跑出來的一樣。'},
+  {t:'沒有問題，海盜船很快就被認出來',s:'沒有問題',n:'號碼確實讓海盜船比較好認，這部分是有用的。不過，這台機器同時還跑出了另一個結果。'}],
+ real:2,
+ problem:{icon:'coins',text:'負責檢查的人說「我幫你寫，一艘收錢」，海盜走了，他還繼續收。'},
+ why:'寫號碼這條規則本身沒有錯，問題出在「誰來執行」。幫忙寫號碼變成一門生意，負責的人有錢可以收，就不希望這條規則結束。一條規則讓某些人得到好處，那些人就會想把它一直留著。',
+ tools:[
+  {k:'brush',name:'毛筆',fix:'船主自己寫，不准收費，並公告',out:'船主自己寫號碼，檢查的人沒有錢可以收了。',good:'寫號碼不必經過檢查的人，收錢的機會就消失了。',cost:'每艘船的字寫得不一樣，有的歪歪扭扭看不清楚；還是要有人看著，確定真的沒有人偷偷收錢。'},
+  {k:'noticepin',name:'告示',fix:'貼出告示，讓大家知道可以檢舉',out:'船主知道收錢是不對的，可以去檢舉。',good:'規則寫清楚、大家都知道，檢查的人怕被檢舉，比較不敢亂收。',cost:'船主怕得罪檢查的人，不一定敢檢舉；接受檢舉的人也要公正，不然檢舉了也沒有用。'},
+  {k:'rotate',name:'輪流',fix:'換人輪流檢查',out:'同一個人不會一直管，比較難慢慢收起錢來。',good:'檢查的人常常換，很難和船主養成「給錢就好辦事」的默契。',cost:'每次換人都要重新教一遍；新來的人也可能收錢，只是換一個人收。'},
+  {k:'hourglass',name:'沙漏',fix:'海盜走了，規則就取消',out:'規則有期限，危險過了就停，沒有人能一直靠它收錢。',good:'規則不會一直留著，用不到的時候就結束了。',cost:'海盜再回來，就要重新訂規則、重新寫號碼；什麼時候才算「海盜走了」，大家也可能意見不同。'}]}
+];
+
+/* ---------- machine drawing ---------- */
+function gear(cx,cy,R,n){
+  var r0=R-6,d='',w=Math.PI/n*0.42;
+  for(var i=0;i<n;i++){
+    var t=i*2*Math.PI/n,t2=t+Math.PI/n;
+    var pts=[[r0,t-w*1.3],[R,t-w],[R,t+w],[r0,t+w*1.3]];
+    pts.forEach(function(p,j){d+=(i===0&&j===0?'M':'L')+(cx+p[0]*Math.cos(p[1])).toFixed(1)+' '+(cy+p[0]*Math.sin(p[1])).toFixed(1)});
+    d+='A'+r0+' '+r0+' 0 0 1 '+(cx+r0*Math.cos(t2+w*0.7)).toFixed(1)+' '+(cy+r0*Math.sin(t2+w*0.7)).toFixed(1);
+  }
+  return d+'Z';
+}
+var G1=gear(102,110,30,10),G2=gear(165,100,21,8);
+function machSvg(toolKey){
+  var S='stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
+  var s='<svg class="mach" viewBox="0 0 400 204" role="img" aria-label="規則機器：上面的入口放進規則，右下的出口跑出結果'+(toolKey?'，工具座上裝了一個工具':'')+'">';
+  s+='<g class="shake">';
+  s+='<rect x="62" y="158" width="28" height="22" rx="5" fill="#C9D3D6" '+S+'/><rect x="200" y="158" width="28" height="22" rx="5" fill="#C9D3D6" '+S+'/>';
+  s+='<path d="M296 160h50l8 34h-66z" fill="#F3E3BE" '+S+'/>';
+  s+='<rect x="28" y="54" width="322" height="110" rx="20" fill="#DCE8F0" '+S+'/>';
+  s+='<path d="M36 6h110l-30 52H66z" fill="#F3E3BE" '+S+'/>';
+  s+='<path d="M60 16h62" stroke="#B7862B" stroke-width="3" stroke-linecap="round" opacity=".55"/>';
+  s+='<rect x="50" y="72" width="168" height="76" rx="14" fill="#FBFCF9" '+S+'/>';
+  s+='<g class="g1"><path d="'+G1+'" fill="#F3D27A" '+S+'/><circle cx="102" cy="110" r="7" fill="#FBFCF9" '+S+'/></g>';
+  s+='<g class="g2"><path d="'+G2+'" fill="#F2B8A0" '+S+'/><circle cx="165" cy="100" r="5.5" fill="#FBFCF9" '+S+'/></g>';
+  s+='<circle class="lamp" cx="246" cy="98" r="11" fill="#F3E3BE" '+S+'/>';
+  s+='<circle cx="304" cy="104" r="20" fill="#FBF4E2" '+S+'/><g transform="translate(304 104)"><path class="needle" d="M0 0L0 -14" stroke="#A8441A" stroke-width="3.5" stroke-linecap="round"/></g><circle cx="304" cy="104" r="3.5" fill="#1F2A2E"/>';
+  s+='<path d="M236 132h34M236 144h34" '+S+'/>';
+  s+='</g>';
+  // tool socket on top
+  s+='<rect class="slotbox" x="242" y="2" width="68" height="56" rx="14" fill="'+(toolKey?'#FBF1DC':'#FBFCF9')+'" stroke="'+(toolKey?'#1F2A2E':'#8A938F')+'" stroke-width="3" '+(toolKey?'':'stroke-dasharray="7 6"')+'/>';
+  if(toolKey){
+    s+='<g transform="translate(256 10) scale(1.68)"><g class="toolin" fill="none" stroke="#1F2A2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[toolKey]+'</g></g>';
+  }else{
+    s+='<path d="M268 30h16M276 22v16" stroke="#8A938F" stroke-width="3" stroke-linecap="round"/>';
+  }
+  // paper in / out
+  s+='<g class="pin"><rect x="74" y="0" width="34" height="26" rx="4" fill="#FBF4E2" '+S+'/><path d="M81 9h20M81 17h13" stroke="#1F2A2E" stroke-width="2.5" stroke-linecap="round"/></g>';
+  s+='<g class="pout"><rect x="304" y="152" width="34" height="26" rx="4" fill="#FFFFFF" '+S+'/><path d="M311 161h20M311 169h13" stroke="#A8441A" stroke-width="2.5" stroke-linecap="round"/></g>';
+  s+='</svg>';
+  return s;
+}
+
+/* builds the machine card; out = {html, cls} for the output box; returns the card */
+function machineCard(c,toolKey,done){
+  var m=el('div','mcard');
+  var inp=el('div','port');
+  var t=CASES[c].tools.filter(function(x){return x.k===toolKey})[0];
+  inp.append(el('span','plabel',ic('chev')+'入口：放進的規則'),el('p','rulecard','「'+CASES[c].rule+'」'+(t?'<span class="add">'+ic('plus')+'加上修法：'+t.fix+'</span>':'')));
+  var holder=el('div');holder.innerHTML=machSvg(toolKey);
+  var svg=holder.firstChild;if(done)svg.classList.add('done');
+  var out=el('div','port');
+  var box=el('div','outbox');
+  out.append(el('span','plabel out',ic('chev')+'出口：跑出來的結果'),box);
+  m.append(inp,svg,out);
+  m._svg=svg;m._box=box;
+  return m;
+}
+function runMachine(m,cb){
+  var svg=m._svg;svg.classList.remove('done');
+  void svg.getBoundingClientRect();
+  svg.classList.add('run');
+  m._box.className='outbox';m._box.innerHTML='<p class="outtxt wait">機器運轉中……</p>';
+  setTimeout(function(){svg.classList.remove('run');svg.classList.add('done');cb&&cb()},RUN_MS);
+}
+function problemHtml(c){var p=CASES[c].problem;return '<p class="outtxt">'+ic(p.icon)+'<span>'+p.text+'</span></p>'}
+function fixHtml(t){
+  return '<p class="outtxt">'+ic(t.k)+'<span>'+t.out+'</span></p>'+
+   '<div class="pc"><span class="tag g">'+ic('plus')+'作用</span><p>'+t.good+'</p><span class="tag c">'+ic('minus')+'代價</span><p>'+t.cost+'</p></div>';
+}
+function caseTag(c,first){return el('p','case',ic(CASES[c].icon)+'第 '+(c+1)+' 台機器'+(first?'（共 3 台）':'：'+CASES[c].name))}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','有些規則訂下去，跑出來的結果，和訂規則的人想的不一樣。'),
+    el('p','lead','今天你是<b>規則修理師傅</b>。每一條規則，都像一台機器：從<b>入口</b>放進規則，<b>出口</b>就會跑出結果。'));
+  var demo=el('div');demo.innerHTML=machSvg(null);
+  c.appendChild(demo.firstChild);
+  var ol=el('ol','steps3');
+  ['先看規則，猜猜看機器會跑出什麼問題。','開動機器，看看真的跑出了什麼。','從工具箱挑一個工具，拖到機器上修修看。'].forEach(function(x){ol.appendChild(el('li',null,x))});
+  app.append(el('h1',null,ic('wrench')+'規則修理站'),c,el('p','case','一共 3 台機器，每一台都要做三件事'),ol,
+    el('p','note','每一種修法都有作用，也有代價，沒有標準答案。選你覺得最好的就可以。'),
+    button('開始修理','btn',function(){go(1)}));
+}
+
+/* ---------- guess ---------- */
+function guess(c){
+  var C=CASES[c],S=st.c[c];app.innerHTML='';
+  var sc=el('div','card');C.story.forEach(function(x){sc.appendChild(el('p','lead',x))});
+  var m=machineCard(c,null,false);
+  m._box.innerHTML='<p class="outtxt wait">還不知道會跑出什麼，先猜猜看。</p>';
+  var g=el('div','opts');
+  var nx=button('開動機器，看結果','btn go',function(){if(S.g==null)return;S.seen=false;go(st.step+1)});
+  nx.disabled=S.g==null;
+  C.opts.forEach(function(o,k){
+    var b=button('<span class="letter">'+L[k]+'</span>'+o.t,'btn alt'+(S.g===k?' pick':''),function(){
+      S.g=k;S.seen=false;save(st);Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');nx.disabled=false;
+    });
+    g.appendChild(b);
+  });
+  app.append(caseTag(c,true),el('h2',null,C.name),sc,m,el('h2',null,'這條規則放進機器，會跑出什麼問題？'),el('p','lead','先猜猜看，每一個都可以選。'),g,nx);
+}
+
+/* ---------- reveal ---------- */
+function reveal(c){
+  var C=CASES[c],S=st.c[c];app.innerHTML='';
+  var m=machineCard(c,null,S.seen);
+  var after=el('div','opts');
+  var o=C.opts[S.g];
+  after.append(el('p','note warm','你猜的是 <b>'+L[S.g]+'：'+o.t+'</b>。<br>'+o.n),
+    (function(){var k=el('div','card');k.append(el('h3',null,'為什麼會這樣？'),el('p','lead',C.why));return k})(),
+    button('打開工具箱，修修看','btn',function(){go(st.step+1)}));
+  app.append(caseTag(c),el('h2',null,'機器開動了！看看出口跑出什麼'),m,after);
+  function show(){m._box.className='outbox full';m._box.innerHTML=problemHtml(c);after.style.display=''}
+  if(S.seen){show()}
+  else{
+    after.style.display='none';
+    m._box.innerHTML='<p class="outtxt wait">準備開動……</p>';
+    setTimeout(function(){runMachine(m,function(){S.seen=true;save(st);show()})},350);
+  }
+}
+
+/* ---------- fix with the toolbox ---------- */
+var busy=false;
+function fix(c){
+  var C=CASES[c],S=st.c[c];app.innerHTML='';busy=false;
+  var cur=C.tools.filter(function(x){return x.k===S.tool})[0];
+  var holder=el('div');
+  var m;
+  function buildMachine(){
+    m=machineCard(c,S.tool,!!S.tool);holder.innerHTML='';holder.appendChild(m);
+    if(cur){m._box.className='outbox fixed';m._box.innerHTML=fixHtml(cur)}
+    else{m._box.className='outbox full';m._box.innerHTML=problemHtml(c)+'<p class="outtxt wait" style="font-size:clamp(19px,2.4vw,21px)">還沒修。把一個工具裝到機器上方的工具座。</p>';m._svg.classList.add('wait')}
+  }
+  buildMachine();
+  var tb=el('div','tbox');
+  tb.append(el('h3',null,ic('toolbox')+'工具箱'),el('p','hint','把工具拖到機器的工具座，或直接點一下工具。'));
+  var tl=el('div','tools');
+  var tbtn={};
+  C.tools.forEach(function(t){
+    var b=el('button','tool','<span class="badge">'+ic('check')+'試過</span>'+ic(t.k)+'<span class="tn">'+t.name+'</span><span class="tf">'+t.fix+'</span>');
+    b.type='button';b.setAttribute('aria-label','裝上工具：'+t.name+'，修法：'+t.fix);
+    tbtn[t.k]=b;tl.appendChild(b);attachDrag(b,t);
+  });
+  tb.appendChild(tl);
+  var grid=el('div','fixgrid');grid.append(holder,tb);
+  var choose=el('div','choose');
+  function updTools(){
+    C.tools.forEach(function(t){var b=tbtn[t.k];b.classList.toggle('tried',S.tried.indexOf(t.k)>=0);b.classList.toggle('on',S.tool===t.k);
+      b.querySelector('.badge').innerHTML=ic('check')+(S.tool===t.k?'裝上了':'試過')});
+    choose.innerHTML='';
+    if(cur&&!busy){
+      choose.append(button('就選這個修法：'+cur.fix,'btn',function(){go(st.step+1)}),el('p',null,'想比一比的話，可以再換一個工具裝上去。'));
+    }
+  }
+  updTools();
+  app.append(caseTag(c),el('h2',null,'挑一個工具，修好這台機器'),el('p','lead','每一種修法都有作用，也有代價，可以換工具試試看，再選一個你覺得最好的。'),grid,choose);
+
+  function install(t){
+    if(busy)return;busy=true;
+    S.tool=t.k;if(S.tried.indexOf(t.k)<0)S.tried.push(t.k);save(st);cur=t;
+    buildMachine();m._svg.classList.remove('done');updTools();
+    try{var r=m.getBoundingClientRect();if(r.top<0||r.top>window.innerHeight*0.6)m.scrollIntoView({behavior:REDUCE?'auto':'smooth',block:'start'})}catch(e){}
+    runMachine(m,function(){busy=false;m._box.className='outbox fixed';m._box.innerHTML=fixHtml(t);updTools()});
+  }
+  function slotRect(){var s=m&&m._svg.querySelector('.slotbox');return s?s.getBoundingClientRect():null}
+  function overMachine(x,y){var r=m.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+  function attachDrag(b,t){
+    var sx=0,sy=0,down=false,drag=false,ghost=null,pid=null,suppress=false;
+    b.addEventListener('pointerdown',function(e){
+      if(busy||(e.pointerType==='mouse'&&e.button!==0))return;
+      down=true;drag=false;sx=e.clientX;sy=e.clientY;pid=e.pointerId;
+      try{b.setPointerCapture(pid)}catch(er){}
+    });
+    b.addEventListener('pointermove',function(e){
+      if(!down||e.pointerId!==pid)return;
+      var dx=e.clientX-sx,dy=e.clientY-sy;
+      if(!drag&&dx*dx+dy*dy>64){
+        drag=true;ghost=el('div','ghost',ic(t.k));document.body.appendChild(ghost);m._svg.classList.add('wait');
+      }
+      if(drag){
+        e.preventDefault();
+        ghost.style.transform='translate('+e.clientX+'px,'+e.clientY+'px)';
+        m.classList.toggle('hot',overMachine(e.clientX,e.clientY));
+      }
+    });
+    function end(e,cancel){
+      if(!down||e.pointerId!==pid)return;down=false;
+      try{b.releasePointerCapture(pid)}catch(er){}
+      if(drag){
+        suppress=true;setTimeout(function(){suppress=false},400);
+        var hit=!cancel&&overMachine(e.clientX,e.clientY);
+        m.classList.remove('hot');
+        if(ghost){ghost.remove();ghost=null}
+        if(hit)install(t);
+        else if(!S.tool)m._svg.classList.add('wait');else m._svg.classList.remove('wait');
+      }
+      drag=false;
+    }
+    b.addEventListener('pointerup',function(e){end(e,false)});
+    b.addEventListener('pointercancel',function(e){end(e,true)});
+    b.addEventListener('click',function(){
+      if(suppress||busy){suppress=false;return}
+      // tap fallback: the tool flies to the socket, then the machine runs
+      var r0=b.getBoundingClientRect(),r1=slotRect();
+      if(!r1||REDUCE){install(t);return}
+      busy=true;
+      var gh=el('div','ghost',ic(t.k));gh.style.transform='translate('+(r0.left+r0.width/2)+'px,'+(r0.top+r0.height/2)+'px)';
+      document.body.appendChild(gh);void gh.offsetWidth;gh.classList.add('fly');
+      gh.style.transform='translate('+(r1.left+r1.width/2)+'px,'+(r1.top+r1.height/2)+'px) scale(.8)';
+      setTimeout(function(){gh.remove();busy=false;install(t)},400);
+    });
+  }
+}
+
+/* ---------- end ---------- */
+function end(){
+  app.innerHTML='';
+  var sum=el('div','sum'),same=0;
+  CASES.forEach(function(C,c){
+    var S=st.c[c],o=S.g!=null?C.opts[S.g]:null,t=C.tools.filter(function(x){return x.k===S.tool})[0];
+    if(S.g===C.real)same++;
+    var k=el('div','card');
+    var r=el('div','row2');
+    r.append(el('span','k','我猜的問題'),el('span','v',o?L[S.g]+'　'+o.s:'—'),
+             el('span','k','我選的修法'),el('span','v',t?ic(t.k)+t.fix:'—'));
+    k.append(el('h3',null,ic(C.icon)+'第 '+(c+1)+' 台：'+C.name),r);
+    sum.appendChild(k);
+  });
+  var tot=el('div','card');
+  tot.appendChild(el('div','row2','<span class="k">猜的和機器跑出來一樣</span><span class="v">'+same+' 台（共 3 台）</span>'));
+  sum.appendChild(tot);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),sum);
+}
+
+function render(){
+  var s=st.step|0;
+  if(s<0||s>10)s=0;
+  // guard: never land on a step whose earlier choices are missing
+  for(var c=0;c<3;c++){
+    var base=1+3*c;
+    if(s>base&&st.c[c].g==null){s=base;break}
+    if(s>base+2&&!st.c[c].tool){s=base+2;break}
+  }
+  st.step=s;
+  if(s===0)intro();
+  else if(s===10)end();
+  else{var c2=Math.floor((s-1)/3),sub=(s-1)%3;[guess,reveal,fix][sub](c2)}
+}
+render();
+})();
+</script>

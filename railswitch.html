@@ -1,0 +1,510 @@
+<title>換一條軌道</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: intro, then three school stories; each: story page, then SVG railway (train carrying "this thing" from the left, a junction fanning into 4 tracks, a switch lever to tap/drag, 開車 / 倒車, terminus board with tiredness thermometer, mood faces and "someone secretly breaking the deal" chip; must try two different tracks), then value question "你最想扳到哪一條？" (every option allowed, effect and cost only), then summary for a show of hands. Fixed script, no randomness. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --plum:#6B5A9E; --note:#EAF1F5; --warm:#FBF1DC;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;justify-content:flex-start;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:focus-visible,.chip:focus-visible,.lever:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint.lv{flex-wrap:nowrap;align-items:flex-start}
+.hint.lv svg.i{margin-top:.2em}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn svg.i{width:1.5em;height:1.5em}
+.btn.alt svg.i{width:1.8em;height:1.8em}
+/* track colours */
+.k-more{--k:#A8441A;--kb:#F8E3DA}.k-cap{--k:#205E86;--kb:#DCE8F0}.k-self{--k:#2F7D4F;--kb:#DCEBD5}.k-team{--k:#8A6416;--kb:#F6EAC8}.k-worth{--k:#6B5A9E;--kb:#EAE5F3}
+.tn{color:var(--k);font-weight:900}
+.dot{display:inline-flex;align-items:center;justify-content:center;width:1.9em;height:1.9em;border-radius:50%;background:var(--kb);color:var(--k);border:3px solid var(--k);flex:none}
+.dot svg.i,.btn.alt .dot svg.i,.btn .dot svg.i{width:1.15em;height:1.15em}
+/* story */
+.story p{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.75}
+.cargo{display:flex;align-items:center;gap:12px;background:var(--warm);border-radius:16px;padding:10px 14px;font-weight:900;font-size:clamp(19px,2.6vw,24px)}
+.cargo svg.i{width:44px;height:44px;color:var(--rust)}
+.cargo small{display:block;font-size:19px;color:var(--muted);font-weight:700}
+.introsvg{width:100%;height:auto;display:block;border-radius:16px;background:#E3EFF4}
+/* railway */
+.rbox{background:#E9EEE0;border:3px solid var(--line);border-radius:20px;overflow:hidden;position:relative}
+.rail{width:100%;height:auto;display:block;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.rail .br{transition:opacity .3s}
+.rail .br.off{opacity:.38}
+.rail .hl{transition:opacity .3s}
+.rail .tlab{font-family:var(--font);font-weight:900;font-size:22px}
+.rail .tap{cursor:pointer}
+.rail .lever{cursor:grab;outline:none}
+.rail .lever:focus-visible .knob{stroke:#B7862B;stroke-width:6}
+.rail .arm{transition:transform .25s}
+.rail.drag .arm{transition:none}
+.rail .st{transition:opacity .3s}
+.rail .puff{opacity:0}
+.rail.moving .puff{animation:puff 1.1s infinite}
+.rail.moving .puff.p2{animation-delay:.55s}
+@keyframes puff{0%{opacity:.85;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(-18px,-26px) scale(1.4)}}
+@media (prefers-reduced-motion:reduce){.rail *{transition:none!important;animation:none!important}}
+@media (max-width:560px){.rail .tlab{display:none}}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--line);border-radius:16px;padding:8px 12px;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;font-size:clamp(19px,2.4vw,22px);font-weight:700;line-height:1.4;position:relative}
+.chip.on{border-color:var(--k);background:var(--kb)}
+.chip .ok{margin-left:auto;color:var(--good);display:flex;align-items:center;gap:2px;font-size:19px;white-space:nowrap}
+.chip .ok svg.i{width:1.1em;height:1.1em}
+.chip[disabled]{cursor:default}
+.chip[disabled]:not(.on){opacity:.55}
+.ctrl{display:flex;flex-direction:column;gap:12px}
+.plan{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.6;display:flex;gap:12px;align-items:flex-start}
+.plan .dot{margin-top:2px}
+.plan b{display:block;font-size:19px;color:var(--muted)}
+.btns{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+/* terminus board */
+.board{border:3px solid var(--k);border-radius:22px;overflow:hidden;background:var(--card)}
+.board .bh{background:var(--k);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;font-weight:900;font-size:clamp(21px,3vw,27px);line-height:1.35}
+.board .bh small{display:block;font-size:19px;font-weight:700;opacity:.9}
+.board .bh .dot{background:#fff;border-color:#fff}
+.board .bb{padding:clamp(12px,2.6vw,20px);display:flex;flex-direction:column;gap:14px}
+.board .bs{margin:0;font-size:clamp(19px,2.6vw,24px);line-height:1.75}
+.gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.g{background:#F4F6F1;border-radius:16px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.g .gt{font-weight:900;font-size:19px;color:var(--muted);line-height:1.3}
+.g .gv{font-weight:900;font-size:clamp(19px,2.6vw,24px);line-height:1.3}
+.thermo{width:44px;height:96px}
+.faces{display:flex;gap:4px;justify-content:center;align-items:center;min-height:96px}
+.faces svg.i{width:34px;height:34px;opacity:.25}
+.faces svg.i.on{width:50px;height:50px;opacity:1}
+.sneak{min-height:96px;display:flex;align-items:center;justify-content:center}
+.sneak svg.i{width:50px;height:50px}
+.lvl{display:flex;gap:4px;margin-top:2px}
+.lvl i{display:block;width:16px;height:10px;border-radius:4px;background:#DADFD6}
+.lvl i.on{background:var(--rust)}
+.care{margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6;background:#F6E3D6;border-radius:14px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start}
+.care svg.i{width:1.6em;height:1.6em;margin-top:1px}
+.wait{border:3px dashed var(--line);border-radius:22px;padding:18px;color:var(--muted);font-weight:700;font-size:clamp(19px,2.5vw,23px);display:flex;gap:12px;align-items:center;margin:0}
+.wait svg.i{width:2em;height:2em}
+.tried{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 12px 2px 4px;background:var(--kb);color:var(--k);font-weight:900;font-size:19px;border:2px solid var(--k)}
+.tag .dot{width:1.6em;height:1.6em;border-width:2px}
+/* pick */
+.btn.alt .tx{display:flex;flex-direction:column;gap:2px}
+.btn.alt .tx small{font-size:19px;color:var(--muted);font-weight:500;line-height:1.5}
+.btn.alt .tx em{font-style:normal;font-size:19px;color:var(--good);font-weight:900}
+.btn.alt.pick{border-color:var(--k);background:var(--kb)}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.e{color:var(--good)}.ec dt.c{color:var(--rust)}
+/* summary */
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:middle}
+.sum td:first-child{color:var(--muted);font-weight:700;width:44%}
+.sum td b{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+@media (max-width:760px){
+  .chips{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .btns{grid-template-columns:1fr 1fr}
+  .g{padding:8px 4px}
+  .faces svg.i{width:24px;height:24px}
+  .faces svg.i.on{width:40px;height:40px}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td{border:0;padding:2px 0}
+  .sum td:first-child{width:auto}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"rail_train": "<path d=\"M3 17V9.5h7V5h5.5v4.5H20a1 1 0 0 1 1 1V17z\" fill=\"#F2B8A0\"/><rect x=\"11.6\" y=\"6.6\" width=\"2.8\" height=\"2.8\" rx=\".5\" fill=\"#FBFCF9\"/><path d=\"M5.6 9.5V6.6M4.3 6.6h2.6\"/><path d=\"M1.8 17h20.4\"/><circle cx=\"7\" cy=\"18.9\" r=\"2\" fill=\"#FBFCF9\"/><circle cx=\"17\" cy=\"18.9\" r=\"2\" fill=\"#FBFCF9\"/>", "rail_lever": "<rect x=\"4\" y=\"16.5\" width=\"16\" height=\"4.5\" rx=\"1.4\" fill=\"#DCE8F0\"/><path d=\"M7 16.5a5 5 0 0 1 10 0\"/><path d=\"M12 16.5L16 6.4\"/><circle cx=\"16.6\" cy=\"4.8\" r=\"2.4\" fill=\"#F2B8A0\"/>", "rail_more": "<rect x=\"3\" y=\"14\" width=\"4.4\" height=\"7\" rx=\"1\" fill=\"#F2C9B5\"/><rect x=\"9.8\" y=\"10.4\" width=\"4.4\" height=\"10.6\" rx=\"1\" fill=\"#F2C9B5\"/><rect x=\"16.6\" y=\"6.4\" width=\"4.4\" height=\"14.6\" rx=\"1\" fill=\"#F2C9B5\"/><path d=\"M3.4 9.6L10 4.4\"/><path d=\"M6.8 3.9h3.4v3.4\"/>", "rail_cap": "<path d=\"M2.5 6.2h19\"/><path d=\"M6.2 2.8v2M12 2.8v2M17.8 2.8v2\"/><rect x=\"4\" y=\"9.4\" width=\"4.4\" height=\"11.6\" rx=\"1\" fill=\"#DCE8F0\"/><rect x=\"9.8\" y=\"9.4\" width=\"4.4\" height=\"11.6\" rx=\"1\" fill=\"#DCE8F0\"/><rect x=\"15.6\" y=\"9.4\" width=\"4.4\" height=\"11.6\" rx=\"1\" fill=\"#DCE8F0\"/>", "rail_self": "<circle cx=\"7.6\" cy=\"8\" r=\"3\" stroke-dasharray=\"2 2.2\"/><path d=\"M2.6 20.2c.4-3.8 2.4-6 5-6s4.6 2.2 5 6\" stroke-dasharray=\"2 2.2\"/><circle cx=\"16\" cy=\"7.4\" r=\"3.2\" fill=\"#CFE3C4\"/><path d=\"M10.8 20.5c.4-4 2.4-6.4 5.2-6.4s4.8 2.4 5.2 6.4z\" fill=\"#CFE3C4\"/>", "rail_team": "<path d=\"M3 6h9v4a2 2 0 0 1 0 4v4H3z\" fill=\"#F3E3BE\"/><path d=\"M12 6h9v12h-9v-4a2 2 0 0 0 0-4z\" fill=\"#CFE3C4\"/>", "rail_worth": "<path d=\"M10.2 3a1.8 1.8 0 1 1 2.5 1.7c-.5.2-.7.5-.7 1.1\"/><path d=\"M12 8.4v12.1M8 20.5h8M4 9.6h16\"/><path d=\"M1.8 15h4.4L4 9.6zM17.8 15h4.4L20 9.6z\" fill=\"#EEE6F3\"/>", "rail_smile": "<circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"#CFE3C4\"/><circle cx=\"9.2\" cy=\"10.4\" r=\".9\" fill=\"currentColor\"/><circle cx=\"14.8\" cy=\"10.4\" r=\".9\" fill=\"currentColor\"/><path d=\"M8.4 14.2q3.6 3.6 7.2 0\"/>", "rail_thermo": "<path d=\"M9.5 14.6V4.8a2.5 2.5 0 0 1 5 0v9.8a4.4 4.4 0 1 1-5 0z\" fill=\"#FBFCF9\"/><circle cx=\"12\" cy=\"18\" r=\"2.4\" fill=\"#F2B8A0\"/><path d=\"M12 15.6V8.5\"/><path d=\"M17.4 6h2.4M17.4 9h2.4M17.4 12h2.4\"/>", "rail_rope": "<ellipse cx=\"12\" cy=\"12.6\" rx=\"8\" ry=\"9.2\"/><circle cx=\"12\" cy=\"7.4\" r=\"2.2\" fill=\"#F6E3D6\"/><path d=\"M12 9.6v5.2M12 11.2l-5.6 2M12 11.2l5.6 2M12 14.8l-2 3.6M12 14.8l2 3.6\"/><rect x=\"2.6\" y=\"10.4\" width=\"2.8\" height=\"5\" rx=\"1.2\" fill=\"#F2B8A0\"/><rect x=\"18.6\" y=\"10.4\" width=\"2.8\" height=\"5\" rx=\"1.2\" fill=\"#F2B8A0\"/>", "rail_balloon": "<ellipse cx=\"9\" cy=\"8.5\" rx=\"4.6\" ry=\"5.4\" fill=\"#F2B8A0\"/><ellipse cx=\"15.8\" cy=\"10\" rx=\"4\" ry=\"4.8\" fill=\"#DCE8F0\"/><path d=\"M9 15.1c-1 2 1 3.6 0 6.4M15.8 14.8c1 2-.6 3.8.4 6.7\"/>", "rail_night": "<rect x=\"3.5\" y=\"6\" width=\"11\" height=\"15\" rx=\"1.6\" fill=\"#FBF4E2\"/><path d=\"M6.5 10.5h5M6.5 13.5h5M6.5 16.5h3\"/><path d=\"M20.8 8.4A4.4 4.4 0 1 1 15.6 3.2a3.5 3.5 0 0 0 5.2 5.2z\" fill=\"#DCE3F2\"/>", "rail_sneak": "<circle cx=\"12\" cy=\"12\" r=\"9.4\" fill=\"#F6E3D6\" stroke=\"none\"/><path d=\"M10.4 7.6l1.4-1.4a3.6 3.6 0 0 1 5.1 5.1L15.5 12.7\"/><path d=\"M13.6 16.4l-1.4 1.4a3.6 3.6 0 0 1-5.1-5.1l1.4-1.4\"/><path d=\"M4.6 4.6l2 2M19.4 19.4l-2-2\"/>", "worry": "<circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"#F6E3A1\"/><path d=\"M7.6 9.8l2.4-1.2M16.4 9.8l-2.4-1.2\"/><circle cx=\"9.2\" cy=\"12.2\" r=\".9\" fill=\"currentColor\"/><circle cx=\"14.8\" cy=\"12.2\" r=\".9\" fill=\"currentColor\"/><path d=\"M8.6 16.6q1.1-1.2 2.3 0t2.3 0 2.3 0\"/>", "meh": "<circle cx=\"12\" cy=\"12\" r=\"9\" fill=\"#EEF0EC\"/><circle cx=\"9.2\" cy=\"10.6\" r=\".9\" fill=\"currentColor\"/><circle cx=\"14.8\" cy=\"10.6\" r=\".9\" fill=\"currentColor\"/><path d=\"M8.8 15.6h6.4\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>", "undo": "<path d=\"M4 4.5v5h5\"/><path d=\"M4.8 9.5A8 8 0 1 1 4 13.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='railswitch-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+var reduce=false;try{reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+
+/* ---------- the five kinds of track ---------- */
+var TR={
+  more:{n:'繼續加碼',ic:'rail_more',col:'#A8441A',bg:'#F8E3DA'},
+  cap:{n:'約定上限',ic:'rail_cap',col:'#205E86',bg:'#DCE8F0'},
+  self:{n:'跟以前的自己比',ic:'rail_self',col:'#2F7D4F',bg:'#DCEBD5'},
+  team:{n:'改成一起完成',ic:'rail_team',col:'#8A6416',bg:'#F6EAC8'},
+  worth:{n:'想想值不值得比',ic:'rail_worth',col:'#6B5A9E',bg:'#EAE5F3'}
+};
+var TIRED=['','一點也不累','有一點累','普通','很累','累壞了'];
+var MOOD=['','不太開心','普通','開心'];
+var BRK={none:['沒有約定',0],low:['不太會',1],mid:['有可能',2],high:['很容易',3]};
+function dot(id){return '<span class="dot k-'+id+'">'+ic(TR[id].ic)+'</span>'}
+function tname(id){return '<span class="tn k-'+id+'">'+TR[id].n+'</span>'}
+
+/* ---------- three school stories (fixed script) ---------- */
+var SC=[
+ {title:'跳繩比賽，大家越來越早到學校',short:'跳繩比賽越來越早練',cargo:'越來越早到學校練跳繩',icon:'rail_rope',
+  story:['每年冬天，學校都會舉辦班際跳繩比賽。',
+   '有一年，比賽前一個月，五年13班開始每天早上 7 點就到學校練習。隔壁的五年14班聽說了，也改成 7 點到；五年13班一緊張，又提早到 6 點 50 分。',
+   '沒過多久，每一班都越練越早，最後大家 6 點半就到學校了。比賽那天，各班的名次和去年差不多，可是每個人都睡不飽、好累。'],
+  tracks:['cap','more','self','team'],
+  plan:{cap:'各班約好：早上最早 7 點半才開始練。',
+        more:'再提早一點，改成 6 點就到學校練。',
+        self:'每個人和上個月的自己比，看看跳的次數有沒有進步。',
+        team:'不搶名次，全年級一起挑戰一個很大的總次數。'},
+  res:{
+   more:{s:'五年13班改成 6 點到，別班聽說了，也跟著改成 6 點。大家都練得更多，可是每一班都進步了，名次還是和去年差不多。早上第一節課，教室裡到處都是打哈欠的人。',t:5,m:1,b:'none',bn:'這裡沒有約定。大家只會越來越早，誰也不敢先停下來。',
+     e:'大家真的練得比較多，跳繩的次數可能會進步，班上也很有拚勁。',c:'別班也一起加碼，名次很難改變；大家越睡越少、越來越累，也很難有人敢先停下來。'},
+   cap:{s:'各班的班長開會，約好早上最早 7 點半才開始練。大家睡得比較飽，名次和去年差不多，可是沒有那麼累了。只是有一天，有人看到某一班 7 點就在操場角落偷偷練習，大家又開始緊張。',t:2,m:2,b:'mid',bn:'只要有一班偷偷提早，別班就會想跟上，約定很容易垮掉。',
+     e:'大家一起停下來，不用再越來越早，名次也不會因為這樣亂掉。',c:'要每一班都同意、都遵守，還要互相信任；有人偷跑的時候，要有人出來處理。'},
+   self:{s:'老師請每個人記下自己上個月跳了幾下，這個月再跳一次，看看自己有沒有進步。大家照自己的時間練，有人多跳了很多下，有人只多了幾下，但是每個人都看得到自己的進步。',t:2,m:3,b:'low',bn:'大家沒有要贏過誰，就算有人多練，也只是讓自己進步。',
+     e:'不用管別班幾點到，只看自己有沒有進步，比較不會越比越累。',c:'班際比賽的名次還在，有人還是會在意輸贏；而且自己的進步有時候很慢，要有耐心。'},
+   team:{s:'學校把比賽改成：全年級的次數加起來，一起挑戰一個很大的總數。各班不再搶第一，跳得好的同學還到別班當小老師，教大家怎麼跳得比較順。最後總數達成了，整個年級一起歡呼。',t:3,m:3,b:'mid',bn:'有人可能會想偷懶：反正總數有別人幫忙撐著。',
+     e:'大家從互相比，變成互相幫忙，跳得好的人也有地方可以出力。',c:'少了「我們班贏了」的刺激，有人會覺得沒那麼好玩；也可能有人偷懶，等別人跳。'}
+  }},
+ {title:'畢業典禮的教室布置，一年比一年多',short:'畢業布置越來越多',cargo:'教室布置越比越多',icon:'rail_balloon',
+  story:['每年畢業典禮前，學校都會舉辦教室布置比賽。',
+   '有一年，六年13班在教室裡掛滿了氣球，得了第一名。第二年，每一班都掛更多氣球、更多彩帶，還加上一串一串的小燈；家長也被請來幫忙，帶來的東西一年比一年多。',
+   '後來，布置一次要花好幾個下午。典禮一結束，教室裡就堆滿了要丟掉的氣球和彩帶。'],
+  tracks:['cap','more','team','worth'],
+  plan:{cap:'各班約好：只用學校發的一箱材料，家長不另外帶東西。',
+        more:'再多一點：氣球、彩帶和小燈都加倍。',
+        team:'不分班比賽，全年級一起布置一條畢業長廊。',
+        worth:'先想一想：教室布置真的需要比嗎？'},
+  res:{
+   more:{s:'各班把氣球、彩帶和小燈都加倍，家長也帶來更多東西。每一間教室都好漂亮，可是每一班都很漂亮，評審很難分出高下。布置花掉好幾個下午，典禮一結束，又多了好幾大袋垃圾。',t:5,m:2,b:'none',bn:'這裡沒有約定。明年大家只會想再多一點。',
+     e:'教室真的很漂亮，大家為了比賽很團結，拍照也很好看。',c:'別班也一起加，名次很難拉開；花的時間、家長帶來的東西和垃圾，都一年比一年多。'},
+   cap:{s:'各班約好：只用學校發的一箱材料，家長不另外帶東西。大家改成比誰的點子好，有一班用舊報紙折出一整面牆的紙鶴。可是典禮前一天，有人偷偷從家裡多帶了一大袋氣球來。',t:2,m:2,b:'high',bn:'典禮前一天最容易有人偷帶東西，大家還會吵「這樣算不算犯規」。',
+     e:'大家輕鬆很多，家長不用一直帶東西來，比的是點子，不是數量。',c:'要每一班都遵守；有人偷帶東西的時候，還要有人來判斷、來處理。'},
+   team:{s:'學校不再分班比賽，改成全年級一起布置通往禮堂的走廊。每一班負責一段，接起來就是一條畢業長廊。典禮那天，家長從頭走到尾，一路都在拍照。',t:3,m:3,b:'low',bn:'大家都看得到彼此的進度，比較不會偷偷亂來；不過有的班可能做得比較少。',
+     e:'大家的力氣都用在同一個作品上，作品更完整，也不用搶名次。',c:'要跨班開會、協調，很花時間；自己班的特色比較看不出來，也有人會覺得少了比賽的樂趣。'},
+   worth:{s:'大家先坐下來想：畢業典禮最重要的是什麼？最後決定，教室布置不用比，各班照自己喜歡的樣子布置就好。省下來的時間，每個人寫一張卡片給老師和學弟妹。典禮那天，大家記得最清楚的，反而是那些卡片。',t:1,m:2,b:'low',bn:'沒有比賽，就沒有人需要偷跑。',
+     e:'把力氣留給真正在乎的事，不用再一年比一年多。',c:'有些人就是喜歡比賽的刺激，會覺得少了一個目標；而且大家要先有共識，哪些事可以不用比。'}
+  }},
+ {title:'寫作業，比誰寫得最晚睡',short:'比誰寫作業寫得最晚',cargo:'比誰寫作業寫到最晚',icon:'rail_night',
+  story:['星期一下課的時候，五年13班的小宇說：「我昨天寫作業寫到 11 點耶！」旁邊的同學馬上接著說：「我寫到 11 點半。」',
+   '聽起來，好像誰寫得越晚，誰就越認真。後來，班上好幾個人寫作業的時間越拖越晚，第二天上課一直打哈欠。',
+   '可是大家的作業，並沒有因為寫得比較晚，就寫得比較好。'],
+  tracks:['self','more','cap','worth'],
+  plan:{self:'跟以前的自己比：這週有沒有比上週寫得更專心、更懂？',
+        more:'繼續比下去：今天要比昨天寫得更晚。',
+        cap:'全班約好：晚上 9 點半就收書包，寫不完的隔天問老師。',
+        worth:'先想一想：「寫到幾點」值得拿來比嗎？'},
+  res:{
+   more:{s:'有人說要寫到 12 點，別人也不想輸。大家睡得越來越少，白天上課一直想睡，寫作業反而更慢。誰寫得最晚，也看不出誰學得比較好。',t:5,m:1,b:'none',bn:'這裡沒有約定。只要有人說得更晚，大家就會想再晚一點。',
+     e:'看起來很努力，聊天的時候有話題，好像大家都很拚。',c:'越比越晚，睡眠被犧牲，上課更累、寫得更慢；而且睡得晚，不代表學得好。'},
+   cap:{s:'全班約好，晚上 9 點半一到就收書包，寫不完的地方第二天問老師。大部分的人睡得比較飽了。可是也有人說：「我寫得比較慢，9 點半根本寫不完。」還有人偷偷寫到更晚，只是不說出來。',t:2,m:2,b:'mid',bn:'有人可能會偷偷寫到更晚，只是不說；約定管不到看不見的地方。',
+     e:'大家一起停下來，不用再怕「別人比我晚」，睡覺的時間比較有保障。',c:'每個人寫作業的速度不一樣，同一個時間不一定適合每個人；偷偷寫到更晚的人，約定也管不到。'},
+   self:{s:'小宇改成記錄自己：今天的數學寫了多久，有沒有比上週更懂。他發現，專心寫的時候，9 點以前就寫完了。後來大家下課聊的是「我終於弄懂這一題了」，不再聊寫到幾點。',t:2,m:3,b:'low',bn:'沒有要贏過別人，也就不需要偷偷比。',
+     e:'把注意力放回自己的進步，睡覺和學習都比較顧得到。',c:'要自己記錄、自己提醒，比較需要自律；進步看不出來的時候，可能會有點灰心。'},
+   worth:{s:'大家想了一想：寫到幾點，只看得出花了多久，看不出學會了多少，也比不出誰比較認真。於是大家說好，這件事不用比。想聊作業的時候，就聊「這一題你是怎麼想的」。',t:1,m:3,b:'low',bn:'沒有人在比，就沒有人需要偷偷比。',
+     e:'發現比錯了東西，就把它放下，不用再為了一個沒有意義的名次少睡覺。',c:'要停下來想清楚，也要承認之前比錯了；而且每個人覺得「什麼值得比」，不一定一樣。'}
+  }}
+];
+var NUM=['一','二','三'];
+
+/* ---------- railway SVG (viewBox 800×370) ---------- */
+var MY=148,JX=250,STOP=640,START=200,WAG=80;
+var TY=[58,148,238,326];
+var PIV=[120,352],ARM=92,ANG=[-50,-17,17,50];
+function route(y){return 'M0 '+MY+' L'+JX+' '+MY+' C330 '+MY+' 350 '+y+' 430 '+y+' L'+STOP+' '+y}
+function branch(y){return 'M'+JX+' '+MY+' C330 '+MY+' 350 '+y+' 430 '+y+' L800 '+y}
+function railPath(d,cls){
+  return '<path d="'+d+'" fill="none" stroke="#B49A78" stroke-width="26" stroke-dasharray="5 9"/>'+
+         '<path d="'+d+'" fill="none" stroke="#7C8A8E" stroke-width="16"/>'+
+         '<path d="'+d+'" fill="none" stroke="#E9EEE0" stroke-width="9"/>';
+}
+function iconSvg(k,x,y,s,col){return '<svg x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="'+(col||'#1F2A2E')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[k]+'</svg>'}
+function trainSVG(cargo){
+  var s='<g class="train">';
+  s+='<g class="wagon"><rect x="-30" y="-15" width="60" height="9" rx="2" fill="#8C6A3E" stroke="#1F2A2E" stroke-width="2.5"/>'+
+     '<rect x="-25" y="-50" width="50" height="36" rx="6" fill="#FBF4E2" stroke="#1F2A2E" stroke-width="2.5"/>'+iconSvg(cargo,-16,-48,32,'#A8441A')+
+     '<circle cx="-17" cy="-5" r="6.5" fill="#3A4448" stroke="#1F2A2E" stroke-width="2"/><circle cx="17" cy="-5" r="6.5" fill="#3A4448" stroke="#1F2A2E" stroke-width="2"/></g>';
+  s+='<g class="loco"><circle class="puff" cx="12" cy="-56" r="7" fill="#FBFCF9" stroke="#B9BFB6" stroke-width="2"/><circle class="puff p2" cx="12" cy="-56" r="7" fill="#FBFCF9" stroke="#B9BFB6" stroke-width="2"/>'+
+     '<rect x="-36" y="-32" width="62" height="24" rx="4" fill="#C0532C" stroke="#1F2A2E" stroke-width="2.5"/>'+
+     '<rect x="-36" y="-50" width="26" height="20" rx="3" fill="#C0532C" stroke="#1F2A2E" stroke-width="2.5"/>'+
+     '<rect x="-31" y="-46" width="16" height="10" rx="2" fill="#DCE8F0" stroke="#1F2A2E" stroke-width="2"/>'+
+     '<rect x="6" y="-46" width="10" height="15" rx="2" fill="#3A4448" stroke="#1F2A2E" stroke-width="2"/>'+
+     '<path d="M-6 -20h26" stroke="#F3D27A" stroke-width="3" stroke-linecap="round"/>'+
+     '<path d="M26 -14L37 -3H26Z" fill="#B7862B" stroke="#1F2A2E" stroke-width="2" stroke-linejoin="round"/>'+
+     '<circle cx="-24" cy="-5" r="6.5" fill="#3A4448" stroke="#1F2A2E" stroke-width="2"/><circle cx="-6" cy="-5" r="6.5" fill="#3A4448" stroke="#1F2A2E" stroke-width="2"/><circle cx="14" cy="-5" r="6.5" fill="#3A4448" stroke="#1F2A2E" stroke-width="2"/></g>';
+  return s+'</g>';
+}
+function railSVG(sc){
+  var s='<svg class="rail" viewBox="0 0 800 370" role="img" aria-label="鐵道：小火車從左邊開過來，前面的分岔口分成四條軌道，每條軌道通到一個終點站；左下角是轉轍器的拉桿">';
+  s+='<rect width="800" height="370" fill="#E9EEE0"/>';
+  // trees and departure sign
+  [[40,70],[92,52],[150,78]].forEach(function(p){s+='<path d="M'+p[0]+' '+(p[1]+44)+'V'+(p[1]+18)+'" stroke="#8C6A3E" stroke-width="5"/><circle cx="'+p[0]+'" cy="'+p[1]+'" r="24" fill="#CFE3C4" stroke="#56743A" stroke-width="2.5"/>'});
+  // branches
+  sc.tracks.forEach(function(id,i){
+    var y=TY[i],t=TR[id];
+    s+='<path class="hl" data-i="'+i+'" d="'+branch(y)+'" fill="none" stroke="'+t.col+'" stroke-width="40" stroke-linecap="round" opacity="0"/>';
+    s+='<g class="br" data-i="'+i+'">'+railPath(branch(y))+'</g>';
+  });
+  s+='<g>'+railPath('M0 '+MY+' L'+(JX+2)+' '+MY)+'</g>';
+  // stations
+  sc.tracks.forEach(function(id,i){
+    var y=TY[i],t=TR[id];
+    s+='<g class="st" data-i="'+i+'"><rect x="662" y="'+(y+12)+'" width="138" height="12" fill="#C9CCC4" stroke="#8D958B" stroke-width="2"/>'+
+       '<path d="M684 '+(y-30)+'L732 '+(y-50)+'L780 '+(y-30)+'Z" fill="'+t.col+'" stroke="#1F2A2E" stroke-width="2.5" stroke-linejoin="round"/>'+
+       '<rect x="690" y="'+(y-31)+'" width="84" height="43" rx="3" fill="'+t.bg+'" stroke="#1F2A2E" stroke-width="2.5"/>'+
+       iconSvg(t.ic,714,y-28,36,t.col)+'<rect class="lamp" x="684" y="'+(y-54)+'" width="96" height="70" rx="10" fill="none" stroke="'+t.col+'" stroke-width="5" opacity="0"/></g>';
+    s+='<text class="tlab" x="448" y="'+(y+35)+'" fill="'+t.col+'">'+t.n+'</text>';
+    s+='<path class="tap" data-i="'+i+'" d="'+branch(y)+'" fill="none" stroke="transparent" stroke-width="56" pointer-events="stroke"/>';
+  });
+  // routes for the train (hidden)
+  sc.tracks.forEach(function(id,i){s+='<path class="route" data-i="'+i+'" d="'+route(TY[i])+'" fill="none" stroke="none" visibility="hidden"/>'});
+  // lever
+  var px=PIV[0],py=PIV[1];
+  s+='<g class="lever" tabindex="0" role="slider" aria-label="轉轍器拉桿：扳到哪一條軌道" aria-valuemin="1" aria-valuemax="4">';
+  s+='<circle cx="'+px+'" cy="'+(py-60)+'" r="92" fill="transparent"/>';
+  s+='<path d="M'+(px-118*Math.sin(Math.PI*58/180)).toFixed(1)+' '+(py-118*Math.cos(Math.PI*58/180)).toFixed(1)+'A118 118 0 0 1 '+(px+118*Math.sin(Math.PI*58/180)).toFixed(1)+' '+(py-118*Math.cos(Math.PI*58/180)).toFixed(1)+'" fill="none" stroke="#C9CCC4" stroke-width="6" stroke-linecap="round"/>';
+  sc.tracks.forEach(function(id,i){var a=ANG[i]*Math.PI/180;s+='<circle class="notch" data-i="'+i+'" cx="'+(px+118*Math.sin(a)).toFixed(1)+'" cy="'+(py-118*Math.cos(a)).toFixed(1)+'" r="11" fill="'+TR[id].col+'" stroke="#FBFCF9" stroke-width="3"/>'});
+  s+='<g class="arm" style="transform-origin:'+px+'px '+py+'px"><path d="M'+px+' '+py+'V'+(py-ARM)+'" stroke="#56605C" stroke-width="10" stroke-linecap="round"/><circle class="knob" cx="'+px+'" cy="'+(py-ARM)+'" r="21" fill="#C0532C" stroke="#1F2A2E" stroke-width="3"/></g>';
+  s+='<rect x="'+(px-46)+'" y="'+(py-6)+'" width="92" height="24" rx="8" fill="#DCE8F0" stroke="#1F2A2E" stroke-width="3"/><circle cx="'+px+'" cy="'+py+'" r="9" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="3"/>';
+  s+='</g>';
+  s+=trainSVG(sc.icon);
+  return s+'</svg>';
+}
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',sc:SC.map(function(){return {sw:1,at:false,tried:[],pick:null}})}}
+var st=load();if(!st||!st.step||!st.sc||st.sc.length!==3)st=fresh();
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var rafId=null;
+
+function intro(){
+  app.append(el('h1',null,'換一條軌道'));
+  var c=el('div','card');
+  var demo={tracks:['cap','more','self','team'],icon:'rail_rope'};
+  c.innerHTML=railSVG(demo).replace('class="rail"','class="rail introsvg"');
+  var svg=c.querySelector('svg');paintSwitch(svg,demo,1,false);placeTrain(svg,1,START);
+  svg.querySelector('.lever').removeAttribute('tabindex');
+  c.append(
+    el('p','lead','有時候，大家都更努力了，名次卻沒有改變，每個人反而都更累。'),
+    el('p','lead','接下來有<b>三個學校裡的故事</b>。每個故事都是一列小火車，載著「這件事」開過來。前面有一個分岔口，分成四條軌道，每條軌道通往一種做法。'),
+    el('p','lead','轉轍器一開始扳在<b>「繼續加碼」</b>：什麼都不改，火車就會一直往前開。你可以扳動拉桿換一條軌道，按「開車」，看看終點站的看板。每個故事<b>至少要試開兩條軌道</b>。'));
+  app.append(c,button('開始第一個故事','btn',function(){go('story0')}));
+}
+
+function storyPage(i){
+  var sc=SC[i];
+  app.append(el('p','case','故事'+NUM[i]+'（共三個）'));
+  app.append(el('h2',null,sc.title));
+  var c=el('div','card story');
+  sc.story.forEach(function(p){c.append(el('p',null,p))});
+  c.append(el('div','cargo',ic(sc.icon)+'<span><small>火車上載著的這件事</small>'+sc.cargo+'</span>'));
+  app.append(c);
+  app.append(button('到鐵道去，扳轉轍器','btn',function(){go('rail'+i)}));
+}
+
+/* ---------- railway page ---------- */
+function ptAt(path,s){var L=path.getTotalLength();s=Math.max(0,Math.min(L,s));return path.getPointAtLength(s)}
+function placeTrain(svg,idx,s){
+  var path=svg.querySelector('.route[data-i="'+idx+'"]');
+  function put(g,d){var p=ptAt(path,d),a=ptAt(path,d-3),b=ptAt(path,d+3);var ang=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;g.setAttribute('transform','translate('+p.x.toFixed(1)+' '+p.y.toFixed(1)+') rotate('+ang.toFixed(1)+')')}
+  put(svg.querySelector('.loco'),s);put(svg.querySelector('.wagon'),s-WAG);
+}
+function routeLen(svg,idx){return svg.querySelector('.route[data-i="'+idx+'"]').getTotalLength()}
+function paintSwitch(svg,sc,sw,at){
+  svg.querySelectorAll('.br').forEach(function(g){g.classList.toggle('off',+g.getAttribute('data-i')!==sw)});
+  svg.querySelectorAll('.hl').forEach(function(g){g.setAttribute('opacity',+g.getAttribute('data-i')===sw?.22:0)});
+  svg.querySelectorAll('.st').forEach(function(g){var i=+g.getAttribute('data-i');g.style.opacity=i===sw?1:.55;g.querySelector('.lamp').setAttribute('opacity',at&&i===sw?1:0)});
+  svg.querySelectorAll('.notch').forEach(function(n){n.setAttribute('r',+n.getAttribute('data-i')===sw?14:10)});
+  svg.querySelector('.arm').style.transform='rotate('+ANG[sw]+'deg)';
+  svg.querySelector('.knob').setAttribute('fill',TR[sc.tracks[sw]].col);
+  var lv=svg.querySelector('.lever');lv.setAttribute('aria-valuenow',sw+1);lv.setAttribute('aria-valuetext',TR[sc.tracks[sw]].n);
+}
+
+function thermo(t){
+  var col=['','#7FB565','#B7C25A','#E8B04B','#E58B4A','#C9482E'][t];
+  var h=Math.round(t/5*62);
+  return '<svg class="thermo" viewBox="0 0 44 96" aria-hidden="true"><rect x="15" y="4" width="14" height="72" rx="7" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="2.5"/>'+
+    '<rect x="19" y="'+(72-h)+'" width="6" height="'+(h+8)+'" rx="3" fill="'+col+'"/><circle cx="22" cy="82" r="11" fill="'+col+'" stroke="#1F2A2E" stroke-width="2.5"/>'+
+    '<path d="M31 18h5M31 30h5M31 42h5M31 54h5M31 66h5" stroke="#8D958B" stroke-width="2" stroke-linecap="round"/></svg>';
+}
+function boardHTML(i,id){
+  var r=SC[i].res[id],b=BRK[r.b];
+  var faces=['worry','meh','rail_smile'].map(function(k,fi){return ic(k,fi+1===r.m?'on':'')}).join('');
+  var lv='';for(var n=1;n<=3;n++)lv+='<i class="'+(n<=b[1]?'on':'')+'"></i>';
+  return '<div class="board k-'+id+'"><div class="bh">'+dot(id)+'<span><small>終點站</small>'+TR[id].n+'</span></div><div class="bb">'+
+    '<p class="bs">'+r.s+'</p>'+
+    '<div class="gauges">'+
+      '<div class="g"><span class="gt">大家多累</span>'+thermo(r.t)+'<span class="gv">'+TIRED[r.t]+'</span></div>'+
+      '<div class="g"><span class="gt">開不開心</span><span class="faces">'+faces+'</span><span class="gv">'+MOOD[r.m]+'</span></div>'+
+      '<div class="g"><span class="gt">有人偷偷破壞約定</span><span class="sneak">'+ic(r.b==='none'?'rail_more':'rail_sneak')+'</span><span class="gv">'+b[0]+'</span><span class="lvl">'+lv+'</span></div>'+
+    '</div>'+
+    '<p class="care">'+ic('rail_sneak')+'<span>'+r.bn+'</span></p></div></div>';
+}
+
+function railPage(i){
+  var sc=SC[i],ss=st.sc[i];
+  app.append(el('p','case','故事'+NUM[i]+'：'+sc.short));
+  app.append(el('h2',null,'扳動拉桿，選一條軌道，再按「開車」。'));
+  var rb=el('div','rbox');rb.innerHTML=railSVG(sc);var svg=rb.querySelector('svg');app.append(rb);
+  app.append(el('p','hint lv',ic('rail_lever')+'點一下左下角的拉桿，或按住拉桿左右拖；也可以點軌道或下面的名稱。'));
+  var chips=el('div','chips');var cb=[];
+  sc.tracks.forEach(function(id,k){
+    var b=button(dot(id)+'<span>'+TR[id].n+'</span><span class="ok"></span>','chip k-'+id,function(){setSw(k)});
+    cb.push(b);chips.appendChild(b);
+  });
+  app.append(chips);
+  var ctrl=el('div','card ctrl');var plan=el('p','plan');ctrl.append(plan);
+  var btns=el('div','btns');
+  var goB=button(ic('rail_train')+'開車','btn',function(){drive()});
+  var backB=button(ic('undo')+'倒車','btn soft',function(){reverse()});
+  btns.append(goB,backB);ctrl.append(btns);app.append(ctrl);
+  var bd=el('div');app.append(bd);
+  var tried=el('div','tried');app.append(tried);
+  var nx=button('我試好了，下一步','btn',function(){if(ss.tried.length>=2&&!busy)go('pick'+i)});app.append(nx);
+  var busy=false;
+
+  function upd(){
+    var id=sc.tracks[ss.sw];
+    paintSwitch(svg,sc,ss.sw,ss.at);
+    cb.forEach(function(b,k){var on=k===ss.sw;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');b.disabled=busy||ss.at;
+      b.querySelector('.ok').innerHTML=ss.tried.indexOf(sc.tracks[k])>=0?ic('check')+'試過':''});
+    plan.innerHTML=dot(id)+'<span><b>'+(ss.at?'火車停在這一站':'轉轍器現在扳到「'+TR[id].n+'」')+'</b>'+sc.plan[id]+'</span>';
+    goB.disabled=busy||ss.at;backB.disabled=busy||!ss.at;
+    bd.innerHTML='';
+    if(ss.at)bd.innerHTML=boardHTML(i,id);
+    else bd.appendChild(el('p','wait',ic('rail_train')+(busy?'火車開出去了……':'扳好拉桿，按「開車」。火車開到哪一站，那一站的看板就會亮起來。')));
+    var n=ss.tried.length;
+    tried.innerHTML='<span class="hint" style="margin-right:4px">已經試開：</span>'+(n?ss.tried.map(function(t){return '<span class="tag k-'+t+'">'+dot(t)+TR[t].n+'</span>'}).join(''):'<span class="hint">還沒有</span>');
+    if(n<2)tried.innerHTML+='<span class="hint" style="width:100%">至少要試開兩條不同的軌道，才能往下（還差 '+(2-n)+' 條）。</span>';
+    nx.disabled=busy||n<2;
+  }
+  function setSw(k){
+    if(busy)return;
+    if(ss.at){flash();return}
+    k=(k+4)%4;if(k===ss.sw)return;ss.sw=k;save(st);upd();
+  }
+  var fl=null;
+  function flash(){var h=app.querySelector('.hint.lv');if(!h)return;h.innerHTML=ic('undo')+'火車還停在終點站。先按「倒車」回來，才能扳轉轍器。';clearTimeout(fl);fl=setTimeout(function(){h.innerHTML=ic('rail_lever')+'點一下左下角的拉桿，或按住拉桿左右拖；也可以點軌道或下面的名稱。'},2600)}
+  function anim(from,to,dur,done){
+    if(rafId)cancelAnimationFrame(rafId);
+    if(reduce){placeTrain(svg,ss.sw,to);done();return}
+    svg.classList.add('moving');var t0=null;
+    function f(ts){if(t0===null)t0=ts;var p=Math.min(1,(ts-t0)/dur);var e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      placeTrain(svg,ss.sw,from+(to-from)*e);
+      if(p<1)rafId=requestAnimationFrame(f);else{rafId=null;svg.classList.remove('moving');done()}}
+    rafId=requestAnimationFrame(f);
+  }
+  function drive(){
+    if(busy||ss.at)return;busy=true;upd();
+    anim(START,routeLen(svg,ss.sw),2100,function(){
+      busy=false;ss.at=true;var id=sc.tracks[ss.sw];if(ss.tried.indexOf(id)<0)ss.tried.push(id);save(st);upd();
+      try{bd.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}catch(e){}
+    });
+  }
+  function reverse(){
+    if(busy||!ss.at)return;busy=true;ss.at=false;save(st);upd();
+    try{rb.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}catch(e){}
+    anim(routeLen(svg,ss.sw),START,1600,function(){busy=false;upd()});
+  }
+  // lever: tap = next track, drag = choose by angle, keys = up/down
+  var lever=svg.querySelector('.lever');var down=false,moved=false,sx=0,sy=0;
+  function toSvg(e){var r=svg.getBoundingClientRect();return [(e.clientX-r.left)/r.width*800,(e.clientY-r.top)/r.height*370]}
+  function angIdx(e){var p=toSvg(e);var a=Math.atan2(p[0]-PIV[0],PIV[1]-p[1])*180/Math.PI;var best=0,bd2=999;ANG.forEach(function(g,k){var d=Math.abs(g-a);if(d<bd2){bd2=d;best=k}});return best}
+  lever.addEventListener('pointerdown',function(e){if(e.button>0)return;down=true;moved=false;sx=e.clientX;sy=e.clientY;try{lever.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
+  lever.addEventListener('pointermove',function(e){if(!down)return;if(!moved&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8){moved=true;svg.classList.add('drag')}if(moved)setSw(angIdx(e))});
+  function up(e,cancel){if(!down)return;down=false;svg.classList.remove('drag');if(!moved&&!cancel)setSw(ss.sw+1)}
+  lever.addEventListener('pointerup',function(e){up(e,false)});
+  lever.addEventListener('pointercancel',function(e){up(e,true)});
+  lever.addEventListener('keydown',function(e){
+    if(e.key==='ArrowUp'||e.key==='ArrowLeft'){setSw(Math.max(0,ss.sw-1));e.preventDefault()}
+    else if(e.key==='ArrowDown'||e.key==='ArrowRight'){setSw(Math.min(3,ss.sw+1));e.preventDefault()}
+    else if(e.key===' '||e.key==='Enter'){setSw(ss.sw+1);e.preventDefault()}});
+  svg.querySelectorAll('.tap').forEach(function(p){p.addEventListener('click',function(){setSw(+p.getAttribute('data-i'))})});
+
+  placeTrain(svg,ss.sw,ss.at?routeLen(svg,ss.sw):START);
+  upd();
+}
+
+/* ---------- value question (no right answer) ---------- */
+function pickPage(i){
+  var sc=SC[i],ss=st.sc[i];
+  app.append(el('p','case','故事'+NUM[i]+'：'+sc.short));
+  app.append(el('h2',null,'你最想扳到哪一條？'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>，每一條都可以選。選好以後，會看到這條路的作用和代價，等一下全班一起討論。'));
+  var o=el('div','opts');var bs={};var fb=el('div');
+  sc.tracks.forEach(function(id){
+    var b=button(dot(id)+'<span class="tx"><span>'+TR[id].n+'</span><small>'+sc.plan[id]+'</small>'+(ss.tried.indexOf(id)>=0?'<em>剛剛試開過</em>':'')+'</span>','btn alt k-'+id,function(){ss.pick=id;save(st);upd()});
+    bs[id]=b;o.appendChild(b);
+  });
+  var last=i===2;
+  var nx=button(last?'看看我的三個選擇':'下一個故事','btn',function(){if(ss.pick)go(last?'end':'story'+(i+1))});
+  app.append(o,fb,nx);
+  function upd(){
+    Object.keys(bs).forEach(function(k){bs[k].classList.toggle('pick',ss.pick===k);bs[k].setAttribute('aria-pressed',ss.pick===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!ss.pick;
+    if(ss.pick){var r=sc.res[ss.pick];var c=el('div','card');c.append(el('h3',null,dot(ss.pick)+'你選了「'+TR[ss.pick].n+'」'));
+      c.append(el('dl','ec','<dt class="e">作用</dt><dd>'+r.e+'</dd><dt class="c">代價</dt><dd>'+r.c+'</dd>'));fb.appendChild(c)}
+  }
+  upd();
+}
+
+/* ---------- end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var picks=st.sc.map(function(s){return s.pick});
+  var cnt={};picks.forEach(function(p){cnt[p]=(cnt[p]||0)+1});
+  var mx=0;Object.keys(cnt).forEach(function(k){if(cnt[k]>mx)mx=cnt[k]});
+  var most=mx>=2?Object.keys(cnt).filter(function(k){return cnt[k]===mx})[0]:null;
+  var mostTxt=most?dot(most)+TR[most].n+'（'+mx+' 次）':'三個故事選的都不一樣';
+  var moreIn=[];picks.forEach(function(p,k){if(p==='more')moreIn.push('故事'+NUM[k])});
+  var moreTxt=moreIn.length?'有（'+moreIn.join('、')+'）':'沒有';
+  var triedN=st.sc.reduce(function(a,s){return a+s.tried.length},0);
+  var rows=SC.map(function(sc,k){return ['故事'+NUM[k]+'：'+sc.short,dot(picks[k])+TR[picks[k]].n]});
+  rows.push(['你最常選的軌道',mostTxt]);
+  rows.push(['有沒有在任何故事選「繼續加碼」',moreTxt]);
+  rows.push(['三個故事一共試開了幾條軌道',triedN+' 條']);
+  var c=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);app.append(c);
+  app.append(el('p','note warm','老師等一下會請大家舉手：每個故事，選「繼續加碼」「約定上限」「跟以前的自己比」「改成一起完成」「想想值不值得比」的，各有幾個人？'));
+}
+
+function render(){
+  if(rafId){cancelAnimationFrame(rafId);rafId=null}
+  app.innerHTML='';
+  var s=st.step,m=/^(story|rail|pick)([0-2])$/.exec(s);
+  if(s==='intro')intro();
+  else if(m&&m[1]==='story')storyPage(+m[2]);
+  else if(m&&m[1]==='rail')railPage(+m[2]);
+  else if(m&&m[1]==='pick'&&st.sc[+m[2]].tried.length>=2)pickPage(+m[2]);
+  else if(s==='end'&&st.sc.every(function(x){return x.pick}))endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

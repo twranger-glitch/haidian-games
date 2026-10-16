@@ -1,0 +1,590 @@
+<title>陣頭比熱鬧</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: story → five years; each year drag villager cards into the 頂庄 procession on an SVG temple street (tap also works), watch practice-night and money-bag counters and the fatigue thermometer rise, then "出陣" reveals 下庄 (it follows your last year's size +1~2) and the length-only judging → before year 4 (and again before year 5 if declined) an optional tea visit to agree a cap, chosen on number plates → five-year line chart (team size, fatigue) → value question (every option allowed, effect and cost only) → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --top:#1F6FA8; --low:#C0532C;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(21px,2.9vw,26px);font-weight:900;margin:0;line-height:1.4;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.soft{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:focus-visible,.vcard:focus-visible,.plate:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+.note b{color:var(--ink)}
+.hint{margin:0;font-size:clamp(19px,2.3vw,21px);color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.7em;height:1.7em}
+.vt{color:var(--top);font-weight:900}.vl{color:var(--low);font-weight:900}
+.tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:0 12px;font-weight:900;color:#fff;font-size:.9em;line-height:1.7}
+.tag.t{background:var(--top)}.tag.l{background:var(--low)}
+/* street */
+.sbox{position:relative;background:#F4EEDF;border:3px solid var(--line);border-radius:20px;overflow:hidden}
+.street{width:100%;height:auto;display:block}
+.zone{outline:4px dashed var(--gold);outline-offset:-4px}
+.zone.over{outline-color:var(--good);outline-style:solid;box-shadow:0 0 0 6px #CFE3C4}
+@keyframes pop{from{opacity:0;transform:translateY(-26px)}to{opacity:1;transform:none}}
+.street .pop{animation:pop .5s ease-out both}
+@media (prefers-reduced-motion:reduce){.street .pop{animation:none}}
+/* villager cards */
+.vcards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.vcard{font:inherit;color:var(--ink);text-align:left;background:var(--card);border:3px solid var(--line);border-top:8px solid var(--top);border-radius:18px;padding:22px 14px 12px;display:flex;flex-direction:column;gap:6px;cursor:grab;position:relative;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.vcard::before{content:"";position:absolute;top:8px;left:50%;width:30px;height:8px;margin-left:-15px;border-radius:5px;background:var(--bg);border:2px solid var(--line)}
+.vcard .top{display:flex;align-items:center;gap:8px}
+.vcard .top svg.i{width:50px;height:50px}
+.vcard .nm{font-size:clamp(21px,2.6vw,25px);font-weight:900;line-height:1.3}
+.vcard .rl{display:block;font-size:19px;color:var(--muted);font-weight:700}
+.vcard .ds{margin:0;font-size:19px;line-height:1.55;color:var(--muted)}
+.vcard .cost{display:flex;gap:10px;flex-wrap:wrap;font-weight:900;font-size:19px;color:var(--ink)}
+.vcard .cost span{display:inline-flex;align-items:center;gap:4px}
+.vcard .st{font-size:19px;font-weight:900;color:var(--good);min-height:1.5em}
+.vcard.in{background:#EEF4F9;border-style:solid;border-color:var(--top)}
+.vcard[disabled]{opacity:.45;cursor:default}
+.ghost{position:fixed;z-index:50;pointer-events:none;opacity:.93;transform:rotate(-3deg);box-shadow:0 12px 26px rgba(31,42,46,.25)}
+/* meters */
+.meters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.mbox{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.mh{display:flex;align-items:center;gap:8px;font-weight:900;font-size:clamp(19px,2.4vw,22px);line-height:1.35}
+.mh svg.i{width:34px;height:34px}
+.mh .mv{margin-left:auto;font-size:clamp(22px,3vw,28px);font-variant-numeric:tabular-nums}
+.mh .dl{font-size:19px;color:var(--rust);font-weight:900;margin-left:4px}
+.mh .dl.dn{color:var(--good)}
+.icrow{display:flex;flex-wrap:wrap;gap:2px;min-height:26px}
+.icrow svg.i{width:24px;height:24px}
+.icrow .nw{color:var(--rust)}
+.thm{display:flex;align-items:center;gap:8px}
+.thm .who{width:3.2em;flex:none;font-weight:900}
+.thm svg.th{flex:1;min-width:0;height:auto}
+.thm .w{width:5.2em;flex:none;text-align:right;font-weight:900;font-size:19px;line-height:1.3}
+.cap{margin:0;font-size:19px;color:var(--muted);line-height:1.5}
+/* result */
+.res{border-color:var(--gold)}
+.big{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.big svg.i{width:44px;height:44px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vs div{border-radius:14px;padding:8px 12px;font-weight:900;font-size:clamp(20px,2.8vw,25px);text-align:center;border:3px solid var(--line)}
+.vs .t{color:var(--top)}.vs .l{color:var(--low)}
+.vs .win{border-color:var(--gold);background:var(--warm)}
+.say{display:flex;gap:14px;align-items:center}
+.say .av{width:76px;height:76px;flex:none}
+.bub{background:var(--warm);border-radius:18px;padding:12px 16px;font-size:clamp(19px,2.6vw,24px);line-height:1.6;margin:0;position:relative}
+/* tea */
+.plates{display:flex;flex-wrap:wrap;gap:10px}
+.plate{font:inherit;width:72px;height:72px;border-radius:50%;border:4px solid var(--line);background:var(--card);color:var(--ink);font-weight:900;font-size:26px;line-height:1;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.plate small{font-size:19px;font-weight:700;color:var(--muted)}
+.plate.pick{border-color:var(--gold);background:var(--warm)}
+.blank{display:inline-block;min-width:2.2em;text-align:center;border-bottom:4px solid var(--gold);font-weight:900;color:var(--gold)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:8px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:19px;color:var(--muted)}
+.ytab td,.ytab th{text-align:center}
+.ec{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.6}
+.ec dt{font-weight:900;white-space:nowrap}
+.ec dd{margin:0}
+.ec dt.e{color:var(--good)}.ec dt.c{color:var(--rust)}
+/* chart */
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-weight:900;font-size:19px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{display:inline-block;width:26px;height:4px;border-radius:2px}
+.chart{width:100%;height:auto;display:block;touch-action:pan-y}
+.readout{margin:0;font-size:clamp(19px,2.4vw,22px);font-weight:700;min-height:3.2em}
+details summary{cursor:pointer;font-weight:900;color:var(--sea)}
+.sum td:first-child{color:var(--muted);font-weight:700;width:42%}
+.sum td b{font-size:1.1em}
+@media (max-width:760px){
+  .vcards{grid-template-columns:1fr}
+  .vcard{padding:18px 12px 10px}
+  .vcard .top svg.i{width:42px;height:42px}
+  .meters{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wrap{padding-inline:16px}
+  .sum,.sum tbody,.sum tr,.sum td{display:block}
+  .sum td:first-child{width:auto}
+  .sum td{border:0;padding:2px 0}
+  .sum tr{border-bottom:2px solid var(--line);padding:8px 0}
+  .ec{grid-template-columns:1fr;gap:0}
+  .ec dd{margin-bottom:6px}
+  .say .av{width:60px;height:60px}
+  .plate{width:62px;height:62px;font-size:24px}
+  .ytab th,.ytab td{padding:6px 2px}
+}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"parade_flag": "<path d=\"M5.5 22V2.5\"/><path d=\"M5.5 3.5h12.5v13.2l-3.1-2.4-3.1 2.4-3.1-2.4-3.2 2.4z\" fill=\"#F3D27A\"/><path d=\"M9 7.6h5.6M9 10.6h5.6\"/><path d=\"M3.5 22h4\"/>", "parade_drum": "<ellipse cx=\"12\" cy=\"10\" rx=\"8\" ry=\"3\" fill=\"#FBF4E2\"/><path d=\"M4 10v7.2c0 1.7 3.6 3 8 3s8-1.3 8-3V10\" fill=\"#F2B8A0\"/><path d=\"M7 12.4v7.2M12 13v7.2M17 12.4v7.2\"/><path d=\"M8.2 7.6L4.6 2.6M15.8 7.6l3.6-5\"/>", "parade_lion": "<path d=\"M12 2.6c2 1.6 4.6.4 6 2.4 1.4 2 3.6 2.8 3.2 5.6-.3 2.4 1 4.4-1 6.6-1.8 2-2.6 4.6-8.2 4.6s-6.4-2.6-8.2-4.6c-2-2.2-.7-4.2-1-6.6C2.4 7.8 4.6 7 6 5c1.4-2 4-.8 6-2.4z\" fill=\"#F3D27A\"/><circle cx=\"12\" cy=\"12.2\" r=\"5.6\" fill=\"#F2B8A0\"/><circle cx=\"9.8\" cy=\"11\" r=\"1.3\" fill=\"currentColor\"/><circle cx=\"14.2\" cy=\"11\" r=\"1.3\" fill=\"currentColor\"/><path d=\"M9.6 14.6q2.4 1.8 4.8 0\"/>", "parade_gong": "<path d=\"M7 3.2h10\"/><path d=\"M9 3.2l1 2.6M15 3.2l-1 2.6\"/><circle cx=\"12\" cy=\"13\" r=\"7.2\" fill=\"#F3D27A\"/><circle cx=\"12\" cy=\"13\" r=\"2.6\" fill=\"#FBF4E2\"/><path d=\"M17.6 21.6l3.2-3.6\"/><circle cx=\"21.2\" cy=\"17.4\" r=\"1.4\" fill=\"#F2B8A0\"/>", "parade_umbrella": "<path d=\"M3 9.4Q12 1.6 21 9.4z\" fill=\"#F2B8A0\"/><path d=\"M3 9.4v2.6h18V9.4\" fill=\"#F3D27A\"/><path d=\"M6 12v1.8M9 12v1.8M12 12v1.8M15 12v1.8M18 12v1.8\"/><path d=\"M12 12v10.2\"/><path d=\"M12 2.8V1.6\"/>", "lantern": "<path d=\"M12 1.8v2.4M12 19.8v2.4\"/><rect x=\"9\" y=\"4.2\" width=\"6\" height=\"2\" rx=\".8\" fill=\"#F3E3BE\"/><ellipse cx=\"12\" cy=\"12.6\" rx=\"7.3\" ry=\"6.1\" fill=\"#F2B8A0\"/><path d=\"M12 6.5v12.2M8 7.7c-1.6 2.9-1.6 6.9 0 9.8M16 7.7c1.6 2.9 1.6 6.9 0 9.8\"/><rect x=\"9\" y=\"18.4\" width=\"6\" height=\"2\" rx=\".8\" fill=\"#F3E3BE\"/>", "parade_thermo": "<path d=\"M9.5 15.2V5a2.5 2.5 0 0 1 5 0v10.2a4.4 4.4 0 1 1-5 0z\" fill=\"#FBFCF9\"/><circle cx=\"12\" cy=\"18.6\" r=\"2.4\" fill=\"#E58B6A\"/><path d=\"M12 16.2V9\" stroke=\"#E58B6A\"/><path d=\"M16.8 6.4h2.4M16.8 9.6h2.4M16.8 12.8h2.4\"/>", "parade_tea": "<path d=\"M4.4 10.4h11.2v5.2a4.6 4.6 0 0 1-4.6 4.6h-2a4.6 4.6 0 0 1-4.6-4.6z\" fill=\"#CFE3C4\"/><path d=\"M15.6 12.2h1.6a2.2 2.2 0 0 1 0 4.4h-1.8\"/><path d=\"M4.4 12.4L1.8 10\"/><path d=\"M7.6 10.4V9a2.4 2.4 0 0 1 4.8 0v1.4\"/><path d=\"M10 6.6V5.4\"/><path d=\"M19.6 21.4h-17\"/><path d=\"M18.4 4.2q1.2 1.4 0 2.8M21 3.4q1.4 2.2 0 4.4\"/>", "parade_pact": "<path d=\"M5.5 2.8h10l3.5 3.5v14.9H5.5z\" fill=\"#FBF4E2\"/><path d=\"M15.5 2.8v3.5H19\"/><path d=\"M8.5 9h7M8.5 12h7M8.5 15h3.6\"/><circle cx=\"15.6\" cy=\"17.4\" r=\"2.6\" fill=\"#E58B6A\"/>", "moon": "<path d=\"M19.5 14.8A8 8 0 1 1 9.2 4.5a6.4 6.4 0 0 0 10.3 10.3z\" fill=\"#DCE3F2\"/>", "purse": "<path d=\"M4.5 10h15l-1.1 9.6a1.8 1.8 0 0 1-1.8 1.6H7.4a1.8 1.8 0 0 1-1.8-1.6z\" fill=\"#F3E3BE\"/><path d=\"M8.3 10a3.7 3.7 0 0 1 7.4 0\"/><circle cx=\"9.8\" cy=\"5.6\" r=\"1.2\" fill=\"#FBF4E2\"/><circle cx=\"14.2\" cy=\"5.6\" r=\"1.2\" fill=\"#FBF4E2\"/>", "ruler": "<g transform=\"rotate(-35 12 12)\"><rect x=\"1.4\" y=\"8.6\" width=\"21.2\" height=\"6.8\" rx=\"1.4\" fill=\"#F3D27A\"/><path d=\"M4.8 8.6v2.8M8.2 8.6v1.7M11.6 8.6v2.8M15 8.6v1.7M18.4 8.6v2.8\"/></g>", "crown": "<path d=\"M3.5 8.2l4.4 4 4.1-6.6 4.1 6.6 4.4-4-1.7 10.3H5.2z\" fill=\"#F3D27A\"/><path d=\"M5.4 21h13.2\"/>", "people": "<circle cx=\"9\" cy=\"7.6\" r=\"3.4\" fill=\"#F6E3D6\"/><path d=\"M2.6 20.5c.4-4 2.8-6.3 6.4-6.3s6 2.3 6.4 6.3z\" fill=\"#F6E3D6\"/><path d=\"M15.4 4.6a3 3 0 0 1 0 6\"/><path d=\"M17.2 14.4c2.6.6 4 2.6 4.3 6.1h-2.8\"/>", "bulb": "<path d=\"M9 16.6c0-1.6-3.2-3.3-3.2-7A6.2 6.2 0 0 1 18.2 9.6c0 3.7-3.2 5.4-3.2 7z\" fill=\"#F3D27A\"/><path d=\"M9.2 19.4h5.6M10.2 22h3.6\"/><path d=\"M10.4 12.6l1.6 1.6 1.6-1.6M12 14.2v2.4\"/>", "heart": "<path d=\"M12 20.2s-7.8-4.7-7.8-10.4A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.8 2.5c0 5.7-7.8 10.4-7.8 10.4z\" fill=\"#F2B8A0\"/>", "equal3": "<rect x=\"3\" y=\"7\" width=\"4.6\" height=\"11\" rx=\"1.2\" fill=\"#DCE8F0\"/><rect x=\"9.7\" y=\"7\" width=\"4.6\" height=\"11\" rx=\"1.2\" fill=\"#DCE8F0\"/><rect x=\"16.4\" y=\"7\" width=\"4.6\" height=\"11\" rx=\"1.2\" fill=\"#DCE8F0\"/><path d=\"M2.5 21h19\"/>", "chev": "<path d=\"M9.5 6l6 6-6 6\"/>", "trend": "<path d=\"M7 7.4l4 4.4 3-2.2 5 6.2v4H7z\" fill=\"#CFE3C4\" stroke=\"none\"/><path d=\"M3.6 3.4v16.8h17\"/><path d=\"M7 7.4l4 4.4 3-2.2 5 6.2\"/><path d=\"M19.4 11.6v4.4H15\"/>", "home": "<path d=\"M3.8 11.2L12 4l8.2 7.2V20a1.2 1.2 0 0 1-1.2 1.2H5a1.2 1.2 0 0 1-1.2-1.2z\" fill=\"#F6E3D6\"/><path d=\"M10 21.2v-5.4h4v5.4\"/><path d=\"M2.5 12.4L12 4l9.5 8.4\"/>", "grip": "<circle cx=\"9\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"6\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"12\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"9\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"18\" r=\"1.2\" fill=\"currentColor\" stroke=\"none\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var AVI={"grandpa": "<circle cx=\"32\" cy=\"32\" r=\"31\" fill=\"#EEF1EC\"/><path d=\"M12 64 Q13 44 32 44 Q51 44 52 64 Z\" fill=\"#56605C\"/><circle cx=\"32\" cy=\"27\" r=\"13\" fill=\"#EBC29E\"/><path d=\"M19 26 Q19 12.5 32 13 Q45 12.5 45 26 Q43 19.5 38 18.5 Q32 20.5 26 18.5 Q21 19.5 19 26 Z\" fill=\"#D5D8DC\"/><circle cx=\"27.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><circle cx=\"36.5\" cy=\"28\" r=\"1.8\" fill=\"#1F2A2E\"/><path d=\"M27.5 33 Q32 36.5 36.5 33\" fill=\"none\" stroke=\"#1F2A2E\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M28.5 31.2 Q32 30 35.5 31.2\" fill=\"none\" stroke=\"#B9BEC4\" stroke-width=\"2\" stroke-linecap=\"round\"/>"};
+function av(k){return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true">'+AVI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='parade-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function rnd2(){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return 1+(a[0]%2)}catch(e){return 1+Math.floor(Math.random()*2)}}
+
+/* ---------- data ---------- */
+var ROLE={flag:{n:'扛旗',ic:'parade_flag'},drum:{n:'打鼓',ic:'parade_drum'},lion:{n:'舞獅',ic:'parade_lion'},gong:{n:'敲鑼',ic:'parade_gong'},umb:{n:'撐涼傘',ic:'parade_umbrella'},lant:{n:'提燈',ic:'lantern'}};
+var START=['flag','drum','gong','umb'];
+var LOWADD=['lion','lant','drum','flag','gong','lion','umb','lant','drum','lion','flag','gong','lant','drum','lion','umb','flag','gong','lant','drum'];
+var CARDS={
+ 1:[{r:'lion',n:'阿凱哥',d:'「我國中就學過舞獅，可以再練一隻獅子。」'},{r:'lant',n:'小芸',d:'「我可以提燈走在最前面，不過要練到走得整齊。」'},{r:'drum',n:'阿忠叔',d:'「白天顧魚塭，晚上還可以來練鼓。」'}],
+ 2:[{r:'flag',n:'阿德伯',d:'「大旗很重，我得多練幾晚才扛得穩。」'},{r:'lion',n:'阿豪',d:'「再加一隻獅子，一定比下庄熱鬧！」'},{r:'gong',n:'秀蘭姨',d:'「我來敲鑼，可是晚上就不能陪孫子寫功課了。」'}],
+ 3:[{r:'lant',n:'小宇',d:'「我想參加！可是要等安親班下課以後才有空練。」'},{r:'drum',n:'阿芬姐',d:'「收完夜市的攤子再來練，會有一點晚喔。」'},{r:'umb',n:'阿土伯',d:'「涼傘要重新做一支，全庄要再湊一點錢。」'}],
+ 4:[{r:'lion',n:'阿傑',d:'「獅頭舊了，要做一顆新的才夠氣派。」'},{r:'flag',n:'阿勇哥',d:'「我們的旗子要做得比下庄的還大！」'},{r:'lant',n:'小如',d:'「我會提燈，媽媽說練完要早一點回家睡覺。」'}],
+ 5:[{r:'drum',n:'阿華',d:'「再加一面鼓，聲音才蓋得過下庄。」'},{r:'gong',n:'阿春嬸',d:'「我可以來，只是最近大家都練得好累。」'},{r:'lion',n:'阿明',d:'「還要再加獅子嗎？我們已經練好多晚了。」'}]
+};
+function lowRoles(n){var a=START.concat(LOWADD);while(a.length<n)a=a.concat(LOWADD);return a.slice(0,n)}
+function fat(size,prev,pact){
+  var v=1+Math.round((size-4)*0.55);
+  if(size-prev>=2&&!pact)v+=1;
+  if(size<prev)v-=1;
+  if(pact)v-=1;
+  return Math.max(1,Math.min(10,v));
+}
+function fword(f){return f<=2?'輕鬆':f<=4?'有點累':f<=6?'累了':f<=8?'很累':'累壞了'}
+
+/* ---------- state ---------- */
+function fresh(){return {step:'intro',y:1,ph:'build',base:START.slice(),add:[],H:[{m:4,h:4,fm:1,fh:1}],r:{},tea:{},pact:null,plate:null,val:null}}
+var st=load();if(!st||!st.step||!st.H)st=fresh();
+var anim=false;
+function go(s){st.step=s;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+function capFor(y){return st.pact&&y>=st.pact.from?st.pact.cap:null}
+function myRoles(){return st.base.concat(st.add.map(function(i){return CARDS[st.y][i].r}))}
+
+/* ---------- street SVG (viewBox 820×350): lane 1 頂庄 baseline 170, lane 2 下庄 baseline 322 ---------- */
+var INK='#1F2A2E';
+function fig(role,col,x,b,cls,delay){
+  var s='<g class="'+(cls||'')+'"'+(delay!=null?' style="animation-delay:'+delay+'s"':'')+'><g transform="translate('+x+' '+b+') scale(.92)" stroke="'+INK+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">';
+  if(cls&&cls.indexOf('nw')>=0)s+='<ellipse cx="0" cy="2" rx="24" ry="6" fill="#F3D27A" stroke="none"/>';
+  // umbrella pole behind
+  if(role==='umb')s+='<path d="M0 -40V-118" stroke-width="3"/><path d="M-30 -108Q0 -138 30 -108Z" fill="#F2B8A0"/><path d="M-30 -108h60v7h-60z" fill="#F3D27A"/><path d="M-24 -101v6M-12 -101v6M0 -101v6M12 -101v6M24 -101v6" stroke-width="2"/>';
+  if(role==='flag')s+='<path d="M15 4V-118" stroke-width="3"/><path d="M15 -116h28v46l-7-6-7 6-7-6-7 6z" fill="#F3D27A"/><path d="M21 -104h16M21 -94h16" stroke-width="2"/>';
+  if(role==='lant')s+='<path d="M12 -38L30 -84" stroke-width="2.6"/><path d="M30 -84v6"/><ellipse cx="30" cy="-66" rx="9" ry="12" fill="#F2B8A0"/><path d="M30 -78v24" stroke-width="1.6"/>';
+  // legs
+  s+='<path d="M-6 -22L-8 0M6 -22L8 0" stroke-width="4"/>';
+  // body
+  s+='<rect x="-12" y="-54" width="24" height="34" rx="7" fill="'+col+'"/>';
+  s+='<path d="M-12 -30h24" stroke="#FBFCF9" stroke-width="3"/>';
+  // head
+  if(role==='lion'){
+    s+='<path d="M0 -94c6 4 12 0 16 5s8 6 6 13 3 10-2 15-6 9-20 9-15-4-20-9-4-8-2-15 2-8 6-13 10-1 16-5z" fill="#F3D27A"/>';
+    s+='<circle cx="0" cy="-70" r="11" fill="#F2B8A0"/><circle cx="-4.5" cy="-73" r="2.4" fill="'+INK+'" stroke="none"/><circle cx="4.5" cy="-73" r="2.4" fill="'+INK+'" stroke="none"/><path d="M-5 -66q5 4 10 0" stroke-width="2"/>';
+  }else{
+    s+='<circle cx="0" cy="-66" r="11" fill="#F2CFAE"/><path d="M-11 -68q1-11 11-11t11 11q-6-5-11-4.5t-11 4.5z" fill="#3A2A1C" stroke-width="2"/><path d="M-11 -70h22" stroke="'+col+'" stroke-width="3"/>';
+  }
+  if(role==='drum')s+='<path d="M-17 -46v16c0 4 34 4 34 0v-16" fill="#F2B8A0"/><ellipse cx="0" cy="-46" rx="17" ry="5" fill="#FBF4E2"/><path d="M-8 -54l-10-14M8 -54l10-14" stroke-width="2.6"/>';
+  if(role==='gong')s+='<path d="M12 -50L22 -54" stroke-width="2"/><circle cx="24" cy="-40" r="12" fill="#F3D27A"/><circle cx="24" cy="-40" r="4" fill="#FBF4E2" stroke-width="1.8"/><path d="M-12 -46l-10 -10" stroke-width="2.6"/><circle cx="-23" cy="-57" r="3.5" fill="#F2B8A0" stroke-width="1.8"/>';
+  return s+'</g></g>';
+}
+function SW(){return (app.clientWidth||800)<600?600:820}
+function lane(roles,col,b,opt){
+  var W=SW(),fr=W-72,n=roles.length,sp=n>1?Math.min(48,(fr-116)/(n-1)):0,s='';
+  for(var i=n-1;i>=0;i--){
+    var x=fr-i*sp,cls='',delay=null;
+    if(opt.newFrom!=null&&i>=opt.newFrom)cls='nw';
+    if(opt.pop&&opt.newFrom!=null&&i>=opt.newFrom){cls+=' pop';delay=0.15+(i-opt.newFrom)*0.18}
+    s+=fig(roles[i],col,x,b,cls,delay);
+  }
+  return s;
+}
+function sign(y,txt,col,n){
+  return '<g transform="translate(10 '+y+')"><rect width="84" height="76" rx="12" fill="#FBFCF9" stroke="'+col+'" stroke-width="4"/><text x="42" y="32" text-anchor="middle" font-size="27" font-weight="900" fill="'+col+'" font-family="Noto Sans TC,sans-serif">'+txt+'</text><text x="42" y="64" text-anchor="middle" font-size="25" font-weight="900" fill="'+INK+'" font-family="Noto Sans TC,sans-serif">'+(n==null?'？':n+' 人')+'</text></g>';
+}
+function streetSVG(o){
+  var W=SW();
+  var s='<svg class="street" viewBox="0 0 '+W+' 350" role="img" aria-label="廟會街道：上面一排是頂庄的陣頭，有 '+o.me.length+' 個人；下面一排是下庄的陣頭'+(o.hShow?'，有 '+o.ha.length+' 個人':'，今年還看不到')+'。隊伍往右邊的廟前進。">';
+  s+='<rect width="'+W+'" height="350" fill="#F4EEDF"/>';
+  // bunting
+  var hw=W/2;s+='<path d="M0 14Q'+(hw/2)+' 34 '+hw+' 14T'+W+' 14" stroke="#8C6A3E" stroke-width="2" fill="none"/>';
+  for(var k=0;k<Math.floor(W/41);k++){var bx=12+k*41,by=14+(bx<hw?10*Math.sin(bx/hw*Math.PI):10*Math.sin((bx-hw)/hw*Math.PI));var c=['#F2B8A0','#F3D27A','#CFE3C4','#DCE8F0'][k%4];s+='<path d="M'+(bx-9)+' '+by+'h18l-9 15z" fill="'+c+'" stroke="#8C6A3E" stroke-width="1.5" stroke-linejoin="round"/>'}
+  // lanes
+  s+='<rect x="0" y="176" width="'+W+'" height="10" fill="#D9CBAE"/><path d="M110 181H'+(W-60)+'" stroke="#FBFCF9" stroke-width="4" stroke-dasharray="22 16"/>';
+  s+='<rect x="0" y="328" width="'+W+'" height="22" fill="#D9CBAE"/>';
+  if(o.zone)s+='<rect x="102" y="38" width="'+(W-140)+'" height="140" rx="16" fill="#EEF4F9" stroke="#B7862B" stroke-width="3" stroke-dasharray="10 8"/>';
+  // temple at right
+  s+='<g transform="translate('+(W-34)+' 150)" stroke="#5E3A1C" stroke-width="2.4" stroke-linejoin="round"><path d="M-6 26h44v60H-6z" fill="#F6E3D6"/><path d="M-14 26Q16 6 46 26" fill="#C0532C"/><path d="M-18 28q8-4 10 2M50 28q-8-4-10 2" fill="none"/><path d="M4 86V50h24v36" fill="#A8441A"/><path d="M16 50v36"/><circle cx="16" cy="38" r="5" fill="#F3D27A"/></g>';
+  s+='<text x="'+(W-12)+'" y="132" text-anchor="end" font-size="22" font-weight="900" fill="#56605C" font-family="Noto Sans TC,sans-serif">廟</text>';
+  // teams
+  s+=lane(o.me,'#1F6FA8',170,{newFrom:o.meNew,pop:false});
+  if(o.hShow){s+=lane(o.ha,'#C0532C',322,{newFrom:o.hNew,pop:o.pop})}
+  else{
+    s+='<g opacity=".28">'+lane(o.ha,'#C0532C',322,{})+'</g>';
+    var bw=W<700?380:470,cx=(W+110)/2;
+    s+='<rect x="'+(cx-bw/2)+'" y="232" width="'+bw+'" height="54" rx="14" fill="#FBFCF9" stroke="#C0532C" stroke-width="3"/><text x="'+cx+'" y="268" text-anchor="middle" font-size="'+(W<700?24:26)+'" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">下庄今年幾個人？出陣才知道</text>';
+  }
+  s+=sign(48,'頂庄','#1F6FA8',o.me.length);
+  s+=sign(200,'下庄','#C0532C',o.hShow?o.ha.length:null);
+  return s+'</svg>';
+}
+
+/* ---------- thermometer + counters ---------- */
+function thermoSVG(f,col){
+  var s='<svg class="th" viewBox="0 0 250 40" aria-hidden="true"><circle cx="18" cy="20" r="15" fill="'+(f>0?'#E58B6A':'#FBFCF9')+'" stroke="#1F2A2E" stroke-width="2.4"/>';
+  s+='<rect x="30" y="10" width="214" height="20" rx="10" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="2.4"/>';
+  var pal=['#F3D27A','#F3D27A','#F2C38B','#F2C38B','#EFAA83','#EFAA83','#E58B6A','#E58B6A','#D0623D','#D0623D'];
+  for(var i=0;i<10;i++){var x=34+i*20.6;s+='<rect x="'+x.toFixed(1)+'" y="14" width="17.6" height="12" rx="3" fill="'+(i<f?pal[i]:'#E8EAE5')+'"/>'}
+  return s+'</svg>';
+}
+function thermoRow(who,cls,f){
+  if(f==null)return '<div class="thm"><span class="who '+cls+'">'+who+'</span>'+thermoSVG(0)+'<span class="w" style="color:var(--muted)">還不知道</span></div>';
+  return '<div class="thm"><span class="who '+cls+'">'+who+'</span>'+thermoSVG(f)+'<span class="w">第 '+f+' 格<br>'+fword(f)+'</span></div>';
+}
+function iconRow(k,n,prev){var s='<div class="icrow" aria-hidden="true">';for(var i=0;i<n;i++)s+=ic(k,i>=prev?'nw':'');return s+'</div>'}
+function meters(o){
+  var w=el('div','meters');
+  var a=el('div','mbox');
+  var d=o.n-o.prev,dl=d>0?'<span class="dl">比去年多 '+d+'</span>':d<0?'<span class="dl dn">比去年少 '+(-d)+'</span>':'';
+  a.innerHTML='<div class="mh">'+ic('moon')+'<span>頂庄的練習晚數</span><span class="mv">'+o.n+' 晚'+dl+'</span></div>'+iconRow('moon',o.n,o.prev)+
+    '<div class="mh">'+ic('purse')+'<span>全庄要出的錢袋</span><span class="mv">'+o.n+' 袋'+dl+'</span></div>'+iconRow('purse',o.n,o.prev)+
+    '<p class="cap">隊伍裡每多一個人，全庄就要多練一晚、多出一袋錢。紅色的是比去年多出來的。</p>';
+  var b=el('div','mbox');
+  b.innerHTML='<div class="mh">'+ic('parade_thermo')+'<span>庄民的疲累</span></div>'+thermoRow('頂庄','vt',o.fm)+thermoRow('下庄','vl',o.fh)+
+    '<p class="cap">'+o.fcap+'</p>';
+  w.append(a,b);return w;
+}
+
+/* ---------- pages ---------- */
+function intro(){
+  app.append(el('h1',null,'陣頭比熱鬧'));
+  var c=el('div','card');var sb=el('div','sbox');
+  sb.innerHTML=streetSVG({me:START,ha:START,hShow:true});
+  c.append(sb,
+    el('p','lead','你是<b class="vt">頂庄</b>的陣頭負責人。每年廟會，隔壁的<b class="vl">下庄</b>也會出陣頭，兩庄的隊伍一起走到廟前。'),
+    el('p','lead','庄裡的大人都說：「熱鬧一定要贏隔壁！」廟口的熱鬧評比只看一件事：<b>哪一隊比較長</b>。去年，兩庄都是 4 個人。'),
+    el('p','lead','接下來有 <b>5 年</b>。每一年，你可以把「庄民卡」拖進頂庄的隊伍。可是隊伍每多一個人，全庄就要<b>多練一晚</b>、<b>多出一袋錢</b>。'));
+  app.append(c,button('開始第 1 年','btn',function(){startYear(1)}));
+}
+function startYear(y){
+  st.y=y;st.ph='build';st.add=[];
+  if(!st.r[y])st.r[y]=rnd2();
+  go('year');
+}
+function yearPage(){
+  var y=st.y,prev=st.H[y-1],cap=capFor(y),res=st.ph==='res';
+  app.append(el('p','case','第 '+y+' 年（一共 5 年）'+(cap?'　<span class="tag t">'+ic('parade_pact')+'兩庄約定：不超過 '+cap+' 人</span>':'')));
+  if(res){yearResult(y,prev,cap);return}
+  app.append(el('h2',null,y===1?'把庄民卡拖進頂庄的隊伍，讓陣頭變長。':'今年要不要再加人？把庄民卡拖進頂庄的隊伍。'));
+  var sb=el('div','sbox zone');app.append(sb);
+  app.append(el('p','hint',ic('chev')+'按住庄民卡拖到上面的街道；也可以直接點一下。再點一次，就是請他今年先不要來。'));
+  var trim=el('div');app.append(trim);
+  var wrap=el('div','vcards');app.append(wrap);
+  var mw=el('div');app.append(mw);
+  var gob=button('出陣！看熱鬧評比','btn',function(){
+    if(cap&&myRoles().length>cap)return;
+    march(y,prev,cap);
+  });
+  app.append(gob);
+  var cards=[];
+  CARDS[y].forEach(function(cd,i){
+    var R=ROLE[cd.r];
+    var b=el('button','vcard','<span class="top">'+ic(R.ic)+'<span><span class="nm">'+cd.n+'</span><span class="rl">'+R.n+'</span></span></span><p class="ds">'+cd.d+'</p><span class="cost"><span>'+ic('moon')+'多練 1 晚</span><span>'+ic('purse')+'多出 1 袋</span></span><span class="st"></span>');
+    b.type='button';b.setAttribute('data-i',i);
+    dragify(b,sb,function(){toggle(i,true)},function(){toggle(i,false)});
+    cards.push(b);wrap.appendChild(b);
+  });
+  function toggle(i,fromDrop){
+    var k=st.add.indexOf(i);
+    if(k>=0){if(fromDrop)return;st.add.splice(k,1)}
+    else{if(cap&&myRoles().length>=cap)return;st.add.push(i)}
+    save(st);upd();
+  }
+  function upd(){
+    var roles=myRoles(),n=roles.length;
+    sb.innerHTML=streetSVG({me:roles,meNew:st.base.length,ha:lowRoles(prev.h),hShow:false,zone:true});
+    var full=cap&&n>=cap;
+    cards.forEach(function(b,i){var on=st.add.indexOf(i)>=0;b.classList.toggle('in',on);b.setAttribute('aria-pressed',on?'true':'false');
+      b.disabled=!on&&!!full;
+      b.querySelector('.st').innerHTML=on?'已經加入頂庄的隊伍':(full?'已經到約定的上限了':'')});
+    trim.innerHTML='';
+    if(cap&&n>cap){
+      var c=el('div','note warm');
+      c.innerHTML='照兩庄的約定，今年每一庄最多 <b>'+cap+' 人</b>。頂庄現在有 <b>'+n+' 人</b>，要先請 <b>'+(n-cap)+' 位</b>庄民今年休息。';
+      trim.append(c,button(ic('home')+'請 '+(n-cap)+' 位庄民今年先休息','btn soft',function(){while(myRoles().length>cap){if(st.add.length)st.add.pop();else st.base.pop()}save(st);upd()}));
+    }
+    var fm=fat(n,prev.m,!!cap);
+    mw.innerHTML='';
+    mw.appendChild(meters({n:n,prev:prev.m,fm:fm,fh:null,fcap:'頂庄的溫度計會跟著隊伍長度變化。下庄的要等出陣才知道。'}));
+    gob.disabled=!!(cap&&n>cap);
+  }
+  upd();
+}
+function march(y,prev,cap){
+  var m=myRoles().length;
+  var r=st.r[y]||1;
+  var lostLast=prev.h<prev.m;
+  var h=Math.max(prev.h,prev.m+r+(lostLast?1:0));
+  if(cap)h=Math.min(cap,Math.max(prev.h,prev.m));
+  st.H[y]={m:m,h:h,fm:fat(m,prev.m,!!cap),fh:fat(h,prev.h,!!cap),cap:cap||null};
+  st.ph='res';anim=true;save(st);render();try{window.scrollTo(0,0)}catch(e){}
+}
+function voice(f,pact){
+  if(pact&&f>2)return '不用再一直加人，晚上終於可以早一點休息了。';
+  return f<=2?'練習完，大家還有力氣去廟口吃點心。':f<=4?'練習的晚上變多了，有人開始打哈欠。':f<=6?'阿嬤說：「晚上都在練，白天顧魚塭都沒精神。」':f<=8?'好幾家說，孩子練到太晚，隔天上學都爬不起來。':'有人小聲說：「再這樣比下去，明年真的撐不住了。」';
+}
+function yearResult(y,prev,cap){
+  var R=st.H[y],me=R.m,ha=R.h,d=Math.abs(me-ha);
+  var myR=myRoles();
+  app.append(el('h2',null,'出陣了！廟口的熱鬧評比，只看哪一隊比較長。'));
+  var sb=el('div','sbox');sb.innerHTML=streetSVG({me:myR,meNew:prev.m<myR.length?prev.m:null,ha:lowRoles(ha),hNew:prev.h<ha?prev.h:null,hShow:true,pop:anim});anim=false;
+  app.append(sb);
+  var c=el('div','card res');
+  var who=me>ha?'<span class="vt">頂庄贏了</span>，多 '+d+' 個人。':me<ha?'<span class="vl">下庄贏了</span>，多 '+d+' 個人。':'<b>平手</b>，兩隊一樣長。';
+  c.append(el('p','big',ic(me===ha?'ruler':'crown')+'<span>熱鬧評比：'+who+'</span>'));
+  var vs=el('div','vs','<div class="t'+(me>ha?' win':'')+'">頂庄 '+me+' 人</div><div class="l'+(ha>me?' win':'')+'">下庄 '+ha+' 人</div>');
+  c.append(vs);
+  var talk;
+  if(cap)talk='兩庄都守約，隊伍都沒有超過 '+cap+' 人。'+(me===ha?'兩隊一樣長，誰也沒有贏，大家倒是輕鬆多了。':'');
+  else if(me>ha)talk='頂庄的人好高興。可是下庄的人說：「明年一定要贏回來！」';
+  else if(me<ha)talk='頂庄的人不服氣：「明年要多找幾個人！」';
+  else talk='兩庄都說：「明年一定要比對方長！」';
+  c.append(el('p','note',talk+'<br>頂庄的庄民：'+voice(R.fm,!!cap)));
+  if(cap&&y>=2){
+    var peak=0;for(var i=1;i<y;i++)peak=Math.max(peak,st.H[i].m);
+    var peakF=0;for(i=1;i<y;i++)peakF=Math.max(peakF,st.H[i].fm);
+    var saved=peak-me;
+    c.append(el('p','note warm',saved>0?'和以前最長的時候比，頂庄今年少練 <b>'+saved+' 晚</b>、少出 <b>'+saved+' 袋</b>錢；疲累從最高的第 '+peakF+' 格，降到第 '+R.fm+' 格。':'隊伍沒有再變長，練習晚數和錢袋也沒有再增加；疲累降到第 '+R.fm+' 格。'));
+  }else if(!cap&&y>=4){
+    c.append(el('p','note warm','兩隊又更長了。今年頂庄練了 <b>'+me+' 晚</b>、出了 <b>'+me+' 袋</b>錢，下庄也練了 '+ha+' 晚、出了 '+ha+' 袋。'));
+  }
+  app.append(c);
+  app.append(meters({n:me,prev:prev.m,fm:R.fm,fh:R.fh,fcap:'兩庄的溫度計：隊伍越長、加得越多，大家越累。'}));
+  var label=y<5?'進入第 '+(y+1)+' 年':'看看這 5 年';
+  app.append(button(label,'btn',function(){
+    st.base=myRoles();st.add=[];save(st);
+    if(y===5){go('chart');return}
+    if((y===3||y===4)&&!st.pact&&!st.tea[y+1]){st.plate=null;st.tea[y+1]={c:null};save(st);go('tea');return}
+    startYear(y+1);
+  }));
+}
+function yearTable(upto){
+  var t=el('table','ytab');var h='<thead><tr><th></th>';for(var i=1;i<=upto;i++)h+='<th>第 '+i+' 年</th>';h+='</tr></thead><tbody><tr><td class="vt">頂庄</td>';
+  for(i=1;i<=upto;i++)h+='<td>'+st.H[i].m+'</td>';h+='</tr><tr><td class="vl">下庄</td>';
+  for(i=1;i<=upto;i++)h+='<td>'+st.H[i].h+'</td>';h+='</tr><tr><td>評比</td>';
+  for(i=1;i<=upto;i++){var a=st.H[i];h+='<td>'+(a.m>a.h?'<span class="vt">頂</span>':a.m<a.h?'<span class="vl">下</span>':'平')+'</td>'}
+  t.innerHTML=h+'</tr></tbody>';return t;
+}
+function teaPage(){
+  var before=st.y+1,T=st.tea[before]||(st.tea[before]={c:null});
+  var last=st.H[st.y];
+  app.append(el('p','case',ic('parade_tea')+'第 '+before+' 年開始前'));
+  if(T.c){teaAfter(before,T);return}
+  app.append(el('h2',null,before===4?'三年下來，兩庄的隊伍都越排越長。今年有一個新的選擇。':'去年你沒有去約。今年，還可以再選一次。'));
+  var c=el('div','card');
+  c.append(el('p','lead','現在：<b class="vt">頂庄 '+last.m+' 人</b>，疲累第 '+last.fm+' 格；<b class="vl">下庄 '+last.h+' 人</b>，疲累第 '+last.fh+' 格。'));
+  c.append(yearTable(st.y));
+  app.append(c);
+  var A=el('div','card');
+  var title=el('h3');A.append(title);
+  A.append(el('p','hint',ic('chev')+'點一個人數牌，把上限填進空格。'));
+  var pl=el('div','plates');var plates=[];
+  var hi=Math.max(last.m,last.h,6);
+  for(var n=4;n<=hi;n++){(function(n){var b=button(n+'<small>人</small>','plate',function(){st.plate=n;save(st);upd()});b.setAttribute('aria-label','上限 '+n+' 人');plates.push([n,b]);pl.appendChild(b)})(n)}
+  A.append(pl);
+  var tb=button(ic('parade_tea')+'派人去下庄喝茶','btn',function(){if(!st.plate)return;T.c='pact';T.cap=st.plate;st.pact={cap:st.plate,from:before};save(st);render();try{window.scrollTo(0,0)}catch(e){}});
+  A.append(tb);
+  app.append(el('p','case','選擇一'),A,el('p','case','選擇二'));
+  app.append(button(ic('crown')+'<span>不約，明年繼續加碼，一定要贏下庄</span>','btn alt',function(){T.c='no';save(st);render();try{window.scrollTo(0,0)}catch(e){}}));
+  function upd(){
+    title.innerHTML=ic('parade_pact')+'<span>派人去下庄喝茶，約定明年兩庄都不超過 <span class="blank">'+(st.plate||'○')+'</span> 人</span>';
+    plates.forEach(function(p){p[1].classList.toggle('pick',p[0]===st.plate);p[1].setAttribute('aria-pressed',p[0]===st.plate?'true':'false')});
+    tb.disabled=!st.plate;
+  }
+  upd();
+}
+function teaAfter(before,T){
+  if(T.c==='pact'){
+    app.append(el('h2',null,'你派人帶著茶葉，去下庄喝茶。'));
+    var say=el('div','say');say.innerHTML=av('grandpa');
+    say.append(el('p','bub','下庄的頭人說：「好啊！其實我們庄裡也練得很累。明年兩庄都不超過 <b>'+T.cap+' 人</b>'+(before===4?'，後年也照這樣':'')+'。不過，你們也要守約喔！」'));
+    app.append(say);
+    var c=el('div','card');c.append(el('h3',null,ic('parade_pact')+'約定上限'));
+    c.append(el('dl','ec','<dt class="e">作用</dt><dd>兩庄都不用再一直加人，練習晚數和錢袋可以停下來，大家有機會休息。</dd><dt class="c">代價</dt><dd>要互相信任，相信對方真的會守約；兩隊差不多長，也少了一點「贏過隔壁」的感覺。</dd>'));
+    app.append(c);
+  }else{
+    app.append(el('h2',null,'你決定不約，明年繼續加碼。'));
+    var c2=el('div','card');c2.append(el('h3',null,ic('crown')+'繼續加碼'));
+    c2.append(el('dl','ec','<dt class="e">作用</dt><dd>比較刺激，大家有一個一起拚的目標；也不用擔心對方偷偷不守約。</dd><dt class="c">代價</dt><dd>下庄多半也會跟著加，隊伍越來越長，練習晚數、錢袋和兩庄的疲累都會繼續往上。</dd>'));
+    app.append(c2);
+  }
+  app.append(button('開始第 '+before+' 年','btn',function(){startYear(before)}));
+}
+
+/* ---------- five-year chart ---------- */
+function stats(){
+  var w=0,l=0,t=0,gap=0,tot=0;
+  for(var i=1;i<=5;i++){var a=st.H[i];if(a.m>a.h)w++;else if(a.m<a.h)l++;else t++;gap=Math.max(gap,Math.abs(a.m-a.h));tot+=a.m}
+  return {w:w,l:l,t:t,gap:gap,tot:tot};
+}
+function chartSVG(W){
+  var H=st.H,narrow=W<500;
+  var L=narrow?44:56,Rm=narrow?78:92,X0=L,X1=W-Rm;
+  var maxN=0;H.forEach(function(a){maxN=Math.max(maxN,a.m,a.h)});var top=Math.max(10,Math.ceil(maxN/5)*5);
+  var A={y0:70,y1:250},B={y0:362,y1:472};
+  function xp(i){return X0+(X1-X0)*i/5}
+  function ya(v){return A.y1-(A.y1-A.y0)*v/top}
+  function yb(v){return B.y1-(B.y1-B.y0)*v/10}
+  var fs=narrow?21:22,F='font-family="Noto Sans TC,sans-serif"';
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+(narrow?552:530)+'" role="img" aria-label="五年的折線圖：上面是兩庄隊伍的人數，下面是兩庄的疲累">';
+  s+='<text x="'+X0+'" y="40" font-size="'+(fs+2)+'" font-weight="900" fill="#1F2A2E" '+F+'>隊伍有幾個人</text>';
+  s+='<text x="'+X0+'" y="336" font-size="'+(fs+2)+'" font-weight="900" fill="#1F2A2E" '+F+'>庄民的疲累（第幾格）</text>';
+  for(var g=0;g<=top;g+=5){s+='<path d="M'+X0+' '+ya(g)+'H'+X1+'" stroke="#E3E6E0" stroke-width="1.5"/><text x="'+(X0-10)+'" y="'+(ya(g)+7)+'" text-anchor="end" font-size="'+fs+'" fill="#56605C" '+F+'>'+g+'</text>'}
+  [0,5,10].forEach(function(g){s+='<path d="M'+X0+' '+yb(g)+'H'+X1+'" stroke="#E3E6E0" stroke-width="1.5"/><text x="'+(X0-10)+'" y="'+(yb(g)+7)+'" text-anchor="end" font-size="'+fs+'" fill="#56605C" '+F+'>'+g+'</text>'});
+  for(var i=0;i<=5;i++)s+='<text x="'+xp(i)+'" y="512" text-anchor="middle" font-size="'+fs+'" fill="#56605C" '+F+'>'+(i===0?'去年':(narrow?i:'第'+i+'年'))+'</text>';
+  if(narrow)s+='<text x="'+X1+'" y="544" text-anchor="end" font-size="'+(fs-2)+'" fill="#56605C" '+F+'>（第幾年）</text>';
+  // pact marker
+  if(st.pact){var px=(xp(st.pact.from)+xp(st.pact.from-1))/2;s+='<path d="M'+px+' 62V'+B.y1+'" stroke="#B7862B" stroke-width="2.5" stroke-dasharray="8 6"/><text x="'+(px+6)+'" y="'+(A.y0+4)+'" font-size="'+fs+'" font-weight="900" fill="#7A5A16" '+F+'>約定</text>'}
+  // win strip
+  for(i=1;i<=5;i++){var a=H[i];var t=a.m>a.h?'頂':a.m<a.h?'下':'平';s+='<text x="'+xp(i)+'" y="'+(A.y1+30)+'" text-anchor="middle" font-size="'+(fs-1)+'" font-weight="900" fill="'+(a.m>a.h?'#1F6FA8':a.m<a.h?'#C0532C':'#56605C')+'" '+F+'>'+t+'</text>'}
+  s+='<text x="'+xp(0)+'" y="'+(A.y1+30)+'" text-anchor="middle" font-size="'+(fs-2)+'" fill="#56605C" '+F+'>評比</text>';
+  s+='<g class="hl"></g>';
+  function line(key,col,yf){var d='';H.forEach(function(a,i){d+=(i?'L':'M')+xp(i).toFixed(1)+' '+yf(a[key]).toFixed(1)});
+    var o='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>';
+    H.forEach(function(a,i){o+='<circle cx="'+xp(i).toFixed(1)+'" cy="'+yf(a[key]).toFixed(1)+'" r="6" fill="'+col+'" stroke="#FBFCF9" stroke-width="2.5"/>'});return o}
+  function endLabels(km,kh,yf,unit){
+    var a=H[5],y1=yf(a[km]),y2=yf(a[kh]);
+    if(Math.abs(y1-y2)<26){var mid=(y1+y2)/2;if(a[km]>=a[kh]){y1=mid-13;y2=mid+13}else{y1=mid+13;y2=mid-13}}
+    return '<text x="'+(X1+12)+'" y="'+(y1+7)+'" font-size="'+fs+'" font-weight="900" fill="#1F2A2E" '+F+'>頂 '+a[km]+unit+'</text><text x="'+(X1+12)+'" y="'+(y2+7)+'" font-size="'+fs+'" font-weight="900" fill="#1F2A2E" '+F+'>下 '+a[kh]+unit+'</text>';
+  }
+  s+=line('h','#C0532C',ya)+line('m','#1F6FA8',ya)+endLabels('m','h',ya,'');
+  s+=line('fh','#C0532C',yb)+line('fm','#1F6FA8',yb)+endLabels('fm','fh',yb,' 格');
+  for(i=0;i<=5;i++){var w=(X1-X0)/5;s+='<rect class="hit" data-i="'+i+'" x="'+(xp(i)-w/2)+'" y="50" width="'+w+'" height="440" fill="transparent"/>'}
+  return s+'</svg>';
+}
+function chartPage(){
+  var S=stats(),H=st.H,a5=H[5];
+  app.append(el('p','case',ic('trend')+'5 年回顧'));
+  app.append(el('h2',null,'5 年下來，名次差多少？大家又累了多少？'));
+  var c=el('div','card');
+  c.append(el('div','legend','<span><i style="background:var(--top)"></i>頂庄（你）</span><span><i style="background:var(--low)"></i>下庄</span>'));
+  var holder=el('div');c.append(holder);
+  var ro=el('p','readout');c.append(ro);
+  var W=(app.clientWidth||800)<600?420:680;
+  holder.innerHTML=chartSVG(W);
+  var svg=holder.querySelector('svg');
+  function show(i){
+    var a=H[i],nm=i===0?'去年':'第 '+i+' 年';
+    var w=i===0?'':a.m>a.h?'（頂庄贏）':a.m<a.h?'（下庄贏）':'（平手）';
+    ro.innerHTML=nm+'：<span class="vt">頂庄 '+a.m+' 人</span>、<span class="vl">下庄 '+a.h+' 人</span>'+w+'<br>疲累：頂庄第 '+a.fm+' 格、下庄第 '+a.fh+' 格';
+    var x=+svg.querySelector('.hit[data-i="'+i+'"]').getAttribute('x')+(+svg.querySelector('.hit[data-i="'+i+'"]').getAttribute('width'))/2;
+    svg.querySelector('.hl').innerHTML='<path d="M'+x+' 56V482" stroke="#B9BFB6" stroke-width="2"/>';
+  }
+  svg.querySelectorAll('.hit').forEach(function(r){var i=+r.getAttribute('data-i');r.addEventListener('pointerenter',function(){show(i)});r.addEventListener('pointerdown',function(){show(i)})});
+  show(5);
+  c.append(el('p','hint','點圖上的任何一年，可以看那一年的數字。'));
+  var det=el('details');det.innerHTML='<summary>用表格看</summary>';det.appendChild(yearTable(5));
+  var ft=el('table','ytab');var fh='<tbody><tr><td class="vt">頂庄疲累</td>';for(var i=1;i<=5;i++)fh+='<td>'+H[i].fm+'</td>';fh+='</tr><tr><td class="vl">下庄疲累</td>';for(i=1;i<=5;i++)fh+='<td>'+H[i].fh+'</td>';ft.innerHTML=fh+'</tr></tbody>';det.appendChild(ft);
+  c.append(det);
+  app.append(c);
+  var txt='這 5 年，你<b>贏了 '+S.w+' 年</b>、輸了 '+S.l+' 年、平手 '+S.t+' 年；兩隊每一年的差距，最多只有 <b>'+S.gap+' 個人</b>。'+
+    '可是兩庄的隊伍，都從 4 個人變成了 <b class="vt">'+a5.m+'</b> 和 <b class="vl">'+a5.h+'</b> 個人。頂庄 5 年一共練了 <b>'+S.tot+' 晚</b>、出了 <b>'+S.tot+' 袋</b>錢。';
+  app.append(el('p','note',txt));
+  app.append(el('p','note warm',st.pact?'約定以後，兩條線不再往上爬，疲累也降下來了；名次差不多，只是少了一點「贏」的感覺。':'兩條線幾乎是一起往上爬：你加，下庄也加。名次一直差不多，大家卻越來越累。'));
+  app.append(button('下一步','btn',function(){go('value')}));
+}
+
+/* ---------- value question ---------- */
+var VAL={
+ num:{n:'比人數：隊伍越長越好',ic:'people',e:'一看就知道誰比較多，大家有一個共同的目標，很有拚勁。',c:'對方也能一直加人，越比越長，練習時間和錢越花越多，名次卻常常差不多。'},
+ idea:{n:'比創意：誰想出新花樣',ic:'bulb',e:'比的是想法，不一定要多花人和錢，看熱鬧的人也覺得新鮮。',c:'想新花樣也要花力氣；好不好看比較難評，有人會不服氣，新花樣也可能被對方學走，又開始比下去。'},
+ fun:{n:'比開心：全庄一起出門的開心',ic:'heart',e:'每個人照自己的力氣參加，大家不會累壞，出陣變成全庄一起玩的事。',c:'少了輸贏的刺激，有人會覺得不夠熱鬧；別人說「你們輸了」的時候，要能不在意。'},
+ none:{n:'不用比',ic:'equal3',e:'不用一直加碼，省下練習時間和錢，兩庄也比較不會傷感情。',c:'少了一個讓大家一起努力、聚在一起的理由；如果只有一邊不比，另一邊還是可能說自己贏了。'}
+};
+var VK=['num','idea','fun','none'];
+function valuePage(){
+  app.append(el('p','case','最後一題'));
+  app.append(el('h2',null,'熱鬧比賽，你覺得最值得比的是什麼？'));
+  app.append(el('p','lead','這一題<b>沒有標準答案</b>。選好以後，會看到這個選擇的作用和代價，等一下全班一起討論。'));
+  var o=el('div','opts');var bs={};var fb=el('div');
+  VK.forEach(function(k){var b=button(ic(VAL[k].ic)+'<span>'+VAL[k].n+'</span>','btn alt',function(){st.val=k;save(st);upd()});bs[k]=b;o.appendChild(b)});
+  var nx=button('下一步','btn',function(){if(st.val)go('end')});
+  app.append(o,fb,nx);
+  function upd(){
+    VK.forEach(function(k){bs[k].classList.toggle('pick',st.val===k);bs[k].setAttribute('aria-pressed',st.val===k?'true':'false')});
+    fb.innerHTML='';nx.disabled=!st.val;
+    if(st.val){var m=VAL[st.val];var c=el('div','card');c.append(el('h3',null,ic(m.ic)+'<span>'+m.n+'</span>'));c.append(el('dl','ec','<dt class="e">作用</dt><dd>'+m.e+'</dd><dt class="c">代價</dt><dd>'+m.c+'</dd>'));fb.appendChild(c)}
+  }
+  upd();
+}
+
+/* ---------- end ---------- */
+function endPage(){
+  app.append(el('h1',null,'做完了！請停在這一頁，等其他同學。'));
+  var S=stats(),H=st.H;
+  var pact=st.pact?'有：第 '+st.pact.from+' 年開始前，約定不超過 '+st.pact.cap+' 人':'沒有';
+  var rows=[
+    ['5 年裡你贏了幾年',S.w+' 年（輸 '+S.l+' 年、平手 '+S.t+' 年）'],
+    ['第 5 年頂庄的隊伍',H[5].m+' 人（第 1 年 '+H[1].m+' 人）'],
+    ['有沒有去約定上限',pact],
+    ['最後頂庄的疲累','第 '+H[5].fm+' 格（共 10 格，'+fword(H[5].fm)+'）'],
+    ['熱鬧比賽最值得比的',VAL[st.val].n]
+  ];
+  var c=el('div','card');var tb=el('table','sum');
+  tb.innerHTML='<tbody>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('')+'</tbody>';
+  c.append(tb);app.append(c);
+  app.append(el('p','note warm','老師等一下會請大家舉手：贏了幾年？第 5 年的隊伍有沒有超過 10 個人？有沒有去約定？疲累到第幾格？'));
+}
+
+/* ---------- drag ---------- */
+function dragify(b,zone,onDrop,onTap){
+  var sx=0,sy=0,down=false,dragging=false,ghost=null,moved=false;
+  function over(x,y){var r=zone.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+  b.addEventListener('pointerdown',function(e){if(e.button>0||b.disabled)return;down=true;dragging=false;sx=e.clientX;sy=e.clientY;try{b.setPointerCapture(e.pointerId)}catch(_){}});
+  b.addEventListener('pointermove',function(e){
+    if(!down)return;
+    if(!dragging&&Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8){
+      dragging=true;var r=b.getBoundingClientRect();ghost=b.cloneNode(true);ghost.classList.add('ghost');ghost.style.width=r.width+'px';ghost.style.left=r.left+'px';ghost.style.top=r.top+'px';ghost._dx=sx-r.left;ghost._dy=sy-r.top;document.body.appendChild(ghost);
+    }
+    if(dragging){ghost.style.left=(e.clientX-ghost._dx)+'px';ghost.style.top=(e.clientY-ghost._dy)+'px';zone.classList.toggle('over',over(e.clientX,e.clientY));e.preventDefault()}
+  });
+  function end(e,cancel){
+    if(!down)return;down=false;
+    if(dragging){moved=true;var hit=!cancel&&over(e.clientX,e.clientY);if(ghost){ghost.remove();ghost=null}zone.classList.remove('over');dragging=false;if(hit)onDrop()}
+  }
+  b.addEventListener('pointerup',function(e){end(e,false)});
+  b.addEventListener('pointercancel',function(e){end(e,true)});
+  b.addEventListener('click',function(){if(moved){moved=false;return}onTap()});
+}
+
+function render(){
+  app.innerHTML='';
+  var s=st.step;
+  if(s==='intro')intro();
+  else if(s==='year'&&st.y>=1&&st.y<=5&&(st.ph==='build'||st.H[st.y]))yearPage();
+  else if(s==='tea'&&st.tea[st.y+1])teaPage();
+  else if(s==='chart'&&st.H[5])chartPage();
+  else if(s==='value'&&st.H[5])valuePage();
+  else if(s==='end'&&st.H[5]&&st.val)endPage();
+  else{st=fresh();save(st);intro()}
+}
+render();
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render();try{window.scrollTo(0,0)}catch(e){}}});
+})();
+</script>

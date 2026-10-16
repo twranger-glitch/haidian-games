@@ -1,0 +1,242 @@
+<title>一步一步的訊息</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: a made-up phone chat with "阿凱" (a stranger who says he leads a guild in a phone game) next to a staircase whose top step is 驗證碼.
+   Secret groups by crypto: 藍色聊天室 = five small-to-big requests; 紫色聊天室 = hello, then the code request straight away.
+   Then: look back at all five messages and mark where it started to feel odd → safety card (facts) → summary for show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --plum:#6A4C93; --room:#205E86; --roomsoft:#E4EEF5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+body.purple{--room:#6A4C93;--roomsoft:#EEE8F5}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:920px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+/* chat + stairs */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;align-items:start}
+.phone{background:var(--card);border:3px solid var(--line);border-radius:28px;overflow:hidden;display:flex;flex-direction:column}
+.bar{background:var(--room);color:#fff;display:flex;align-items:center;gap:12px;padding:12px 16px}
+.av{width:46px;height:46px;border-radius:50%;background:#fff;color:var(--room);font-weight:900;font-size:22px;display:grid;place-items:center;flex:none}
+.bar b{display:block;font-size:clamp(19px,2.6vw,23px);line-height:1.3}
+.bar span{font-size:18px;opacity:.9}
+.log{display:flex;flex-direction:column;gap:10px;padding:16px 14px;min-height:280px;background:var(--roomsoft)}
+.msg{max-width:84%;padding:10px 16px;border-radius:20px;font-size:clamp(20px,2.7vw,24px);line-height:1.55;animation:pop .25s ease-out}
+.msg.kai{align-self:flex-start;background:#fff;border:2px solid var(--line);border-bottom-left-radius:6px}
+.msg.me{align-self:flex-end;background:var(--room);color:#fff;border-bottom-right-radius:6px;font-weight:700}
+.sys{align-self:center;font-size:19px;color:var(--muted);margin:0;text-align:center}
+.typing{align-self:flex-start;background:#fff;border:2px solid var(--line);border-radius:20px;padding:10px 18px;display:flex;gap:6px}
+.typing i{width:10px;height:10px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.replies{display:flex;flex-wrap:wrap;gap:10px;padding:12px 14px;border-top:2px solid var(--line);background:var(--card);justify-content:flex-end}
+.rep{font:inherit;font-size:clamp(20px,2.7vw,24px);font-weight:900;border:3px solid var(--room);background:#fff;color:var(--room);border-radius:999px;padding:8px 20px;cursor:pointer;flex:1 1 auto}
+.rep:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.stairs{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.stairs svg{width:100%;height:auto;max-height:330px}
+.stairs p{margin:0;font-size:19px;font-weight:700;color:var(--muted)}
+#who{transition:transform .8s cubic-bezier(.4,1.4,.5,1)}
+/* review */
+.steps{display:flex;flex-direction:column;gap:10px}
+.steps .btn.alt{display:flex;gap:12px;align-items:flex-start}
+.num{flex:none;width:40px;height:40px;border-radius:50%;background:var(--room);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px;margin-top:2px}
+.tag{display:block;font-size:19px;color:var(--muted);font-weight:700}
+/* safety card */
+.tips{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tip{background:var(--card);border:3px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.tip svg{width:52px;height:52px}
+.tip b{font-size:clamp(21px,3vw,27px);line-height:1.4}
+.tip p{margin:0;font-size:clamp(19px,2.5vw,23px);line-height:1.6;color:var(--ink)}
+.chip{align-self:center;background:var(--room);color:#fff;border-radius:999px;padding:8px 30px;font-size:clamp(34px,7vw,60px);font-weight:900;margin:0}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700}
+td.v{font-weight:900;text-align:right}
+@media (max-width:700px){
+  .stage{grid-template-columns:1fr}
+  .stairs{order:-1;flex-direction:row;padding:6px 12px}
+  .stairs svg{max-height:150px;width:auto;flex:none}
+  .stairs p{flex:1}
+  .tips{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){#who{transition:none}.msg{animation:none}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='step-message-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rnd(){var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}
+var st=load();
+if(!st||!st.grp){st={grp:rnd()?'L':'D',step:0,ans:[],odd:null};save(st)}
+var LAD=st.grp==='L';
+if(!LAD)document.body.classList.add('purple');
+var ROOM=LAD?'藍色聊天室':'紫色聊天室';
+
+var M=['嗨！我們公會缺人，可以幫我的貼文按個讚嗎？','謝啦～加我好友好不好？','你讀幾年級？哪個學校？','傳一張你穿制服的照片給我看看～','我要幫你領公會的免費寶石，你手機會收到一組簡訊驗證碼，把它傳給我就好！'];
+var SHORT=['幫貼文按讚','加好友','說出年級和學校','傳穿制服的照片','傳簡訊驗證碼'];
+var GREET='嗨！我是阿凱，我們公會缺人，看到你也在玩這款遊戲～';
+var REQ=LAD?M:[M[4]];
+var RT={y:'好啊',n:'不要',f:'我先問家人'};
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',fn);return b}
+function yesCount(){return st.ans.filter(function(a){return a==='y'}).length}
+function level(){return LAD?yesCount():(st.ans[0]==='y'?5:0)}
+function chatDone(){var n=st.ans.length;return n>0&&(st.ans[n-1]!=='y'||n>=REQ.length)}
+function gaveCode(){return LAD?st.ans[4]==='y':st.ans[0]==='y'}
+
+/* stairs: ground y=290; step k (1..5) top at 290-k*48, column x=14+k*46 */
+function sx(k){return k===0?30:14+k*46+23}
+function sy(k){return 290-k*48}
+function stairsSVG(){
+  var s='<svg viewBox="0 0 300 330" role="img" aria-label="五階樓梯，最上面一階寫著驗證碼"><rect x="0" y="290" width="300" height="40" fill="#D4D9D2"/>';
+  for(var k=1;k<=5;k++){
+    var x=14+k*46,y=sy(k);
+    s+='<rect x="'+x+'" y="'+y+'" width="46" height="'+(290-y)+'" fill="'+(k===5?'#A8441A':'#B9C4BF')+'" stroke="#FBFCF9" stroke-width="2"/>';
+    s+='<text x="'+(x+23)+'" y="'+(y+30)+'" text-anchor="middle" font-size="20" font-weight="900" fill="'+(k===5?'#fff':'#1F2A2E')+'">'+k+'</text>';
+  }
+  s+='<text x="8" y="44" font-size="34" font-weight="900" fill="#A8441A">驗證碼</text><path d="M118 32 H222" stroke="#A8441A" stroke-width="5" stroke-linecap="round"/><path d="M212 22 L226 32 L212 42" stroke="#A8441A" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  var L=level();
+  s+='<g id="who" style="transform:translate('+sx(L)+'px,'+sy(L)+'px)"><circle cx="0" cy="-40" r="9" fill="#1F2A2E"/><path d="M0 -31 V-14 M-10 -24 H10 M0 -14 L-8 0 M0 -14 L8 0" stroke="#1F2A2E" stroke-width="5" stroke-linecap="round" fill="none"/></g></svg>';
+  return s;
+}
+function stairCap(){var L=level();return L===0?'你還站在地上。':(L===5?'你到了最上面：驗證碼。':'你在第 '+L+' 階。')}
+
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','放學回家，你打開一款常玩的手機遊戲。聊天室突然跳出一則訊息，是一個你不認識的人傳來的，他說自己是遊戲裡「公會」的會長。'),
+    el('p','lead','接下來，每一則訊息你都可以選一個回覆：「好啊」「不要」或「我先問家人」。沒有對錯，選你真的會怎麼回。'),
+    el('p','note','這是假的聊天室，阿凱是故事裡編出來的人物，不會真的傳出任何東西。'));
+  app.append(el('h1',null,'一步一步的訊息'),c,btn('打開聊天室','btn',function(){st.step=1;save(st);chat(true)}));
+}
+
+function items(){
+  var out=[];
+  if(!LAD)out.push(['kai',GREET]);
+  for(var i=0;i<REQ.length;i++){
+    out.push(['kai',REQ[i]]);
+    var a=st.ans[i];if(!a)break;
+    out.push(['me',RT[a]]);
+    if(a!=='y'){out.push(['sys','你停在這裡']);out.push(['kai',a==='n'?'喔好吧。':'喔，好吧。']);break}
+    out.push(['sys','你答應了第 '+(i+1)+' 步']);
+    if(i===REQ.length-1)out.push(['kai','收到，謝啦！']);
+  }
+  return out;
+}
+function chat(anim){
+  app.innerHTML='';
+  var stage=el('div','stage');
+  var ph=el('div','phone');
+  var bar=el('div','bar');bar.append(el('div','av','凱'),el('div',null,'<b>阿凱</b><span>自稱公會會長・你不認識他</span>'));
+  var log=el('div','log');
+  var its=items();var cut=its.length;
+  if(anim){cut=its.length-1;while(cut>0&&its[cut][0]!=='kai')cut--;if(its[cut][0]!=='kai')cut=its.length}
+  its.slice(0,cut).forEach(function(x){log.appendChild(x[0]==='sys'?el('p','sys',x[1]):el('div','msg '+x[0],x[1]))});
+  ph.append(bar,log);
+  var sw=el('div','stairs');sw.innerHTML=stairsSVG();sw.appendChild(el('p',null,stairCap()));
+  stage.append(ph,sw);
+  app.append(el('p','case',ROOM),stage);
+  if(cut<its.length){
+    log.appendChild(el('div','typing','<i></i><i></i><i></i>'));
+    setTimeout(function(){chat(false)},900);return;
+  }
+  if(chatDone()){
+    log.appendChild(el('p','sys','對話結束了'));
+    var nx=btn('下一步：回頭看樓梯','btn',function(){st.step=2;save(st);review()});
+    app.appendChild(nx);nx.scrollIntoView({behavior:'smooth',block:'end'});
+  }else{
+    var rp=el('div','replies');
+    ['y','n','f'].forEach(function(k){rp.appendChild(btn(RT[k],'rep',function(){
+      var prev=level();st.ans.push(k);save(st);chat(true);
+      var w=document.getElementById('who');if(w&&level()!==prev){w.style.transition='none';w.style.transform='translate('+sx(prev)+'px,'+sy(prev)+'px)';w.getBoundingClientRect();w.style.transition='';w.style.transform='translate('+sx(level())+'px,'+sy(level())+'px)'}
+    }))});
+    ph.appendChild(rp);
+    if(anim!==undefined)rp.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+}
+
+function tagFor(i){
+  if(!LAD)return i===4?'你的阿凱一開口，問的就是這一則。':'你的阿凱沒有問這一則。';
+  var a=st.ans[i];
+  if(a==='y')return '你回了「好啊」';
+  if(a)return '你回了「'+RT[a]+'」，對話停在這裡';
+  return '你沒有看到這一則';
+}
+function review(){
+  app.innerHTML='';
+  var lead=LAD?'這是阿凱一步一步傳的 5 則訊息。你沒看到的後面幾則，也一起列出來。':'你的阿凱一開口就要驗證碼。有些同學的阿凱，是一步一步問的，下面就是那 5 則訊息。';
+  var g=el('div','steps');var fb=el('div');fb.style.display='flex';fb.style.flexDirection='column';fb.style.gap='12px';
+  var opts=M.map(function(t,i){return [i+1,'<span class="num">'+(i+1)+'</span><span>'+t+'<span class="tag">'+tagFor(i)+'</span></span>']});
+  opts.push([0,'<span class="num">—</span><span>都還好，沒有哪一步覺得怪</span>']);
+  opts.forEach(function(o){var b=btn(o[1],'btn alt',function(){
+    Array.prototype.forEach.call(g.children,function(x){x.classList.remove('pick')});b.classList.add('pick');
+    st.odd=o[0];save(st);showFb(true);
+  });if(st.odd===o[0])b.classList.add('pick');g.appendChild(b)});
+  app.append(el('p','case','第二部分'),el('h1',null,'回頭看樓梯'),el('p','lead',lead),el('h2',null,'從哪一步開始，我覺得怪怪的？'),g,fb);
+  function showFb(scroll){fb.innerHTML='';
+    var nx=btn('下一步：安全小卡','btn',function(){st.step=3;save(st);card()});
+    fb.append(el('p','note','沒有對錯。每個人覺得怪的地方不一樣，等一下可以和全班比一比。<br><span style="font-size:.85em;color:var(--muted)">想換也可以，直接點別的訊息。</span>'),nx);
+    if(scroll)nx.scrollIntoView({behavior:'smooth',block:'end'});}
+  if(st.odd!=null)showFb(false);
+}
+
+var ICON={
+ key:'<svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="16" cy="26" r="10" fill="none" stroke="#B7862B" stroke-width="6"/><path d="M26 26 H48 M40 26 V36 M47 26 V34" stroke="#B7862B" stroke-width="6" fill="none" stroke-linecap="round"/></svg>',
+ id:'<svg viewBox="0 0 52 52" aria-hidden="true"><rect x="5" y="10" width="42" height="32" rx="6" fill="none" stroke="#205E86" stroke-width="5"/><circle cx="18" cy="24" r="5" fill="#205E86"/><path d="M10 36 Q18 28 26 36 M31 21 H41 M31 30 H41" stroke="#205E86" stroke-width="4" fill="none" stroke-linecap="round"/></svg>',
+ home:'<svg viewBox="0 0 52 52" aria-hidden="true"><path d="M6 26 L26 8 L46 26 M12 22 V44 H40 V22" stroke="#2F7D4F" stroke-width="5" fill="none" stroke-linejoin="round"/><rect x="21" y="30" width="10" height="14" fill="#2F7D4F"/></svg>',
+ tel:'<svg viewBox="0 0 52 52" aria-hidden="true"><rect x="14" y="4" width="24" height="44" rx="6" fill="none" stroke="#A8441A" stroke-width="5"/><text x="26" y="32" text-anchor="middle" font-size="12" font-weight="900" fill="#A8441A">165</text></svg>'
+};
+function card(){
+  app.innerHTML='';
+  var t=el('div','tips');
+  [['key','驗證碼就像家裡的鑰匙','簡訊收到的驗證碼，任何人來要都不能給。就算他說自己是會長、客服、朋友，或說要送你寶物，也一樣不能給。'],
+   ['id','個人資料不給陌生人','學校、班級、住址、穿制服的照片，都不要給網路上不認識的人。'],
+   ['home','不確定，先問家人','覺得怪怪的、不知道怎麼辦的時候，先停下來，問家人或老師。'],
+   ['tel','可以打 165','165 是反詐騙專線，家人和你都可以打去問問看。']
+  ].forEach(function(x){var d=el('div','tip');d.innerHTML=ICON[x[0]];d.append(el('b',null,x[1]),el('p',null,x[2]));t.appendChild(d)});
+  app.append(el('p','case','第三部分'),el('h1',null,'安全小卡'),t);
+  if(yesCount()>0)app.appendChild(el('p','note warm','很多人一開始都會答應，因為每一步看起來都很小。'));
+  app.appendChild(btn('看我的結果','btn',function(){st.step=4;save(st);end()}));
+}
+
+function end(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','你是'),el('p','chip',ROOM));
+  var L=level(),last=st.ans[st.ans.length-1];
+  var climb=LAD?(L===0?'第 0 階（還在地上）':'第 '+L+' 階（共 5 階）'):(L===5?'一步就到最上面':'第 0 階（還在地上）');
+  var how=last==='y'?(LAD?'每一步都回「好啊」':'回「好啊」'):(last==='n'?'回「不要」':'回「我先問家人」');
+  var odd=st.odd==null?'—':(st.odd===0?'都還好':'第 '+st.odd+' 步（'+SHORT[st.odd-1]+'）');
+  var t=el('table');
+  [['你爬到',climb],['最後有沒有答應傳驗證碼',gaveCode()?'有答應':'沒有答應'],['你停下來的方式',how],['從哪一步開始覺得怪怪的',odd]].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));t.appendChild(tr)});
+  c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c,
+    el('p','note','先答應一個小要求，之後更大的要求也比較容易答應。心理學家把這叫做「得寸進尺」。不過每一步，你都可以重新決定。'));
+}
+
+[intro,chat,review,card,end][st.step]();
+})();
+</script>

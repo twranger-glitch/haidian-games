@@ -1,0 +1,248 @@
+<title>國字方格計時賽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: estimate (best case / worst case seconds) → tap Chinese numerals 一…二十 in order on a shuffled grid, with one "accident" reshuffle mid-way → three bars (best, worst, actual) → second round → summary for a show of hands. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.btn{font:inherit;font-size:clamp(20px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;touch-action:manipulation}
+.btn:disabled{background:#9AA7A3;cursor:default}
+.btn:focus-visible,input:focus-visible,.cell:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+/* estimate */
+.q{font-size:clamp(23px,3.4vw,30px);font-weight:900;margin:0;line-height:1.45}
+.stepper{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pm{font:inherit;width:64px;height:64px;border-radius:16px;border:3px solid var(--line);background:var(--card);font-size:36px;font-weight:900;color:var(--sea);cursor:pointer;touch-action:manipulation;line-height:1}
+.pm:active{background:var(--note)}
+.num{font:inherit;width:120px;height:64px;border-radius:16px;border:3px solid var(--line);background:#fff;font-size:36px;font-weight:900;text-align:center;color:var(--rust);font-variant-numeric:tabular-nums}
+.num::-webkit-inner-spin-button,.num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.num{-moz-appearance:textfield}
+.unit{font-size:clamp(21px,3vw,26px);font-weight:700}
+.err{color:var(--rust);font-weight:700;margin:0;font-size:clamp(19px,2.6vw,23px);min-height:1.6em}
+.ref{font-size:clamp(19px,2.5vw,22px);margin:0}
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(4,minmax(56px,1fr));gap:10px;user-select:none;-webkit-user-select:none}
+@media (min-width:600px){.grid{grid-template-columns:repeat(5,minmax(56px,1fr))}}
+.cell{font:inherit;min-height:64px;aspect-ratio:1.25;border-radius:14px;border:3px solid var(--line);background:#fff;color:var(--ink);font-size:clamp(24px,4.6vw,38px);font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;padding:0;line-height:1}
+@media (min-width:600px){.cell{aspect-ratio:1.5}}
+.grid.ghost .cell{aspect-ratio:auto;min-height:56px;font-size:24px;background:#DADFD9;border-color:#C9CFC8;color:#A9B1AD;cursor:default}
+.cell.done{background:var(--good);border-color:var(--good);color:#fff}
+.cell.no{animation:no .32s ease}
+@keyframes no{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.grid.bump{animation:bump .55s ease}
+@keyframes bump{0%,100%{transform:rotate(0)}20%{transform:rotate(-2deg) translateX(-8px)}50%{transform:rotate(1.6deg) translateX(8px)}80%{transform:rotate(-.8deg)}}
+.bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.clock{font-size:clamp(34px,6vw,52px);font-weight:900;color:var(--rust);font-variant-numeric:tabular-nums;margin:0}
+.next{font-size:clamp(22px,3.2vw,28px);font-weight:900;margin:0}
+.next b{color:var(--sea);font-size:1.3em}
+.toast{background:#FBF1DC;border:3px solid var(--gold);border-radius:16px;padding:10px 16px;font-size:clamp(22px,3.4vw,30px);font-weight:900;text-align:center;margin:0}
+.toast.off{visibility:hidden}
+/* result bars */
+.bars{display:flex;flex-direction:column;gap:14px}
+.row .lab{display:flex;justify-content:space-between;gap:8px;font-size:clamp(19px,2.6vw,23px);font-weight:700}
+.row .lab b{font-variant-numeric:tabular-nums}
+.track{height:34px;background:#E3E7E2;border-radius:10px;overflow:hidden}
+.fill{height:100%;border-radius:10px}
+.big{font-size:clamp(46px,9vw,80px);font-weight:900;line-height:1.1;margin:0;text-align:center;color:var(--rust);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,23px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td.n{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+th{color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:620px){.two{grid-template-columns:1fr}}
+td.n{text-align:right}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='grid-timer-v1';
+var N=['','一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function rint(n){var a=new Uint32Array(1),lim=Math.floor(4294967296/n)*n,x;do{crypto.getRandomValues(a);x=a[0]}while(x>=lim);return x%n}
+function shuffle(arr){for(var i=arr.length-1;i>0;i--){var j=rint(i+1),t=arr[i];arr[i]=arr[j];arr[j]=t}return arr}
+var ACC2=[7,8,9,11,12,13,14,15];
+var st=load();
+if(!st||!st.r){st={step:'intro',r:[{},{}],acc:[10,ACC2[rint(ACC2.length)]],draft:{}};save(st)}
+var restarted=false;
+if(st.step==='play'){st.step='ready';restarted=true;save(st)}
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(txt,fn,cls){var b=el('button','btn'+(cls?' '+cls:''),txt);b.type='button';
+  /* 如果輸入框還在聚焦，按下按鈕時頁面可能捲動，放開時手指已不在按鈕上；用按下的位置補判一次 */
+  var down=null,done=false;function fire(){if(done||b.disabled)return;done=true;fn()}
+  b.addEventListener('click',fire);
+  b.addEventListener('pointerdown',function(e){down={x:e.clientX,y:e.clientY,t:Date.now()}});
+  document.addEventListener('pointerup',function(e){if(!down)return;var d=down;down=null;
+    if(Date.now()-d.t<1000&&Math.abs(e.clientX-d.x)<20&&Math.abs(e.clientY-d.y)<20&&b.isConnected)setTimeout(fire,0)});
+  return b}
+function go(step){st.step=step;save(st);render();window.scrollTo(0,0)}
+function f1(x){return (Math.round(x*10)/10).toFixed(1)}
+function rd(){return st.round||0}
+
+function render(){
+  var s=st.step;
+  if(s==='intro')intro();else if(s==='est')est();else if(s==='ready')ready();else if(s==='res')res();else end();
+}
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','畫面上會出現一個方格，裡面有國字數字「一」到「二十」，一共 20 格，位置全都被打亂了。'),
+    el('p','lead','你要照順序點：一、二、三……一直點到「二十」。點對的格子會變成綠色；點錯的格子只會輕輕抖一下，不會扣分。'),
+    el('p','lead','開始之前，你要先估一估：自己大概要花幾秒？一共玩兩回。'));
+  app.append(el('h1',null,'國字方格計時賽'),c,btn('開始估一估',function(){st.round=0;go('est')}));
+}
+function ghost(){
+  var g=el('div','grid ghost');g.setAttribute('aria-hidden','true');
+  for(var i=0;i<20;i++)g.appendChild(el('div','cell','？'));return g;
+}
+function stepper(key,label){
+  var wrap=el('div','card');
+  wrap.appendChild(el('p','q',label));
+  var row=el('div','stepper');
+  var minus=el('button','pm','－');minus.type='button';minus.setAttribute('aria-label','少 1 秒');
+  var plus=el('button','pm','＋');plus.type='button';plus.setAttribute('aria-label','多 1 秒');
+  var inp=document.createElement('input');inp.className='num';inp.type='number';inp.inputMode='numeric';inp.min=1;inp.max=600;inp.step=1;inp.placeholder='？';inp.setAttribute('aria-label',label);
+  var d=st.draft[rd()+key];if(d!=null&&d!=='')inp.value=d;
+  function setv(v){v=Math.max(1,Math.min(600,v));inp.value=v;changed()}
+  function bump(k){var v=parseInt(inp.value,10);if(isNaN(v))v=10;else v+=k;setv(v)}
+  function hold(b,k){var t1=null,t2=null;
+    function stop(){clearTimeout(t1);clearInterval(t2);t1=t2=null}
+    b.addEventListener('pointerdown',function(e){e.preventDefault();bump(k);stop();t1=setTimeout(function(){t2=setInterval(function(){bump(k)},110)},450)});
+    ['pointerup','pointerleave','pointercancel'].forEach(function(n){b.addEventListener(n,stop)});
+    b.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();bump(k)}});
+  }
+  hold(minus,-1);hold(plus,1);
+  function changed(){st.draft[rd()+key]=inp.value;save(st);check()}
+  inp.addEventListener('input',changed);
+  row.append(minus,inp,plus,el('span','unit','秒'));
+  wrap.appendChild(row);
+  return {node:wrap,get:function(){var v=parseInt(inp.value,10);return isNaN(v)?null:v}};
+}
+var check=function(){};
+function est(){
+  app.innerHTML='';
+  var k=rd();
+  app.append(el('p','case','第 '+(k+1)+' 回，共 2 回'),el('h2',null,'先估一估：點完 20 格，你要花幾秒？'));
+  if(k===1){var p=st.r[0];app.appendChild(el('p','note','上一回：順利估計 <b>'+p.best+' 秒</b>、最不順估計 <b>'+p.worst+' 秒</b>，實際花了 <b>'+f1(p.actual)+' 秒</b>。這一回，方格會重新打亂。'))}
+  var c=el('div','card');c.append(el('p','lead','方格長這樣，不過現在還看不到裡面的字：'),ghost());app.appendChild(c);
+  var a=stepper('b','① 一切順利的話，我要幾秒？');
+  var b=stepper('w','② 如果很不順，最慢要幾秒？');
+  var er=el('p','err','');
+  var go1=btn('估好了，開始計時',function(){
+    st.r[k]={best:a.get(),worst:b.get()};save(st);startPlay();
+  });
+  check=function(){
+    var x=a.get(),y=b.get(),m='';
+    if(x==null||y==null)m='兩個數字都要填。（按 ＋ 或 － 調整，也可以直接打數字。）';
+    else if(y<x)m='「最慢」的秒數，不能比「順利」的秒數還少喔。';
+    er.textContent=m;go1.disabled=!!m;
+  };
+  app.append(a.node,b.node,er,go1);check();
+}
+function ready(){
+  app.innerHTML='';var k=rd(),p=st.r[k];
+  app.append(el('p','case','第 '+(k+1)+' 回，共 2 回'),el('h2',null,'重新整理了，這一回重來。'),
+    el('p','note','你剛才的估計還在：順利的話 <b>'+p.best+' 秒</b>，最不順 <b>'+p.worst+' 秒</b>。方格會重新打亂，按下面的按鈕就重新開始計時。'));
+  var c=el('div','card');c.appendChild(ghost());app.appendChild(c);
+  app.appendChild(btn('重新開始這一回',function(){startPlay()}));
+}
+var raf=0;
+function startPlay(){
+  st.step='play';save(st);window.scrollTo(0,0);
+  var k=rd(),accAt=st.acc[k],next=1,bumped=false;
+  var order=shuffle([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]);
+  app.innerHTML='';
+  var top=el('div','bar-top');var nx=el('p','next','');var clk=el('p','clock','0.0 秒');top.append(nx,clk);
+  var toast=el('p','toast','哎呀，桌子被撞到了！方格全亂了！');toast.classList.add('off');
+  var g=el('div','grid');var cells={};
+  for(var n=1;n<=20;n++){(function(n){var c=el('button','cell',N[n]);c.type='button';c.setAttribute('aria-label',N[n]);
+    c.addEventListener('pointerdown',function(e){e.preventDefault();tap(n,c)});
+    c.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();tap(n,c)}});
+    cells[n]=c})(n)}
+  function layout(){order.forEach(function(n){g.appendChild(cells[n])})}
+  layout();
+  function upd(){nx.innerHTML='下一個：<b>'+(next<=20?N[next]:'完成')+'</b>'}
+  upd();
+  app.append(el('p','case','第 '+(k+1)+' 回，共 2 回'),top,toast,g);
+  var t0=performance.now();
+  function tick(){clk.textContent=f1((performance.now()-t0)/1000)+' 秒';raf=requestAnimationFrame(tick)}
+  cancelAnimationFrame(raf);raf=requestAnimationFrame(tick);
+  function tap(n,c){
+    if(next>20)return;
+    if(n!==next){c.classList.remove('no');void c.offsetWidth;c.classList.add('no');return}
+    c.classList.add('done');c.disabled=true;next++;upd();
+    if(n===accAt&&!bumped){bumped=true;
+      order=shuffle(order.slice());layout();
+      toast.classList.remove('off');g.classList.remove('bump');void g.offsetWidth;g.classList.add('bump');
+      setTimeout(function(){toast.classList.add('off')},2200);
+    }
+    if(next>20){
+      var t=(performance.now()-t0)/1000;cancelAnimationFrame(raf);clk.textContent=f1(t)+' 秒';
+      st.r[k].actual=Math.round(t*10)/10;st.r[k].accAt=accAt;st.step='res';save(st);
+      var d=el('p','note','點完了！');app.appendChild(d);
+      setTimeout(function(){render();window.scrollTo(0,0)},700);
+    }
+  }
+}
+function cmp(p){
+  var d=Math.round((p.actual-p.best)*10)/10;
+  if(Math.abs(d)<=2)return {code:'B',txt:'差不多（差 2 秒以內）',line:'實際和順利的估計差不多，只差 '+f1(Math.abs(d))+' 秒。'};
+  if(d<0)return {code:'A',txt:'比估計的少',line:'實際比順利的估計<b>少 '+f1(-d)+' 秒</b>。'};
+  return {code:'C',txt:'比估計的多',line:'實際比順利的估計<b>多 '+f1(d)+' 秒</b>。'};
+}
+function enough(p){return p.actual<=p.worst}
+function bars(p){
+  var mx=Math.max(p.best,p.worst,p.actual)*1.08;
+  var w=el('div','bars');
+  [['一切順利的估計',p.best,'var(--sea)',p.best+' 秒'],['最不順的估計',p.worst,'var(--gold)',p.worst+' 秒'],['實際花的時間',p.actual,'var(--rust)',f1(p.actual)+' 秒']].forEach(function(r){
+    var row=el('div','row');row.appendChild(el('div','lab','<span>'+r[0]+'</span><b>'+r[3]+'</b>'));
+    var tr=el('div','track');var f=el('div','fill');f.style.width=(r[1]/mx*100).toFixed(1)+'%';f.style.background=r[2];tr.appendChild(f);row.appendChild(tr);w.appendChild(row);
+  });
+  return w;
+}
+function res(){
+  app.innerHTML='';var k=rd(),p=st.r[k],c=cmp(p),ok=enough(p);
+  app.append(el('p','case','第 '+(k+1)+' 回的結果'),el('p','big',f1(p.actual)+' 秒'));
+  var card=el('div','card');card.appendChild(bars(p));app.appendChild(card);
+  app.appendChild(el('p','note',c.line+'<br>'+(ok?'最不順的估計（'+p.worst+' 秒）<b>夠用</b>，實際沒有超過它。':'最不順的估計（'+p.worst+' 秒）<b>不夠</b>，實際還多了 '+f1(p.actual-p.worst)+' 秒。')));
+  app.appendChild(el('p','note warm','這一回，在你點到「'+N[p.accAt]+'」的時候，桌子被撞到，方格全亂了。你估計的時候，有沒有想到會發生這種事？'));
+  if(k===0)app.appendChild(btn('第二回：再估一次',function(){st.round=1;go('est')}));
+  else app.appendChild(btn('看兩回的總整理',function(){go('end')}));
+}
+function end(){
+  app.innerHTML='';
+  app.appendChild(el('h2',null,'做完了！請停在這一頁，等其他同學。'));
+  var a=st.r[0],b=st.r[1],ca=cmp(a),cb=cmp(b);
+  var two=el('div','two');
+  [[a,ca,'第一回'],[b,cb,'第二回']].forEach(function(x){var p=x[0],c=x[1];var cd=el('div','card');cd.appendChild(el('p','case',x[2]));
+    var t=el('table');[['順利的估計',p.best+' 秒'],['最不順的估計',p.worst+' 秒'],['實際花的時間',f1(p.actual)+' 秒'],['和順利估計比',c.code+'（'+c.txt.replace('（差 2 秒以內）','')+'）'],['最不順估計夠嗎',enough(p)?'夠':'不夠']].forEach(function(r){
+      var tr=el('tr');tr.append(el('td',null,r[0]),el('td','n',r[1]));t.appendChild(tr)});
+    cd.appendChild(t);two.appendChild(cd)});
+  app.appendChild(two);
+  var da=Math.abs(a.actual-a.best),db=Math.abs(b.actual-b.best);
+  var v=Math.abs(da-db)<=1?'第二回的估計和第一回差不多準。':(db<da?'第二回的順利估計，比第一回<b>更接近</b>實際。':'第二回的順利估計，反而比第一回<b>離實際更遠</b>。');
+  app.appendChild(el('p','note',v+'<br><span style="font-size:.9em;color:var(--muted)">A＝比估計的少　B＝差不多（差 2 秒以內）　C＝比估計的多</span>'));
+  app.appendChild(el('p','note warm','很多人估計自己要花多少時間，常常估得太少，連「最不順」的估計也不一定夠。心理學家把這種現象叫做「計畫謬誤」。'));
+}
+render();
+})();
+</script>

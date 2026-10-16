@@ -1,0 +1,641 @@
+<title>四草夏令營</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Flow: intro → day 1 own team (teammates, cheer, pick flag colour) → day 2 three matches (fixed: own team wins 1, loses 2; taunt + complaint bubbles) → gauge 1 → day 3 morning breakfast + show (still silent) → gauge 2 → water tower + stuck truck story → pull the rope together (alternate left/right) → gauge 3 → line chart of 3 gauges → what changed your mind (all choices ok) → summary. Team (招潮蟹隊／彈塗魚隊) is drawn with crypto and saved. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5; --warm:#FBF1DC;
+  --crab:#B4531F; --crabL:#F7E1D2; --mud:#22707E; --mudL:#DCEEF0;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.lead b{color:var(--ink)}
+.case{font-size:clamp(19px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45;touch-action:manipulation}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700;display:flex;align-items:center;gap:12px}
+.btn.alt.pick{border-color:var(--gold);background:var(--warm)}
+.btn.go{background:var(--rust)}
+.btn:focus-visible,.gauge svg:focus-visible,.sw:focus-visible,.pullbtn:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:var(--warm)}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+.btn.alt svg.i{width:1.6em;height:1.6em;color:var(--sea)}
+/* team chip */
+.tchip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 14px 4px 8px;font-weight:900;font-size:clamp(19px,2.4vw,22px);letter-spacing:0;line-height:1.4}
+.tchip.t0{background:var(--crabL);color:var(--crab)}
+.tchip.t1{background:var(--mudL);color:var(--mud)}
+.tchip .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+/* intro badges */
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.badge{border-radius:20px;padding:14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:900;font-size:clamp(21px,3vw,28px)}
+.badge svg.i{width:72px;height:72px}
+.badge.t0{background:var(--crabL);color:var(--crab)}
+.badge.t1{background:var(--mudL);color:var(--mud)}
+.badge.t0 svg.i,.badge.t1 svg.i{color:var(--ink)}
+.days{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:clamp(19px,2.6vw,24px)}
+.days li{display:flex;gap:10px;align-items:center}
+.days b{white-space:nowrap}
+/* teammates */
+.mates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mate{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:3px solid var(--line);border-radius:18px;padding:12px}
+.mate svg.av{width:68px;height:68px;flex:none}
+.mate h3{margin:0;font-size:clamp(21px,2.8vw,25px)}
+.mate p{margin:0;font-size:clamp(19px,2.4vw,22px);line-height:1.55}
+.cheer{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.5;text-wrap:balance}
+.cheer.t0{color:var(--crab)} .cheer.t1{color:var(--mud)}
+/* flag */
+.flagbox{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;align-items:center}
+.flagbox svg.flag{width:100%;height:auto;max-width:300px;justify-self:center}
+.swatches{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sw{font:inherit;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-weight:700;font-size:19px;color:var(--ink);touch-action:manipulation}
+.sw span.c{width:44px;height:44px;border-radius:50%;border:3px solid var(--ink)}
+.sw.pick{border-color:var(--gold);background:var(--warm)}
+/* matches */
+.score{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.slot{border:3px solid var(--line);border-radius:14px;padding:6px 4px;text-align:center;font-size:clamp(17px,2.2vw,20px);font-weight:700;color:var(--muted);background:var(--card);line-height:1.35}
+.slot svg.i{width:1.5em;height:1.5em;display:block;margin:0 auto 2px;color:var(--ink)}
+.slot.now{border-color:var(--sea)}
+.slot.w0{background:var(--crabL);border-color:var(--crab);color:var(--crab)}
+.slot.w1{background:var(--mudL);border-color:var(--mud);color:var(--mud)}
+.scene{width:100%;height:auto;display:block;border-radius:16px}
+.tugg{transform-box:view-box}
+.tugg.runL{animation:tugL 2.4s ease-in-out forwards}
+.tugg.runR{animation:tugR 2.4s ease-in-out forwards}
+.tugg.endL{transform:translateX(-36px)} .tugg.endR{transform:translateX(36px)}
+@keyframes tugL{0%{transform:translateX(0)}15%{transform:translateX(-10px)}30%{transform:translateX(9px)}45%{transform:translateX(-14px)}60%{transform:translateX(10px)}100%{transform:translateX(-36px)}}
+@keyframes tugR{0%{transform:translateX(0)}15%{transform:translateX(10px)}30%{transform:translateX(-9px)}45%{transform:translateX(14px)}60%{transform:translateX(-10px)}100%{transform:translateX(36px)}}
+.lanes{display:flex;flex-direction:column;gap:12px;background:#F3EAD3;border-radius:16px;padding:12px}
+.lane{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}
+.lane .nm{font-weight:900;font-size:clamp(17px,2.4vw,21px);white-space:nowrap}
+.lane .nm.t0{color:var(--crab)} .lane .nm.t1{color:var(--mud)}
+.track{position:relative;height:56px;border-bottom:3px dashed #C9B98F}
+.runner{position:absolute;left:0;top:2px;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid var(--ink);transition:left 2.2s cubic-bezier(.4,.1,.5,1)}
+.runner.t0{background:var(--crabL)} .runner.t1{background:var(--mudL)}
+.runner svg.i{width:34px;height:34px}
+.lane .goal svg.i{width:44px;height:44px}
+.tent{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(.12)}
+.tents.run .tent{transition:transform 2.2s ease-in-out}
+.tents.run .tent.w,.tents.end .tent.w{transform:scaleY(1)}
+.tents.run .tent.l,.tents.end .tent.l{transform:scaleY(.58) skewX(-10deg)}
+.result{font-size:clamp(25px,4.2vw,36px);font-weight:900;margin:0;text-align:center}
+.result.t0{color:var(--crab)} .result.t1{color:var(--mud)}
+.prize{display:flex;gap:10px;align-items:center;justify-content:center;font-size:clamp(19px,2.6vw,23px);font-weight:700;margin:0;text-align:left}
+.prize svg.i{width:1.6em;height:1.6em}
+.say{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start}
+.say svg.av{width:64px;height:64px}
+.say .who{font-size:clamp(17px,2.2vw,19px);font-weight:900;margin:0 0 4px}
+.say .who.t0{color:var(--crab)} .say .who.t1{color:var(--mud)}
+.bub{position:relative;border-radius:18px;padding:12px 16px;font-size:clamp(19px,2.6vw,24px);line-height:1.6;margin:0;border:3px solid var(--line);background:var(--card)}
+.bub.t0{border-color:#E8BFA4;background:#FDF4EE}
+.bub.t1{border-color:#A9D0D6;background:#F1F8F9}
+/* gauge */
+.gauge{display:flex;flex-direction:column;align-items:center;gap:6px}
+.gauge svg{width:100%;max-width:520px;height:auto;touch-action:none;cursor:pointer;border-radius:12px}
+.gauge .ends{width:100%;max-width:520px;display:flex;justify-content:space-between;font-weight:700;color:var(--muted);font-size:clamp(19px,2.4vw,22px);margin-top:-6px}
+.readout{font-size:clamp(26px,4.6vw,40px);font-weight:900;margin:0;text-align:center;color:var(--ink)}
+.readout.none{color:var(--muted);font-size:clamp(19px,2.8vw,25px);font-weight:700}
+#needle{transform-origin:160px 172px;transition:transform .25s ease-out}
+/* breakfast */
+.tablescene{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;align-items:end}
+.tablescene svg.av{width:100%;height:auto;display:block}
+.tablescene .seat{aspect-ratio:1;border-radius:50%;border:3px dashed var(--line)}
+.tablescene .tab{grid-column:1/-1;height:20px;border-radius:8px;background:#C9A574;border:3px solid var(--ink)}
+.tablescene .q{grid-column:span 4;display:flex;justify-content:center;color:var(--muted)}
+.tablescene .q svg.i{width:40px;height:40px}
+.tablescene .gap{grid-column:span 2}
+.icrow{display:flex;gap:14px;align-items:flex-start}
+.icrow > svg.i{width:56px;height:56px;flex:none;margin-top:2px}
+/* rope */
+.pullrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pullbtn{font:inherit;border:3px solid var(--ink);border-radius:20px;min-height:132px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;font-weight:900;font-size:clamp(20px,2.8vw,25px);color:var(--ink);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .08s;user-select:none;-webkit-user-select:none}
+.pullbtn:active{transform:scale(.95)}
+.pullbtn.t0{background:var(--crabL)} .pullbtn.t1{background:var(--mudL)}
+.pullbtn svg.i{width:60px;height:60px}
+.pullbtn small{font-size:clamp(17px,2.2vw,19px);font-weight:700;color:var(--muted)}
+.pullbtn:disabled{opacity:.5;cursor:default}
+.bar{height:30px;border-radius:999px;background:#E3E6E0;border:3px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--crab),var(--gold),var(--mud));transition:width .2s}
+.barlbl{display:flex;justify-content:space-between;font-weight:700;color:var(--muted);font-size:clamp(19px,2.4vw,22px);margin:0}
+.fig{transform-box:fill-box;transform-origin:50% 100%;transition:transform .18s}
+.fig.lean{transform:rotate(14deg)}
+#truck{transition:transform .25s}
+/* chart */
+.chart{width:100%;max-width:560px;height:auto;align-self:center}
+.legend{font-size:clamp(19px,2.4vw,22px);color:var(--muted);font-weight:700;margin:0;text-align:center}
+ul.why{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;font-size:clamp(19px,2.6vw,24px);line-height:1.65}
+ul.why li{display:flex;gap:12px;align-items:flex-start}
+ul.why li svg.i{width:1.7em;height:1.7em;flex:none;margin-top:.1em;color:var(--sea)}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+th,td{padding:10px 8px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:700}
+@media (max-width:620px){
+  .wrap{padding-inline:16px}
+  .mates{grid-template-columns:1fr}
+  .flagbox{grid-template-columns:1fr}
+  th,td{padding:8px 4px}
+  .say svg.av{width:52px;height:52px}
+  .runner{width:44px;height:44px} .runner svg.i{width:28px;height:28px}
+  .lane .goal svg.i{width:36px;height:36px}
+  .pullbtn{min-height:120px}
+}
+@media (prefers-reduced-motion:reduce){.tugg.runL,.tugg.runR{animation-duration:.01s}.runner,.tents.run .tent{transition-duration:.01s}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"crab": "<path d=\"M6.9 13.2L4.6 10.6\"/><path d=\"M4.9 11.2L2.7 9.4a1.5 1.5 0 0 1 2.2-2L6 9.3\" fill=\"#F2C9B5\"/><path d=\"M17.1 13.2l1.8-2.6\"/><path d=\"M18.4 11.4c-2.4-1.4-2.7-5.2-.4-7.2 1.9-.9 4 .2 4.4 2.3l-2.6.7 2.5 1.4c-.4 1.8-2 3-3.9 2.8z\" fill=\"#F3B48C\"/><path d=\"M10 12V8.6M14 12V8.6\"/><circle cx=\"10\" cy=\"7.8\" r=\"1.1\" fill=\"currentColor\"/><circle cx=\"14\" cy=\"7.8\" r=\"1.1\" fill=\"currentColor\"/><path d=\"M5.6 15.2C5.6 13 8.5 12 12 12s6.4 1 6.4 3.2-2.9 3.4-6.4 3.4-6.4-1.2-6.4-3.4z\" fill=\"#F2C9B5\"/><path d=\"M7.4 17.8l-2 2.6M9.8 18.6l-1 2.6M16.6 17.8l2 2.6M14.2 18.6l1 2.6\"/>", "mudskip": "<path d=\"M2.6 15.4c0-3.2 2.4-5.2 5.8-5.2h6.4c2.4 0 3.8.9 5 2.4l1.8-1.8v6.4l-1.8-1.4c-1.2 1.3-2.7 1.9-5 1.9H7c-2.6 0-4.4-.7-4.4-2.3z\" fill=\"#CFE0E8\"/><path d=\"M10.6 10.2c1-2.6 2.8-3.8 5-3.6l-.6 3.6\" fill=\"#CFE0E8\"/><circle cx=\"6.4\" cy=\"8.6\" r=\"2.4\" fill=\"#FBFCF9\"/><circle cx=\"6.9\" cy=\"8.4\" r=\".9\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M2.8 15h2\"/><path d=\"M9.4 17.9l-1.6 2.7h3\"/><path d=\"M1.5 21.4h21\"/>", "tug": "<path d=\"M1.6 13.6h20.8\"/><path d=\"M12 13.6l-1.7 4.4h3.4z\" fill=\"#F2B8A0\"/><circle cx=\"4.6\" cy=\"5\" r=\"2\" fill=\"#F6E3D6\"/><path d=\"M5.2 7.2L3.6 13.4M3.6 13.4L2 19.8M3.6 13.4l2.6 6.2\"/><circle cx=\"19.4\" cy=\"5\" r=\"2\" fill=\"#F6E3D6\"/><path d=\"M18.8 7.2l1.6 6.2M20.4 13.4l1.6 6.4M20.4 13.4l-2.6 6.2\"/>", "chest": "<path d=\"M3 10.2V8.6A3.6 3.6 0 0 1 6.6 5h10.8A3.6 3.6 0 0 1 21 8.6v1.6z\" fill=\"#F3D27A\"/><rect x=\"3\" y=\"10.2\" width=\"18\" height=\"10\" rx=\"1.6\" fill=\"#F3E3BE\"/><path d=\"M8 5v15.2M16 5v15.2\"/><rect x=\"10.3\" y=\"9\" width=\"3.4\" height=\"4.2\" rx=\".9\" fill=\"#FBFCF9\"/>", "tent": "<path d=\"M12 4.6L2.6 20h18.8z\" fill=\"#CFE3C4\"/><path d=\"M8.8 20l3.2-6.4 3.2 6.4\" fill=\"#FBFCF9\"/><path d=\"M12 4.6V2.2\"/><path d=\"M12 2.2l3 1.1-3 1.1\" fill=\"#F2B8A0\"/><path d=\"M1.6 20h20.8\"/>", "tower": "<rect x=\"5.6\" y=\"2.6\" width=\"12.8\" height=\"7.4\" rx=\"2.2\" fill=\"#DCE8F0\"/><path d=\"M8 10l-1.8 11.4M16 10l1.8 11.4M7.1 15.4h9.8\"/><path d=\"M12 10v3.6\"/><path d=\"M10.9 13.6h2.2\"/><path d=\"M12 16.4c1 1.3 1.6 2.2 1.6 2.9a1.6 1.6 0 0 1-3.2 0c0-.7.6-1.6 1.6-2.9z\" fill=\"#BFD9EA\"/>", "truck": "<rect x=\"1.8\" y=\"6.2\" width=\"11.6\" height=\"10.4\" rx=\"1.2\" fill=\"#F3E3BE\"/><path d=\"M13.4 9.2h4.2l3.6 3.8v3.6h-7.8z\" fill=\"#DCE8F0\"/><path d=\"M15 11h2.1l1.7 1.9H15z\" fill=\"#FBFCF9\"/><circle cx=\"6\" cy=\"17.6\" r=\"2.1\" fill=\"#FBFCF9\"/><circle cx=\"17\" cy=\"17.6\" r=\"2.1\" fill=\"#FBFCF9\"/><path d=\"M1.4 21.2q3-1.4 6 0t6 0 6 0 3.2-.4\"/>", "bowl": "<path d=\"M3 11.4h18a9 7.6 0 0 1-18 0z\" fill=\"#F3E3BE\"/><path d=\"M8.6 20.2h6.8\"/><path d=\"M8.6 8.2q-1-1.6 0-3.2M12 8.2q-1-1.6 0-3.2M15.4 8.2q-1-1.6 0-3.2\"/>", "stage": "<rect x=\"2.5\" y=\"3.6\" width=\"19\" height=\"15.6\" rx=\"1.6\" fill=\"#FBF4E2\"/><path d=\"M2.5 4.2c3.4 2.6 4.2 8.2 3.6 15M21.5 4.2c-3.4 2.6-4.2 8.2-3.6 15\" fill=\"#F2B8A0\"/><path d=\"M12 8.4l1.1 2.2 2.4.4-1.7 1.7.4 2.4-2.2-1.1-2.2 1.1.4-2.4-1.7-1.7 2.4-.4z\" fill=\"#F3D27A\"/><path d=\"M1.5 19.2h21\"/>", "pull": "<path d=\"M1.4 13.2h4.2M18.4 13.2h4.2\"/><path d=\"M5.6 10.4a1.7 1.7 0 0 1 3.2-.8 1.7 1.7 0 0 1 3.2 0 1.7 1.7 0 0 1 3.2 0 1.7 1.7 0 0 1 3.2.8V16a3 3 0 0 1-3 3H8.6a3 3 0 0 1-3-3z\" fill=\"#F6E3D6\"/><path d=\"M8.8 9.6v3M12 9.6v3M15.2 9.6v3\"/><path d=\"M5.6 13.6h5a1.5 1.5 0 0 1 0 3H8\"/><path d=\"M9.4 19v3M14.8 19v3\"/>", "flag": "<path d=\"M6 21.5V3\"/><path d=\"M6 4h12.2l-2.6 4 2.6 4H6z\" fill=\"#F3D27A\"/><path d=\"M3.5 21.5h5\"/>", "gift": "<rect x=\"4\" y=\"10.4\" width=\"16\" height=\"10.6\" rx=\"1.6\" fill=\"#DCE8F0\"/><rect x=\"2.8\" y=\"7\" width=\"18.4\" height=\"3.6\" rx=\"1.2\" fill=\"#FBFCF9\"/><path d=\"M12 7v14\"/><path d=\"M12 7C10.2 2.4 5 2.2 5.6 5.2 6 7 12 7 12 7zM12 7c1.8-4.6 7-4.8 6.4-1.8C18 7 12 7 12 7z\" fill=\"#F2B8A0\"/>", "quiet": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"11.4\" rx=\"5.7\" fill=\"#EEE6F3\"/><circle cx=\"8\" cy=\"8.7\" r=\".9\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"8.7\" r=\".9\" fill=\"currentColor\"/><circle cx=\"16\" cy=\"8.7\" r=\".9\" fill=\"currentColor\"/><circle cx=\"7.4\" cy=\"17.6\" r=\"1.7\" fill=\"#EEE6F3\"/><circle cx=\"4.6\" cy=\"20.8\" r=\"1\" fill=\"#EEE6F3\"/>", "mega": "<path d=\"M3.5 9.5h3l8-4.5v14l-8-4.5h-3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z\" fill=\"#DCE8F0\"/><path d=\"M6.5 14.5l1.6 5h2.6l-1.4-4.2\"/><path d=\"M18 9.2a4 4 0 0 1 0 5.6M20.5 6.8a7.4 7.4 0 0 1 0 10.4\"/>", "talk": "<path d=\"M2.8 5.6a2.2 2.2 0 0 1 2.2-2.2h8.6a2.2 2.2 0 0 1 2.2 2.2v4.6a2.2 2.2 0 0 1-2.2 2.2H8.4L4.8 15.2v-2.9a2.2 2.2 0 0 1-2-2.1z\" fill=\"#DCE8F0\"/><path d=\"M18.6 8.6h.4a2.2 2.2 0 0 1 2.2 2.2v4.4a2.2 2.2 0 0 1-2 2.2v2.8l-3.6-2.8h-4.2a2.2 2.2 0 0 1-2.2-2.2\" fill=\"#F6DCCF\"/>", "minus": "<path d=\"M5 12h14\"/>", "people": "<circle cx=\"9\" cy=\"7.6\" r=\"3.4\" fill=\"#F6E3D6\"/><path d=\"M2.6 20.5c.4-4 2.8-6.3 6.4-6.3s6 2.3 6.4 6.3z\" fill=\"#F6E3D6\"/><path d=\"M15.4 4.6a3 3 0 0 1 0 6\"/><path d=\"M17.2 14.4c2.6.6 4 2.6 4.3 6.1h-2.8\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+var app=document.getElementById('app');
+var KEY='camp-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(){try{var a=new Uint8Array(1);crypto.getRandomValues(a);return a[0]&1}catch(e){return Math.random()<0.5?1:0}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){return {team:rnd(),step:0,flag:null,ev:0,evs:[0,0,0],g:[null,null,null],pull:{p:0,last:null,same:0},feel:null}}
+var st=load();
+if(!st||(st.team!==0&&st.team!==1)){st=fresh()}
+if(!st.evs)st.evs=[0,0,0];if(!st.g)st.g=[null,null,null];if(!st.pull)st.pull={p:0,last:null,same:0};
+save(st);
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function button(txt,cls,fn){var b=el('button',cls||'btn',txt);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+
+/* ---------- people ---------- */
+var HAIR=[
+ '<path d="M19 25 Q19 12 32 13 Q45 12 45 25 Q41 17.5 33 18.5 Q30 15.5 26 18.5 Q22 20 19 25 Z" fill="#2B2118"/>',
+ '<path d="M18.5 30 Q17 12 32 12.5 Q47 12 45.5 30 Q44 20 32 19.5 Q20 20 18.5 30 Z" fill="#5A3A22"/><circle cx="47" cy="22" r="4.5" fill="#5A3A22"/><circle cx="44.2" cy="19.6" r="1.6" fill="#E8A0A8"/>',
+ '<path d="M19 24 Q18.5 11 32 12 Q45.5 11 45 24 L42 19 L38.5 22 L35 18 L31 21.5 L27 18 L23.5 21.5 Z" fill="#1F1A16"/>',
+ '<path d="M18 34 Q16 12 32 12.5 Q48 12 46 34 Q44 22 40 19 Q32 22 22 19.5 Q19 24 18 34 Z" fill="#3A2A1C"/>',
+ '<path d="M19.5 24 Q20 12.5 32 13 Q44 12.5 44.5 24 Q38 17 26 19 Q22 20 19.5 24 Z" fill="#3A2A1C"/>',
+ '<path d="M18 33 Q16 12 32 12.5 Q48 12 46 33 Q45 24 42 20 Q34 17 27 20 Q21 22 20 26 Q19 29 18 33 Z" fill="#2B2118"/>',
+ '<path d="M19 25 Q19 12 32 13 Q45 12 45 25 Q40 18 32 18.5 Q24 18 19 25 Z" fill="#4A3020"/>',
+ '<path d="M18.5 31 Q17 12 32 12.5 Q47 12 45.5 31 Q43 21 32 20 Q21 21 18.5 31 Z" fill="#1F1A16"/><path d="M17 26 Q14 33 18 37 M47 26 Q50 33 46 37" fill="none" stroke="#1F1A16" stroke-width="3.5" stroke-linecap="round"/>'
+];
+var SKIN=['#F2CFAE','#F2CFAE','#E3B48C','#EBC29E','#EBC29E','#F2CFAE','#E9BE96','#F2CFAE'];
+function face(h,shirt){
+  return '<svg class="av" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#EEF1EC"/><path d="M12 64 Q13 44 32 44 Q51 44 52 64 Z" fill="'+shirt+'"/><circle cx="32" cy="27" r="13" fill="'+SKIN[h]+'"/>'+HAIR[h]+'<circle cx="27.5" cy="28" r="1.8" fill="#1F2A2E"/><circle cx="36.5" cy="28" r="1.8" fill="#1F2A2E"/><path d="M27.5 33 Q32 36.5 36.5 33" fill="none" stroke="#1F2A2E" stroke-width="2" stroke-linecap="round"/></svg>';
+}
+var TEAMS=[
+ {name:'招潮蟹隊',ic:'crab',c:'#B4531F',
+  cheer:'舉起大螯，橫著走也不怕！招潮蟹，加油、加油！',
+  kids:[{n:'阿凱',h:0,t:'我跑得很快，尋寶的時候交給我！'},{n:'小芸',h:1,t:'我很會綁繩結，搭帳篷沒問題。'},{n:'阿哲',h:2,t:'我家就住在四草，泥灘上的招潮蟹，我從小看到大。'},{n:'小晴',h:3,t:'我負責喊隊呼，我的聲音最大聲！'}]},
+ {name:'彈塗魚隊',ic:'mudskip',c:'#22707E',
+  cheer:'泥灘上跳一跳，誰也追不到！彈塗魚，衝、衝、衝！',
+  kids:[{n:'阿翔',h:4,t:'我的力氣很大，拔河我站第一個。'},{n:'小琪',h:5,t:'我很會看地圖，找東西最快。'},{n:'阿廷',h:6,t:'我第一次來四草，好想看彈塗魚在泥灘上跳。'},{n:'小妤',h:7,t:'我很會畫畫，隊旗的圖案我來設計。'}]}
+];
+function me(){return TEAMS[st.team]}
+function op(){return TEAMS[1-st.team]}
+function kidFace(t,k){return face(TEAMS[t].kids[k].h,TEAMS[t].c)}
+var FLAGS=[['紅色','#C8463C'],['橘色','#E08A2E'],['黃色','#E2B93B'],['綠色','#3F8F55'],['藍色','#2F6DB0'],['紫色','#7A5AA6']];
+function chip(t){
+  if(t==null)t=st.team;
+  var dot=(t===st.team&&st.flag!=null)?'<span class="dot" style="background:'+FLAGS[st.flag][1]+'"></span>':'';
+  return '<span class="tchip t'+t+'">'+ic(TEAMS[t].ic)+TEAMS[t].name+dot+'</span>';
+}
+function topbar(kicker){
+  var d=el('div','topbar');d.append(el('p','case',kicker),el('span',null,chip()));return d;
+}
+function flagSvg(col){
+  var c=col==null?'#E3E6E0':col;
+  return '<svg class="flag" viewBox="0 0 220 150" role="img" aria-label="'+me().name+'的隊旗"><path d="M24 8V146" stroke="#1F2A2E" stroke-width="6" stroke-linecap="round"/><path d="M26 14Q70 0 112 14T206 14V96Q164 82 112 96T26 96Z" fill="'+c+'" stroke="#1F2A2E" stroke-width="4" stroke-linejoin="round"/><circle cx="116" cy="55" r="30" fill="#FBFCF9" stroke="#1F2A2E" stroke-width="3"/><svg x="92" y="31" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1F2A2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+ICI[me().ic]+'</svg></svg>';
+}
+
+/* ---------- step 0: intro ---------- */
+function intro(){
+  app.innerHTML='';
+  var c=el('div','card');
+  c.append(el('p','lead','暑假到了，四草的海邊營地要辦三天兩夜的夏令營。營地旁邊就是泥灘，退潮的時候，可以看到招潮蟹揮著大螯，彈塗魚在泥上一跳一跳。'),
+    el('p','lead','報到的時候，每個人都會抽到一個隊伍。接下來三天，你都會和自己的隊一起住、一起玩、一起比賽。'));
+  var t=el('div','teams');
+  TEAMS.forEach(function(T,k){t.appendChild(el('div','badge t'+k,ic(T.ic)+T.name))});
+  var d=el('ul','days');
+  d.innerHTML='<li>'+ic('flag')+'<b>第 1 天</b>認識自己的隊</li><li>'+ic('tug')+'<b>第 2 天</b>兩隊比賽</li><li>'+ic('stage')+'<b>第 3 天</b>到時候就知道了</li>';
+  var c2=el('div','card');c2.appendChild(d);
+  app.append(el('h1',null,'四草夏令營'),c,t,c2,button('看看我抽到哪一隊','btn',function(){go(1)}));
+}
+
+/* ---------- step 1: day 1 own team ---------- */
+function day1(){
+  app.innerHTML='';
+  var T=me();
+  app.appendChild(topbar(ic('flag')+' 第 1 天・認識自己的隊'));
+  app.appendChild(el('h2',null,'你抽到的是：<span style="color:'+T.c+'">'+T.name+'</span>！'));
+  app.appendChild(el('p','lead','這是你的四位隊友，他們先來介紹自己：'));
+  var m=el('div','mates');
+  T.kids.forEach(function(k){
+    var d=el('div','mate',face(k.h,T.c));var t=el('div');t.append(el('h3',null,k.n),el('p',null,'「'+k.t+'」'));d.appendChild(t);m.appendChild(d);
+  });
+  app.appendChild(m);
+  var c=el('div','card');
+  c.append(el('p','lead',ic('mega')+' '+T.kids[st.team===0?3:0].n+'教大家喊隊呼，全隊一起大聲喊：'),el('p','cheer t'+st.team,'「'+T.cheer+'」'));
+  app.appendChild(c);
+  var fc=el('div','card');
+  fc.appendChild(el('p','lead','最後，隊旗還沒有顏色。<b>你來替隊旗選一個顏色</b>：'));
+  var box=el('div','flagbox');var prev=el('div',null,flagSvg(st.flag!=null?FLAGS[st.flag][1]:null));
+  var sws=el('div','swatches');sws.setAttribute('role','group');sws.setAttribute('aria-label','隊旗顏色');
+  var nx=button('隊旗做好了，進入第 2 天','btn',function(){if(st.flag==null)return;go(2)});nx.disabled=st.flag==null;
+  FLAGS.forEach(function(f,k){
+    var b=button('<span class="c" style="background:'+f[1]+'"></span>'+f[0],'sw'+(st.flag===k?' pick':''),function(){
+      st.flag=k;save(st);Array.prototype.forEach.call(sws.children,function(x){x.classList.remove('pick');x.setAttribute('aria-pressed','false')});b.classList.add('pick');b.setAttribute('aria-pressed','true');
+      prev.innerHTML=flagSvg(f[1]);nx.disabled=false;
+      var tb=app.querySelector('.topbar span');if(tb)tb.innerHTML=chip();
+    });
+    b.setAttribute('aria-pressed',st.flag===k?'true':'false');
+    sws.appendChild(b);
+  });
+  box.append(prev,sws);fc.appendChild(box);
+  app.append(fc,nx);
+}
+
+/* ---------- step 2: day 2 matches ---------- */
+var EV=[
+ {name:'拔河',ic:'tug',win:false,prize:'每人一支冰棒',
+  taunt:[0,'拔河就是要比力氣嘛！你們回去多吃兩碗飯，明年再來喔。'],
+  moan:[0,'他們贏了就一直笑，有必要那麼大聲嗎？']},
+ {name:'尋寶',ic:'chest',win:true,prize:'一大袋貝殼造型餅乾',
+  taunt:[1,'你們只是運氣好，剛好先走到那棵樹下而已啦。'],
+  moan:[1,'明明是我們先找到的，他們就是不肯承認。']},
+ {name:'搭帳篷',ic:'tent',win:false,prize:'今晚營火晚會坐最前排',
+  taunt:[3,'你們的帳篷歪歪的耶，晚上不要被海風吹走喔！'],
+  moan:[2,'他們剛剛偷看我們怎麼綁繩子，還笑得那麼大聲。']}
+];
+function winner(k){return EV[k].win?st.team:1-st.team}
+function scoreRow(cur){
+  var s=el('div','score');
+  EV.forEach(function(e,k){
+    var done=st.evs[k];
+    var d=el('div','slot'+(done?' w'+winner(k):'')+(k===cur&&!done?' now':''),ic(e.ic)+e.name+'<br>'+(done?TEAMS[winner(k)].name.replace('隊','')+'贏':(k===cur?'比賽中':'還沒比')));
+    s.appendChild(d);
+  });
+  return s;
+}
+function tugScene(mode,k){
+  var w=winner(k);
+  var cls=mode==='run'?(w===0?'runL':'runR'):(mode==='done'?(w===0?'endL':'endR'):'');
+  var s='<svg class="scene" viewBox="0 0 360 140" role="img" aria-label="兩隊拔河，左邊是招潮蟹隊，右邊是彈塗魚隊"><rect width="360" height="140" fill="#F3EAD3"/><rect y="112" width="360" height="28" fill="#E3D3AA"/>';
+  s+='<path d="M180 16V128" stroke="#A8441A" stroke-width="3" stroke-dasharray="6 6"/>';
+  s+='<text x="90" y="24" text-anchor="middle" font-size="20" font-weight="900" fill="#B4531F" font-family="Noto Sans TC,sans-serif">招潮蟹隊</text><text x="270" y="24" text-anchor="middle" font-size="20" font-weight="900" fill="#22707E" font-family="Noto Sans TC,sans-serif">彈塗魚隊</text>';
+  s+='<g class="tugg '+cls+'"><path d="M6 78H354" stroke="#8A6A3A" stroke-width="5" stroke-linecap="round"/><path d="M180 78l-8 18h16z" fill="#C8463C" stroke="#1F2A2E" stroke-width="2.5" stroke-linejoin="round"/>';
+  [52,82,112,142].forEach(function(x,i){s+=stick(x,0,TEAMS[0].kids[i].h)});
+  [218,248,278,308].forEach(function(x,i){s+=stick(x,1,TEAMS[1].kids[i].h)});
+  s+='</g></svg>';
+  return s;
+  function stick(x,t,h){
+    var d=t===0?1:-1,col=TEAMS[t].c;
+    return '<g stroke="#1F2A2E" stroke-width="3" stroke-linecap="round"><path d="M'+x+' 56L'+(x+d*10)+' 92" stroke="'+col+'" stroke-width="10"/><path d="M'+(x+d*10)+' 92L'+(x+d*18)+' 116M'+(x+d*10)+' 92L'+(x+d*26)+' 113"/><path d="M'+(x+d*3)+' 64L'+(x+d*16)+' 78"/><circle cx="'+x+'" cy="46" r="11" fill="'+SKIN[h]+'"/></g>';
+  }
+}
+function huntScene(mode,k){
+  var w=winner(k);var d=el('div','lanes');d.setAttribute('role','img');d.setAttribute('aria-label','兩隊比賽誰先找到寶箱');
+  var runners=[];
+  [0,1].forEach(function(t){
+    var ln=el('div','lane');
+    var tr=el('div','track');var r=el('div','runner t'+t,ic(TEAMS[t].ic));tr.appendChild(r);runners.push(r);
+    ln.append(el('span','nm t'+t,TEAMS[t].name.replace('隊','')),tr,el('span','goal',ic('chest')));
+    d.appendChild(ln);
+  });
+  function end(){runners.forEach(function(r,t){r.style.left=t===w?'calc(100% - 52px)':'58%'})}
+  if(mode==='done'){runners.forEach(function(r){r.style.transition='none'});end()}
+  if(mode==='run'){requestAnimationFrame(function(){requestAnimationFrame(end)})}
+  return d;
+}
+function tentScene(mode,k){
+  var w=winner(k);
+  var cls=mode==='run'?'run':(mode==='done'?'end':'');
+  var s='<svg class="scene tents '+cls+'" viewBox="0 0 360 160" role="img" aria-label="兩隊比賽搭帳篷"><rect width="360" height="160" fill="#E6EEF2"/><rect y="128" width="360" height="32" fill="#E3D3AA"/>';
+  s+='<text x="95" y="24" text-anchor="middle" font-size="20" font-weight="900" fill="#B4531F" font-family="Noto Sans TC,sans-serif">招潮蟹隊</text><text x="265" y="24" text-anchor="middle" font-size="20" font-weight="900" fill="#22707E" font-family="Noto Sans TC,sans-serif">彈塗魚隊</text>';
+  [[95,0],[265,1]].forEach(function(p){
+    var x=p[0],t=p[1];
+    s+='<g class="tent '+(t===w?'w':'l')+'" stroke="#1F2A2E" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"><path d="M'+x+' 42L'+(x-62)+' 130H'+(x+62)+'Z" fill="'+(t===0?'#F7E1D2':'#DCEEF0')+'"/><path d="M'+(x-18)+' 130L'+x+' 92L'+(x+18)+' 130" fill="#FBFCF9"/><path d="M'+x+' 42V30"/><path d="M'+x+' 30l16 5-16 5" fill="'+TEAMS[t].c+'"/></g>';
+  });
+  s+='</svg>';
+  return s;
+}
+function matches(){
+  app.innerHTML='';
+  var k=st.ev||0;if(k>2)k=2;
+  var e=EV[k];
+  app.appendChild(topbar(ic('tug')+' 第 2 天・比賽日'));
+  app.appendChild(el('h2',null,'第 '+(k+1)+' 場：'+e.name));
+  if(k===0&&!st.evs[0])app.appendChild(el('p','lead','今天兩隊要比三場：拔河、尋寶、搭帳篷。每一場都有獎品，可是<b>只有贏的隊拿得到</b>。'));
+  app.appendChild(scoreRow(k));
+  var sc=el('div','card');app.appendChild(sc);
+  var area=el('div','opts');app.appendChild(area);
+  function draw(mode){
+    sc.innerHTML='';
+    if(k===1)sc.appendChild(huntScene(mode,k));
+    else sc.innerHTML=k===0?tugScene(mode,k):tentScene(mode,k);
+  }
+  if(!st.evs[k]){
+    draw('idle');
+    var b=button('開始比賽','btn go',function(){
+      b.disabled=true;st.evs[k]=1;save(st);draw('run');
+      setTimeout(function(){if(st.step===2&&st.ev===k)matches()},2500);
+    });
+    area.appendChild(b);
+    return;
+  }
+  draw('done');
+  var w=winner(k);
+  var r=el('div','card');
+  r.append(el('p','result t'+w,TEAMS[w].name+'贏了！'),el('p','prize',ic('gift')+'<span>獎品：'+e.prize+'。只有'+TEAMS[w].name+'拿得到。</span>'));
+  app.insertBefore(r,area);
+  var bub=el('div','card');
+  bub.appendChild(el('p','lead','比完以後，你聽到兩隊的人這樣說：'));
+  function say(t,arr){
+    var kid=TEAMS[t].kids[arr[0]];var d=el('div','say',kidFace(t,arr[0]));
+    var x=el('div');x.append(el('p','who t'+t,kid.n+'（'+TEAMS[t].name+(t===st.team?'，你的隊友':'')+'）'),el('p','bub t'+t,'「'+arr[1]+'」'));d.appendChild(x);return d;
+  }
+  bub.append(say(1-st.team,e.taunt),say(st.team,e.moan));
+  app.insertBefore(bub,area);
+  if(k<2)area.appendChild(button('下一場：'+EV[k+1].name,'btn',function(){st.ev=k+1;save(st);matches();try{window.scrollTo(0,0)}catch(x){}}));
+  else{
+    area.appendChild(el('p','note','三場比完了：'+me().name+'贏 1 場、輸 2 場。'+op().name+'拿走了兩份獎品。'));
+    area.appendChild(button('比完了，下一步','btn',function(){go(3)}));
+  }
+}
+
+/* ---------- gauge ---------- */
+var GL=['很不喜歡','不太喜歡','普通','還不錯','很喜歡'];
+var GF=['#E3E7EE','#E9ECE6','#F2EEDD','#F6E6CF','#F8DCC4'];
+var GS=['#AEBCCF','#BFCBB4','#E2D29A','#EDC48F','#E9A984'];
+var CX=160,CY=172,R=150,RI=62;
+function pol(r,a){var t=a*Math.PI/180;return [(CX+r*Math.cos(t)).toFixed(1),(CY-r*Math.sin(t)).toFixed(1)]}
+function sector(i){
+  var a0=180-36*i,a1=180-36*(i+1),p0=pol(R,a0),p1=pol(R,a1),q1=pol(RI,a1),q0=pol(RI,a0);
+  return 'M'+p0+'A'+R+' '+R+' 0 0 1 '+p1+'L'+q1+'A'+RI+' '+RI+' 0 0 0 '+q0+'Z';
+}
+var GQ=[
+ {kick:'第 2 天晚上・比賽完以後',after:'比完三場比賽，回到帳篷準備睡覺。'},
+ {kick:'第 3 天上午・一起吃早餐、看表演以後',after:'早餐吃完、表演也看完了。'},
+ {kick:'第 3 天下午・一起把小貨車拉出來以後',after:'小貨車拉出來了，大家終於吃到午餐。'}
+];
+function gaugePage(idx,next){
+  app.innerHTML='';
+  var q=GQ[idx];
+  app.appendChild(topbar(ic('people')+' 好感指針 '+(idx+1)+'／3'));
+  app.appendChild(el('p','lead',q.after));
+  app.appendChild(el('h2',null,'你覺得'+op().name+'的人怎麼樣？'));
+  app.appendChild(el('p','lead','沒有對錯，照你現在的感覺選。點一格，或按住指針拖到你想要的位置。'));
+  var c=el('div','card gauge');
+  var s='<svg viewBox="0 0 320 192" role="slider" tabindex="0" aria-label="好感指針，1 是很不喜歡，5 是很喜歡" aria-valuemin="1" aria-valuemax="5">';
+  for(var i=0;i<5;i++){
+    var m=pol(124,180-36*i-18);
+    s+='<path class="sec" data-i="'+i+'" d="'+sector(i)+'" fill="'+GF[i]+'" stroke="#1F2A2E" stroke-width="2.5" stroke-linejoin="round"/>';
+    s+='<text x="'+m[0]+'" y="'+(+m[1]+9)+'" text-anchor="middle" font-size="26" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif" pointer-events="none">'+(i+1)+'</text>';
+  }
+  s+='<g id="needle" pointer-events="none"><path d="M'+CX+' '+CY+'L'+(CX-98)+' '+CY+'" stroke="#1F2A2E" stroke-width="7" stroke-linecap="round"/><circle cx="'+(CX-98)+'" cy="'+CY+'" r="6" fill="#A8441A" stroke="#1F2A2E" stroke-width="2.5"/></g><circle cx="'+CX+'" cy="'+CY+'" r="13" fill="#1F2A2E" pointer-events="none"/></svg>';
+  c.innerHTML=s;
+  var ends=el('div','ends');ends.append(el('span',null,'1 很不喜歡'),el('span',null,'5 很喜歡'));
+  var ro=el('p','readout');
+  c.append(ends,ro);
+  app.appendChild(c);
+  var nx=button('選好了，下一步','btn',function(){if(st.g[idx]==null)return;go(next)});
+  app.appendChild(nx);
+  var svg=c.querySelector('svg'),needle=svg.querySelector('#needle'),secs=svg.querySelectorAll('.sec');
+  function show(){
+    var v=st.g[idx];
+    for(var j=0;j<5;j++)secs[j].setAttribute('fill',v===j+1?GS[j]:GF[j]);
+    if(v==null){needle.style.opacity='.18';needle.style.transform='rotate(90deg)';ro.className='readout none';ro.textContent='還沒選：點一格，或拖動指針';svg.setAttribute('aria-valuetext','還沒選');svg.removeAttribute('aria-valuenow')}
+    else{needle.style.opacity='1';needle.style.transform='rotate('+(18+36*(v-1))+'deg)';ro.className='readout';ro.textContent=v+' 分・'+GL[v-1];svg.setAttribute('aria-valuenow',v);svg.setAttribute('aria-valuetext',v+' 分，'+GL[v-1])}
+    nx.disabled=v==null;
+  }
+  function setv(v){if(st.g[idx]!==v){st.g[idx]=v;save(st)}show()}
+  function pick(e){
+    var pt;try{var m=svg.getScreenCTM().inverse();var p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;pt=p.matrixTransform(m)}catch(x){return}
+    var a=Math.atan2(CY-pt.y,pt.x-CX)*180/Math.PI;
+    if(pt.y>CY)a=pt.x<CX?180:0;
+    var i=Math.floor((180-a)/36);if(i<0)i=0;if(i>4)i=4;
+    setv(i+1);
+  }
+  var drag=false;
+  svg.addEventListener('pointerdown',function(e){drag=true;try{svg.setPointerCapture(e.pointerId)}catch(x){}pick(e);e.preventDefault()});
+  svg.addEventListener('pointermove',function(e){if(drag)pick(e)});
+  svg.addEventListener('pointerup',function(){drag=false});
+  svg.addEventListener('pointercancel',function(){drag=false});
+  svg.addEventListener('keydown',function(e){
+    var v=st.g[idx]||3;
+    if(e.key==='ArrowLeft'||e.key==='ArrowDown'){setv(Math.max(1,st.g[idx]==null?3:v-1));e.preventDefault()}
+    else if(e.key==='ArrowRight'||e.key==='ArrowUp'){setv(Math.min(5,st.g[idx]==null?3:v+1));e.preventDefault()}
+    else if(e.key>='1'&&e.key<='5'){setv(+e.key);e.preventDefault()}
+  });
+  show();
+}
+
+/* ---------- step 4: breakfast + show ---------- */
+function breakfast(){
+  app.innerHTML='';
+  app.appendChild(topbar(ic('bowl')+' 第 3 天上午・一起吃早餐'));
+  app.appendChild(el('h2',null,'今天早上，兩隊要一起吃早餐、一起看表演。'));
+  var c=el('div','card');
+  c.appendChild(el('p','lead','營地老師說：「比賽結束了，今天早上兩隊一起吃飯吧！」早餐是熱騰騰的虱目魚粥。兩隊坐在同一張長桌，可是招潮蟹隊坐這一頭，彈塗魚隊坐另一頭，中間空著兩個位子。'));
+  var ts=el('div','tablescene');ts.setAttribute('role','img');ts.setAttribute('aria-label','長桌的左邊坐著招潮蟹隊，右邊坐著彈塗魚隊，中間空著兩個位子，大家都沒有說話');
+  var q=el('div','q',ic('quiet'));var q2=el('div','q',ic('quiet'));
+  ts.append(q,el('div','gap'),q2);
+  for(var i=0;i<4;i++)ts.appendChild(el('div',null,kidFace(0,i)));
+  ts.append(el('div','seat'),el('div','seat'));
+  for(i=0;i<4;i++)ts.appendChild(el('div',null,kidFace(1,i)));
+  ts.appendChild(el('div','tab'));
+  c.appendChild(ts);
+  c.appendChild(el('p','lead','大家低頭吃粥，只跟自己隊的人小聲說話。整頓早餐，兩隊之間沒有人開口。'));
+  var c2=el('div','card');
+  var r=el('div','icrow',ic('stage'));
+  r.appendChild(el('p','lead','吃完早餐，大家一起坐在廣場上，看營地老師表演魔術。看到好笑的地方，兩隊都笑出聲來；可是笑完了，大家又轉回去和自己隊的人說話，還是沒有人和對方隊說一句話。'));
+  c2.appendChild(r);
+  app.append(c,c2,button('下一步','btn',function(){go(5)}));
+}
+
+/* ---------- step 6: water tower + truck story ---------- */
+function trouble(){
+  app.innerHTML='';
+  app.appendChild(topbar(ic('tower')+' 第 3 天下午・營地出狀況了'));
+  app.appendChild(el('h2',null,'水塔的水管破了，整個營地都沒水！'));
+  var c=el('div','card');var r=el('div','icrow',ic('tower'));
+  var t=el('div','opts');
+  t.append(el('p','lead','中午快到了，天氣很熱。營地水塔的水管突然破了一個洞，水龍頭一滴水也流不出來，兩隊都沒水喝。'),
+    el('p','lead','營地阿伯說：「要修這根水管，得有人爬上去扶住水管、有人去倉庫搬工具、還要有人排成一排傳水桶。只靠一隊，人不夠，要兩隊一起來才行。」'),
+    el('p','lead','兩隊的人只好一起動手：有人扶、有人搬、有人傳。忙了半個小時，水管終於修好了。'));
+  r.appendChild(t);c.appendChild(r);
+  var c2=el('div','card');var r2=el('div','icrow',ic('truck'));
+  var t2=el('div','opts');
+  t2.append(el('p','lead','可是麻煩還沒結束。運午餐的小貨車開進營地的時候，輪子陷進了沙地，越踩油門陷得越深。'),
+    el('p','lead','司機說：「得有很多人一起拉繩子，才拉得出來。」兩隊的午餐都在這台車上。'));
+  r2.appendChild(t2);c2.appendChild(r2);
+  app.append(c,c2,button('去拉繩子','btn go',function(){go(7)}));
+}
+
+/* ---------- step 7: pull the rope together ---------- */
+function rope(){
+  app.innerHTML='';
+  var P=st.pull;
+  app.appendChild(topbar(ic('pull')+' 第 3 天下午・一起拉繩'));
+  app.appendChild(el('h2',null,'兩隊一起拉繩子，把小貨車拉出沙地！'));
+  app.appendChild(el('p','lead','左邊是<b style="color:var(--crab)">招潮蟹隊</b>的手，右邊是<b style="color:var(--mud)">彈塗魚隊</b>的手。<b>左右兩邊輪流點</b>，代表兩隊一起出力。'));
+  var c=el('div','card');
+  var s='<svg class="scene" viewBox="0 0 400 200" role="img" aria-label="小貨車陷在沙地裡，兩隊的人拉著同一條繩子"><rect width="400" height="200" fill="#E6EEF2"/><rect y="150" width="400" height="50" fill="#EBDDBB"/><ellipse cx="80" cy="156" rx="74" ry="16" fill="#D3BC86"/>';
+  s+='<path id="ropeL" d="" stroke="#8A6A3A" stroke-width="5" stroke-linecap="round" fill="none"/>';
+  s+='<g id="truck" stroke="#1F2A2E" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><rect x="20" y="40" width="92" height="56" rx="5" fill="#F3E3BE"/><text x="66" y="75" text-anchor="middle" font-size="16" font-weight="900" fill="#1F2A2E" stroke="none" font-family="Noto Sans TC,sans-serif">午餐</text><path d="M112 56h22l16 18v22h-38z" fill="#DCE8F0"/><path d="M118 62h13l10 12h-23z" fill="#FBFCF9"/><circle cx="46" cy="100" r="14" fill="#FBFCF9"/><circle cx="46" cy="100" r="4" fill="#1F2A2E"/><circle cx="124" cy="100" r="14" fill="#FBFCF9"/><circle cx="124" cy="100" r="4" fill="#1F2A2E"/><circle cx="150" cy="86" r="3" fill="#1F2A2E"/></g>';
+  s+='<path d="M6 158q10-6 20 0t20 0 20 0 20 0 20 0 20 0" stroke="#B89A5E" stroke-width="3" fill="none" stroke-linecap="round" id="sandline"/>';
+  for(var i=0;i<6;i++){
+    var x=270+i*22,t=i%2,col=TEAMS[t].c;
+    s+='<g class="fig f'+t+'" stroke="#1F2A2E" stroke-width="3" stroke-linecap="round"><path d="M'+x+' 112L'+(x+6)+' 136" stroke="'+col+'" stroke-width="9"/><path d="M'+(x+6)+' 136L'+(x)+' 150M'+(x+6)+' 136L'+(x+13)+' 150"/><path d="M'+(x+2)+' 118L'+(x-8)+' 124"/><circle cx="'+(x-1)+'" cy="102" r="8.5" fill="'+SKIN[TEAMS[t].kids[i>>1].h]+'"/></g>';
+  }
+  s+='</svg>';
+  c.innerHTML=s;
+  var lbl=el('p','barlbl');var lt=el('span',null,'小貨車拉出來了');var lv=el('span');lbl.append(lt,lv);
+  var bar=el('div','bar');var fill=el('i');bar.appendChild(fill);bar.setAttribute('role','progressbar');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');
+  c.append(lbl,bar);
+  app.appendChild(c);
+  var row=el('div','pullrow');
+  var btns=[0,1].map(function(t){
+    var b=button(ic('pull')+TEAMS[t].name+'<small>'+(t===st.team?'你的隊・':'')+'點這裡拉一下</small>','pullbtn t'+t,function(){tap(t)});
+    b.setAttribute('aria-label',TEAMS[t].name+'拉一下');
+    row.appendChild(b);return b;
+  });
+  app.appendChild(row);
+  var msg=el('p','note');msg.setAttribute('aria-live','polite');app.appendChild(msg);
+  var after=el('div','opts');app.appendChild(after);
+  var truck=c.querySelector('#truck'),ropeP=c.querySelector('#ropeL'),figs=c.querySelectorAll('.fig');
+  function paint(){
+    var p=Math.min(100,P.p);
+    var tx=p*1.0,ty=46-10*p/100;
+    truck.setAttribute('transform','translate('+tx.toFixed(1)+' '+ty.toFixed(1)+')');
+    ropeP.setAttribute('d','M'+(150+tx).toFixed(1)+' '+(86+ty).toFixed(1)+'L392 '+(p>=100?'121':'124'));
+    fill.style.width=p+'%';lv.textContent=Math.round(p)+'%';bar.setAttribute('aria-valuenow',Math.round(p));
+  }
+  function finish(){
+    btns.forEach(function(b){b.disabled=true});
+    msg.className='note';msg.innerHTML='<b>拉出來了！</b>兩隊一起出力，小貨車終於離開沙地，午餐送到了。';
+    after.innerHTML='';
+    var o=1-st.team,kid=op().kids[1];
+    var d=el('div','say',kidFace(o,1));var x=el('div');
+    x.append(el('p','who t'+o,kid.n+'（'+op().name+'）'),el('p','bub t'+o,'「剛剛你們那一邊拉得好用力，謝謝！我叫'+kid.n+'。下午的活動，要不要一起？」'));
+    d.appendChild(x);
+    var cc=el('div','card');cc.appendChild(d);
+    after.append(cc,button('下一步','btn',function(){go(8)}));
+  }
+  function tap(t){
+    if(P.p>=100)return;
+    if(P.last===null||P.last!==t){P.p=Math.min(100,P.p+8);P.same=0;
+      P.m='ok';}
+    else{P.same++;if(P.same<=2)P.p=Math.min(100,P.p+1);
+      P.m='same';}
+    P.last=t;save(st);say2();
+    Array.prototype.forEach.call(figs,function(f){if(f.classList.contains('f'+t)){f.classList.add('lean');setTimeout(function(){f.classList.remove('lean')},200)}});
+    paint();
+    if(P.p>=100)finish();
+  }
+  function say2(){
+    if(P.m==='same'){msg.className='note warm';msg.innerHTML='<b>一隊的力氣不夠</b>，車子幾乎沒動。請'+TEAMS[1-P.last].name+'也一起拉！'}
+    else if(P.m==='ok'){msg.className='note';msg.innerHTML='兩隊一起出力，小貨車往前動了！繼續換另一邊拉。'}
+    else{msg.className='note';msg.innerHTML='先點一邊，再點另一邊：招潮蟹隊拉一下、彈塗魚隊拉一下，這樣輪流。'}
+  }
+  paint();
+  if(P.p>=100)finish();
+  else say2();
+}
+
+/* ---------- step 9: result chart ---------- */
+function chart(){
+  app.innerHTML='';
+  var g=st.g;
+  app.appendChild(topbar(ic('people')+' 三次好感指針'));
+  app.appendChild(el('h2',null,'你對'+op().name+'的感覺，三次是這樣變的：'));
+  var X=[95,200,305],LB=['比賽完','一起吃飯後','一起拉車後'];
+  function Y(v){return 186-(v-1)*38}
+  var s='<svg class="chart" viewBox="0 0 360 250" role="img" aria-label="三次好感分數：'+g.join('、')+'">';
+  for(var v=1;v<=5;v++){s+='<path d="M50 '+Y(v)+'H340" stroke="#D4D9D2" stroke-width="2"/><text x="36" y="'+(Y(v)+7)+'" text-anchor="middle" font-size="19" font-weight="700" fill="#56605C" font-family="Noto Sans TC,sans-serif">'+v+'</text>'}
+  s+='<polyline points="'+X.map(function(x,i){return x+','+Y(g[i])}).join(' ')+'" fill="none" stroke="#205E86" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>';
+  X.forEach(function(x,i){
+    s+='<circle cx="'+x+'" cy="'+Y(g[i])+'" r="10" fill="#FBFCF9" stroke="#205E86" stroke-width="5"/>';
+    s+='<text x="'+x+'" y="'+(Y(g[i])-18)+'" text-anchor="middle" font-size="22" font-weight="900" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">'+g[i]+'</text>';
+    s+='<text x="'+x+'" y="236" text-anchor="middle" font-size="19" font-weight="700" fill="#1F2A2E" font-family="Noto Sans TC,sans-serif">'+LB[i]+'</text>';
+  });
+  s+='</svg>';
+  var c=el('div','card',s);
+  c.appendChild(el('p','legend','1＝很不喜歡　3＝普通　5＝很喜歡'));
+  app.appendChild(c);
+  var c2=el('div','card');
+  c2.appendChild(el('p','lead','每個人的指針不一定一樣，你的感覺沒有對錯。兩隊相處，常常會有這樣的情形：'));
+  var ul=el('ul','why');
+  ul.innerHTML='<li>'+ic('tug')+'<span><b>比賽的時候</b>，兩隊搶同一份獎品，一隊贏、另一隊就輸，再加上你一句、我一句，很容易覺得對方隊的人不好。</span></li>'+
+   '<li>'+ic('bowl')+'<span><b>只是一起吃飯、看表演</b>，大家還是各坐各的，不一定會變好。</span></li>'+
+   '<li>'+ic('pull')+'<span><b>遇到兩隊都需要、一隊又做不到的事</b>，大家只好一起出力。一起完成以後，比較容易覺得對方隊也不錯。</span></li>';
+  c2.appendChild(ul);
+  app.append(c2,button('下一步','btn',function(){go(10)}));
+}
+
+/* ---------- step 10: what changed your mind ---------- */
+var FEEL=[
+ ['bowl','一起吃飯','坐在同一張桌子、看同一場表演，讓兩隊有機會看見對方。有人會因此改觀；也有人覺得，光是坐在一起還不夠。'],
+ ['pull','一起修水管、拉車','這件事兩隊都需要，一隊又做不到，大家只好一起出力。有人覺得，一起完成一件事以後，對方就像「自己人」了。'],
+ ['talk','認識對方隊的一個人','認識了一個人以後，對方隊就不再只是「那一隊」，而是有名字、有個性的人。'],
+ ['minus','都沒有改變','想法不一定要改變。有人對另一隊的感覺一直差不多；也有人覺得，比賽時的不開心需要更久才會淡掉。']
+];
+function feel(){
+  app.innerHTML='';
+  app.appendChild(topbar(ic('talk')+' 最後一題'));
+  app.appendChild(el('h2',null,'什麼事最讓你改變對另一隊的想法？'));
+  app.appendChild(el('p','lead','每個選項都可以選，選你心裡最接近的那一個。'));
+  var o=el('div','opts');var note=el('p','note warm');note.hidden=st.feel==null;
+  var nx=button('選好了，下一步','btn',function(){if(st.feel==null)return;go(11)});nx.disabled=st.feel==null;
+  FEEL.forEach(function(f,k){
+    var b=button(ic(f[0])+'<span>'+f[1]+'</span>','btn alt'+(st.feel===k?' pick':''),function(){
+      st.feel=k;save(st);Array.prototype.forEach.call(o.children,function(x){x.classList.remove('pick');x.setAttribute('aria-pressed','false')});b.classList.add('pick');b.setAttribute('aria-pressed','true');
+      note.hidden=false;note.textContent=f[2];nx.disabled=false;
+    });
+    b.setAttribute('aria-pressed',st.feel===k?'true':'false');
+    o.appendChild(b);
+  });
+  if(st.feel!=null)note.textContent=FEEL[st.feel][2];
+  app.append(o,note,nx);
+}
+
+/* ---------- step 11: end ---------- */
+function end(){
+  app.innerHTML='';
+  var g=st.g,t=el('table');
+  var d=g[2]-g[0],dt=d>0?'高了 '+d+' 格':(d<0?'低了 '+(-d)+' 格':'一樣');
+  [['我的隊',me().name],
+   ['好感：比賽完',g[0]+' 分（'+GL[g[0]-1]+'）'],
+   ['好感：一起吃飯後',g[1]+' 分（'+GL[g[1]-1]+'）'],
+   ['好感：一起拉車後',g[2]+' 分（'+GL[g[2]-1]+'）'],
+   ['第 3 次比第 1 次',dt],
+   ['最讓我改變想法的事',FEEL[st.feel][1]]].forEach(function(r){
+    var tr=el('tr');tr.append(el('td',null,r[0]),el('td',null,'<b>'+r[1]+'</b>'));t.appendChild(tr);
+  });
+  var c=el('div','card');c.appendChild(t);
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+
+function render(){
+  var S=[intro,day1,matches,function(){gaugePage(0,4)},breakfast,function(){gaugePage(1,6)},trouble,rope,function(){gaugePage(2,9)},chart,feel,end];
+  if(st.step>=2&&st.flag==null)st.step=1;
+  if(st.step>=3&&!(st.evs[0]&&st.evs[1]&&st.evs[2]))st.step=2;
+  if(st.step>=4&&st.g[0]==null)st.step=3;
+  if(st.step>=6&&st.g[1]==null)st.step=5;
+  if(st.step>=8&&!(st.pull.p>=100))st.step=7;
+  if(st.step>=9&&st.g[2]==null)st.step=8;
+  if(st.step>=11&&st.feel==null)st.step=10;
+  (S[st.step]||intro)();
+}
+window.addEventListener('hashchange',function(){if(location.hash==='#reset'){save(null);location.replace(location.pathname+location.search);location.reload()}});
+render();
+})();
+</script>

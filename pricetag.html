@@ -1,0 +1,259 @@
+<title>小店價格牌工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Two rounds: (1) be the shop owner — snap real "anchor blocks" onto a price tag for a 120-dollar spoonbill keychain, tag redraws live; (2) two other shops' tags — tap the anchor number, pick what you really pay, say whether you need it. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --paper:#FFF8E8;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:900px;margin:0 auto;padding-inline:16px;padding-block:24px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--gold);background:#FBF1DC}
+.btn.small{font-size:clamp(18px,2.4vw,21px);padding:10px 14px}
+.btn:disabled{cursor:default}
+.btn:focus-visible,.num:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.note.bad{background:#F8E4DA;border:3px solid var(--rust)}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+/* price tags */
+.stage{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;justify-content:center;background:#E3E7E0;border-radius:22px;padding:18px 12px}
+.tag{position:relative;background:var(--paper);border:3px solid var(--rust);border-radius:18px;padding:30px 20px 18px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:0;max-width:100%}
+.tag::before{content:"";position:absolute;top:10px;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#E3E7E0;border:3px solid var(--rust)}
+.tag.main{flex:1 1 260px;max-width:420px}
+.tag.side{flex:0 1 190px;border-color:var(--muted);background:#FCFBF5}
+.tag.side::before{border-color:var(--muted)}
+.tag .nm{font-size:clamp(21px,3vw,28px);font-weight:900;margin:0;line-height:1.35}
+.tag .sm{font-size:clamp(19px,2.6vw,23px);font-weight:700;margin:0;color:var(--muted);line-height:1.45}
+.tag .big{font-size:clamp(46px,8vw,72px);font-weight:900;color:var(--rust);margin:0;line-height:1.15;font-variant-numeric:tabular-nums}
+.tag .mid{font-size:clamp(26px,4.4vw,38px);font-weight:900;margin:0;line-height:1.3}
+.tag .fine{font-size:19px;color:var(--muted);margin:0}
+.tag s{text-decoration-thickness:3px;text-decoration-color:var(--rust)}
+.stamp{position:absolute;right:-6px;top:-14px;transform:rotate(8deg);background:var(--rust);color:#fff;font-weight:900;font-size:19px;padding:4px 10px;border-radius:10px}
+.bird{width:72px;height:44px}
+.num{font:inherit;font-weight:inherit;color:inherit;font-size:inherit;background:#fff;border:3px dashed var(--sea);border-radius:12px;padding:0 8px;cursor:pointer;line-height:1.3}
+.num:disabled{cursor:default}
+.num.hit{background:#DCEFE2;border:3px solid var(--good)}
+.num.miss{background:#FBF1DC;border:3px solid var(--gold)}
+/* design blocks */
+.blocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.blk{font:inherit;text-align:left;background:var(--card);border:3px solid var(--line);border-radius:16px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px;color:var(--ink)}
+.blk b{font-size:clamp(19px,2.6vw,23px);line-height:1.45}
+.blk span{font-size:19px;color:var(--sea);font-weight:700}
+.blk.on{border-color:var(--sea);background:#E4EFF6}
+.blk.on span::before{content:"已放上　";padding-left:1.25em;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23205E86%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2012.5l4.5%204.5L19%207.5%22/%3E%3C/svg%3E") left center/1em 1em no-repeat}
+.blk.fake span{color:var(--rust)}
+.blk:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.5vw,22px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+.bignum{font-size:clamp(40px,7vw,64px);font-weight:900;color:var(--sea);line-height:1.1}
+@media (max-width:620px){.blocks{grid-template-columns:1fr}.tag.side{flex:1 1 140px}td.k{white-space:normal;width:38%}}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var app=document.getElementById('app');
+var KEY='price-tag-studio-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null)}
+function rnd(n){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+
+var BIRD='<svg class="bird" viewBox="0 0 72 44" aria-hidden="true"><ellipse cx="30" cy="26" rx="18" ry="11" fill="#fff" stroke="#56605C" stroke-width="2"/><circle cx="47" cy="15" r="7" fill="#fff" stroke="#56605C" stroke-width="2"/><path d="M52 13 Q60 13 66 20 Q70 25 64 25 Q58 21 52 18 Z" fill="#1F2A2E"/><line x1="26" y1="36" x2="24" y2="43" stroke="#56605C" stroke-width="2"/><line x1="34" y1="36" x2="36" y2="43" stroke="#56605C" stroke-width="2"/></svg>';
+
+/* ---------- 第一關：積木 ---------- */
+var B=[
+ {id:'big',ty:'旁邊放貴的',t:'旁邊擺一個「黑面琵鷺布偶 650 元」',
+  d:'客人先看到 650 元的布偶，再看到 120 元的鑰匙圈，就會覺得鑰匙圈好便宜。布偶是店裡真的有賣的商品，所以可以這樣擺。'},
+ {id:'cheap',ty:'旁邊放便宜的',t:'旁邊擺一張「手繪明信片 30 元」',
+  d:'這也是一個錨，可是方向剛好相反：客人先看到 30 元，再看 120 元，反而會覺得鑰匙圈有點貴。老闆通常不會這樣擺，你可以想想為什麼。'},
+ {id:'real',ty:'劃掉的原價',t:'劃掉原價 150 元（開幕那個月，真的賣 150 元）',
+  d:'這個鑰匙圈開幕那個月真的賣過 150 元，後來才降成 120 元，所以可以寫。客人會拿 150 元來比，覺得自己省了 30 元。'},
+ {id:'fake',ty:'劃掉的原價',t:'劃掉原價 399 元（其實從來沒有賣過這個價錢）',fake:true},
+ {id:'pair',ty:'一組的價錢',t:'加一行「兩個一組 220 元」',
+  d:'客人心裡會想：「一個 120 元，兩個就要 240 元。」這樣一比，220 元好像很划算，不知不覺就多買了一個。'},
+ {id:'day',ty:'拆成每天',t:'加一行「每天不到 1 元，陪你一整年」',
+  d:'120 元分給 365 天，每天真的不到 1 元。把錢切成很小很小的一塊，小數字讓人覺得不痛不癢。'}
+];
+var FAKE_NOTE='等一下！這個鑰匙圈從來沒有用 399 元賣過。老闆故意寫一個沒賣過的「原價」，讓客人以為撿到便宜，這是不實的價格標示。在台灣，這樣做違反《公平交易法》，店家可能會被罰錢，客人知道了也不會再相信這家店。你可以把它改掉。';
+
+/* ---------- 第二關：別家的價格牌 ---------- */
+var T=[
+ {shop:'七股鹽山小舖',
+  html:function(n){return '<p class="nm">鹽山造型小鹽罐</p><p class="sm">原價 <s>'+n(0,'480 元')+'</s></p><p class="sm">今天只要</p><p class="big">'+n(1,'199 元')+'</p><p class="sm">限時 '+n(2,'3 天')+'！</p>'},
+  anchor:0,
+  af:['對！被劃掉的 480 元是一個大數字，它讓 199 元看起來好便宜。要拆穿它，可以問：這個鹽罐真的用 480 元賣過嗎？別家賣多少？',
+      '199 元是你真正要付的錢，不是錨。錨是那個被劃掉的 480 元：它先把你心裡的價錢拉高，199 元才會顯得便宜。',
+      '「限時 3 天」是在催你快點買，這是另一種讓人心急的寫法。這張牌上的錨是被劃掉的 480 元，它讓 199 元看起來很便宜。'],
+  pay:['199 元','480 元','281 元（省下來的錢）'],good:0,
+  pf:['沒錯。不管原價寫多少，從你的錢包拿出去的就是 199 元。',
+      '480 元是寫給你看的原價，你不用付這麼多。真正要付的是 199 元。',
+      '281 元是「省下來的錢」，聽起來像賺到，可是你的錢包不會多出 281 元。真正付出去的是 199 元。']},
+ {shop:'台江帆布行',
+  html:function(n){return '<p class="sm">櫃子最上面：</p><p class="mid">手工皮革包 '+n(0,'2,400 元')+'</p><p class="sm">下面一排：</p><p class="nm">黑面琵鷺帆布袋</p><p class="big">'+n(1,'350 元')+'</p><p class="sm">共有 '+n(2,'8 種')+'顏色</p>'},
+  anchor:0,
+  af:['對！客人一進門先看到 2,400 元的皮革包，再看到 350 元的帆布袋，就覺得帆布袋好便宜。皮革包放在最上面，不一定是想賣它，而是想當錨。',
+      '350 元是你真正要付的錢，不是錨。錨是先看到的 2,400 元皮革包：有它在旁邊，350 元就顯得很便宜。',
+      '「8 種顏色」是讓你覺得選擇很多，但它不是價錢。這張牌上的錨是先看到的 2,400 元皮革包。'],
+  pay:['350 元','2,400 元','2,050 元（便宜了這麼多）'],good:0,
+  pf:['沒錯。你只買帆布袋，要付的就是 350 元。皮革包貴不貴，跟這個帆布袋值不值得，沒有關係。',
+      '2,400 元是皮革包的價錢，你並沒有要買它。買帆布袋真正要付的是 350 元。',
+      '2,050 元是兩個價錢差多少，你不會因此多出 2,050 元。真正要付的是 350 元。']},
+ {shop:'海佃小書房',
+  html:function(n){return '<p class="nm">繪本看到飽會員</p><p class="sm">每天只要</p><p class="big">'+n(0,'5 元')+'</p><p class="fine">（小字：一次繳一年 '+n(1,'1,825 元')+'，到期自動續約）</p>'},
+  anchor:0,
+  af:['對！大大的「每天 5 元」就是錨。它把一整年的錢切成小小一塊，讓人覺得不痛不癢。',
+      '1,825 元才是真正的價錢，可是它被寫得很小，放在括號裡。錨是寫得很大的「每天 5 元」：小數字讓人覺得很便宜。'],
+  pay:['5 元','一年 1,825 元，而且明年會自動再扣一次','看幾天付幾天'],good:1,
+  pf:['5 元是把一年的錢切成小塊的說法。小字寫的是一次要繳一年 1,825 元，而且會自動續約。',
+      '沒錯。一次就要付 1,825 元，而且如果忘了取消，明年還會再扣一次。這個數字就藏在小字裡。',
+      '小字寫的是「一次繳一年」，不是看幾天付幾天。真正要付的是一年 1,825 元，而且會自動續約。']},
+ {shop:'安南冰果室',
+  html:function(n){return '<p class="nm">芒果牛奶冰</p><p class="sm">一碗</p><p class="mid">'+n(0,'120 元')+'</p><p class="sm">兩碗一起買，只要</p><p class="big">'+n(1,'200 元')+'</p><p class="sm">夏天限定！</p>'},
+  anchor:0,
+  af:['對！先看到「一碗 120 元」，心裡就會算：「兩碗要 240 元。」拿 240 元來比，200 元好像很划算，於是本來只想吃一碗的人，也點了兩碗。',
+      '200 元是買兩碗要付的錢。讓它看起來划算的，是前面「一碗 120 元」這個錨：大家心裡會拿兩碗 240 元來比。'],
+  pay:['100 元，因為兩碗 200 元，一碗就是 100 元','我只想吃一碗就付 120 元；真的要兩碗才付 200 元','一定要付 200 元'],good:1,
+  pf:['只買一碗的時候，還是要付 120 元。「一碗 100 元」只有在買兩碗的時候才算得出來。',
+      '沒錯。要付多少，要看你真正要吃幾碗。只想吃一碗卻買兩碗，多付的 80 元就是被錨拉走的。',
+      '你也可以只買一碗。一碗要付 120 元，兩碗才是 200 元。']}
+];
+var NEED=[
+ ['需要，我本來就打算買這個。','如果是本來就計畫好要買的東西，價格牌只是幫你決定在哪裡買。還是可以比比看別家，再決定。'],
+ ['不太需要，是價格牌讓我心動的。','你發現「心動」是價格牌造成的，這就是拆穿了。代價是可能會錯過真的好東西，可以先記下來，過幾天還想要再買。'],
+ ['不確定，我想先回家想一想、比比看別家。','多想一下、多比一家，比較不會被錨拉著走。代價是要多花一點時間，有時候東西會先賣完。'],
+ ['不需要，可是我很喜歡，還是想買。','喜歡也是真實的心情，用自己存的零用錢買喜歡的東西也可以。重點是清楚知道：我是因為喜歡才買，還是因為數字看起來划算才買。']
+];
+
+function fresh(){var a=rnd(4),b=rnd(3);if(b>=a)b++;return {p:'intro',on:[],last:null,tags:[a,b],k:0,ans:[{},{}]}}
+var st=load();if(!st||!st.tags)st=fresh();
+
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(t,cls,fn){var b=el('button',cls||'btn',t);b.type='button';b.addEventListener('click',fn);return b}
+function has(id){return st.on.indexOf(id)>=0}
+function go(p){st.p=p;save(st);render();window.scrollTo(0,0)}
+
+/* 畫出我的價格牌 */
+function myTag(){
+  var s=el('div','stage');
+  if(has('big'))s.appendChild(el('div','tag side','<p class="sm">黑面琵鷺布偶</p><p class="mid">650 元</p>'));
+  if(has('cheap'))s.appendChild(el('div','tag side','<p class="sm">手繪明信片</p><p class="mid">30 元</p>'));
+  var h=BIRD+'<p class="nm">黑面琵鷺鑰匙圈</p>';
+  if(has('real'))h+='<p class="sm">原價 <s>150 元</s></p>';
+  if(has('fake'))h+='<p class="sm">原價 <s>399 元</s></p><span class="stamp">原價不實</span>';
+  h+='<p class="big">120 元</p>';
+  if(has('pair'))h+='<p class="mid">兩個一組 220 元</p>';
+  if(has('day'))h+='<p class="sm">每天不到 1 元，陪你一整年</p>';
+  s.appendChild(el('div','tag main',h));
+  return s;
+}
+function toggle(id){
+  var i=st.on.indexOf(id);
+  if(i>=0){st.on.splice(i,1);st.last=null}
+  else{
+    if(id==='real'||id==='fake'){st.on=st.on.filter(function(x){return x!=='real'&&x!=='fake'})}
+    st.on.push(id);st.last=id;
+  }
+  save(st);render();
+}
+function types(){var o=[];B.forEach(function(b){if(has(b.id)&&o.indexOf(b.ty)<0)o.push(b.ty)});return o}
+
+function intro(){
+  var c=el('div','card');
+  c.append(el('p','lead','今天你是「海佃文創小店」的老闆，要賣一個 120 元的黑面琵鷺鑰匙圈。'),
+    el('p','lead','第一關：設計。用「錨」組一張價格牌，讓客人覺得划算。<br>第二關：拆穿。看別家店的價格牌，找出錨、算出真正要付多少。'),
+    el('p','lead','規則只有一條：價格牌上的數字都要是真的。'));
+  app.append(el('h1',null,'小店價格牌工作室'),c,btn('開始第一關',null,function(){go('design')}));
+}
+function design(){
+  app.append(el('p','case','第一關：設計'),el('h2',null,'點一下積木就放上價格牌，再點一下就拿掉。'),myTag());
+  var last=st.last&&B.filter(function(b){return b.id===st.last})[0];
+  if(last){
+    if(last.fake){
+      var n=el('div','note bad');n.appendChild(el('p',null,FAKE_NOTE)).style.margin='0';
+      var r=el('div','row');r.style.marginTop='10px';
+      r.append(btn('改成真的原價 150 元','btn small',function(){toggle('real')}),btn('拿掉原價','btn alt small',function(){toggle('fake')}));
+      n.appendChild(r);app.appendChild(n);
+    }else app.appendChild(el('p','note','<b>'+last.ty+'：</b>'+last.d));
+  }
+  var g=el('div','blocks');
+  B.forEach(function(b){var x=el('button','blk'+(has(b.id)?' on':'')+(b.fake?' fake':''),'<span>'+b.ty+'</span><b>'+b.t+'</b>');x.type='button';x.setAttribute('aria-pressed',has(b.id));x.addEventListener('click',function(){toggle(b.id)});g.appendChild(x)});
+  app.appendChild(g);
+  app.appendChild(btn(st.on.length?'價格牌做好了，看看完成的樣子':'我不用任何錨，就這樣賣',null,function(){go('done1')}));
+}
+function done1(){
+  app.append(el('p','case','第一關：完成'),el('h2',null,'這是你做好的價格牌。'),myTag());
+  var ty=types(),c=el('div','card');
+  if(!ty.length)c.appendChild(el('p','lead','你沒有用任何錨，只寫了 120 元。這樣最老實，客人不會被別的數字拉走；代價是，客人也比較不會覺得「撿到便宜」。'));
+  else{
+    c.appendChild(el('p','lead','你用了 '+ty.length+' 種錨：'+ty.join('、')+'。'));
+    B.forEach(function(b){if(has(b.id)&&!b.fake)c.appendChild(el('p','note','<b>'+b.ty+'：</b>'+b.d))});
+    if(has('fake'))c.appendChild(el('p','note bad','你的價格牌上還留著不實的原價 399 元。在真的商店裡，這是違法的。你可以回去改掉。'));
+  }
+  c.appendChild(el('p','lead','你剛剛用的這些錨，別的店也會用。換你去拆穿別家的價格牌！'));
+  var r=el('div','row');r.append(btn('回去修改','btn alt',function(){go('design')}),btn('進入第二關',null,function(){st.k=0;go('crack')}));
+  app.append(c,r);
+}
+function crack(){
+  var k=st.k,t=T[st.tags[k]],a=st.ans[k];
+  app.append(el('p','case','第二關：拆穿　第 '+(k+1)+' 張，共 2 張'),el('h2',null,t.shop+'的價格牌'));
+  var s=el('div','stage'),tg=el('div','tag main');
+  tg.innerHTML=t.html(function(i,txt){
+    var c='num';if(a.a!=null){if(i===t.anchor)c+=' hit';else if(i===a.a)c+=' miss'}
+    return '<button type="button" class="'+c+'" data-i="'+i+'"'+(a.a!=null?' disabled':'')+'>'+txt+'</button>'});
+  s.appendChild(tg);app.appendChild(s);
+  Array.prototype.forEach.call(tg.querySelectorAll('.num'),function(b){b.addEventListener('click',function(){a.a=+b.getAttribute('data-i');save(st);render()})});
+  if(a.a==null){app.appendChild(el('p','note','① 這張價格牌上，哪一個數字是「錨」？<br>請直接點價格牌上有虛線框的數字。'));return}
+  app.appendChild(el('p','note'+(a.a===t.anchor?'':' warm'),'① 錨是哪一個數字？<br>'+t.af[a.a]));
+  app.appendChild(el('h2',null,'② 我真正要付多少錢？'));
+  var g=el('div','opts');
+  t.pay.forEach(function(x,i){var b=btn(x,'btn alt'+(a.p===i?' pick':''),function(){if(a.p==null){a.p=i;save(st);render()}});if(a.p!=null&&a.p!==i)b.disabled=true;g.appendChild(b)});
+  app.appendChild(g);
+  if(a.p==null)return;
+  app.appendChild(el('p','note'+(a.p===t.good?'':' warm'),t.pf[a.p]));
+  app.appendChild(el('h2',null,'③ 我真的需要嗎？（每個答案都可以選）'));
+  var g2=el('div','opts');
+  NEED.forEach(function(x,i){g2.appendChild(btn(x[0],'btn alt'+(a.n===i?' pick':''),function(){a.n=i;save(st);render();var nx=document.getElementById('nx');if(nx)nx.scrollIntoView({block:'end'})}))});
+  app.appendChild(g2);
+  if(a.n==null)return;
+  app.appendChild(el('p','note',NEED[a.n][1]+'<br><span style="font-size:.9em;color:var(--muted)">想換一個答案也可以，直接點別的選項。</span>'));
+  var nx=btn(k===0?'下一張價格牌':'看看我的紀錄',null,function(){if(k===0){st.k=1;go('crack')}else go('end')});nx.id='nx';
+  app.appendChild(nx);
+}
+function end(){
+  var ty=types(),hit=0,pay=0;
+  st.ans.forEach(function(a,k){var t=T[st.tags[k]];if(a.a===t.anchor)hit++;if(a.p===t.good)pay++});
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),myTag());
+  var c=el('div','card'),tb=el('table');
+  function row(k,v){var tr=el('tr');tr.append(el('td','k',k),el('td',null,v));tb.appendChild(tr)}
+  row('我用了幾種錨','<span class="bignum">'+ty.length+'</span> 種'+(ty.length?'：'+ty.join('、'):'（只寫 120 元）'));
+  row('劃掉的原價',has('real')?'用了，是真的原價 150 元':has('fake')?'用了不實的原價 399 元（真的商店不可以這樣做）':'沒有用');
+  row('拆穿：點對錨','<span class="bignum">'+hit+'</span> 張（共 2 張）');
+  row('拆穿：真正要付多少','答對 '+pay+' 張（共 2 張）');
+  st.ans.forEach(function(a,k){row(T[st.tags[k]].shop,'我真的需要嗎？<br><b>'+(a.n!=null?NEED[a.n][0]:'—')+'</b>')});
+  c.appendChild(tb);app.appendChild(c);
+}
+function render(){
+  app.innerHTML='';
+  ({intro:intro,design:design,done1:done1,crack:crack,end:end}[st.p]||intro)();
+}
+render();
+})();
+</script>

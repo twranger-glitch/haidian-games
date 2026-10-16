@@ -1,0 +1,254 @@
+<title>出發前檢查</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: pick a situation → how sure are you (slider) → pack only 5 of 12 items → pre-mortem: "it already went wrong, why?" + optional one-item swap → 3 random surprises revealed one by one → how sure now → summary for show of hands. No scores. Single light classroom look on purpose. */
+:root{
+  --bg:#EEF0EC; --card:#FBFCF9; --ink:#1F2A2E; --muted:#56605C; --line:#D4D9D2;
+  --sea:#205E86; --rust:#A8441A; --gold:#B7862B; --good:#2F7D4F; --note:#EAF1F5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{min-height:100%;max-width:880px;margin:0 auto;padding-inline:20px;padding-block:24px 36px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,50px);font-weight:900;margin:0;text-wrap:balance}
+h2{font-size:clamp(23px,3.8vw,34px);font-weight:900;margin:0;line-height:1.45;text-wrap:balance}
+h3{font-size:clamp(20px,2.9vw,26px);font-weight:900;margin:0;color:var(--sea)}
+.lead{font-size:clamp(19px,2.7vw,25px);color:var(--muted);margin:0}
+.case{font-size:clamp(18px,2.4vw,22px);font-weight:700;color:var(--sea);letter-spacing:2px;margin:0}
+.card{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:12px}
+.scene{font-size:clamp(21px,3.1vw,28px);font-weight:700;line-height:1.55;margin:0}
+.count{font-size:clamp(54px,10vw,90px);font-weight:900;text-align:center;color:var(--rust);margin:0;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--rust);height:40px}
+.scale{display:flex;justify-content:space-between;font-size:clamp(16px,2.2vw,20px);color:var(--muted);font-weight:700;margin:0}
+.opts{display:flex;flex-direction:column;gap:10px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.btn{font:inherit;font-size:clamp(19px,2.8vw,25px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--sea);color:#fff;cursor:pointer;line-height:1.45}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--line);text-align:left;font-weight:700}
+.btn.alt.pick{border-color:var(--sea);background:#DCEAF3}
+.btn.alt.out{border-color:var(--rust);background:#F6E3DA;text-decoration:line-through}
+.btn.alt.hint{border-style:dashed;border-color:var(--gold)}
+.btn.alt .tag{display:block;font-size:.78em;color:var(--gold);font-weight:900}
+.btn.alt.dim{opacity:.55}
+.btn.ghost{background:var(--card);color:var(--sea);border:3px solid var(--sea)}
+.btn:disabled{background:#9AAAB0;cursor:default}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--gold);outline-offset:3px}
+.bag{display:flex;align-items:center;gap:12px;font-size:clamp(20px,3vw,27px);font-weight:900}
+.slots{display:flex;gap:6px}
+.slot{width:clamp(24px,4vw,34px);height:clamp(24px,4vw,34px);border-radius:8px;border:3px solid var(--sea);background:var(--card)}
+.slot.full{background:var(--sea)}
+.note{background:var(--note);border-radius:16px;padding:14px 18px;font-size:clamp(19px,2.6vw,24px);line-height:1.7;margin:0}
+.note.warm{background:#FBF1DC}
+.sur{border-left:10px solid var(--line)}
+.sur.yes{border-left-color:var(--good)}
+.sur.no{border-left-color:var(--gold)}
+.res{font-size:clamp(20px,2.9vw,26px);font-weight:900;margin:0}
+.yes .res{color:var(--good)} .no .res{color:var(--gold)}
+.small{font-size:clamp(19px,2.5vw,23px);margin:0;line-height:1.65}
+table{border-collapse:collapse;width:100%;font-size:clamp(19px,2.6vw,24px)}
+td{padding:10px 8px;border-bottom:2px solid var(--line);vertical-align:top} td.k{color:var(--muted);font-weight:700;white-space:nowrap}
+td.v{font-weight:900}
+@media (max-width:620px){.grid{grid-template-columns:1fr} td.k{white-space:normal;width:44%}}
+svg.i{width:1.2em;height:1.2em;vertical-align:-0.25em;flex:none;display:inline-block}
+</style>
+
+<main class="wrap" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+"use strict";
+var ICI={"check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>"};
+function ic(k,c){return '<svg class="i'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICI[k]+'</svg>'}
+
+var app=document.getElementById('app');
+var KEY='premortem-check-v1';
+/* items: 12 per situation. surprises: k = items that would have helped, f = what you can still do on the spot. reasons: h = items that are related (only a hint). */
+var S=[
+ {name:'七股潟湖校外教學',scene:'星期五，全班要去七股潟湖校外教學：坐膠筏看蚵棚、上沙洲走一走、找找看有哪些鳥，玩一整天才回學校。',
+  items:['帽子','防曬乳','裝滿的水壺','防風外套','輕便雨衣','暈車暈船藥（請爸媽準備）','備用的襪子','防水袋（裝手機和錢）','垃圾袋','筆記本和筆','OK 繃','小毛巾'],
+  sur:[
+   {t:'沙洲上沒有樹，太陽曬得好大。',k:[0,1],f:'可以先用外套或毛巾遮頭，多找有陰影的地方休息。'},
+   {t:'中午過後，突然下起一陣雨。',k:[4],f:'可以先躲到膠筏的遮雨棚下，或跟同學擠一下雨傘。'},
+   {t:'膠筏開到潟湖中間，海風好強，吹得好冷。',k:[3],f:'可以縮在膠筏中間、背對著風，跟同學坐近一點。'},
+   {t:'膠筏晃來晃去，你開始覺得頭暈想吐。',k:[5],f:'可以看遠方的地平線、深呼吸，趕快跟老師說。'},
+   {t:'走沙洲時，一腳踩進濕沙裡，襪子全濕了。',k:[6,11],f:'可以先脫下來擰乾，回程讓腳晾一晾。'},
+   {t:'浪花打上膠筏，濺濕了你的包包。',k:[7,11],f:'可以把手機拿出來，用衣服擦乾，再放在外套裡面。'},
+   {t:'天氣好熱，才到中午就好渴。',k:[2],f:'可以跟老師說，請帶隊老師幫忙找地方裝水。'},
+   {t:'吃完點心，沙洲上找不到垃圾桶。',k:[8],f:'可以把垃圾先塞回點心袋子裡，帶回車上再丟。'},
+   {t:'老師說：「學習單要記下你看到的三種鳥。」',k:[9],f:'可以先跟同學借一張紙，或請同學幫忙記。'},
+   {t:'在沙洲上被尖尖的蚵殼劃到腳。',k:[10],f:'馬上跟老師說，老師的急救包裡有藥品。'}],
+  reasons:[['天氣跟我想的不一樣：太熱、下雨或風很大。',[0,1,3,4]],['在膠筏上或沙洲上，身體不舒服。',[2,5,10]],['東西弄濕、弄髒或弄丟了。',[6,7,8,11]],['老師要我們做的事，我沒準備到。',[9]],['我想不到，應該不會出什麼事吧。',[]]]},
+ {name:'園遊會擺攤',scene:'學校的園遊會到了，你們班要擺攤賣冬瓜檸檬和愛玉。從早上九點開到中午十二點，你是負責的小老闆之一。',
+  items:['找錢用的零錢','寫得很大的價目表','記帳用的紙和筆','保冷箱和冰塊','多準備一疊杯子','提袋','抹布和濕紙巾','攤位專用的垃圾桶','輪流顧攤的排班表','遮陽傘','膠帶和剪刀','吸引人的宣傳海報'],
+  sur:[
+   {t:'第一位客人就拿出一張一千元的大鈔。',k:[0],f:'可以請客人等一下，請老師或隔壁攤位幫忙換錢。'},
+   {t:'客人一直問「一杯多少錢？」，問到你們來不及做飲料。',k:[1],f:'可以請一位同學專門回答價錢，或拿張紙趕快寫一個。'},
+   {t:'到了十一點，天氣好熱，飲料都變溫了。',k:[3,9],f:'可以先把飲料放到陰影下，請老師幫忙去合作社買冰塊。'},
+   {t:'生意太好了，杯子不到十點就用完了。',k:[4],f:'可以請同學跑一趟福利社或回教室找找看，先暫停賣一下。'},
+   {t:'有人不小心把一整杯飲料打翻在桌上。',k:[6],f:'可以先用衛生紙吸乾，再請同學去拿抹布。'},
+   {t:'有位阿嬤一次要外帶四杯，雙手拿不住。',k:[5],f:'可以用紙箱或托盤幫她裝，或請同學幫忙送一段路。'},
+   {t:'收攤時一算，錢跟賣出去的杯數對不起來。',k:[2],f:'可以大家一起回想，數一數剩下的杯子，下次記得一邊賣一邊記。'},
+   {t:'大家都想去逛別的攤位，攤位上只剩你一個人。',k:[8],f:'可以現在就跟大家商量，每個人顧半小時，輪流去逛。'},
+   {t:'一陣大風吹過來，招牌掉到地上。',k:[10],f:'可以先用石頭或書本把招牌壓住。'},
+   {t:'旁邊的攤位好多，經過的人都沒注意到你們。',k:[11],f:'可以請一位同學站到走廊上，大聲介紹今天賣什麼。'},
+   {t:'客人喝完就把杯子放在桌上，桌子越堆越亂。',k:[7],f:'可以拿一個紙箱當臨時垃圾桶，放在攤位旁邊。'}],
+  reasons:[['東西不夠用，或是用完了。',[3,4,5]],['錢的事情弄亂了。',[0,1,2]],['太忙了，顧攤的人手不夠。',[8,11]],['天氣或場地出了狀況。',[6,7,9,10]],['我想不到，應該不會出什麼事吧。',[]]]},
+ {name:'週末寫完科展',bag:'時間',go:'④ 週末到了！這兩天發生了 3 個意外……',has:'你有',iff:'如果有',scene:'你和兩位組員在做「哪一種土最適合綠豆發芽」的科展。老師說星期一要交報告，你心想：「這個週末一定寫得完。」',
+  items:['先列出全部的步驟','先把材料買齊','多留一天當備用','先跟組員講好誰寫哪一段','先問老師報告的格式','照片先存到雲端','星期五放學就開始','排一張週末時間表','提早一天印出來','平板和電腦先充好電','先寫一小段，看要花多久','先把要查的資料找好'],
+  sur:[
+   {t:'綠豆發芽比你想的慢，星期六還看不出差別。',k:[6,2],f:'可以先把已經有的觀察寫下來，跟老師說明還在等結果。'},
+   {t:'星期六家裡臨時要回外婆家吃飯，一整天都不在家。',k:[2,7],f:'可以在車上先想好報告要寫什麼，回家再補。'},
+   {t:'星期天晚上才發現少一種土，店已經關了。',k:[1],f:'可以問問看家人或鄰居有沒有，或在報告裡說明少了哪一組。'},
+   {t:'兩位組員都以為「結論」是你要寫的。',k:[3],f:'可以馬上傳訊息分工，一個人寫一小段。'},
+   {t:'寫完才發現，老師要的格式跟你想的不一樣。',k:[4],f:'可以先照老師的格式把標題排好，內容再搬過去。'},
+   {t:'平板突然當機，拍好的照片不見了。',k:[5],f:'可以問問組員有沒有也拍照，或重新拍一次綠豆。'},
+   {t:'星期天晚上要印的時候，印表機沒有墨水了。',k:[8],f:'可以把檔案存好，星期一早上請老師幫忙印。'},
+   {t:'寫一頁就花了一個小時，比你想的慢好多。',k:[10,6],f:'可以先寫最重要的部分，把要補的地方記下來。'},
+   {t:'寫到一半，才想起來還有一個步驟忘了做。',k:[0],f:'可以先在報告裡寫下來，趕快補做或跟老師說明。'},
+   {t:'要開始寫的時候，平板只剩下一格電。',k:[9],f:'可以一邊充電一邊寫，或先用紙筆打草稿。'},
+   {t:'要查的資料在網路上找不到，要去圖書館才有。',k:[11],f:'可以請組員幫忙找，或星期一去學校圖書館補查。'}],
+  reasons:[['時間不夠，做起來比想的久。',[2,6,7,10]],['突然有別的事插進來。',[2,7]],['東西或資料出了問題。',[1,5,8,9,11]],['跟組員或老師沒有講清楚。',[0,3,4]],['我想不到，應該不會出什麼事吧。',[]]]}
+];
+var RFB={
+ last:'很多人一開始都會這樣想。事前驗屍就是要我們「假裝已經出事了」，逼自己多想一步。想到了，不一定要換；只是多看一眼。',
+ other:'先想像「已經搞砸了」，再回頭找原因，常常比問「會不會出事？」更容易想到漏掉的地方。下面用虛線框起來的，是可能跟這個原因有關的準備，只是參考。'};
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+function fresh(){return {stage:0,sc:null,c1:null,pick:[],reason:null,out:null,inn:null,swap:null,sur:null,shown:0,c2:null}}
+var st=load()||fresh();
+function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function btn(cls,html,fn){var b=el('button',cls,html);b.type='button';b.addEventListener('click',fn);return b}
+function go(n){st.stage=n;save(st);render();window.scrollTo(0,0)}
+function rnd(n){var a=new Uint32Array(1);var lim=Math.floor(4294967296/n)*n;do{crypto.getRandomValues(a)}while(a[0]>=lim);return a[0]%n}
+function draw3(n){var p=[];for(var i=0;i<n;i++)p.push(i);for(var j=n-1;j>0;j--){var r=rnd(j+1),t=p[j];p[j]=p[r];p[r]=t}return p.slice(0,3)}
+function sc(){return S[st.sc]}
+function head(){app.append(el('p','case',sc().name),el('div','card','<p class="scene">'+sc().scene+'</p>'))}
+function slider(label,init,onGo,goTxt){
+  var r=document.createElement('input');r.type='range';r.min=0;r.max=10;r.step=1;r.value=init;r.setAttribute('aria-label',label);
+  var out=el('p','count',init+' 成');r.addEventListener('input',function(){out.textContent=r.value+' 成'});
+  var s2=el('p','scale');s2.append(el('span',null,'0 成：一定會出事'),el('span',null,'10 成：絕對沒問題'));
+  app.append(out,r,s2,btn('btn',goTxt,function(){onGo(+r.value)}));
+}
+function bagBar(n){var w=el('div','bag');var sl=el('div','slots');for(var i=0;i<5;i++)sl.appendChild(el('span','slot'+(i<n?' full':'')));w.append(el('span',null,(st.sc!=null&&S[st.sc].bag)||'背包'),sl,el('span',null,n+'／5'));return w}
+function finalPick(){var p=st.pick.slice();if(st.swap){p=p.filter(function(x){return x!==st.out});p.push(st.inn)}return p}
+
+function render(){
+  app.innerHTML='';
+  if(st.stage===0)return s0();
+  if(st.stage===1)return s1();
+  if(st.stage===2)return s2();
+  if(st.stage===3)return s3();
+  if(st.stage===4)return s4();
+  if(st.stage===5)return s5();
+  if(st.stage===6)return s6();
+  return end();
+}
+function s0(){
+  app.append(el('h1',null,'出發前檢查'));
+  var c=el('div','card');c.append(el('p','lead','你要替一件事做準備。可是背包空間和時間都有限，12 樣準備裡只能挑 5 樣。準備好以後，會隨機發生 3 個意外，看看你有沒有準備到。'),el('p','lead','這不是考試，沒有分數。'));
+  app.append(c,el('h2',null,'先選一件你想準備的事：'));
+  var g=el('div','opts');
+  S.forEach(function(s,k){g.appendChild(btn('btn alt','<span style="font-weight:900">'+s.name+'</span><br><span style="font-weight:500;font-size:.85em;color:var(--muted)">'+s.scene+'</span>',function(){st.sc=k;go(1)}))});
+  app.append(g);
+}
+function s1(){
+  head();
+  app.append(el('h2',null,'① 你覺得這件事能順利完成，你有幾成把握？'));
+  slider('順利完成的把握',st.c1!=null?st.c1:7,function(v){st.c1=v;go(2)},'開始準備');
+}
+function s2(){
+  head();
+  app.append(el('h2',null,'② 這 12 樣準備，你只能挑 5 樣。'),el('p','lead','點一下選進來，再點一下拿出來。'));
+  var bar=el('div');var g=el('div','grid');var msg=el('p','note warm','已經挑滿 5 樣了！想換別的，要先拿出一樣。');msg.style.display='none';
+  var nx=btn('btn','準備好了',function(){go(3)});
+  function draw(){
+    bar.innerHTML='';bar.appendChild(bagBar(st.pick.length));
+    g.innerHTML='';
+    sc().items.forEach(function(t,k){var on=st.pick.indexOf(k)>=0;
+      var b=btn('btn alt'+(on?' pick':'')+(!on&&st.pick.length>=5?' dim':''),(on?ic('check')+' ':'')+t,function(){
+        var i=st.pick.indexOf(k);
+        if(i>=0){st.pick.splice(i,1);msg.style.display='none'}
+        else if(st.pick.length<5){st.pick.push(k);msg.style.display='none'}
+        else{msg.style.display='block'}
+        save(st);draw();
+      });b.setAttribute('aria-pressed',on?'true':'false');g.appendChild(b)});
+    nx.disabled=st.pick.length!==5;nx.textContent=st.pick.length===5?'準備好了':'還要再挑 '+(5-st.pick.length)+' 樣';
+  }
+  draw();app.append(bar,g,msg,nx);
+}
+function s3(){
+  head();
+  var c=el('div','card');c.style.background='#FBF1DC';c.append(el('h2',null,'③ 事前驗屍'),el('p','scene','想像一下：這件事已經結束了，而且搞砸了。'),el('p','scene','你覺得，最可能是因為什麼？'));
+  app.append(c);
+  var g=el('div','opts');
+  sc().reasons.forEach(function(r,k){g.appendChild(btn('btn alt'+(st.reason===k?' pick':''),r[0],function(){st.reason=k;go(4)}))});
+  app.append(g);
+}
+function s4(){
+  head();
+  var R=sc().reasons[st.reason];var last=R[1].length===0;
+  app.append(el('p','note'+(last?' warm':''),'你選了：<b>'+R[0]+'</b><br>'+(last?RFB.last:RFB.other)));
+  app.append(el('h2',null,'想到這一點，你要不要換掉一樣準備？只能換一樣，也可以不換。'));
+  var box=el('div');box.style.display='flex';box.style.flexDirection='column';box.style.gap='12px';
+  var ok=btn('btn','換好了',function(){st.swap=true;st.sur=null;st.shown=0;go(5)});
+  var keep=btn('btn ghost','不換，維持原本的 5 樣',function(){st.swap=false;st.out=null;st.inn=null;st.sur=null;st.shown=0;go(5)});
+  function tag(k){return R[1].indexOf(k)>=0?'<span class="tag">可能有關</span>':''}
+  function draw(){
+    box.innerHTML='';
+    box.append(el('h3',null,'拿出一樣（背包裡的）'));
+    var g1=el('div','grid');
+    st.pick.forEach(function(k){g1.appendChild(btn('btn alt'+(st.out===k?' out':' pick')+(R[1].indexOf(k)>=0?' hint':''),tag(k)+sc().items[k],function(){st.out=st.out===k?null:k;save(st);draw()}))});
+    box.append(g1,el('h3',null,'放進一樣（還沒帶的）'));
+    var g2=el('div','grid');
+    sc().items.forEach(function(t,k){if(st.pick.indexOf(k)>=0)return;g2.appendChild(btn('btn alt'+(st.inn===k?' pick':'')+(R[1].indexOf(k)>=0?' hint':''),tag(k)+(st.inn===k?ic('check')+' ':'')+t,function(){st.inn=st.inn===k?null:k;save(st);draw()}))});
+    box.append(g2);
+    ok.disabled=st.out==null||st.inn==null;
+    ok.textContent=ok.disabled?'兩邊各點一樣，才能換':'換好了：拿出「'+sc().items[st.out]+'」，放進「'+sc().items[st.inn]+'」';
+  }
+  draw();app.append(box,ok,keep);
+}
+function s5(){
+  head();
+  if(!st.sur){st.sur=draw3(sc().sur.length);st.shown=0;save(st)}
+  var mine=finalPick();
+  app.append(el('h2',null,sc().go||'④ 出發了！這一天發生了 3 個意外……'),bagBar(5));
+  var bagTxt=el('p','small',((sc().bag)?'你做的準備：':'你的背包：')+mine.map(function(k){return sc().items[k]}).join('、'));bagTxt.style.color='var(--muted)';app.append(bagTxt);
+  for(var i=0;i<st.shown;i++){
+    var u=sc().sur[st.sur[i]];var hit=u.k.filter(function(k){return mine.indexOf(k)>=0});
+    var c=el('div','card sur '+(hit.length?'yes':'no'));
+    c.append(el('p','case','意外 '+(i+1)),el('p','scene',u.t));
+    if(hit.length){
+      var sw=st.swap&&hit.indexOf(st.inn)>=0;
+      c.append(el('p','res','準備到了！'+(sc().has||'你帶了')+'「'+hit.map(function(k){return sc().items[k]}).join('」和「')+'」。'));
+      if(sw)c.append(el('p','small','這一樣，是你事前驗屍以後才換進來的。'));
+    }else{
+      c.append(el('p','res','這次沒有準備到。'),el('p','small',(sc().iff||'如果帶了')+'「'+u.k.map(function(k){return sc().items[k]}).join('」或「')+'」，會比較順。<br>現在還可以這樣補救：'+u.f));
+      if(st.swap&&u.k.indexOf(st.out)>=0)c.append(el('p','small','咦，「'+sc().items[st.out]+'」是你事前驗屍時拿出來的。沒關係，每一個選擇都有代價，下次可以再想想。'));
+    }
+    app.append(c);
+  }
+  if(st.shown<3){app.append(btn('btn','抽第 '+(st.shown+1)+' 個意外',function(){st.shown++;save(st);render();var cs=app.querySelectorAll('.sur');if(cs.length)cs[cs.length-1].scrollIntoView({behavior:'smooth',block:'center'})}))}
+  else{app.append(el('p','note','意外是隨機抽的，每個人碰到的不一樣。準備到幾個，有一部分靠運氣；可是先想過「可能會出什麼事」，運氣不好的時候也比較不會慌。'),btn('btn','下一步',function(){go(6)}))}
+}
+function hits(){var mine=finalPick();return st.sur.filter(function(i){return sc().sur[i].k.some(function(k){return mine.indexOf(k)>=0})}).length}
+function s6(){
+  head();
+  app.append(el('h2',null,'⑤ 經歷過這些以後，如果下星期再做一次這件事，你覺得順利完成的把握有幾成？'),el('p','lead','一開始你選了 '+st.c1+' 成。改不改都可以。'));
+  slider('現在的把握',st.c2!=null?st.c2:st.c1,function(v){st.c2=v;go(7)},'看看我的紀錄');
+}
+function end(){
+  var t=el('table');
+  var rows=[['我準備的事',sc().name],['一開始的把握',st.c1+' 成'],['3 個意外，準備到',hits()+' 個'],['最後的把握',st.c2+' 成'],
+   ['事前驗屍以後',st.swap?'有換：拿出「'+sc().items[st.out]+'」，放進「'+sc().items[st.inn]+'」':'沒有換'],
+   ['我想到最可能搞砸的原因',sc().reasons[st.reason][0]]];
+  rows.forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));t.appendChild(tr)});
+  var d=st.c2-st.c1;
+  var c=el('div','card');c.append(t,el('p','note',d<0?'你的把握變少了 '+(-d)+' 成。看過意外以後，知道事情沒有想的那麼簡單，這也是一種收穫。':d>0?'你的把握變多了 '+d+' 成。也許你覺得自己現在比較知道要準備什麼了。':'你的把握沒有變。等一下可以想想看：為什麼？'));
+  app.append(el('h2',null,'做完了！請停在這一頁，等其他同學。'),c);
+}
+render();
+})();
+</script>
