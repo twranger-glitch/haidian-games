@@ -87,7 +87,7 @@ function render(){
     var c=el('div','card');
     c.append(el('p','lead','夜市的投籃機一共玩 5 回合。每一回合開始時，老闆會發給你幾顆球。'),
       el('p','lead','投籃的方法：指針會在力氣條上左右來回跑，等它跑到<b style="color:#2A6F68">綠色的地方</b>，再按「投！」，球就會進。'),
-      el('p','lead','每一回合開始前，如果你覺得球不夠，可以先<b style="color:#D95D39">向下一回合借球</b>。借 1 顆球，這一回合就多 1 顆；可是到了下一回合，老闆會先收回 2 顆。第 5 回合是最後一回合，不能再借。'));
+      el('p','lead','每一回合開始前，如果你覺得球不夠，可以<b style="color:#D95D39">借球</b>：先把下一回合的球拿來用。借 1 顆，這一回合就多 1 顆；可是下一回合要還老闆 2 顆，所以下一回合會少 2 顆。第 5 回合是最後一回合，不能再借。'));
     var g=el('div','note warm','平板發給你的卡片是：<span class="chip '+(RED?'red':'blue')+'">'+(RED?'紅色卡':'藍色卡')+'</span>，每一回合老闆會發給你 <b>'+BASE+' 顆球</b>。<br>請先不要告訴別人你的卡片顏色。');
     app.append(c,g,btn('開始第 1 回合','',function(){startRound()}));
     return;
@@ -95,7 +95,7 @@ function render(){
   if(st.ph==='borrow'){
     app.append(hud(),el('h2',null,'第 '+st.r+' 回合：這一回合你有 '+(st.left)+' 顆球'));
     var c2=el('div','card');
-    c2.append(ballsRow(st.left),el('p','lead',st.left===0?'這一回合的球，已經在上一回合借光了。':'你要不要向下一回合借球？每借 1 顆，這一回合就多 1 顆；可是到了第 '+(st.r+1)+' 回合，老闆會先收回 2 顆。'));
+    c2.append(ballsRow(st.left),el('p','lead',st.left===0?'這一回合的球，已經在上一回合借光了。':'你要不要借球？每借 1 顆，這一回合就多 1 顆；可是第 '+(st.r+1)+' 回合要還老闆 2 顆。'));
     if(st.borrowNow>0)c2.append(el('p','note warm','你這一回合已經借了 '+st.borrowNow+' 顆，所以到了第 '+(st.r+1)+' 回合，老闆會先收回 '+(st.borrowNow*2)+' 顆。'));
     app.append(c2);
     var canBorrow=(st.borrowNow+1)*2<=BASE;
