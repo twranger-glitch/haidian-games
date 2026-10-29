@@ -116,7 +116,7 @@ function render(){var h='';var s=st.step;
    '你放手了。阿海伯用 '+r.ai+' 元買走了魚苗；你喊過的 '+r.me+' 元還是要付，可是什麼也拿不到。';
   var total=r.me+r.ai;
   h='<p class="kick">第 '+st.round+' 回合結束</p><h2>'+t+'</h2>'+
-  '<div class="card"><p>你們兩個人加起來，一共付出 <b>'+total+' 元</b>，換到一桶值 100 元的魚苗。'+(total>100?'兩個人搶得不肯放手，反而讓辦拍賣的人漁翁得利，多賺了 '+(total-100)+' 元。':'')+'</p>'+
+  '<div class="card"><p>'+(r.me===0?'辦拍賣的人只收到阿海伯付的 <b>'+r.ai+' 元</b>。':'辦拍賣的人收到兩筆錢：'+(r.win?'你付的 '+r.me+' 元，加上阿海伯付的 '+r.ai+' 元':'阿海伯付的 '+r.ai+' 元，加上你付的 '+r.me+' 元')+'，一共 <b>'+total+' 元</b>'+(total>100?'，比這桶魚苗值的 100 元還多了 '+(total-100)+' 元。兩個人搶得不肯放手，反而讓辦拍賣的人漁翁得利。':'。'))+'</p>'+
   (st.round===2?'<p>你設的停損點是 '+st.stop+' 元，'+(r.me>st.stop?'<b>你最後喊到 '+r.me+' 元，超過了停損點。</b>':'你最後喊到 '+r.me+' 元，<b>守住了停損點。</b>')+'</p>':'')+'</div>'+
   (st.round===1?'<button class="btn" onclick="go(\'setstop\')">下一步：準備第二回合</button>':'<button class="btn" onclick="go(\'why\')">下一步</button>');
  } else if(s==='why'){
