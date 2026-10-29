@@ -42,7 +42,7 @@ table.sum td.k{font-weight:900;color:var(--muted);width:40%}
 .bigdone{font-size:clamp(24px,4vw,34px)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-/* 流程：介紹 → 一題一題問「願不願意丟」（丟到字一律付 100 點，丟到人頭可以得到的點數 100→150→200→250→300→500 越加越多，答「願意」就停）
+/* 流程：介紹 → 一題一題問「玩不玩」（丟到字一律付 100 點，丟到人頭可以得到的點數 100→150→200→250→300→500 越加越多，答「願意」就停）
    → 照你願意的條件真的丟一次（硬幣翻轉動畫）→ 結果頁（舉手分組＋長條比較） */
 .stall{width:100%;max-width:420px;height:auto;display:block;margin:0 auto}
 .pts{display:inline-flex;align-items:center;gap:8px;background:var(--lg);border:2px solid #EBD9A6;border-radius:14px;padding:4px 14px;font-weight:900;font-size:clamp(19px,2.6vw,23px);align-self:flex-start}
@@ -121,21 +121,21 @@ function intro(){
  var c=el('div','card');c.innerHTML=stallSvg();
  c.append(el('p','lead','廟口有一個丟硬幣的攤子。老闆手上的硬幣，一面是<b>「人頭」</b>，另一面是<b>「字」</b>。丟出去，出現人頭和出現字的機會<b>一樣大</b>，一半一半。'),
   el('p','lead','一開始，你有 <b>1000 點</b>遊戲點數。這些點數只在遊戲裡用，不是真的錢。'),
-  el('p','lead','老闆會一次開一個條件。覺得划得來，就按<b>「願意丟」</b>；覺得划不來，就按<b>「不願意丟」</b>。'),
-  el('p','lead','你要想的只有一件事：丟到「字」要付 100 點，那丟到「人頭」<b>至少要拿多少點</b>，你才<b>心甘情願</b>丟？沒有標準答案，照你心裡真正的想法選。'));
+  el('p','lead','老闆會一次開一個條件。覺得划得來，就按<b>「玩一把」</b>；覺得划不來，就按<b>「不玩」</b>。'),
+  el('p','lead','你要想的只有一件事：丟到「字」要付 100 點，那丟到「人頭」<b>至少要拿多少點</b>，你才<b>心甘情願</b>玩一把？沒有標準答案，照你心裡真正的想法選。'));
  app.append(c,btn('走到硬幣攤前面','',function(){go(1)}));
 }
 function ask(){var k=st.k,win=OFFERS[k];
  app.append(el('p','kick','第 '+(k+1)+' 個條件'));
  app.appendChild(el('p','say','老闆說：「丟到人頭，我給你 <b class="n">'+win+' 點</b>；丟到字，你給我 <b class="c n">100 點</b>。」'));
  app.appendChild(deal(win,k>0));
- app.appendChild(el('h2',null,'這個條件划得來嗎？你心甘情願丟一次嗎？'));
+ app.appendChild(el('h2',null,'這個條件划得來嗎？你心甘情願玩一把嗎？'));
  var yn=el('div','yn');
- yn.appendChild(btn('願意丟<small>划得來，就照這個條件丟一次</small>','teal',function(){st.yes=win;save();go(2)}));
- yn.appendChild(btn('不願意丟<small>划不來，請老闆再加碼</small>','',function(){st.no.push(win);
+ yn.appendChild(btn('玩一把<small>划得來，就照這個條件玩</small>','teal',function(){st.yes=win;save();go(2)}));
+ yn.appendChild(btn('不玩<small>划不來，請老闆再加碼</small>','',function(){st.no.push(win);
    if(k+1<OFFERS.length){st.k=k+1;save();render();window.scrollTo(0,0)}else{st.yes='never';save();go(3)}}));
  app.appendChild(yn);
- app.appendChild(el('p','hint','你按「不願意丟」，老闆就會加碼：丟到「人頭」給你更多點，再問你一次。'));
+ app.appendChild(el('p','hint','你按「不玩」，老闆就會加碼：丟到「人頭」給你更多點，再問你一次。'));
  app.appendChild(ladder());
 }
 function toss(){var win=st.yes;
@@ -156,14 +156,14 @@ function toss(){var win=st.yes;
   var ci=box.querySelector('.coinin');ci.style.setProperty('--ry',head?'1080deg':'1260deg');ci.classList.add('go');setTimeout(done,1350)}
  box.addEventListener('click',doToss);box.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();doToss()}});
 }
-function group(){var v=st.yes;if(v==='never'||v>=300)return '第 4 組：要給 300 點以上才肯丟，或是怎麼加都不丟';if(v>=200)return '第 3 組：人頭要給 200 或 250 點，我才肯丟';if(v===150)return '第 2 組：人頭要給 150 點，我才肯丟';return '第 1 組：人頭給 100 點，我就肯丟'}
+function group(){var v=st.yes;if(v==='never'||v>=300)return '第 4 組：要給 300 點以上才肯玩一把，或是怎麼加都不丟';if(v>=200)return '第 3 組：人頭要給 200 或 250 點，我才肯玩一把';if(v===150)return '第 2 組：人頭要給 150 點，我才肯玩一把';return '第 1 組：人頭給 100 點，我就肯玩一把'}
 function end(){
  app.appendChild(el('h2','bigdone','做完了！請停在這一頁，等其他同學。'));
  var c=el('div','card');var v=st.yes;
  c.appendChild(el('p','kick','舉手分組'));
  c.appendChild(el('p','say','<b>'+group()+'</b>'));
  if(v==='never'){c.appendChild(el('p','lead','丟到人頭給你 500 點，你還是不想冒險付 100 點。很多人一想到可能會輸，就覺得心疼，乾脆不玩，這也是一種選擇。'))}
- else{c.appendChild(el('p','lead',v===100?'丟到人頭拿到的點數，和丟到字付出的點數一樣多，你就肯丟了。':'丟到字要付 100 點。丟到人頭要給你 <b>'+v+' 點</b>，你才心甘情願丟。也就是說，贏的要比輸的多，你才覺得划得來。'));
+ else{c.appendChild(el('p','lead',v===100?'丟到人頭拿到的點數，和丟到字付出的點數一樣多，你就肯玩一把了。':'丟到字要付 100 點。丟到人頭要給你 <b>'+v+' 點</b>，你才心甘情願玩一把。也就是說，贏的要比輸的多，你才覺得划得來。'));
   var bars=el('div','bars');var mx=Math.max(v,100);
   bars.appendChild(el('div','bar','<span>可能付出</span><span class="tr"><span class="f lose" style="width:'+(100/mx*100)+'%">100 點</span></span>'));
   bars.appendChild(el('div','bar','<span>至少要得到</span><span class="tr"><span class="f win" style="width:'+(v/mx*100)+'%">'+v+' 點</span></span>'));
