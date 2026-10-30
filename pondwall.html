@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>颱風季，守住魚塭</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{--bg:#FAF7F2;--card:#FFFFFF;--ink:#1E242B;--co:#D95D39;--te:#2A6F68;--mu:#475569;--ln:#E3DED7;--col:#FFF5F2;--tel:#F0F7F6;--dk:#1E242B;--or:#F2A65A;
+--font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:19px;line-height:1.6}
+.wrap{max-width:880px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:clamp(30px,5.4vw,48px);font-weight:900;margin:0;line-height:1.25}
+h2{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45}
+p{margin:0}
+.kick{font-size:clamp(18px,2.4vw,21px);font-weight:700;color:var(--co);letter-spacing:2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lead{font-size:clamp(19px,2.6vw,23px);color:var(--mu)}
+.card{background:var(--card);border:2px solid var(--ln);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:clamp(14px,3vw,24px);display:flex;flex-direction:column;gap:10px}
+.card p{font-size:clamp(19px,2.6vw,23px)}
+.card.warm{background:var(--col);border-color:#F3D9CF}
+.card.cool{background:var(--tel);border-color:#CFE3E0}
+.card.dark{background:var(--dk);border:0;color:#FAF7F2}
+.card.dark .mini{color:#CBD5E1}
+.btn{font:inherit;font-size:clamp(19px,2.7vw,24px);font-weight:900;border:0;border-radius:16px;padding:14px 18px;background:var(--co);color:#fff;cursor:pointer;line-height:1.45}
+.btn.te{background:var(--te)}
+.btn[disabled]{opacity:.4;cursor:default}
+.btn.alt{background:var(--card);color:var(--ink);border:3px solid var(--ln);text-align:left;font-weight:700;width:100%}
+.btn.alt.pick{border-color:var(--te);background:var(--tel)}
+.btn:focus-visible,input:focus-visible{outline:4px solid var(--te);outline-offset:3px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-weight:900;border-radius:999px;padding:2px 12px;font-size:18px;letter-spacing:0}
+.tag.red{background:var(--col);color:var(--co)} .tag.blue{background:var(--tel);color:var(--te)}
+.mini{font-size:18px;color:var(--mu)}
+/* 回合列 */
+.rounds{display:flex;gap:6px}
+.rounds span{flex:1;text-align:center;border-radius:12px;border:2px solid var(--ln);padding:4px 0;font-weight:700;color:var(--mu);background:#fff;font-size:17px}
+.rounds span.now{border-color:var(--co);color:var(--ink);background:var(--col)}
+.rounds span.done{background:var(--tel);color:var(--te);border-color:#CFE3E0}
+/* 場景 */
+.stage{position:relative;border-radius:20px;overflow:hidden;border:2px solid var(--ln);background:#fff}
+.stage svg{display:block;width:100%;height:auto}
+.hud{position:absolute;top:10px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.pill{background:rgba(255,255,255,.92);border:2px solid var(--ln);border-radius:999px;padding:2px 14px;font-weight:900;font-size:clamp(17px,2.4vw,21px)}
+.pill b{color:var(--te);font-size:1.25em}
+.rain line{stroke:#94A3B8;stroke-width:3;stroke-linecap:round;opacity:0}
+.storm .rain line{animation:drop .5s linear infinite}
+@keyframes drop{0%{transform:translate(0,-40px);opacity:0}20%{opacity:.9}100%{transform:translate(-14px,60px);opacity:0}}
+.storm .sky{fill:#64748B}
+.sky{transition:fill .4s}
+.fish{animation:swim 3.2s ease-in-out infinite alternate}
+@keyframes swim{from{transform:translateX(-6px)}to{transform:translateX(6px)}}
+.wv{transition:transform 1.4s ease}
+@media (prefers-reduced-motion:reduce){.storm .rain line,.fish{animation:none}.wv{transition:none}}
+/* 派工 */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.side{border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.side.wall{background:var(--col);border:2px solid #F3D9CF}
+.side.ditch{background:var(--tel);border:2px solid #CFE3E0}
+.side .nm{font-weight:900;font-size:clamp(19px,2.6vw,23px)}
+.side .n{font-size:clamp(38px,7vw,56px);font-weight:900;line-height:1.1}
+.side.wall .n{color:var(--co)} .side.ditch .n{color:var(--te)}
+.crew{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.crew svg{width:clamp(26px,6vw,40px);height:auto}
+input[type=range]{width:100%;height:44px;accent-color:var(--te)}
+.ends{display:flex;justify-content:space-between;font-weight:700;color:var(--mu);font-size:17px;margin-top:-6px}
+/* 結果 */
+.big{font-size:clamp(44px,9vw,72px);font-weight:900;line-height:1;color:var(--or)}
+.res{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.sum .row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:2px solid var(--ln);padding:8px 0;font-size:clamp(19px,2.6vw,23px)}
+.sum .row b{color:var(--co);font-size:clamp(20px,3vw,27px);text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+var KEY='u2c-pondwall-v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}
+function rnd(n){try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}catch(e){return Math.floor(Math.random()*n)}}
+function fresh(){var h=location.hash;var g=h==='#red'?'red':h==='#blue'?'blue':(rnd(2)?'red':'blue');
+ return {g:g,step:0,r:0,ph:'plan',wall:[0,0,0,0],ditch:[0,0,0,0],lost:[0,0,0,0],cur:5,goal:null,next:null}}
+if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}}
+var st=load();
+if(!st||((location.hash==='#red'||location.hash==='#blue')&&st.step===0)){st=fresh();save(st)}
+
+var STORM=[
+ {t:'第 1 場：大雨',  why:'雨水從塭岸<b>上面</b>漫進魚塭。', wallOK:true,  S:25},
+ {t:'第 2 場：颱風',  why:'這次水不是從上面來，是從塭岸<b>底下的沙土</b>慢慢滲進來。', wallOK:false, S:20},
+ {t:'第 3 場：大雨',  why:'塭岸<b>另一邊</b>被沖出一個缺口，水從缺口灌進來。', wallOK:false, S:20},
+ {t:'第 4 場：今年最大的颱風', why:'海水倒灌，浪一波一波打過來，<b>整片</b>都是水。', wallOK:false, S:30}
+];
+function sum(a,n){var s=0;for(var i=0;i<(n===undefined?a.length:n);i++)s+=a[i];return s}
+function fishLeft(){return Math.max(0,100-sum(st.lost))}
+function who(){return st.g==='red'
+ ?'這口魚塭的塭岸（魚塭四周的土堤），是<b>你當初決定蓋的</b>。為了它，你說服了全家人，也花了很多工夫。'
+ :'這口魚塭的塭岸（魚塭四周的土堤），是<b>上一任塭主決定蓋的</b>。他搬去外地了，魚塭現在交給你管。'}
+function tag(){return st.g==='red'?'<span class="tag red">● 紅組</span>':'<span class="tag blue">■ 藍組</span>'}
+
+/* 場景 SVG：天空、海、塭岸、魚塭、水渠、魚 */
+function scene(storm){
+ var pv=st.ph==='plan'&&st.step===1;
+ var wallT=sum(st.wall, st.ph==='plan'?st.r:st.r+1)+(pv?10-st.cur:0);
+ var dT=sum(st.ditch, st.ph==='plan'?st.r:st.r+1)+(pv?st.cur:0);
+ var layers=Math.min(10,Math.ceil(wallT/4));          // 塭岸層數
+ var dlen=Math.min(1,dT/40);                          // 水渠完成度
+ var fish=fishLeft(); var nf=Math.round(fish/10);
+ var top=200-layers*8;                                // 塭岸頂
+ var o='<svg viewBox="0 80 640 220" role="img" aria-label="魚塭的樣子：左邊是魚塭，中間是塭岸，右邊是海；底下的虛線是水渠">';
+ o+='<rect class="sky" x="0" y="80" width="640" height="220" fill="#E8EEF3"/>';
+ o+=storm?'':'<circle cx="520" cy="110" r="16" fill="#F2A65A"/>';
+ o+='<g fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"><path d="M120 120 q0 -16 18 -16 q6 -12 22 -8 q16 -4 18 12 q14 2 12 14 z"/><path d="M380 112 q0 -14 16 -14 q6 -10 20 -6 q14 -2 16 10 q12 2 10 12 z"/></g>';
+ o+='<g class="rain">';for(var i=0;i<26;i++){var x=20+i*24,y=96+(i*37)%70;o+='<line x1="'+x+'" y1="'+y+'" x2="'+(x-8)+'" y2="'+(y+20)+'" style="animation-delay:'+((i*53)%500)/1000+'s"/>'}o+='</g>';
+ // 海
+ o+='<path d="M470 170 Q505 160 540 170 T610 170 L640 170 L640 300 L470 300 Z" fill="#CFE3E0" stroke="#2A6F68" stroke-width="3"/>';
+ // 地面
+ o+='<rect x="0" y="236" width="470" height="64" fill="#EADFCF"/>';
+ // 魚塭
+ var wl=storm?150:178;
+ o+='<rect x="30" y="150" width="330" height="86" rx="6" fill="#FFFFFF"/>';
+ o+='<rect class="wv" x="30" y="'+wl+'" width="330" height="'+(236-wl)+'" fill="#BFE0DB" opacity=".9"/>';
+ for(var k=0;k<10;k++){var fx=58+(k%5)*60+(k>4?28:0),fy=200+(k>4?18:0);
+  if(k<nf)o+='<g class="fish" style="animation-delay:'+(k*0.3)+'s"><path d="M'+fx+' '+fy+' q14 -10 28 0 q-14 10 -28 0 z" fill="#2A6F68"/><path d="M'+(fx+28)+' '+fy+' l9 -7 l0 14 z" fill="#2A6F68"/></g>';
+  else o+='<path d="M'+fx+' '+(fy-2)+' l22 4" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>'}
+ o+='<path d="M30 236 L360 236" stroke="#475569" stroke-width="4"/>';
+ // 塭岸（梯形土堤，越疊越高）
+ o+='<path d="M360 236 L380 '+top+' L410 '+top+' L432 236 Z" fill="#F2D3BF" stroke="#D95D39" stroke-width="4" stroke-linejoin="round"/>';
+ o+='<text x="396" y="'+(top-10)+'" font-size="18" font-weight="900" fill="#D95D39" text-anchor="middle" font-family="Noto Sans TC,sans-serif">塭岸</text>';
+ // 水渠：從魚塭底下通到海
+ var x0=60,x1=x0+(560-x0)*dlen;
+ o+='<path d="M60 266 L560 266" stroke="#CBD5E1" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 14"/>';
+ if(dT>0)o+='<path d="M'+x0+' 266 L'+x1.toFixed(0)+' 266" stroke="#2A6F68" stroke-width="10" stroke-linecap="round"/>';
+ o+='<text x="66" y="292" font-size="17" font-weight="700" fill="#2A6F68" font-family="Noto Sans TC,sans-serif">水渠 '+Math.round(dlen*100)+'%</text>';
+ o+='</svg>';
+ return '<div class="stage'+(storm?' storm':'')+'" id="stage">'+o+
+  '<div class="hud"><span class="pill">虱目魚 <b>'+fish+'</b> 條</span><span class="pill">'+(st.r+1>4?'':'第 '+(st.r+1)+' 場')+'</span></div></div>';
+}
+function rounds(){return '<div class="rounds">'+[0,1,2,3].map(function(i){return '<span class="'+(i<st.r||(i===st.r&&st.ph==='done')?'done':i===st.r?'now':'')+'">第 '+(i+1)+' 場</span>'}).join('')+'</div>'}
+function person(c){return '<svg viewBox="0 0 24 32" aria-hidden="true"><circle cx="12" cy="8" r="6" fill="'+c+'"/><path d="M3 31 Q3 17 12 17 Q21 17 21 31 Z" fill="'+c+'"/></svg>'}
+
+function go(n){st.step=n;save(st);render();try{window.scrollTo(0,0)}catch(e){}}
+var app=document.getElementById('app');
+function render(){var h='';var s=st.step;
+ if(s===0){
+  h='<p class="kick">第 3 課・活動三 '+tag()+'</p><h1>颱風季，守住魚塭</h1>'+
+  '<p class="lead">你是臺江一口魚塭的塭主。魚塭裡養了 <b>100 條虱目魚</b>，中秋節前要撈起來賣，這是全家今年的收入。</p>'+
+  '<div class="card warm"><p>'+who()+'</p></div>'+
+  '<div class="card"><p>接下來會有 <b>4 場大雨和颱風</b>。每一場來之前，你有 <b>10 位工人</b>可以派：</p>'+
+  '<div class="split"><div class="side wall"><span class="nm">加高塭岸</span><span class="mini">把土堤再堆高，擋住外面的水。</span></div>'+
+  '<div class="side ditch"><span class="nm">挖水渠</span><span class="mini">挖一條水渠，把積水排回海裡。要挖好幾場才會越來越有用。</span></div></div>'+
+  '<p class="mini">兩邊怎麼分都可以，沒有標準答案。請不要告訴旁邊的同學你是哪一組。</p></div>'+
+  scene(false)+'<button class="btn" onclick="go(1)">第 1 場要來了，開始派工</button>';
+ } else if(s===1 && st.ph==='plan'){
+  var w=10-st.cur,d=st.cur,last=st.r>0?STORM[st.r-1]:null;
+  h='<p class="kick">派工 '+tag()+'</p>'+rounds()+
+  (last?'<div class="card"><p>上一場：'+last.why.replace(/<\/?b>/g,'')+'魚死了 <b>'+st.lost[st.r-1]+'</b> 條。</p><p class="mini">'+who().replace(/<\/?b>/g,'')+'</p></div>'
+       :'<div class="card"><p>氣象預報：這幾天會下大雨。</p><p class="mini">'+who().replace(/<\/?b>/g,'')+'</p></div>')+
+  '<div id="sb">'+scene(false)+'</div>'+
+  '<div class="card"><p><b>這一場，10 位工人要怎麼分？</b>拉動下面的滑桿。</p>'+
+  '<div class="split"><div class="side wall"><span class="nm">加高塭岸</span><span class="n" id="nw">'+w+' 位</span></div><div class="side ditch"><span class="nm">挖水渠</span><span class="n" id="nd">'+d+' 位</span></div></div>'+
+  '<div class="crew" id="crew" aria-hidden="true">'+crew(w,d)+'</div>'+
+  '<input type="range" min="0" max="10" step="1" value="'+d+'" oninput="slide(this.value)" aria-label="挖水渠的工人數，其餘加高塭岸">'+
+  '<div class="ends"><span>← 全部加高塭岸</span><span>全部挖水渠 →</span></div></div>'+
+  '<button class="btn te" onclick="storm()">派工完成，等'+STORM[st.r].t.split('：')[1]+'來</button>';
+ } else if(s===1 && st.ph==='storm'){
+  h='<p class="kick">'+STORM[st.r].t+' '+tag()+'</p>'+rounds()+scene(true)+'<h2 style="text-align:center">風雨好大……</h2>';
+ } else if(s===1){
+  var R=STORM[st.r],L=st.lost[st.r],wl=st.wall[st.r],dc=sum(st.ditch,st.r+1);
+  var note=R.wallOK?(wl>0?'加高的塭岸擋住了一部分的水。':'塭岸沒有加高，水直接漫了進來。'):'塭岸再高，也擋不住這一次的水。';
+  note+=dc>0?'水渠把一部分積水排回海裡。':'沒有地方排水，積水一直留在魚塭裡。';
+  h='<p class="kick">'+R.t+' '+tag()+'</p>'+rounds()+scene(false)+
+  '<div class="card dark"><p>'+R.why+'</p><div class="res"><span class="big">−'+L+'</span><p>這一場死了 '+L+' 條魚，<br>現在還剩 <b>'+fishLeft()+'</b> 條。</p></div><p class="mini">'+note+'</p></div>'+
+  '<button class="btn" onclick="nextR()">'+(st.r<3?'第 '+(st.r+2)+' 場要來了，繼續派工':'颱風季結束了')+'</button>';
+ } else if(s===2){
+  h='<p class="kick">颱風季結束了</p><h2>先停一下：你養這口魚塭，真正的目標是什麼？</h2>';
+  var G=['讓塭岸永遠不要被水沖過。','中秋節前，有虱目魚可以賣。','證明當初蓋這道塭岸沒有錯。','把塭岸堆得又高又漂亮。'];
+  for(var i=0;i<4;i++)h+='<button class="btn alt'+(st.goal===i?' pick':'')+'" onclick="pick(\'goal\','+i+')">'+G[i]+'</button>';
+  h+='<button class="btn" '+(st.goal===null?'disabled':'')+' onclick="go(3)">下一題</button>';
+ } else if(s===3){
+  h='<p class="kick">最後一題（沒有標準答案）</p><h2>明年颱風季，又有 10 位工人。你打算怎麼派？</h2>';
+  var N=['10 位全部加高塭岸。','一半加高塭岸，一半挖水渠。','10 位全部挖水渠。','先問問附近的塭主，再決定。'];
+  for(var j=0;j<4;j++)h+='<button class="btn alt'+(st.next===j?' pick':'')+'" onclick="pick(\'next\','+j+')">'+N[j]+'</button>';
+  h+='<button class="btn" '+(st.next===null?'disabled':'')+' onclick="go(4)">看結果</button>';
+ } else {
+  var tw=sum(st.wall),td=sum(st.ditch);
+  var band=tw<=20?'20 位以下':tw<=30?'21 到 30 位':'超過 30 位';
+  var G2=['塭岸不被沖過','中秋節有魚賣','證明沒蓋錯','塭岸蓋漂亮'],N2=['全部加高塭岸','一半一半','全部挖水渠','先問附近塭主'];
+  h='<h1>做完了！請停在這一頁，等其他同學。</h1><div class="card sum">'+
+  '<div class="row"><span>你的組別</span><b>'+(st.g==='red'?'● 紅組':'■ 藍組')+'</b></div>'+
+  '<div class="row"><span>四場加起來，派去加高塭岸的工人</span><b>'+tw+' 位（'+band+'）</b></div>'+
+  '<div class="row"><span>四場加起來，派去挖水渠的工人</span><b>'+td+' 位</b></div>'+
+  '<div class="row"><span>每一場派去加高塭岸的人數</span><b>'+st.wall.join('、')+'</b></div>'+
+  '<div class="row"><span>剩下的虱目魚</span><b>'+fishLeft()+' 條</b></div>'+
+  '<div class="row"><span>你認為的目標</span><b>'+G2[st.goal]+'</b></div>'+
+  '<div class="row"><span>明年的打算</span><b>'+N2[st.next]+'</b></div></div>'+
+  '<p class="mini">同一位工人來兩場，就算兩位。</p><p class="lead">想一想：塭岸和水渠都只是「方法」。目標是中秋節有魚可以賣，哪一個方法比較有希望？</p>';
+ }
+ app.innerHTML=h;
+}
+function crew(w,d){return Array(w+1).join(person('#D95D39'))+Array(d+1).join(person('#2A6F68'))}
+function slide(v){st.cur=+v;save(st);var w=10-st.cur,d=st.cur;
+ document.getElementById('nw').textContent=w+' 位';document.getElementById('nd').textContent=d+' 位';
+ document.getElementById('crew').innerHTML=crew(w,d);document.getElementById('sb').innerHTML=scene(false)}
+function storm(){var i=st.r,R=STORM[i];st.wall[i]=10-st.cur;st.ditch[i]=st.cur;
+ var dc=sum(st.ditch,i+1);var wallEff=R.wallOK?Math.min(10,Math.round(st.wall[i]*1.5)):0;var dEff=Math.min(R.S-3,Math.round(dc*1.6));
+ st.lost[i]=Math.min(fishLeft(),Math.max(2,R.S-wallEff-dEff));
+ st.ph='storm';save(st);render();setTimeout(function(){st.ph='done';save(st);render()},1800)}
+function nextR(){if(st.r<3){st.r++;st.ph='plan';st.cur=5;save(st);render();try{window.scrollTo(0,0)}catch(e){}}else{go(2)}}
+function pick(k,v){st[k]=v;save(st);render()}
+if(st.step===1&&st.ph==='storm'){st.ph='done';save(st)}
+window.addEventListener('hashchange',function(){if((location.hash==='#red'||location.hash==='#blue')&&st.step===0){st=fresh();save(st);render();return}if(location.hash==='#reset'){save(null);try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}st=fresh();save(st);render()}});
+render();
+</script>
+</body>
+</html>
