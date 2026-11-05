@@ -163,7 +163,7 @@ function end(){
   ['我想對阿水伯說',{hard:'要接受一定會賠錢，真的很不甘心',count:'先算算看最多可能會賠多少',ask:'去問問已經改養魚的鄰居',luck:'再撐撐看，說不定明年會變好'}[st.word]||'—']].forEach(function(r){
   var tr=el('tr');tr.append(el('td','k',r[0]),el('td',null,r[1]));t.appendChild(tr)});
  c.appendChild(t);app.appendChild(c);
- if(window.LIVE)app.appendChild(LIVE.box('forkraft',{rows:[gs===2,lb===2]}));
+ if(window.LIVE)app.appendChild(LIVE.box('forkraft',{rows:[gs===2,lb===2,gs===2&&lb===2]}));
  app.appendChild(el('p','hint','等一下老師會問兩個問題。第一個：可以得到錢的兩題，都選了「一定會」的人，請舉手。第二個：可能失去錢的兩題，都選了「賭一把」的人，請舉手。'));
 }
 render();
