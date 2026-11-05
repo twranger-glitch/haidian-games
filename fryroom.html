@@ -117,7 +117,8 @@ if(location.hash.indexOf('host')>=0){
  window.toStop=function(){H.r=2;H.ph='stop';H.stops={};render();broadcast()};
  window.toSum=function(){H.ph='sum';render();broadcast()};
  window.release=function(s){if(H.ph!=='lobby')return;if(confirm('要把 '+s+' 號空出來，讓別台平板重新選嗎？')){delete H.seats[s];render();broadcast()}};
- window.newRoom=function(){if(confirm('要開一個新的房間嗎？（換下一班時用）')){location.hash='#host-new';location.reload()}};
+ window.replay=function(){if(confirm('要從第 1 回合重新開始嗎？已經進場的座號會保留。')){H.ph='lobby';H.r=1;H.price=0;H.lead=null;H.bids={};H.stops={};H.over={};H.hist=[];H.log=[];render();broadcast()}};
+ window.newRoom=function(){if(confirm('要全部重置、開一個新房號嗎？（換下一班時用）')){pub(T+'state',{room:H.room,ph:'closed',seats:{},bids:{},stops:{},hist:[]},true);setTimeout(function(){location.hash='#host-new';location.reload()},400)}};
  function crowd(){var h='';var sec=second();Object.keys(H.seats).map(Number).sort(function(a,b){return a-b}).forEach(function(s){
    var cls=s===H.lead?'lead':s===sec?'second':'';var fill=s===H.lead?'#D95D39':s===sec?'#2A6F68':'#94A3B8';
    h+='<div class="av '+cls+'" id="av'+s+'" onclick="release('+s+')"><span class="tag">'+(H.bids[s]?H.bids[s]+' 元':'－')+'</span>'+person(fill,s,s===H.lead)+'</div>'});
@@ -128,7 +129,8 @@ if(location.hash.indexOf('host')>=0){
  function render(){var s=second(),n=Object.keys(H.seats).length,h='';
   h+='<div class="wrap host"><div class="top"><div><p class="kick">第 3 課・活動二　全班版</p><h1>瘋狂魚苗拍賣會</h1>'+
    '<p class="lead">學生網址：games.twranger.com/fryroom.html　輸入房號 →</p></div>'+
-   '<div style="text-align:right"><p class="lead">房號</p><p class="roomcode">'+H.room+'</p><p id="net" class="net"></p></div></div>';
+   '<div style="text-align:right"><p class="lead">房號</p><p class="roomcode">'+H.room+'</p><p id="net" class="net"></p>'+
+   '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button class="btn gh" style="font-size:16px;padding:6px 12px" onclick="replay()">同一班重玩</button><button class="btn gh" style="font-size:16px;padding:6px 12px" onclick="newRoom()">換下一班（全部重置）</button></div></div></div>';
   if(H.ph==='lobby'){
    h+='<div class="card"><h2>已經進場：'+n+' 人</h2><div class="crowd">'+crowd()+'</div><p class="net">選錯座號的同學：點他的小人，就能把座號空出來。</p></div>'+
    '<div class="card"><p>規則：魚苗值 <b>100 元</b>。每次舉牌多喊 <b>5 元</b>。'+QUIET+' 秒內沒有人再喊，就成交。<br>喊最高的人，付錢買走魚苗；喊<b>第二高</b>的人，也要照付自己喊的錢，卻什麼也拿不到。</p></div>'+
@@ -169,7 +171,7 @@ else{
  var m=location.hash.match(/room=(\d{4})/);if(m)S.room=m[1];
  function T(){return 'hdfry/'+S.room+'/'}
  function send(o){o.cid=S.cid;o.seat=S.seat;pub(T()+'in',o)}
- function join(){handlers.push(function(t,d){if(t!==T()+'state')return;ST=d;lastSeen=Date.now();pending=false;
+ function join(){handlers.push(function(t,d){if(t!==T()+'state')return;if(d.ph==='closed'){S.room='';S.seat=null;ls('fryme-v1',S);location.reload();return}ST=d;lastSeen=Date.now();pending=false;
    if(S.seat&&d.seats[S.seat]!==S.cid&&d.ph==='lobby'){S.seat=null;ls('fryme-v1',S)}render()});
   connectAll([T()+'state']);setTimeout(function(){send({t:'hello'})},1500);
   setTimeout(function(){if(!ST)render()},6000)}
