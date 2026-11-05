@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>連線測試</title>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<style>
+body{margin:0;background:#FAF7F2;color:#1E242B;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;font-size:20px;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:34px;margin:0}
+.card{background:#fff;border:2px solid #E3DED7;border-radius:18px;padding:16px 20px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid #E3DED7}
+.ok{color:#2A6F68;font-weight:900}.bad{color:#D95D39;font-weight:900}.wait{color:#475569}
+.big{font-size:28px;font-weight:900}
+button{font:inherit;font-size:24px;font-weight:900;border:0;border-radius:14px;padding:14px 18px;background:#2A6F68;color:#fff;width:100%}
+#log p{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>課堂即時連線測試</h1>
+<p>請在<b>學校的平板</b>和<b>教室電腦</b>各打開這一頁，等大約 10 秒。</p>
+<div class="card"><div class="big" id="sum">測試中……</div><div id="list"></div></div>
+<div class="card">
+<p><b>兩台一起測：</b>兩台都打開這一頁以後，在其中一台按下面的按鈕，另一台的「收到的訊息」應該在 1～2 秒內出現。</p>
+<p>這台裝置的代號：<b id="me"></b></p>
+<button onclick="ping()">送出測試訊息</button>
+<p style="margin-top:12px"><b>收到的訊息：</b></p><div id="log"><p class="wait">（還沒有）</p></div>
+</div>
+<p style="font-size:16px;color:#475569">請把上面「測試結果」那一格拍照或截圖給 Claude。</p>
+</div>
+<script>
+var ME='裝置-'+Math.random().toString(36).slice(2,6).toUpperCase();document.getElementById('me').textContent=ME;
+var TOPIC='haidian-nettest-2026/room1';
+var B=[
+ {id:'emqx',name:'服務 1（EMQX）',url:'wss://broker.emqx.io:8084/mqtt'},
+ {id:'hive',name:'服務 2（HiveMQ）',url:'wss://broker.hivemq.com:8884/mqtt'},
+ {id:'mosq',name:'服務 3（Mosquitto）',url:'wss://test.mosquitto.org:8081/mqtt'},
+ {id:'ntfy',name:'服務 4（ntfy，443 埠）',url:'wss://ntfy.sh/'+'haidian-nettest-2026-room1'+'/ws'}
+];
+var st={},cl={},t0=Date.now(),seen={};
+function show(){var h='',n=0;B.forEach(function(b){var s=st[b.id]||'wait';if(s==='ok')n++;
+ h+='<div class="row"><span>'+b.name+'</span><span class="'+(s==='ok'?'ok':s==='bad'?'bad':'wait')+'">'+(s==='ok'?'✓ 連線成功'+(b.ms?'（'+b.ms+' 毫秒）':''):s==='bad'?'✗ 連不上':'測試中…')+'</span></div>'});
+ document.getElementById('list').innerHTML=h;
+ var done=B.every(function(b){return st[b.id]==='ok'||st[b.id]==='bad'});
+ document.getElementById('sum').innerHTML=n>0?'<span class="ok">✓ 有 '+n+' 個服務可以用</span>':done?'<span class="bad">✗ 全部連不上，學校網路可能擋住了</span>':'測試中……';}
+function got(src,txt){if(seen[txt])return;seen[txt]=1;var l=document.getElementById('log');if(l.querySelector('.wait'))l.innerHTML='';
+ l.insertAdjacentHTML('afterbegin','<p>'+txt.replace(/[<>&]/g,'')+' <span class="wait">（經由 '+src+'）</span></p>')}
+B.forEach(function(b){
+ var timer=setTimeout(function(){if(st[b.id]!=='ok'){st[b.id]='bad';show()}},12000);
+ if(b.id==='ntfy'){try{var ws=new WebSocket(b.url);ws.onopen=function(){st[b.id]='ok';b.ms=Date.now()-t0;clearTimeout(timer);show()};
+   ws.onerror=function(){st[b.id]='bad';show()};ws.onmessage=function(e){try{var m=JSON.parse(e.data);if(m.event==='message')got('ntfy',m.message)}catch(x){}};}catch(e){st[b.id]='bad'}return}
+ try{var c=mqtt.connect(b.url,{connectTimeout:10000,reconnectPeriod:0,clientId:'hd_'+Math.random().toString(16).slice(2,10)});cl[b.id]=c;
+  c.on('connect',function(){st[b.id]='ok';b.ms=Date.now()-t0;clearTimeout(timer);c.subscribe(TOPIC);show()});
+  c.on('error',function(){st[b.id]='bad';show()});
+  c.on('message',function(t,m){got(b.name.split('（')[0],m.toString())});}catch(e){st[b.id]='bad'}
+});
+show();
+function ping(){var txt=ME+' 在 '+new Date().toLocaleTimeString('zh-TW')+' 說：哈囉';
+ Object.keys(cl).forEach(function(k){if(st[k]==='ok')cl[k].publish(TOPIC,txt)});
+ if(st.ntfy==='ok')fetch('https://ntfy.sh/haidian-nettest-2026-room1',{method:'POST',body:txt}).catch(function(){});
+ got('自己',txt+'（已送出）')}
+</script>
+</body>
+</html>
