@@ -58,6 +58,7 @@ h2{font-size:clamp(23px,3.6vw,32px);font-weight:900;margin:0;line-height:1.45}
 .chg{font-weight:900;color:var(--te)}
 </style>
 <div class="wrap" id="app"></div>
+<script src="live.js"></script>
 <script>
 var KEY='u2c-glasses-v1';
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
@@ -139,6 +140,8 @@ function render(){
   '';
  }
  app.innerHTML=h;
+ if(st.step>=8&&window.LIVE){var g1=st.a1.filter(function(x){return x==='go'}).length,ch=0;for(var j=0;j<4;j++)if(st.a1[j]!==st.a2[j])ch++;
+  app.appendChild(LIVE.box('glasses',{g:st.g,rows:[st.ticket==='a',st.ticket==='b',ch===0,ch===1,ch>=2]}))}
 }
 function tk(id,icon,name,priceHtml){return '<button class="ticket'+(st.ticket===id?' pick':'')+'" onclick="pickT(\''+id+'\')" aria-pressed="'+(st.ticket===id)+'">'+icon+'<b>'+name+'</b>'+priceHtml+'<span class="mini">星期六下午</span></button>'}
 function pickT(id){st.ticket=id;save(st);render()}

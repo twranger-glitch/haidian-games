@@ -53,6 +53,7 @@ td.v{font-weight:900}
 .shoot{font-size:clamp(28px,5vw,40px);padding:18px}
 </style>
 <main class="wrap" id="app" aria-live="polite"></main>
+<script src="live.js"></script>
 <script>
 (function(){
 "use strict";
@@ -149,6 +150,7 @@ function render(){
   var rt=el('table');rt.innerHTML='<tr><td class="k">回合</td>'+st.rs.map(function(x){return '<td class="v">'+x.r+'</td>'}).join('')+'</tr><tr><td class="k">投了幾球</td>'+st.rs.map(function(x){return '<td>'+x.shots+'</td>'}).join('')+'</tr><tr><td class="k">借了幾顆</td>'+st.rs.map(function(x){return '<td>'+x.bor+'</td>'}).join('')+'</tr>';
   var c5=el('div','card');c5.append(el('p','lead','每一回合的紀錄'),rt);
   app.append(c4,c5,el('p','note','等一下，老師會請紅色卡和藍色卡分開舉手。兩種卡片到底差在哪裡？請等老師揭曉。'));
+  if(window.LIVE)app.append(LIVE.box('hoopshot',{g:RED?'red':'blue',rows:[st.bor===0,st.bor>=1&&st.bor<=2,st.bor>=3,st.think==='this']}));
 }
 function endRound(){
   var rec={r:st.r,shots:0,makes:0,bor:st.borrowNow};

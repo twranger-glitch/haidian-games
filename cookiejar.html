@@ -57,6 +57,7 @@ td.v{font-weight:900}
 .bar i{display:block;height:100%;background:var(--co)}
 </style>
 <main class="wrap" id="app" aria-live="polite"></main>
+<script src="live.js"></script>
 <script>
 (function(){
 "use strict";
@@ -171,6 +172,7 @@ function render(){
      ['看到新口味的廣告，我選了',BUY[st.buy]]].forEach(function(r){var tr=el('tr');tr.append(el('td','k',r[0]),el('td','v',r[1]));tb.appendChild(tr)});
     c2.appendChild(tb);
     app.append(c2,el('p','note','等一下，老師會請紅色卡和藍色卡分開舉手。兩種卡片到底差在哪裡？請等老師揭曉。'));
+    if(window.LIVE)app.append(LIVE.box('cookiejar',{g:RED?'red':'blue',rows:[(st.q||0)>=5,(st.t||0)>=3,st.taste>=2,st.buy==='now']}));
   }
 }
 render();

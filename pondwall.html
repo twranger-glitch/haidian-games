@@ -73,6 +73,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--te)}
 </head>
 <body>
 <div class="wrap" id="app"></div>
+<script src="live.js"></script>
 <script>
 var KEY='u2c-pondwall-v1';
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
@@ -196,6 +197,7 @@ function render(){var h='';var s=st.step;
   '<p class="mini">同一位工人來兩場，就算兩位。</p><p class="lead">想一想：塭岸和水渠都只是「方法」。目標是中秋節有魚可以賣，哪一個方法比較有希望？</p>';
  }
  app.innerHTML=h;
+ if(s>=4&&window.LIVE){var tw=sum(st.wall);app.appendChild(LIVE.box('pondwall',{g:st.g,rows:[tw<=20,tw>20&&tw<=30,tw>30]}))}
 }
 function crew(w,d){return Array(w+1).join(person('#D95D39'))+Array(d+1).join(person('#2A6F68'))}
 function slide(v){st.cur=+v;save(st);var w=10-st.cur,d=st.cur;

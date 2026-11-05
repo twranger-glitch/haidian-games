@@ -70,6 +70,7 @@ details{background:var(--card);border:2px dashed var(--line);border-radius:16px;
 details summary{font-weight:900;cursor:pointer;color:var(--muted)}
 </style>
 <div class="wrap" id="app"></div>
+<script src="live.js"></script>
 <script>
 (function(){
 "use strict";
@@ -188,6 +189,7 @@ function end(){
  app.appendChild(el('p','hint','等一下，老師會請黃組和青組分開舉手，分成 0 點到 49 點、50 點到 99 點、100 點到 199 點、200 點或更多。接著，第二關有交換的人，要再舉一次手。'));
  var d=el('details');d.innerHTML='<summary>等老師揭曉以後，再點這裡，看看兩組的題目差在哪裡</summary><p>黃組：鑰匙圈一開始就送給你了。畫面問你，同學最少要給你多少點，你才肯割愛，把它賣掉。第二關，你手上拿的是鑰匙圈，可以換成明信片。</p><p>青組：鑰匙圈擺在文具店的櫃子裡。畫面問你，最多肯花多少點把它買下來。第二關，你手上拿的是明信片，可以換成鑰匙圈。</p>';
  app.appendChild(d);
+ if(window.LIVE){var pv=price();app.appendChild(LIVE.box('souvenir',{g:st.g==='y'?'yellow':'cyan',rows:[pv<50,pv>=50&&pv<100,pv>=100&&pv<200,pv>=200,st.swap===true]}))}
 }
 render();
 })();

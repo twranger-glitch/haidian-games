@@ -80,6 +80,7 @@ table.sum td.k{font-weight:900;color:var(--muted);width:40%}
 @media (max-width:480px){.yn{grid-template-columns:1fr}}
 </style>
 <div class="wrap" id="app"></div>
+<script src="live.js"></script>
 <script>
 (function(){
 "use strict";
@@ -171,6 +172,7 @@ function end(){
  if(st.toss)c.appendChild(el('p','lead','真的丟一次的結果：'+(st.toss.head?'丟到人頭，現在你有 '+(1000+v)+' 點。':'丟到字，現在你有 900 點。')));
  app.appendChild(c);
  app.appendChild(el('p','hint','等一下，老師會請大家照上面寫的「舉手分組」舉手。'));
+ if(window.LIVE){var gn=+group().charAt(2);app.appendChild(LIVE.box('coinstall',{rows:[gn===1,gn===2,gn===3,gn===4]}))}
 }
 render();
 })();

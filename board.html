@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全班統計看板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<script src="live.js"></script>
+<style>
+:root{--bg:#FAF7F2;--ink:#1E242B;--co:#D95D39;--te:#2A6F68;--mu:#475569;--ln:#E3DED7;--y:#C99A2E}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;font-size:20px;line-height:1.5}
+p{margin:0}
+.wrap{padding:18px 28px 40px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+h1{font-size:40px;font-weight:900;margin:0}
+.kick{font-size:18px;font-weight:700;color:var(--co);letter-spacing:2px}
+.roomcode{font-size:64px;font-weight:900;letter-spacing:10px;color:var(--te);line-height:1}
+.mu{color:var(--mu)} .net b{color:var(--te)} .net.off b{color:var(--co)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:inherit;font-size:19px;font-weight:700;border:3px solid var(--ln);background:#fff;border-radius:999px;padding:6px 16px;cursor:pointer}
+.tab.on{border-color:var(--te);background:#F0F7F6}
+.tab .n{color:var(--co);font-weight:900;margin-left:6px}
+.card{background:#fff;border:2px solid var(--ln);border-radius:20px;box-shadow:0 4px 24px rgba(30,36,43,.06);padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.legend{display:flex;gap:24px;font-size:22px;font-weight:900}
+.sw{display:inline-block;width:22px;height:22px;border-radius:6px;vertical-align:-3px;margin-right:6px}
+.q{display:grid;grid-template-columns:minmax(260px,38%) 1fr;gap:18px;align-items:center;border-bottom:2px solid var(--ln);padding:10px 0}
+.q .lab{font-size:26px;font-weight:700;line-height:1.35}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:flex;align-items:center;gap:12px}
+.bar .tr{flex:1;height:38px;background:#F3EEE7;border-radius:10px;overflow:hidden}
+.bar .f{height:100%;border-radius:10px;transition:width .5s}
+.bar .num{width:150px;font-size:26px;font-weight:900;text-align:right;white-space:nowrap}
+.btn{font:inherit;font-size:18px;font-weight:900;border:3px solid var(--ln);background:#fff;border-radius:12px;padding:6px 14px;cursor:pointer}
+.big{font-size:30px;font-weight:900}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+/* 每個遊戲：分組名稱、要統計的列（和投影片上的舉手表一樣） */
+var G={
+ glasses:{name:'歸零再選一次',lesson:'第 3 課',groups:[['red','紅組','#D95D39'],['blue','藍組','#2A6F68']],
+  rows:['第一題選了「七股潟湖搭膠筏」','第一題選了「四草綠色隧道坐竹筏」','歸零以後，改了 0 個決定','歸零以後，改了 1 個決定','歸零以後，改了 2 個以上']},
+ pondwall:{name:'颱風季，守住魚塭',lesson:'第 3 課',groups:[['red','紅組（塭岸自己蓋的）','#D95D39'],['blue','藍組（上一任蓋的）','#2A6F68']],
+  rows:['四場加起來，派去加高塭岸 20 位以下','21 到 30 位','超過 30 位']},
+ cookiejar:{name:'最後兩塊雞蛋糕',lesson:'第 4 課',groups:[['red','紅色卡','#D95D39'],['blue','藍色卡','#2A6F68']],
+  rows:['想再吃一塊，而且願意排在 5 個人以上的後面','覺得一塊雞蛋糕值 3 張園遊券以上','覺得雞蛋糕「好吃」或「非常好吃」','看到新口味的廣告，選了「馬上買」']},
+ hoopshot:{name:'夜市投籃機',lesson:'第 4 課',groups:[['red','紅色卡','#D95D39'],['blue','藍色卡','#2A6F68']],
+  rows:['5 回合裡，一次都沒有借球','一共借了 1 到 2 顆球','一共借了 3 顆球以上','玩的時候，心裡只想著「這一球一定要進」']},
+ coinstall:{name:'廟口硬幣攤',lesson:'第 2 課',groups:[['all','全班','#2A6F68']],
+  rows:['第 1 組：人頭給 100 點就肯玩','第 2 組：人頭要給 150 點','第 3 組：人頭要給 200 或 250 點','第 4 組：300 點以上，或怎麼加都不丟']},
+ forkraft:{name:'竹筏岔路口',lesson:'第 2 課',groups:[['all','全班','#2A6F68']],
+  rows:['可以得到錢的兩題，都選了「一定會」','可能失去錢的兩題，都選了「賭一把」']},
+ souvenir:{name:'紀念品交換日',lesson:'第 2 課',groups:[['yellow','黃組','#C99A2E'],['cyan','青組','#2A6F68']],
+  rows:['第一關寫下 0～49 點','50～99 點','100～199 點','200 點或更多','第二關有交換']}
+};
+var ORDER=['coinstall','souvenir','forkraft','glasses','pondwall','cookiejar','hoopshot'];
+var B=LIVE.ls('hdboard-v1');
+if(!B||location.hash.indexOf('new')>=0){B={room:String(1000+Math.floor(Math.random()*9000)),cur:null,res:{}};LIVE.ls('hdboard-v1',B);try{history.replaceState(null,'','#host')}catch(e){}}
+var m=location.hash.match(/game=([a-z]+)/);if(m&&G[m[1]])B.cur=m[1];
+if(!B.cur){B.cur='cookiejar'}
+var conn=LIVE.connect(['hdboard/'+B.room+'/in'],function(t,d){
+ if(d.t!=='res'||!G[d.game])return;var r=B.res[d.game]=B.res[d.game]||{};
+ r[d.cid]={g:d.g||'all',rows:(d.rows||[]).map(Boolean)};LIVE.ls('hdboard-v1',B);
+ conn.pub('hdboard/'+B.room+'/ack',{cid:d.cid,game:d.game});
+ if(d.game!==B.cur){B.cur=d.game}render()},function(){render()});
+function pick(k){B.cur=k;LIVE.ls('hdboard-v1',B);render()}
+function clearGame(){if(confirm('要清空「'+G[B.cur].name+'」這一班的結果嗎？')){B.res[B.cur]={};LIVE.ls('hdboard-v1',B);render()}}
+function newRoom(){if(confirm('要全部重置、開新房號嗎？（換下一班時用）')){location.hash='#host-new';location.reload()}}
+window.pick=pick;window.clearGame=clearGame;window.newRoom=newRoom;
+function render(){var g=G[B.cur],R=B.res[B.cur]||{},list=Object.keys(R).map(function(k){return R[k]});
+ var h='<div class="top"><div><p class="kick">生存智慧・全班統計看板</p><h1>'+g.name+'</h1>'+
+  '<p class="mu">學生做完遊戲以後，在最後一頁輸入右邊的房號，按「送出結果」。</p></div>'+
+  '<div style="text-align:right"><p class="mu">房號</p><p class="roomcode">'+B.room+'</p><p class="net'+(conn.ok()?'':' off')+'">連線：<b>'+(conn.ok()?'正常':'連線中…')+'</b></p>'+
+  '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button class="btn" onclick="clearGame()">清空這個遊戲</button><button class="btn" onclick="newRoom()">換下一班（全部重置）</button></div></div></div>';
+ h+='<div class="tabs">'+ORDER.map(function(k){var n=Object.keys(B.res[k]||{}).length;return '<button class="tab'+(k===B.cur?' on':'')+'" onclick="pick(\''+k+'\')">'+G[k].lesson+' '+G[k].name+(n?'<span class="n">'+n+'</span>':'')+'</button>'}).join('')+'</div>';
+ var cnt={};g.groups.forEach(function(x){cnt[x[0]]=list.filter(function(r){return g.groups.length===1||r.g===x[0]}).length});
+ h+='<div class="card"><div class="legend">'+g.groups.map(function(x){return '<span><span class="sw" style="background:'+x[2]+'"></span>'+x[1]+'：'+cnt[x[0]]+' 人</span>'}).join('')+'</div>';
+ g.rows.forEach(function(lab,i){
+  h+='<div class="q"><p class="lab">'+lab+'</p><div class="bars">'+g.groups.map(function(x){
+   var n=list.filter(function(r){return (g.groups.length===1||r.g===x[0])&&r.rows[i]}).length,tot=cnt[x[0]]||0,pc=tot?Math.round(n/tot*100):0;
+   return '<div class="bar"><span class="tr"><span class="f" style="display:block;width:'+pc+'%;background:'+x[2]+'"></span></span><span class="num" style="color:'+x[2]+'">'+n+' 人'+(tot?'（'+pc+'%）':'')+'</span></div>'}).join('')+'</div></div>'});
+ h+='</div>';
+ if(!list.length)h+='<p class="big mu">還沒有人送出結果。</p>';
+ else if(g.groups.length>1)h+='<p class="mu">兩組人數不一樣多，請看括號裡的百分比來比較。</p>';
+ document.getElementById('app').innerHTML=h}
+render();setInterval(render,3000);
+</script>
+</body>
+</html>
