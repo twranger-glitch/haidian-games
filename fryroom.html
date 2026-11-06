@@ -94,22 +94,31 @@ if(location.hash.indexOf('host')>=0){
  var T='hdfry/'+H.room+'/';
  var lastLead=null;
  function second(){var b=null;Object.keys(H.bids).forEach(function(s){if(+s===H.lead)return;if(!b||H.bids[s]>H.bids[b])b=s});return b?+b:null}
- function left(){return H.ph==='live'?Math.max(0,Math.ceil((H.deadline-Date.now())/1000)):0}
- function broadcast(){var s=second();pub(T+'state',{room:H.room,ph:H.ph,r:H.r,price:H.price,lead:H.lead,sec:s,secAmt:s?H.bids[s]:0,bids:H.bids,seats:H.seats,stops:H.stops,left:left(),hist:H.hist},true);ls('fryhost-v1',H)}
+ function endAt(){return H.hard?Math.min(H.deadline,H.hard):H.deadline}
+ function left(){return H.ph==='live'?Math.max(0,Math.ceil((endAt()-Date.now())/1000)):0}
+ function broadcast(){var s=second();pub(T+'state',{hard:H.hard?1:0,room:H.room,ph:H.ph,r:H.r,price:H.price,lead:H.lead,sec:s,secAmt:s?H.bids[s]:0,bids:H.bids,seats:H.seats,stops:H.stops,left:left(),hist:H.hist},true);ls('fryhost-v1',H)}
  handlers.push(function(t,d){if(t!==T+'in')return;var seat=+d.seat;
   if(d.t==='join'){if(!(seat>=1&&seat<=MAXSEAT))return;var own=H.seats[seat];if(!own||own===d.cid){
     Object.keys(H.seats).forEach(function(k){if(H.seats[k]===d.cid&&+k!==seat)delete H.seats[k]});H.seats[seat]=d.cid;render();broadcast()}else{broadcast()}}
   else if(d.t==='bid'){if(H.ph!=='live'||H.seats[seat]!==d.cid||H.lead===seat)return;
-    H.price+=STEP;H.lead=seat;H.bids[seat]=H.price;H.deadline=Date.now()+QUIET*1000;
+    if(H.hard&&Date.now()>=H.hard)return;H.price+=STEP;H.lead=seat;H.bids[seat]=H.price;if(!H.hard)H.deadline=Date.now()+QUIET*1000;
     if(H.r===2&&H.stops[seat]!=null&&H.price>H.stops[seat])H.over[seat]=1;
     H.log.unshift(seat+' 號喊 '+H.price+' 元');H.log=H.log.slice(0,8);render();broadcast()}
   else if(d.t==='stop'){if(H.seats[seat]!==d.cid)return;H.stops[seat]=Math.max(0,+d.v||0);render();broadcast()}
   else if(d.t==='hello'){broadcast()}});
  connectAll([T+'in']);
- setInterval(function(){if(H.ph==='live'&&Date.now()>=H.deadline&&H.lead!=null){hammer()}else if(H.ph==='live'){tick()}},250);
+ setInterval(function(){if(H.ph==='live'&&((H.hard&&Date.now()>=H.hard)||(Date.now()>=H.deadline&&H.lead!=null))){hammer()}else if(H.ph==='live'){tick()}ctl()},250);
  setInterval(broadcast,2500);
- function tick(){var e=document.getElementById('tm');if(e)e.textContent=H.lead==null?'等第一個人舉牌':'還剩 '+left()+' 秒';}
- window.startRound=function(){H.ph='live';H.price=0;H.lead=null;H.bids={};H.over={};H.deadline=Date.now()+QUIET*1000;H.log=[];render();broadcast()};
+ function tick(){var e=document.getElementById('tm');if(e)e.textContent=H.hard?'最後倒數 '+left()+' 秒（不再延長）':H.lead==null?'等第一個人舉牌':'還剩 '+left()+' 秒';}
+ /* 老師控制列：固定在畫面下方，不會被重畫，喊價再激烈也按得到（也可以按鍵盤：F＝最後倒數 15 秒，H＝直接落槌） */
+ var CB=document.createElement('div');CB.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9;display:none;gap:12px;justify-content:center;padding:12px;background:rgba(30,36,43,.92)';
+ CB.innerHTML='<button id="cbF" class="btn" style="font-size:26px">最後倒數 15 秒（F）</button><button id="cbH" class="btn gh" style="font-size:26px">直接落槌（H）</button>';document.body.appendChild(CB);
+ function finalCount(){if(H.ph!=='live'||H.hard)return;H.hard=Date.now()+15000;H.log.unshift('老師：最後倒數 15 秒！');H.log=H.log.slice(0,8);render();broadcast()}
+ document.getElementById('cbF').addEventListener('pointerdown',function(e){e.preventDefault();finalCount()});
+ document.getElementById('cbH').addEventListener('pointerdown',function(e){e.preventDefault();hammer()});
+ document.addEventListener('keydown',function(e){var k=(e.key||'').toLowerCase();if(k==='f'){finalCount()}else if(k==='h'){hammer()}});
+ function ctl(){var on=H.ph==='live';CB.style.display=on?'flex':'none';var f=document.getElementById('cbF');f.textContent=H.hard?'最後倒數中：'+left()+' 秒':'最後倒數 15 秒（F）';f.disabled=!!H.hard}
+ window.startRound=function(){H.ph='live';H.hard=0;H.price=0;H.lead=null;H.bids={};H.over={};H.deadline=Date.now()+QUIET*1000;H.log=[];render();broadcast()};
  window.hammer=function(){if(H.ph!=='live')return;var s=second();
   H.hist=H.hist.filter(function(x){return x.r!==H.r});
   H.hist.push({r:H.r,price:H.price,lead:H.lead,sec:s,secAmt:s?H.bids[s]:0,bidders:Object.keys(H.bids).length,
@@ -144,7 +153,7 @@ if(location.hash.indexOf('host')>=0){
     (end?'':'<p class="timer" id="tm"></p>')+'</div>'+
     '<div class="card"><h2>剛剛的喊價</h2><div class="log">'+(H.log.map(function(x){return '<p>'+esc(x)+'</p>'}).join('')||'<p>（還沒有）</p>')+'</div></div></div>'+
     '<div class="card"><div class="crowd">'+crowd()+'</div></div>';
-   if(!end)h+='<button class="btn gh" onclick="hammer()">老師直接落槌（結束這一回合）</button>';
+   if(!end)h+='<div style="height:90px"></div>';
    else{var x=H.hist[H.hist.length-1];
     h+='<div class="card dark"><h2>算一算</h2><p style="font-size:24px">'+(x.lead?x.lead+' 號付了 '+x.price+' 元買到值 100 元的魚苗：'+(x.price<=100?'賺了 '+(100-x.price)+' 元':'<b style="color:#F2A65A">賠了 '+(x.price-100)+' 元</b>')+'。':'沒有人喊價。')+
      (x.sec?'<br>'+x.sec+' 號付了 '+x.secAmt+' 元，<b style="color:#F2A65A">什麼也沒拿到</b>。':'')+
@@ -186,7 +195,7 @@ else{
  window.noBid=function(){ask=false;render()};
  window.adj=function(d){stopDraft=Math.max(0,Math.min(300,(stopDraft==null?100:stopDraft)+d));render()};
  window.setStop=function(){send({t:'stop',v:stopDraft==null?100:stopDraft});};
- setInterval(function(){if(ST&&ST.ph==='live'){var e=document.getElementById('lf');if(e){var l=Math.max(0,ST.left-Math.floor((Date.now()-lastSeen)/1000));e.textContent=ST.lead==null?'':'還剩大約 '+l+' 秒'}}},500);
+ setInterval(function(){if(ST&&ST.ph==='live'){var e=document.getElementById('lf');if(e){var l=Math.max(0,ST.left-Math.floor((Date.now()-lastSeen)/1000));e.textContent=ST.hard?'老師喊最後倒數：還剩 '+l+' 秒！':ST.lead==null?'':'還剩大約 '+l+' 秒'}}},500);
  function render(){var h='<div class="wrap"><p class="kick">瘋狂魚苗拍賣會・全班版'+(S.seat?'　｜　我是 '+S.seat+' 號':'')+'</p>';
   if(!S.room||(!ST&&!CL.length)){
    h+='<h1>輸入房號</h1><p class="lead">看大螢幕右上角的 4 個數字。</p><input id="code" class="code" inputmode="numeric" maxlength="4" value="'+esc(S.room)+'"><button class="btn te" onclick="enter()">進入拍賣場</button>';
