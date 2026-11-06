@@ -23,7 +23,7 @@
 <body>
 <script>
 var ROUNDS=6,MAXP=5,SEC=20;
-var RULES={free:{name:'第 1 輪：沒有規則，想撈幾條都可以（最多 5 條）',max:5},quota:{name:'第 2 輪的規則：每人每回合最多撈 1 條',max:1},turn:{name:'第 2 輪的規則：單號、雙號輪流撈，輪到的人最多撈 2 條',max:2}};
+var RULES={free:{name:'第 1 輪：沒有規則，每人每回合想撈幾條都可以（最多 5 條；魚塭不夠就只能撈剩下的）',max:5},quota:{name:'第 2 輪的規則：每人每回合最多撈 1 條',max:1},turn:{name:'第 2 輪的規則：單號、雙號輪流撈，輪到的人最多撈 2 條',max:2}};
 function players(H){return Object.keys(H.seats).length}
 function canFish(g,seat){return g.mode!=='turn'||(seat%2)===(g.round%2)}
 function maxFor(g,seat){return canFish(g,seat)?RULES[g.mode].max:0}
@@ -67,9 +67,9 @@ ROOM.start({
   if(H.ph==='choose'||H.ph==='reveal'){var L=g.last,rv=H.ph==='reveal';
    h+='<div class="card dark"><p class="stat">'+RULES[g.mode].name+'</p><p>一開始的魚：全班 '+g.n0+' 人 × 每人 4 條 = <b style="color:#F2A65A">'+g.cap+' 條</b>（魚塭最多就養這麼多）</p><p>第 '+g.round+' 回合（一共 '+ROUNDS+' 回合）'+(g.mode==='turn'?'　這一回合輪到：<b style="color:#F2A65A">'+(g.round%2?'單號':'雙號')+'</b>':'')+'</p></div>';
    h+='<div class="grid2"><div class="card">'+pondSVG(rv?L.left:g.fish,g.cap)+'<p class="stat" style="text-align:center">'+(rv?'撈完剩下 '+L.left+' 條':'魚塭裡有 '+g.fish+' 條魚')+'</p></div><div class="card">';
-   if(!rv)h+='<p class="stat">已經決定：'+Object.keys(g.picks).length+' / '+N+' 人</p><p class="stat" id="hdtick" style="color:#D95D39">還剩 '+SEC+' 秒</p><p class="lead">大家想撈幾條，收網的時候才公布。</p>';
+   if(!rv)h+='<p class="stat">已經決定：'+Object.keys(g.picks).length+' / '+N+' 人</p><p class="stat" id="hdtick" style="color:#D95D39">還剩 '+SEC+' 秒</p><p class="lead">大家想撈幾條，收網的時候才公布。</p>'+(N<5?'<p class="lead" style="color:#D95D39">現在只有 '+N+' 人進場，算是試玩。上課時全班進場，魚塭會有 人數 × 4 條魚。</p>':'');
    else h+='<p class="stat">大家一共想撈 <span style="color:#D95D39">'+L.demand+'</span> 條</p><p class="stat">真的撈到 '+L.caught+' 條</p>'+
-    '<p class="stat">剩下 '+L.left+' 條，生了小魚以後，下一回合有：<span style="color:'+(L.fish1?'#2A6F68':'#D95D39')+'">'+L.fish1+' 條</span></p>'+(L.left<=1?'<p style="color:#D95D39;font-weight:900">只剩 1 條以下，生不出小魚了！</p>':L.fish1===g.cap&&L.left*1.5>g.cap?'<p class="lead">魚塭最多只能養 '+g.cap+' 條，所以不會再多。</p>':'')+(L.demand>L.fish0?'<p style="color:#D95D39;font-weight:900">想撈的比魚還多，有人撈不到！</p>':'')+'<p class="lead">撈最多的：'+topList(g)+'</p>';
+    '<p class="stat">剩下 '+L.left+' 條，生了小魚以後，下一回合有：<span style="color:'+(L.fish1?'#2A6F68':'#D95D39')+'">'+L.fish1+' 條</span></p>'+(L.demand===0?'<p class="lead">這一回合沒有人撈，魚塭還是滿的。</p>':L.left<=1?'<p style="color:#D95D39;font-weight:900">只剩 1 條以下，生不出小魚了！</p>':L.fish1===g.cap&&L.left*1.5>g.cap?'<p class="lead">魚塭滿了（最多 '+g.cap+' 條），再多也養不下。</p>':'')+(L.demand>L.fish0?'<p style="color:#D95D39;font-weight:900">想撈的比魚還多，有人撈不到！</p>':'')+'<p class="lead">撈最多的：'+topList(g)+'</p>';
    h+='</div></div><div class="card"><h2>每一回合開始的時候，魚塭裡有幾條魚</h2>'+histHTML(g)+'</div>';
   } else if(H.ph==='end'){var r=g.res[g.res.length-1];
    h+='<div class="card dark"><p class="stat">'+(r.dead?'魚塭在第 '+r.rounds+' 回合被撈光了。':'魚塭撐完了 '+ROUNDS+' 回合，還有 '+g.fish+' 條魚。')+'</p><p style="font-size:24px">全班一共撈到 <b style="color:#F2A65A">'+r.total+'</b> 條，平均每人 '+(r.n?Math.round(r.total/r.n*10)/10:0)+' 條。</p><p>撈最多的：'+topList(g)+'</p></div>'+
@@ -89,7 +89,7 @@ ROOM.start({
    h+='<p class="lead">第 '+g.round+' 回合　魚塭裡有</p><p class="big" style="color:#2A6F68">'+g.fish+' 條</p><p class="lead">這口魚塭是全班 '+g.n0+' 個人一起用的。一開始有 '+g.n0+' 人 × 4 條 = '+g.cap+' 條，現在剩 '+g.fish+' 條，大家一起撈。</p>';
    if(!rmx)h+='<div class="card"><h2>這一回合輪到'+(g.round%2?'單號':'雙號')+'，你先休息。</h2></div>';else if(!mx)h+='<div class="card"><h2>魚塭裡沒有魚了。</h2></div>';
    else{h+='<h2>這一回合，你要撈幾條？</h2><div class="picks">';for(var i=0;i<=mx;i++)h+='<button class="btn '+(cur===i?'te on':'gh')+'" data-act="take" data-arg="'+i+'">'+i+' 條</button>';
-    h+='</div><p class="lead">'+(cur==null?'還沒決定。':'你選了 '+cur+' 條，收網以前都可以改。')+(g.mode!=='free'?'（這一輪的規則：最多 '+rmx+' 條）':'')+'</p><p class="lead">大家想撈的加起來比魚多，就抽籤，有人會撈不到。</p>'}
+    h+='</div><p class="lead">'+(cur==null?'還沒決定。':'你選了 '+cur+' 條，收網以前都可以改。')+(g.mode!=='free'?'（這一輪的規則：最多 '+rmx+' 條）':mx<rmx?'（魚塭只剩 '+mx+' 條，所以最多 '+mx+' 條）':'')+'</p><p class="lead">大家想撈的加起來比魚多，就抽籤，有人會撈不到。</p>'}
    h+='<div class="card"><p>我目前一共撈到：<b>'+my+' 條</b></p></div>'}
   else if(ST.ph==='reveal'){var L=g.last||{},w=(L.want||{})[me],gt=(L.got||{})[me]||0;
    h+='<h1>收網！</h1><div class="card"><p class="stat">你這回合撈到 '+gt+' 條'+(w>gt?'（想撈 '+w+' 條，沒搶到）':'')+'</p><p>大家一共想撈 '+L.demand+' 條，撈完剩下 '+L.left+' 條，生了小魚以後，下一回合有 <b>'+L.fish1+' 條</b>。</p><p>我目前一共撈到：<b>'+my+' 條</b></p></div><p class="lead">看大螢幕，等老師按下一回合。</p>'}
