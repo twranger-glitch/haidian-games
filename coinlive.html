@@ -29,7 +29,7 @@ function curve(g){return '<div class="curve">'+OFFERS.map(function(x,i){var r=(g
 function topList(g){var s=g.pts||{};return Object.keys(s).sort(function(a,b){return s[b]-s[a]}).slice(0,5).map(function(k){return k+' 號（'+s[k]+'）'}).join('、')||'—'}
 ROOM.start({
  key:'coin',title:'廟口硬幣攤・開獎版',kick:'第 2 課・損失厭惡　全班連線',studentUrl:'coinlive.html',
- rules:'<p>每個人一開始有 <b>1000 點</b>。每一回合，老師丟一枚硬幣：<b>丟到字，要付 100 點；丟到人頭，可以拿到攤子開的點數</b>。</p><p>每一回合你都可以選「丟」或「不丟」。人頭的點數會從 100 點一路加到 500 點。</p>',
+ rules:'<p>每個人一開始有 <b>1000 點</b>。每一回合，老師丟一枚硬幣：選「丟」的人，<b>出現字就輸 100 點；出現人頭就贏攤子開的點數</b>。</p><p>選「不丟」或沒有選的人，這一回合不輸也不贏。人頭的點數會從 100 點一路加到 500 點。</p>',
  init:function(H){H.g={}},
  onStart:function(H){var g=H.g;g.i=0;g.choice={};g.pts={};Object.keys(H.seats).forEach(function(s){g.pts[s]=START});g.hist=[];g.t0=Date.now();H.ph='choose'},
  onJoin:function(H,s){if(H.g.pts&&H.g.pts[s]==null)H.g.pts[s]=START},
@@ -46,20 +46,20 @@ ROOM.start({
  bar:function(H){if(H.ph==='choose')return '<button class="btn" data-act="flip">丟硬幣！（T）</button>';if(H.ph==='reveal')return '<button class="btn te" data-act="next">'+(H.g.i>=OFFERS.length-1?'看全班的曲線':'下一回合：人頭的點數加高')+'</button>';return ''},
  hostView:function(H){var g=H.g,N=players(H),h='',x=OFFERS[g.i];
   if(H.ph==='choose'||H.ph==='spin'){var play=Object.keys(g.choice).filter(function(s){return g.choice[s]}).length;
-   h+='<div class="card dark"><p class="stat">第 '+(g.i+1)+' 回合：丟到字付 <span style="color:#F2A65A">100 點</span>；丟到人頭拿 <span style="color:#F2A65A">'+x+' 點</span></p><p>已經決定：'+Object.keys(g.choice).length+' / '+N+' 人（誰要丟，開獎後才公布）</p></div>'+
+   h+='<div class="card dark"><p class="stat">第 '+(g.i+1)+' 回合：丟到字付 <span style="color:#F2A65A">100 點</span>；丟到人頭拿 <span style="color:#F2A65A">'+x+' 點</span></p><p>已經決定：'+Object.keys(g.choice).length+' / '+N+' 人（誰要丟，開獎後才公布；沒有選的人，當作不丟）</p></div>'+
     '<div class="card"><div class="coin'+(H.ph==='spin'?' spin':'')+'">'+(H.ph==='spin'?'?':'$')+'</div></div>'}
   else if(H.ph==='reveal'){var L=g.last,r=g.hist[g.i];
-   h+='<div class="card dark"><p>第 '+(g.i+1)+' 回合開獎</p><p class="stat" style="font-size:56px;color:#F2A65A">'+(L.res==='head'?'人頭！丟的人拿 '+L.offer+' 點':'字！丟的人付 100 點')+'</p><p style="font-size:24px">這一回合肯丟的：'+r.play+' / '+r.n+' 人</p></div>'+
+   h+='<div class="card dark"><p>第 '+(g.i+1)+' 回合開獎</p><p class="stat" style="font-size:56px;color:#F2A65A">'+(L.res==='head'?'人頭！丟的人贏 '+L.offer+' 點':'字！丟的人輸 100 點')+'</p><p style="font-size:24px">這一回合肯丟的：'+r.play+' / '+r.n+' 人</p></div>'+
     '<div class="card"><div class="coin">'+(L.res==='head'?'人頭':'字')+'</div></div><div class="card"><h2>每一回合肯丟的人</h2>'+curve(g)+'</div><div class="card"><p>點數最多：'+topList(g)+'</p></div>'}
   else h+='<div class="card"><h2>全班的曲線：人頭要給多少，大家才肯丟？</h2>'+curve(g)+'</div><div class="card dark"><p style="font-size:24px">人頭給 100 點的時候，得到和失去一樣多，可是很多人不肯丟。常常要人頭給到大約 200 點，才有一半的人肯玩。<b style="color:#F2A65A">失去的痛，比得到的開心重</b>，這就是損失厭惡。</p></div><div class="card"><p>點數最多：'+topList(g)+'</p></div>';
   return h},
  studentView:function(ST,me,api){var g=ST.g||{},h='',my=(g.pts||{})[me];if(my==null)my=START;
   if(ST.ph==='choose'||ST.ph==='spin'){var cur=api.local['c'+g.t0+'_'+g.i];
    h+='<p class="lead">第 '+(g.i+1)+' 回合</p><div class="card warm"><p class="stat">丟到字：付 100 點<br>丟到人頭：拿 <span style="color:#D95D39">'+g.offer+' 點</span></p></div><h2>你要丟嗎？</h2>'+
-    (ST.ph==='spin'?'<p class="stat" style="text-align:center">硬幣轉轉轉……</p>':'<div class="two"><button class="btn '+(cur==='y'?'te on':'gh')+'" data-act="go" data-arg="y">丟！</button><button class="btn '+(cur==='n'?'te on':'gh')+'" data-act="go" data-arg="n">不丟</button></div><p class="lead">'+(cur?'你選了「'+(cur==='y'?'丟':'不丟')+'」，開獎前都可以改。':'還沒決定。')+'</p>')+
+    (ST.ph==='spin'?'<p class="stat" style="text-align:center">硬幣轉轉轉……</p>':'<div class="two"><button class="btn '+(cur==='y'?'te on':'gh')+'" data-act="go" data-arg="y">丟！</button><button class="btn '+(cur==='n'?'te on':'gh')+'" data-act="go" data-arg="n">不丟</button></div><p class="lead">'+(cur?'你選了「'+(cur==='y'?'丟':'不丟')+'」，開獎前都可以改。':'還沒決定。沒有選的話，就當作不丟。')+'</p>')+
     '<div class="card"><p>我的點數：<b>'+my+' 點</b></p></div>'}
   else if(ST.ph==='reveal'){var L=g.last||{},c=(L.choice||{})[me];
-   h+='<h1>'+(L.res==='head'?'人頭！':'字！')+'</h1><div class="card"><p class="stat">'+(c?(L.res==='head'?'你丟了，拿到 '+L.offer+' 點！':'你丟了，付了 100 點。'):'你這一回合沒有丟。')+'</p><p>我的點數：<b>'+my+' 點</b></p></div>'}
+   h+='<h1>開獎：出現「'+(L.res==='head'?'人頭':'字')+'」</h1><div class="card"><p class="stat">'+(c?(L.res==='head'?'你丟了，出現「人頭」，你贏了 '+L.offer+' 點！':'你丟了，出現「字」，你輸了 100 點。'):(c===false?'你選了不丟，這一回合不輸也不贏。':'你這一回合沒有選，就當作不丟，不輸也不贏。'))+'</p><p style="font-size:24px">我的點數：現在有 <b>'+my+' 點</b></p></div>'}
   else h+='<h1>結束了！</h1><div class="card"><p class="stat">我最後有 '+my+' 點</p></div><p class="lead">請看大螢幕上全班的曲線。</p>';
   return h},
  sact:{go:function(ST,me,api,v){var g=ST.g;api.local={};api.local['c'+g.t0+'_'+g.i]=v;api.send({t:'go',v:v});api.save()}}
