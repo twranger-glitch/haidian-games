@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>最後兩塊雞蛋糕・搶搶版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<script src="live.js"></script>
+<script src="room.js"></script>
+<style>
+.jar{display:block;width:100%;max-width:520px;height:auto;margin:0 auto}
+.rate{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.rate .btn{font-size:clamp(22px,4.5vw,32px);padding:14px 0}
+.grab{font-size:clamp(30px,7vw,46px)!important;padding:24px 0!important;width:100%}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+</style>
+</head>
+<body>
+<script>
+var SEC_B=10;
+function players(H){return Object.keys(H.seats).length}
+function jarSVG(n,total){var o='<svg class="jar" viewBox="0 0 400 330" role="img" aria-label="罐子裡還有 '+n+' 塊雞蛋糕"><path d="M90 40 h220 v30 q40 20 40 70 v150 q0 30 -30 30 h-240 q-30 0 -30 -30 v-150 q0 -50 40 -70 z" fill="#F0F7F6" stroke="#2A6F68" stroke-width="6"/><rect x="80" y="20" width="240" height="30" rx="10" fill="#2A6F68"/>';
+ var shown=Math.min(n,40);for(var i=0;i<shown;i++){var x=95+(i%8)*28,y=290-(i/8|0)*30;o+='<ellipse cx="'+x+'" cy="'+y+'" rx="13" ry="11" fill="#F2A65A" stroke="#C77D2E" stroke-width="2"/>'}
+ return o+'</svg>'}
+function avg(o){var k=Object.keys(o||{});if(!k.length)return '—';var s=0;k.forEach(function(x){s+=o[x]});return Math.round(s/k.length*10)/10}
+function hi(o){var k=Object.keys(o||{});if(!k.length)return '—';return Math.round(k.filter(function(x){return o[x]>=3}).length/k.length*100)+'%'}
+ROOM.start({
+ key:'cake',title:'最後兩塊雞蛋糕・搶搶版',kick:'第 4 課・稀缺效應　全班連線',studentUrl:'cookierush.html',
+ rules:'<p>大螢幕上有一罐雞蛋糕。每個人最多可以拿 <b>1 塊</b>。拿完以後，請告訴大家：你覺得<b>一塊雞蛋糕值幾張園遊券</b>？</p><p>一共兩次。第二次會有一點不一樣。</p>',
+ init:function(H){H.g={}},
+ onStart:function(H){var g=H.g,N=players(H);g.stage='A';g.jar=Math.max(20,N*2);g.total=g.jar;g.took={};g.rate={A:{},B:{}};g.order=[];H.ph='grab'},
+ pub:function(H){var g=H.g;return {g:{stage:g.stage,jar:g.jar,total:g.total,took:g.took,rate:g.rate,left:g.deadline?Math.max(0,Math.ceil((g.deadline-Date.now())/1000)):null,open:!!g.open}}},
+ onMsg:function(H,d,seat){var g=H.g;
+  if(d.t==='grab'&&H.ph==='grab'&&(g.stage==='A'||g.open)&&!g.took[g.stage+seat]&&g.jar>0){g.jar--;g.took[g.stage+seat]=1;g.order.push(seat);return true}
+  if(d.t==='rate'&&H.ph==='grab'){g.rate[g.stage][seat]=Math.max(0,Math.min(5,+d.v||0));return true}},
+ tick:function(H){var g=H.g;if(H.ph==='grab'&&g.stage==='B'&&g.open&&g.deadline&&Date.now()>=g.deadline){g.open=false;g.deadline=0;return true}},
+ tickText:function(H){var g=H.g;return g.stage==='B'&&g.open?'還剩 '+Math.max(0,Math.ceil((g.deadline-Date.now())/1000))+' 秒':''},
+ act:{
+  toB:function(H){var g=H.g,N=players(H);g.stage='B';g.jar=Math.max(2,Math.round(N/6));g.total=g.jar;g.open=false;g.deadline=0;H.ph='grab'},
+  openB:function(H){var g=H.g;if(g.stage!=='B'||g.open)return false;g.open=true;g.deadline=Date.now()+SEC_B*1000},
+  sum:function(H){H.ph='sum'}
+ },
+ bar:function(H){var g=H.g;if(H.ph!=='grab')return '';if(g.stage==='A')return '<button class="btn te" data-act="toB">第 2 次：換一個罐子</button>';
+  return (g.open||g.jar===0?'':'<button class="btn" data-act="openB">開搶！（'+SEC_B+' 秒）</button>')+'<button class="btn te" data-act="sum">比一比兩次的評分</button>'},
+ hostView:function(H){var g=H.g,N=players(H),h='',r=g.rate[g.stage]||{};
+  if(H.ph==='grab'){var B=g.stage==='B';
+   h+='<div class="card dark"><p class="stat">'+(B?'第 2 次：這個罐子<span style="color:#F2A65A">只剩 '+g.total+' 塊</span>！':'第 1 次：一大罐雞蛋糕，想拿就拿')+'</p><p>'+(B?(g.open?'開搶了！':'老師按「開搶」才可以拿。'):'每個人最多拿 1 塊。')+' <span id="hdtick" style="color:#F2A65A;font-weight:900"></span></p></div>'+
+    '<div class="cmp"><div class="card">'+jarSVG(g.jar,g.total)+'<p class="stat" style="text-align:center;color:'+(B?'#D95D39':'#2A6F68')+'">罐子裡還有 '+g.jar+' 塊</p></div>'+
+    '<div class="card"><p class="stat">已經評分：'+Object.keys(r).length+' / '+N+' 人</p><p class="lead">大家覺得一塊值幾張園遊券，最後一起公布。</p>'+(B&&g.jar===0?'<p class="stat" style="color:#D95D39">搶光了！</p>':'')+'</div></div>'}
+  else{h+='<div class="card"><h2>同一種雞蛋糕，兩次的評分比一比</h2><table><tr><th></th><th>一塊平均值幾張園遊券</th><th>覺得值 3 張以上的人</th><th>評分人數</th></tr>'+
+    '<tr><td>第 1 次：一大罐</td><td><b>'+avg(g.rate.A)+' 張</b></td><td>'+hi(g.rate.A)+'</td><td>'+Object.keys(g.rate.A).length+'</td></tr>'+
+    '<tr><td>第 2 次：只剩幾塊</td><td><b style="color:#D95D39">'+avg(g.rate.B)+' 張</b></td><td>'+hi(g.rate.B)+'</td><td>'+Object.keys(g.rate.B).length+'</td></tr></table></div>'+
+    '<div class="card dark"><p style="font-size:24px">雞蛋糕一模一樣，只是第二次快沒了。如果第二次的評分比較高，就是<b style="color:#F2A65A">稀缺效應</b>：東西一變少，看起來就變得比較好、比較值錢。搶不到的那種著急，就是<b style="color:#F2A65A">害怕錯過（FOMO）</b>。</p></div>'}
+  return h},
+ studentView:function(ST,me,api){var g=ST.g||{},h='',B=g.stage==='B',took=(g.took||{})[g.stage+me],mr=((g.rate||{})[g.stage]||{})[me];
+  if(ST.ph==='grab'){
+   h+='<p class="lead">'+(B?'第 2 次':'第 1 次')+'</p>'+jarSVG(g.jar,g.total)+'<p class="big" style="font-size:44px;color:'+(B?'#D95D39':'#2A6F68')+'">'+(B?(g.jar?'只剩 '+g.jar+' 塊！':'沒了！'):'還有 '+g.jar+' 塊')+'</p>';
+   if(took)h+='<div class="card cool"><p class="stat">你拿到一塊了！</p></div>';
+   else if(B&&!g.open&&g.jar>0)h+='<div class="card warm"><p class="stat">等老師說「開搶」……</p></div>';
+   else if(g.jar===0)h+='<div class="card warm"><p class="stat">沒了！被搶光了。</p></div>';
+   else h+='<button class="btn grab" data-act="grab">拿一塊！</button>';
+   h+='<h2>你覺得一塊雞蛋糕值幾張園遊券？</h2><div class="rate">';for(var i=0;i<=5;i++)h+='<button class="btn '+(mr===i?'te on':'gh')+'" data-act="rate" data-arg="'+i+'">'+i+'</button>';
+   h+='</div><p class="lead">'+(mr==null?'還沒評分。':'你選了 '+mr+' 張，可以再改。')+'</p>'}
+  else h+='<h1>比一比</h1><p class="lead">請看大螢幕：兩次的評分一樣嗎？</p>';
+  return h},
+ sact:{grab:function(ST,me,api){api.send({t:'grab'})},rate:function(ST,me,api,v){api.send({t:'rate',v:+v})}}
+});
+</script>
+</body>
+</html>
