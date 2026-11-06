@@ -6,6 +6,7 @@ var MQTT_SRC='https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js';
 var L=window.LIVE={};
 function ls(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
 L.ls=ls;
+L.key=(function(){try{var k=new URLSearchParams(location.search).get('k');return k&&/^[a-z0-9]{3,16}$/.test(k)?k:null}catch(e){return null}})();
 L.uid=function(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4)};
 L.cid=function(){var c=ls('hd-cid');if(!c){c=L.uid();ls('hd-cid',c)}return c};
 L.esc=function(s){return String(s==null?'':s).replace(/[<>&"]/g,'')};
@@ -33,6 +34,12 @@ var CSS='.hdbox{background:#F0F7F6;border:2px solid #CFE3E0;border-radius:18px;p
  '.hdbox .s{font-size:17px;color:#475569}.hdbox .s.ok{color:#2A6F68;font-weight:900}.hdbox .s.bad{color:#D95D39;font-weight:900}';
 L.box=function(game,payload){
  if(!document.getElementById('hdboxcss')){var st=document.createElement('style');st.id='hdboxcss';st.textContent=CSS;document.head.appendChild(st)}
+ if(L.key){/* 從簡報的連結進來：自動送出，不用房號 */
+  var a=document.createElement('p');a.className='hdbox s';a.style.cssText='font-size:17px;color:#475569;margin:0';a.textContent='（正在把結果送到老師的大螢幕……）';
+  var cid0=L.cid(),done=false,cn=L.connect(['hdboard/'+L.key+'/ack'],function(t,m){if(m.cid===cid0&&m.game===game&&!done){done=true;a.style.color='#2A6F68';a.style.fontWeight='900';a.textContent='✓ 結果已經送到老師的大螢幕'}},
+   function(ok){if(ok&&!done)cn.pub('hdboard/'+L.key+'/in',{t:'res',game:game,cid:cid0,g:payload.g||null,rows:payload.rows||[],v:payload.v==null?null:payload.v})});
+  setTimeout(function(){if(!done)a.textContent='（老師這次沒有開統計大螢幕也沒關係，等一下照老師說的舉手。）'},9000);
+  return a}
  var d=document.createElement('div');d.className='hdbox';
  var room=ls('hd-room')||'';
  d.innerHTML='<b class="t">把結果送到老師的大螢幕</b><p class="s">老師有開「全班統計」的話，輸入大螢幕上的 4 位數房號，再按送出。沒有的話，這一格不用管。</p>'+
